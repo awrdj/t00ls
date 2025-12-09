@@ -644,22 +644,24 @@
             </div>
         </div>
     </div>
-
+    
     <!-- Change Keywords Modal -->
-    <div class="modal" id="changeKeywordsModal">
-        <div class="modal-content">
-            <h2 class="modal-title">🏷️ Change Keywords</h2>
-            <div class="modal-body">
-                <label class="modal-label" for="newKeywords">New Keywords (comma-separated or text):</label>
-                <input type="text" class="modal-input" id="newKeywords" placeholder="keyword1, keyword2, ...">
-                <p class="modal-hint">Will replace the Keywords field for the selected pin(s).</p>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-modal btn-modal-secondary" onclick="closeModal('changeKeywordsModal')">Cancel</button>
-                <button class="btn-modal btn-modal-primary" onclick="confirmKeywordsChange()">Apply</button>
-            </div>
+<div class="modal" id="changeKeywordsModal">
+    <div class="modal-content">
+        <h2 class="modal-title">🏷️ Change Keywords</h2>
+        <div class="modal-body">
+            <p>Current keywords: <strong><span id="currentKeywordsLabel">None</span></strong></p>
+            <label class="modal-label" for="newKeywords" style="margin-top:0.6rem;">New Keywords (comma-separated or text):</label>
+            <input type="text" class="modal-input" id="newKeywords" placeholder="keyword1, keyword2, ...">
+            <p class="modal-hint">Will replace the Keywords field for the selected pin(s).</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('changeKeywordsModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmKeywordsChange()">Apply</button>
         </div>
     </div>
+</div>
+
 
     <!-- Adjust Time Modal (single pin) -->
     <div class="modal" id="adjustTimeModal">
@@ -1168,10 +1170,13 @@
             updateUI();
         }
         function quickChangeKeywords(index) {
-            selectedIndices = new Set([index]);
-            document.getElementById('changeKeywordsModal').classList.add('active');
-            updateUI();
-        }
+    selectedIndices = new Set([index]);
+    const currentKeywords = pins[index]['Keywords'] || '';
+    document.getElementById('currentKeywordsLabel').textContent = currentKeywords || 'None';
+    document.getElementById('newKeywords').value = currentKeywords;
+    document.getElementById('changeKeywordsModal').classList.add('active');
+    updateUI();
+}
         function quickAdjustTime(index) {
             timeAdjustIndex = index;
             const pin = pins[index];
@@ -1279,9 +1284,16 @@
 
         // Change keywords (selected)
         function showChangeKeywordsModal() {
-            if (selectedIndices.size === 0) { showToast('Select pins to change keywords', 'warning'); return; }
-            document.getElementById('changeKeywordsModal').classList.add('active');
-        }
+    if (selectedIndices.size === 0) { showToast('Select pins to change keywords', 'warning'); return; }
+    
+    // Show keywords from first selected pin as example
+    const firstIndex = Array.from(selectedIndices)[0];
+    const currentKeywords = pins[firstIndex]['Keywords'] || '';
+    document.getElementById('currentKeywordsLabel').textContent = currentKeywords || 'None';
+    document.getElementById('newKeywords').value = currentKeywords;
+    
+    document.getElementById('changeKeywordsModal').classList.add('active');
+}
         function confirmKeywordsChange() {
             const newKeywords = document.getElementById('newKeywords').value.trim();
             if (!newKeywords) { showToast('Enter keywords', 'error'); return; }
