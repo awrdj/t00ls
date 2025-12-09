@@ -58,6 +58,7 @@
             top: 0;
             z-index: 100;
             box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
         }
 
         .header-inner {
@@ -1647,20 +1648,32 @@ card.addEventListener('click', e => {
             if (theme === 'dark') document.body.classList.add('dark-mode');
         }
 
-        // Dock show/hide on scroll
-        function setupScrollDockBehavior() {
-            let lastScroll = window.scrollY;
-            window.addEventListener('scroll', () => {
-                const dockHidden = document.body.classList.contains('dock-hidden');
-                const curr = window.scrollY;
-                if (curr > lastScroll + 60 && curr > 200 && !dockHidden) {
-                    document.body.classList.add('dock-hidden');
-                } else if (curr < lastScroll - 60 || curr < 100) {
-                    document.body.classList.remove('dock-hidden');
-                }
-                lastScroll = curr;
-            });
+        // Dock and Header show/hide on scroll
+function setupScrollDockBehavior() {
+    let lastScroll = window.scrollY;
+    const header = document.querySelector('.header');
+    
+    window.addEventListener('scroll', () => {
+        const dockHidden = document.body.classList.contains('dock-hidden');
+        const curr = window.scrollY;
+        
+        // Hide dock when scrolling down
+        if (curr > lastScroll + 60 && curr > 200 && !dockHidden) {
+            document.body.classList.add('dock-hidden');
+        } else if (curr < lastScroll - 60 || curr < 100) {
+            document.body.classList.remove('dock-hidden');
         }
+        
+        // Hide header when scrolling down
+        if (curr > lastScroll && curr > 80) {
+            header.style.transform = 'translateY(-100%)';
+        } else if (curr < lastScroll || curr < 50) {
+            header.style.transform = 'translateY(0)';
+        }
+        
+        lastScroll = curr;
+    });
+}
         function showDock() { document.body.classList.remove('dock-hidden'); }
     </script>
 </body>
