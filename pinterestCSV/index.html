@@ -927,14 +927,19 @@
             card.dataset.index = index;
             if (selectedIndices.has(index)) card.classList.add('selected');
 
-            // Click to toggle selection
+// Click to toggle selection (only on card content, not buttons)
 card.addEventListener('click', e => {
-    const tag = e.target.tagName.toLowerCase();
-    // Ignore clicks on links, buttons, checkbox, or inside action overlay
-    if (tag === 'a' || tag === 'button' || e.target.classList.contains('card-checkbox') || 
-        e.target.closest('.card-actions-overlay')) return;
+    // Ignore if clicking on interactive elements
+    if (e.target.tagName.toLowerCase() === 'a' || 
+        e.target.tagName.toLowerCase() === 'button' ||
+        e.target.classList.contains('card-checkbox') ||
+        e.target.closest('.card-actions-overlay') ||
+        e.target.closest('.card-action-btn')) {
+        return;
+    }
     toggleSelection(index);
 });
+
 
             const num = document.createElement('div');
             num.className = 'card-number';
@@ -963,6 +968,7 @@ card.addEventListener('click', e => {
             btnPreview.title = 'Preview image';
             btnPreview.textContent = '👁';
             btnPreview.onclick = e => { e.stopPropagation(); if (imageUrl) showImagePreview(imageUrl); };
+
 
             const btnDel = document.createElement('button');
             btnDel.className = 'card-action-btn';
