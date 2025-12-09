@@ -1717,17 +1717,21 @@ function setupScrollDockBehavior() {
         const curr = window.scrollY;
         
         // Hide dock when scrolling down
+        /* OLD HIDE IT SO MUCH
         if (curr > lastScroll + 60 && curr > 200 && !dockHidden) {
             document.body.classList.add('dock-hidden');
         } else if (curr < lastScroll - 60 || curr < 100) {
             document.body.classList.remove('dock-hidden');
         }
+        */  
         
         // Hide header when scrolling down
         if (curr > lastScroll && curr > 80) {
             header.style.transform = 'translateY(-100%)';
+            document.body.classList.add('dock-hidden');
         } else if (curr < lastScroll || curr < 50) {
             header.style.transform = 'translateY(0)';
+            document.body.classList.remove('dock-hidden');
         }
         
         lastScroll = curr;
