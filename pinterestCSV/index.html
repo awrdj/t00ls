@@ -506,22 +506,38 @@
         }
 
         .dock-btn {
-            padding: 0.45rem 0.8rem;
-            border-radius: 999px;
-            border: none;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            background: rgba(255,255,255,0.1);
-            color: #f8f9fa;
-            border: 1px solid rgba(255,255,255,0.25);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-        }
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: rgba(255,255,255,0.1);
+    color: #f8f9fa;
+    border: 1px solid rgba(255,255,255,0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
 
-        .dock-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-        .dock-btn:not(:disabled):hover { background: rgba(255,255,255,0.2); }
+.dock-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.dock-btn:not(:disabled):hover { background: rgba(255,255,255,0.2); }
+
+/* ADD THESE NEW RULES FOR LIGHT MODE */
+body:not(.dark-mode) .dock {
+    background: rgba(255,255,255,0.95);
+    border: 1px solid var(--border-color);
+}
+
+body:not(.dark-mode) .dock-btn {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body:not(.dark-mode) .dock-btn:not(:disabled):hover {
+    background: var(--border-color);
+}
 
         .dock-indicator {
             position: fixed;
