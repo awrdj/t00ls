@@ -589,20 +589,22 @@
         <img class="image-preview-content" id="imagePreviewImg" src="">
     </div>
 
-    <!-- Select 100 Modal -->
-    <div class="modal" id="select100Modal">
-        <div class="modal-content">
-            <h2 class="modal-title">💯 Keep First 100, Delete Rest</h2>
-            <div class="modal-body">
-                <p>This will keep the first 100 pins and delete the remaining <strong><span id="deleteRestCount">0</span></strong> pins.</p>
-                <p style="color: var(--danger-color); font-weight: 600;">You can still undo using the Undo button.</p>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-modal btn-modal-secondary" onclick="closeModal('select100Modal')">Cancel</button>
-                <button class="btn-modal btn-modal-danger" onclick="confirmSelect100()">Confirm</button>
-            </div>
+    <!-- Keep First N Modal -->
+<div class="modal" id="select100Modal">
+    <div class="modal-content">
+        <h2 class="modal-title">💯 Keep First N Pins</h2>
+        <div class="modal-body">
+            <label class="modal-label" for="keepAmount">How many pins to keep:</label>
+            <input type="number" class="modal-input" id="keepAmount" min="1" placeholder="100" value="100" oninput="updateKeepPreview()">
+            <p style="margin-top:0.6rem;">This will keep the first <strong><span id="keepAmountPreview">100</span></strong> pins and delete the remaining <strong><span id="deleteRestCount">0</span></strong> pins.</p>
+            <p style="color: var(--danger-color); font-weight: 600; margin-top:0.4rem;">You can still undo using the Undo button.</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('select100Modal')">Cancel</button>
+            <button class="btn-modal btn-modal-danger" onclick="confirmSelect100()">Confirm</button>
         </div>
     </div>
+</div>
 
     <!-- Delete Modal -->
     <div class="modal" id="deleteModal">
@@ -765,8 +767,8 @@
                 ⬜ <span class="label">None</span>
             </button>
             <button class="dock-btn" id="dockSelect100" onclick="showSelect100Modal()" disabled>
-                💯 <span class="label">Keep 100</span>
-            </button>
+    💯 <span class="label" style="white-space:nowrap;">Keep First #</span>
+</button>
             <button class="dock-btn" id="dockDelete" onclick="showDeleteModal()" disabled>
                 🗑️ <span class="label">Delete</span>
             </button>
@@ -1202,19 +1204,40 @@ card.addEventListener('click', e => {
 
         // Select First 100
         function showSelect100Modal() {
-            if (pins.length <= 100) { showToast('You have 100 or fewer pins already', 'warning'); return; }
-            document.getElementById('deleteRestCount').textContent = pins.length - 100;
-            document.getElementById('select100Modal').classList.add('active');
-        }
+    if (pins.length <= 1) { showToast('You need at least 2 pins', 'warning'); return; }
+    document.getElementById('keepAmount').value = Math.min(100, pins.length);
+    updateKeepPreview();
+    document.getElementById('select100Modal').classList.add('active');
+}
+function updateKeepPreview() {
+    const keepAmount = parseInt(document.getElementById('keepAmount').value) || 0;
+    const deleteAmount = Math.max(0, pins.length - keepAmount);
+    document.getElementById('keepAmountPreview').textContent = keepAmount;
+    document.getElementById('deleteRestCount').textContent = deleteAmount;
+}
+
         function confirmSelect100() {
-            saveHistory();
-            pins = pins.slice(0, 100);
-            filteredPins = [...pins];
-            selectedIndices.clear();
-            closeModal('select100Modal');
-            renderPins(); updateUI();
-            showToast('Kept first 100 pins, deleted the rest', 'success');
-        }
+    const keepAmount = parseInt(document.getElementById('keepAmount').value);
+    
+    if (!keepAmount || keepAmount < 1) {
+        showToast('Enter a valid number', 'error');
+        return;
+    }
+    
+    if (keepAmount >= pins.length) {
+        showToast('Keep amount must be less than total pins', 'warning');
+        return;
+    }
+    
+    saveHistory();
+    const deleted = pins.length - keepAmount;
+    pins = pins.slice(0, keepAmount);
+    filteredPins = [...pins];
+    selectedIndices.clear();
+    closeModal('select100Modal');
+    renderPins(); updateUI();
+    showToast(`Kept first ${keepAmount} pins, deleted ${deleted}`, 'success');
+}
 
         // Search
         function searchPins() {
@@ -1610,7 +1633,7 @@ card.addEventListener('click', e => {
 
             document.getElementById('dockSelectAll').disabled = !hasData;
             document.getElementById('dockDeselectAll').disabled = !hasSel;
-            document.getElementById('dockSelect100').disabled = pins.length <= 100;
+            document.getElementById('dockSelect100').disabled = pins.length <= 1;
             document.getElementById('dockDelete').disabled = !hasSel;
             document.getElementById('dockLink').disabled = !hasSel;
             document.getElementById('dockBoard').disabled = !hasSel;
