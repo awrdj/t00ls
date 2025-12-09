@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pinterest CSV Editor</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
             --bg-primary: #ffffff;
@@ -25,6 +21,7 @@
             --warning-color: #ffc107;
             --shadow: 0 1px 3px rgba(0,0,0,0.1);
             --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+            --dock-bg: rgba(33,37,41,0.95);
         }
 
         body.dark-mode {
@@ -36,6 +33,7 @@
             --border-color: #404040;
             --shadow: 0 1px 3px rgba(0,0,0,0.3);
             --shadow-hover: 0 4px 12px rgba(0,0,0,0.4);
+            --dock-bg: rgba(15,15,15,0.95);
         }
 
         body {
@@ -49,98 +47,52 @@
         .header {
             background: var(--bg-card);
             border-bottom: 2px solid var(--border-color);
-            padding: 0.75rem 1.5rem;
+            padding: 0.5rem 1.5rem;
             position: sticky;
             top: 0;
             z-index: 100;
             box-shadow: var(--shadow);
         }
 
-        .header-top {
+        .header-inner {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 0.75rem;
+            justify-content: center;
+            position: relative;
         }
 
-        .header h1 {
+        .header-title {
             font-size: 1.3rem;
             color: var(--accent-color);
             font-weight: 600;
+            text-align: center;
         }
 
         .theme-toggle {
-            padding: 0.4rem 0.8rem;
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0.3rem 0.8rem;
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 999px;
             cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.2s;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .theme-toggle span {
+            font-size: 0.8rem;
         }
 
         .theme-toggle:hover {
             background: var(--border-color);
         }
 
-        .toolbar {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 0.5rem 0.9rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn:not(:disabled):hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow);
-        }
-
-        .btn-primary {
-            background: var(--accent-color);
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background: var(--accent-hover);
-        }
-
-        .btn-success {
-            background: var(--success-color);
-            color: white;
-        }
-
-        .btn-danger {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        .btn-warning {
-            background: var(--warning-color);
-            color: #000;
-        }
-
-        .btn-secondary {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-
-        /* Search and Stats Row */
+        /* Search + Stats */
         .search-stats-bar {
             display: flex;
             align-items: center;
@@ -150,10 +102,7 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-        .search-container {
-            flex: 1;
-            max-width: 500px;
-        }
+        .search-container { flex: 1; max-width: 500px; }
 
         .search-input {
             width: 100%;
@@ -165,24 +114,9 @@
             color: var(--text-primary);
         }
 
-        .stats-container {
-            display: flex;
-            gap: 1.5rem;
-            margin-left: auto;
-        }
-
-        .stat {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            font-size: 0.9rem;
-        }
-
-        .stat-value {
-            font-weight: 700;
-            font-size: 1rem;
-            color: var(--accent-color);
-        }
+        .stats-container { display: flex; gap: 1.5rem; margin-left: auto; }
+        .stat { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; }
+        .stat-value { font-weight: 700; font-size: 1rem; color: var(--accent-color); }
 
         /* Upload Zone */
         .upload-zone {
@@ -196,71 +130,36 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-
         .upload-zone:hover,
-        .upload-zone.dragover {
-            border-color: var(--accent-color);
-            background: var(--bg-secondary);
-        }
+        .upload-zone.dragover { border-color: var(--accent-color); background: var(--bg-secondary); }
+        .upload-zone input[type="file"] { display: none; }
 
-        .upload-zone input[type="file"] {
-            display: none;
-        }
-
-        .upload-zone h2 {
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-zone p {
-            color: var(--text-secondary);
-        }
-
-        /* Cards Grid - 6 per row */
+        /* Cards Grid - 6 from 1000px up */
         .cards-container {
             padding: 1.5rem;
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 1rem;
             max-width: 1800px;
-            margin: 0 auto;
+            margin: 0 auto 5rem auto; /* bottom space for dock */
         }
 
-        @media (max-width: 1600px) {
-            .cards-container {
-                grid-template-columns: repeat(5, 1fr);
-            }
+        @media (min-width: 1000px) {
+            .cards-container { grid-template-columns: repeat(6, 1fr); }
         }
 
-        @media (max-width: 1400px) {
-            .cards-container {
-                grid-template-columns: repeat(4, 1fr);
-            }
+        @media (max-width: 999px) and (min-width: 768px) {
+            .cards-container { grid-template-columns: repeat(3, 1fr); }
         }
 
-        @media (max-width: 1100px) {
-            .cards-container {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .cards-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .search-stats-bar {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .stats-container {
-                margin-left: 0;
-            }
+        @media (max-width: 767px) {
+            .cards-container { grid-template-columns: repeat(2, 1fr); padding: 1rem; }
+            .search-stats-bar { flex-direction: column; align-items: flex-start; }
+            .stats-container { margin-left: 0; }
         }
 
         @media (max-width: 480px) {
-            .cards-container {
-                grid-template-columns: 1fr;
-            }
+            .cards-container { grid-template-columns: 1fr; }
         }
 
         /* Card */
@@ -274,29 +173,11 @@
             position: relative;
             border: 2px solid transparent;
         }
-
-        .card:active {
-            cursor: grabbing;
-        }
-
-        .card:hover {
-            box-shadow: var(--shadow-hover);
-            transform: translateY(-2px);
-        }
-
-        .card.selected {
-            border-color: var(--accent-color);
-        }
-
-        .card.dragging {
-            opacity: 0.4;
-            cursor: grabbing;
-        }
-
-        .card.drag-over {
-            border-color: var(--accent-color);
-            border-style: dashed;
-        }
+        .card:active { cursor: grabbing; }
+        .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+        .card.selected { border-color: var(--accent-color); }
+        .card.dragging { opacity: 0.4; cursor: grabbing; }
+        .card.drag-over { border-color: var(--accent-color); border-style: dashed; }
 
         .card-number {
             position: absolute;
@@ -329,38 +210,50 @@
             overflow: hidden;
             background: var(--bg-secondary);
         }
+        .card-image { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        .card-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
+        /* Quick action buttons on image bottom-center */
+        .card-actions-overlay {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            background: rgba(0,0,0,0.55);
+            padding: 4px 6px;
+            border-radius: 999px;
+            align-items: center;
         }
 
-        .card-content {
-            padding: 0.75rem;
+        .card-action-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 0;
         }
+
+        .card-action-btn:hover { background: white; transform: translateY(-1px); }
+
+        .card-content { padding: 0.6rem 0.7rem 0.7rem; }
 
         .card-title {
             font-size: 0.9rem;
             font-weight: 600;
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.3rem;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             line-height: 1.3;
-        }
-
-        .card-description {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            line-height: 1.3;
+            cursor: help;
         }
 
         .card-meta {
@@ -369,7 +262,7 @@
             gap: 0.3rem;
             font-size: 0.75rem;
             color: var(--text-secondary);
-            padding-top: 0.5rem;
+            padding-top: 0.4rem;
             border-top: 1px solid var(--border-color);
         }
 
@@ -382,198 +275,164 @@
             white-space: nowrap;
         }
 
-        .card-link {
-            color: var(--accent-color);
-            text-decoration: none;
-        }
+        .card-link { color: var(--accent-color); text-decoration: none; }
+        .card-link:hover { text-decoration: underline; }
 
-        .card-link:hover {
-            text-decoration: underline;
+        /* Hover tooltip for title/description */
+        .title-tooltip {
+            position: fixed;
+            max-width: 400px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            padding: 0.75rem 1rem;
+            z-index: 9999;
+            font-size: 0.85rem;
+            border: 1px solid var(--border-color);
         }
+        .title-tooltip-label { font-weight: 600; font-size: 0.8rem; opacity: 0.8; }
+        .title-tooltip-text { margin-bottom: 0.4rem; }
 
-        /* Image Preview on Hover */
+        /* Image Preview Overlay */
         .image-preview-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 9999;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 9998;
             align-items: center;
             justify-content: center;
             padding: 2rem;
         }
+        .image-preview-overlay.active { display: flex; }
+        .image-preview-content { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
 
-        .image-preview-overlay.active {
-            display: flex;
-        }
-
-        .image-preview-content {
-            max-width: 90%;
-            max-height: 90%;
-            border-radius: 8px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        }
-
-        /* Modal */
+        /* Modals */
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.75);
             z-index: 10000;
             align-items: center;
             justify-content: center;
             padding: 1rem;
         }
-
-        .modal.active {
-            display: flex;
-        }
-
+        .modal.active { display: flex; }
         .modal-content {
             background: var(--bg-card);
-            padding: 2rem;
+            padding: 1.5rem 1.75rem;
             border-radius: 12px;
-            max-width: 500px;
+            max-width: 480px;
             width: 100%;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
-
-        .modal-title {
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        .modal-body {
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-body p {
-            margin-bottom: 1rem;
-            line-height: 1.6;
-        }
-
-        .modal-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
+        .modal-title { font-size: 1.3rem; margin-bottom: 0.8rem; font-weight: 600; }
+        .modal-body { margin-bottom: 1.2rem; font-size: 0.9rem; }
+        .modal-label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; }
         .modal-input {
-            width: 100%;
-            padding: 0.7rem;
+            width: 100%; padding: 0.6rem 0.7rem; border-radius: 6px;
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 0.95rem;
             background: var(--bg-secondary);
             color: var(--text-primary);
+            font-size: 0.9rem;
         }
+        .modal-hint { margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-secondary); }
+        .modal-buttons { display: flex; gap: 0.75rem; justify-content: flex-end; }
 
-        .modal-hint {
-            margin-top: 0.5rem;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-        }
-
-        /* Toast */
         .toast {
             position: fixed;
-            bottom: 2rem;
-            right: 2rem;
+            bottom: 2rem; right: 2rem;
             background: var(--bg-card);
-            padding: 1rem 1.5rem;
+            padding: 0.8rem 1.2rem;
             border-radius: 8px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-            transform: translateY(150px);
+            transform: translateY(120px);
             opacity: 0;
             transition: all 0.3s;
             z-index: 20000;
-            max-width: 400px;
+            max-width: 380px;
+            font-size: 0.9rem;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-left: 4px solid var(--success-color); }
+        .toast.error { border-left: 4px solid var(--danger-color); }
+        .toast.warning { border-left: 4px solid var(--warning-color); }
+
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+
+        /* Floating Dock Toolbar (bottom center) */
+        .dock-wrapper {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 18px;
+            z-index: 15000;
+            transition: transform 0.3s ease, opacity 0.3s ease;
         }
 
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
+        .dock {
+            display: inline-flex;
+            gap: 0.5rem;
+            background: var(--dock-bg);
+            padding: 0.5rem 0.8rem;
+            border-radius: 999px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            backdrop-filter: blur(16px);
+            align-items: center;
         }
 
-        .toast.success {
-            border-left: 4px solid var(--success-color);
+        .dock-btn {
+            padding: 0.45rem 0.8rem;
+            border-radius: 999px;
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            color: #f8f9fa;
+            border: 1px solid rgba(255,255,255,0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
         }
 
-        .toast.error {
-            border-left: 4px solid var(--danger-color);
-        }
+        .dock-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .dock-btn:not(:disabled):hover { background: rgba(255,255,255,0.2); }
 
-        .toast.warning {
-            border-left: 4px solid var(--warning-color);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
+        .dock-indicator {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 8px;
+            font-size: 0.75rem;
             color: var(--text-secondary);
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 14000;
         }
 
-        .empty-state h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
+        .dock-hidden .dock-wrapper { transform: translate(-50%, 120%); opacity: 0; }
+        .dock-hidden .dock-indicator { opacity: 1; pointer-events: auto; }
+
+        @media (max-width: 600px) {
+            .dock { gap: 0.3rem; }
+            .dock-btn span.label { display: none; }
         }
 
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
     <!-- Header -->
     <div class="header">
-        <div class="header-top">
-            <h1>📌 Pinterest CSV Editor</h1>
-            <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
-        </div>
-        <div class="toolbar">
-            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
-                📁 Load CSV
-            </button>
-            <button class="btn btn-secondary" id="selectAllBtn" onclick="selectAll()" disabled>
-                ☑️ Select All
-            </button>
-            <button class="btn btn-secondary" id="deselectAllBtn" onclick="deselectAll()" disabled>
-                ⬜ Deselect All
-            </button>
-            <button class="btn btn-warning" id="selectFirst100Btn" onclick="showSelect100Modal()" disabled>
-                💯 Select First 100
-            </button>
-            <button class="btn btn-danger" id="deleteSelectedBtn" onclick="showDeleteModal()" disabled>
-                🗑️ Delete Selected
-            </button>
-            <button class="btn btn-secondary" id="changeLinkBtn" onclick="showChangeLinkModal()" disabled>
-                🔗 Change Link
-            </button>
-            <button class="btn btn-secondary" id="changeBoardBtn" onclick="showChangeBoardModal()" disabled>
-                📋 Change Board
-            </button>
-            <button class="btn btn-secondary" id="undoBtn" onclick="undo()" disabled>
-                ↶ Undo
-            </button>
-            <button class="btn btn-success" id="exportBtn" onclick="exportCSV()" disabled>
-                💾 Export CSV
+        <div class="header-inner">
+            <div class="header-title">📌 Pinterest CSV Editor</div>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span>🌓</span><span>Theme</span>
             </button>
         </div>
     </div>
@@ -581,27 +440,12 @@
     <!-- Search and Stats Bar -->
     <div class="search-stats-bar hidden" id="searchStatsBar">
         <div class="search-container">
-            <input 
-                type="text" 
-                class="search-input" 
-                id="searchInput" 
-                placeholder="🔍 Search by title or keywords..."
-                oninput="searchPins()"
-            >
+            <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search by title or keywords..." oninput="searchPins()">
         </div>
         <div class="stats-container">
-            <div class="stat">
-                <span>Total:</span>
-                <span class="stat-value" id="totalPins">0</span>
-            </div>
-            <div class="stat">
-                <span>Selected:</span>
-                <span class="stat-value" id="selectedCount">0</span>
-            </div>
-            <div class="stat">
-                <span>Showing:</span>
-                <span class="stat-value" id="filteredCount">0</span>
-            </div>
+            <div class="stat"><span>Total:</span><span class="stat-value" id="totalPins">0</span></div>
+            <div class="stat"><span>Selected:</span><span class="stat-value" id="selectedCount">0</span></div>
+            <div class="stat"><span>Showing:</span><span class="stat-value" id="filteredCount">0</span></div>
         </div>
     </div>
 
@@ -612,7 +456,7 @@
         <p>You can upload multiple CSV files to merge them</p>
     </div>
 
-    <!-- Cards Container -->
+    <!-- Cards -->
     <div class="cards-container" id="cardsContainer"></div>
 
     <!-- Image Preview Overlay -->
@@ -620,30 +464,27 @@
         <img class="image-preview-content" id="imagePreviewImg" src="">
     </div>
 
-    <!-- Select First 100 Modal -->
+    <!-- Modals -->
     <div class="modal" id="select100Modal">
         <div class="modal-content">
-            <h2 class="modal-title">⚠️ Select First 100 & Delete Rest</h2>
+            <h2 class="modal-title">💯 Keep First 100, Delete Rest</h2>
             <div class="modal-body">
-                <p>This will:</p>
-                <p><strong>✓ Select</strong> the first 100 pins</p>
-                <p><strong>✗ Delete</strong> all remaining pins (<span id="deleteRestCount">0</span> pins)</p>
-                <p style="color: var(--danger-color); font-weight: 600;">This action cannot be undone (except with Undo button).</p>
+                <p>This will keep the first 100 pins and delete the remaining <strong><span id="deleteRestCount">0</span></strong> pins.</p>
+                <p style="color: var(--danger-color); font-weight: 600;">You can still undo using the Undo button.</p>
             </div>
             <div class="modal-buttons">
                 <button class="btn btn-secondary" onclick="closeModal('select100Modal')">Cancel</button>
-                <button class="btn btn-danger" onclick="confirmSelect100()">Keep 100, Delete Rest</button>
+                <button class="btn btn-danger" onclick="confirmSelect100()">Confirm</button>
             </div>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div class="modal" id="deleteModal">
         <div class="modal-content">
-            <h2 class="modal-title">⚠️ Confirm Deletion</h2>
+            <h2 class="modal-title">🗑️ Confirm Deletion</h2>
             <div class="modal-body">
                 <p id="deleteMessage"></p>
-                <p style="color: var(--danger-color); font-weight: 600;">This action cannot be undone (except with Undo button).</p>
+                <p style="color: var(--danger-color); font-weight: 600;">You can still undo using the Undo button.</p>
             </div>
             <div class="modal-buttons">
                 <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
@@ -652,48 +493,47 @@
         </div>
     </div>
 
-    <!-- Change Link Modal -->
     <div class="modal" id="changeLinkModal">
         <div class="modal-content">
             <h2 class="modal-title">🔗 Change Link Domain</h2>
             <div class="modal-body">
-                <label class="modal-label" for="newDomain">New Domain (slug will be preserved):</label>
-                <input 
-                    type="text" 
-                    class="modal-input" 
-                    id="newDomain" 
-                    placeholder="https://example.com"
-                >
-                <p class="modal-hint">
-                    Example: Changes https://oldsite.com/?ChocolateCookies to https://newsite.com/?ChocolateCookies
-                </p>
+                <label class="modal-label" for="newDomain">New Domain (slug preserved):</label>
+                <input type="text" class="modal-input" id="newDomain" placeholder="https://example.com">
+                <p class="modal-hint">Example: https://old.com/?Slug → https://new.com/?Slug</p>
             </div>
             <div class="modal-buttons">
                 <button class="btn btn-secondary" onclick="closeModal('changeLinkModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmLinkChange()">Apply Changes</button>
+                <button class="btn btn-primary" onclick="confirmLinkChange()">Apply</button>
             </div>
         </div>
     </div>
 
-    <!-- Change Board Modal -->
     <div class="modal" id="changeBoardModal">
         <div class="modal-content">
             <h2 class="modal-title">📋 Change Pinterest Board</h2>
             <div class="modal-body">
                 <label class="modal-label" for="newBoard">New Board Name:</label>
-                <input 
-                    type="text" 
-                    class="modal-input" 
-                    id="newBoard" 
-                    placeholder="My Board Name"
-                >
-                <p class="modal-hint">
-                    This will change the Pinterest board for <span id="boardChangeCount">0</span> selected pin(s).
-                </p>
+                <input type="text" class="modal-input" id="newBoard" placeholder="My Board Name">
+                <p class="modal-hint">Will update <strong><span id="boardChangeCount">0</span></strong> selected pin(s).</p>
             </div>
             <div class="modal-buttons">
                 <button class="btn btn-secondary" onclick="closeModal('changeBoardModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmBoardChange()">Apply Changes</button>
+                <button class="btn btn-primary" onclick="confirmBoardChange()">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="adjustTimeModal">
+        <div class="modal-content">
+            <h2 class="modal-title">⏰ Adjust Publish Time</h2>
+            <div class="modal-body">
+                <p>Current time: <strong><span id="currentTimeLabel"></span></strong></p>
+                <label class="modal-label" for="newTime">New Publish Date/Time (YYYY-MM-DDTHH:MM:SS):</label>
+                <input type="text" class="modal-input" id="newTime" placeholder="2025-12-10T11:00:00">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('adjustTimeModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmAdjustTime()">Apply</button>
             </div>
         </div>
     </div>
@@ -701,28 +541,65 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <!-- Dock Toolbar -->
+    <div class="dock-wrapper" id="dockWrapper">
+        <div class="dock">
+            <button class="dock-btn" onclick="document.getElementById('fileInput').click()">
+                📁 <span class="label">Load</span>
+            </button>
+            <button class="dock-btn" id="dockSelectAll" onclick="selectAll()" disabled>
+                ☑️ <span class="label">All</span>
+            </button>
+            <button class="dock-btn" id="dockDeselectAll" onclick="deselectAll()" disabled>
+                ⬜ <span class="label">None</span>
+            </button>
+            <button class="dock-btn" id="dockSelect100" onclick="showSelect100Modal()" disabled>
+                💯 <span class="label">Keep 100</span>
+            </button>
+            <button class="dock-btn" id="dockDelete" onclick="showDeleteModal()" disabled>
+                🗑️ <span class="label">Delete</span>
+            </button>
+            <button class="dock-btn" id="dockLink" onclick="showChangeLinkModal()" disabled>
+                🔗 <span class="label">Link</span>
+            </button>
+            <button class="dock-btn" id="dockBoard" onclick="showChangeBoardModal()" disabled>
+                📋 <span class="label">Board</span>
+            </button>
+            <button class="dock-btn" id="dockSwap" onclick="swapSelected()" disabled>
+                🔁 <span class="label">Swap</span>
+            </button>
+            <button class="dock-btn" id="dockUndo" onclick="undo()" disabled>
+                ↶ <span class="label">Undo</span>
+            </button>
+            <button class="dock-btn" id="dockExport" onclick="exportCSV()" disabled>
+                💾 <span class="label">Export</span>
+            </button>
+        </div>
+    </div>
+    <div class="dock-indicator" id="dockIndicator" onclick="showDock()">▲ Toolbar hidden (hover/scroll up to show)</div>
+
     <script>
-        // State
         let pins = [];
         let filteredPins = [];
         let history = [];
         let selectedIndices = new Set();
         let draggedIndex = null;
         let originalFilename = 'pinterest';
+        let tooltipEl = null;
+        let timeAdjustIndex = null;
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             setupDragAndDrop();
             loadTheme();
+            setupScrollDockBehavior();
         });
 
         // File Handling
         function handleFileSelect(event) {
             const files = event.target.files;
-            if (files.length === 0) return;
+            if (!files || files.length === 0) return;
 
             showToast('Loading CSV files...', 'success');
-
             const readers = Array.from(files).map(file => {
                 if (!originalFilename || originalFilename === 'pinterest') {
                     originalFilename = file.name.replace('.csv', '');
@@ -736,50 +613,38 @@
                     showToast('No valid data found in CSV files', 'error');
                     return;
                 }
-
                 saveHistory();
                 pins = allPins;
                 filteredPins = [...pins];
                 renderPins();
                 updateUI();
                 showToast(`Loaded ${pins.length} pins successfully!`, 'success');
-            }).catch(error => {
-                showToast('Error loading CSV: ' + error.message, 'error');
-                console.error(error);
+            }).catch(err => {
+                console.error(err);
+                showToast('Error loading CSV', 'error');
             });
         }
 
         function readCSV(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = e => {
                     try {
                         const text = e.target.result;
                         const lines = text.split('\n').filter(line => line.trim());
-
-                        if (lines.length < 2) {
-                            reject(new Error('CSV file is empty or invalid'));
-                            return;
-                        }
-
+                        if (lines.length < 2) return resolve([]);
                         const headers = parseCSVLine(lines[0]);
                         const data = [];
-
                         for (let i = 1; i < lines.length; i++) {
                             const values = parseCSVLine(lines[i]);
                             if (values.length === headers.length) {
                                 const pin = {};
-                                headers.forEach((header, index) => {
-                                    pin[header.trim()] = values[index];
-                                });
+                                headers.forEach((h, idx) => pin[h.trim()] = values[idx]);
                                 data.push(pin);
                             }
                         }
-
                         resolve(data);
-                    } catch (error) {
-                        reject(error);
-                    }
+                    } catch (e2) { reject(e2); }
                 };
                 reader.onerror = () => reject(new Error('Failed to read file'));
                 reader.readAsText(file);
@@ -790,87 +655,52 @@
             const result = [];
             let current = '';
             let inQuotes = false;
-
             for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-
-                if (char === '"') {
-                    if (inQuotes && line[i + 1] === '"') {
-                        current += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (char === ',' && !inQuotes) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+                    else { inQuotes = !inQuotes; }
+                } else if (ch === ',' && !inQuotes) {
                     result.push(current);
                     current = '';
-                } else {
-                    current += char;
-                }
+                } else { current += ch; }
             }
             result.push(current);
-
-            return result.map(value => value.replace(/^"|"$/g, '').trim());
+            return result.map(v => v.replace(/^"|"$/g, '').trim());
         }
 
-        // Drag and Drop Setup
+        // Drag & Drop upload
         function setupDragAndDrop() {
             const uploadZone = document.getElementById('uploadZone');
-
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                uploadZone.addEventListener(eventName, preventDefaults, false);
-            });
-
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                uploadZone.addEventListener(eventName, () => {
-                    uploadZone.classList.add('dragover');
-                }, false);
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                uploadZone.addEventListener(eventName, () => {
-                    uploadZone.classList.remove('dragover');
-                }, false);
-            });
-
-            uploadZone.addEventListener('drop', (e) => {
-                const dt = e.dataTransfer;
-                const files = dt.files;
+            ['dragenter','dragover','dragleave','drop'].forEach(ev => uploadZone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }));
+            ['dragenter','dragover'].forEach(ev => uploadZone.addEventListener(ev, () => uploadZone.classList.add('dragover')));
+            ['dragleave','drop'].forEach(ev => uploadZone.addEventListener(ev, () => uploadZone.classList.remove('dragover')));
+            uploadZone.addEventListener('drop', e => {
+                const files = e.dataTransfer.files;
                 handleFileSelect({ target: { files } });
-            }, false);
+            });
         }
 
         // Rendering
         function renderPins() {
             const container = document.getElementById('cardsContainer');
             const uploadZone = document.getElementById('uploadZone');
-
             if (filteredPins.length === 0 && pins.length === 0) {
                 container.innerHTML = '<div class="empty-state"><h2>No pins to display</h2><p>Upload a CSV file to get started</p></div>';
                 uploadZone.classList.remove('hidden');
                 return;
             }
-
             if (filteredPins.length === 0 && pins.length > 0) {
                 container.innerHTML = '<div class="empty-state"><h2>No pins match your search</h2><p>Try a different search term</p></div>';
                 uploadZone.classList.add('hidden');
                 return;
             }
-
             uploadZone.classList.add('hidden');
             container.innerHTML = '';
-
-            filteredPins.forEach((pin) => {
-                const actualIndex = pins.indexOf(pin);
-                const card = createCard(pin, actualIndex);
-                container.appendChild(card);
+            filteredPins.forEach(pin => {
+                const idx = pins.indexOf(pin);
+                container.appendChild(createCard(pin, idx));
             });
-
             updateStats();
         }
 
@@ -879,63 +709,75 @@
             card.className = 'card';
             card.draggable = true;
             card.dataset.index = index;
+            if (selectedIndices.has(index)) card.classList.add('selected');
 
-            if (selectedIndices.has(index)) {
-                card.classList.add('selected');
-            }
+            const num = document.createElement('div');
+            num.className = 'card-number';
+            num.textContent = '#' + (index + 1);
 
-            // Card Number
-            const cardNumber = document.createElement('div');
-            cardNumber.className = 'card-number';
-            cardNumber.textContent = `#${index + 1}`;
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'card-checkbox';
+            cb.checked = selectedIndices.has(index);
+            cb.onclick = e => { e.stopPropagation(); toggleSelection(index); };
 
-            // Checkbox
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.className = 'card-checkbox';
-            checkbox.checked = selectedIndices.has(index);
-            checkbox.onclick = (e) => {
-                e.stopPropagation();
-                toggleSelection(index);
-            };
-
-            // Image Container
-            const imageContainer = document.createElement('div');
-            imageContainer.className = 'card-image-container';
-
+            const imgWrap = document.createElement('div');
+            imgWrap.className = 'card-image-container';
             const img = document.createElement('img');
             img.className = 'card-image';
             const imageUrl = pin['Media URL'] || pin['Thumbnail'] || '';
             img.src = imageUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="350"%3E%3Crect fill="%23ddd" width="300" height="350"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E';
-            img.alt = pin['Title'] || 'Pin image';
-            img.onerror = () => {
-                img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="350"%3E%3Crect fill="%23ddd" width="300" height="350"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E';
-            };
-
-            // Click to preview full image
+            img.onerror = () => { img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="350"%3E%3Crect fill="%23ddd" width="300" height="350"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E'; };
             if (imageUrl) {
-                imageContainer.style.cursor = 'pointer';
-                imageContainer.onclick = (e) => {
-                    e.stopPropagation();
-                    showImagePreview(imageUrl);
-                };
+                imgWrap.style.cursor = 'pointer';
+                imgWrap.onclick = e => { e.stopPropagation(); showImagePreview(imageUrl); };
             }
 
-            imageContainer.appendChild(img);
+            // Quick actions on image
+            const actions = document.createElement('div');
+            actions.className = 'card-actions-overlay';
 
-            // Content
+            const btnDel = document.createElement('button');
+            btnDel.className = 'card-action-btn';
+            btnDel.title = 'Delete this pin';
+            btnDel.textContent = '🗑️';
+            btnDel.onclick = e => { e.stopPropagation(); quickDelete(index); };
+
+            const btnLink = document.createElement('button');
+            btnLink.className = 'card-action-btn';
+            btnLink.title = 'Change link domain for this pin';
+            btnLink.textContent = '🔗';
+            btnLink.onclick = e => { e.stopPropagation(); quickChangeLink(index); };
+
+            const btnBoard = document.createElement('button');
+            btnBoard.className = 'card-action-btn';
+            btnBoard.title = 'Change board for this pin';
+            btnBoard.textContent = '📋';
+            btnBoard.onclick = e => { e.stopPropagation(); quickChangeBoard(index); };
+
+            const btnTime = document.createElement('button');
+            btnTime.className = 'card-action-btn';
+            btnTime.title = 'Adjust publish time';
+            btnTime.textContent = '⏰';
+            btnTime.onclick = e => { e.stopPropagation(); quickAdjustTime(index); };
+
+            actions.appendChild(btnDel);
+            actions.appendChild(btnLink);
+            actions.appendChild(btnBoard);
+            actions.appendChild(btnTime);
+
+            imgWrap.appendChild(img);
+            imgWrap.appendChild(actions);
+
             const content = document.createElement('div');
             content.className = 'card-content';
 
             const title = document.createElement('div');
             title.className = 'card-title';
             title.textContent = pin['Title'] || 'Untitled';
-            title.title = pin['Title'] || 'Untitled';
-
-            const description = document.createElement('div');
-            description.className = 'card-description';
-            description.textContent = pin['Description'] || 'No description';
-            description.title = pin['Description'] || 'No description';
+            title.addEventListener('mouseenter', e => showTitleTooltip(e, pin));
+            title.addEventListener('mousemove', e => moveTitleTooltip(e));
+            title.addEventListener('mouseleave', hideTitleTooltip);
 
             const meta = document.createElement('div');
             meta.className = 'card-meta';
@@ -943,46 +785,39 @@
             if (pin['Publish date']) {
                 const dateItem = document.createElement('div');
                 dateItem.className = 'card-meta-item';
-                dateItem.innerHTML = `📅 ${pin['Publish date']}`;
-                dateItem.title = pin['Publish date'];
+                dateItem.textContent = '📅 ' + pin['Publish date'];
                 meta.appendChild(dateItem);
             }
-
             if (pin['Pinterest board']) {
                 const boardItem = document.createElement('div');
                 boardItem.className = 'card-meta-item';
-                boardItem.innerHTML = `📌 ${pin['Pinterest board']}`;
-                boardItem.title = pin['Pinterest board'];
+                boardItem.textContent = '📌 ' + pin['Pinterest board'];
                 meta.appendChild(boardItem);
             }
-
             if (pin['Link']) {
                 const linkItem = document.createElement('div');
                 linkItem.className = 'card-meta-item';
-                const link = document.createElement('a');
-                link.className = 'card-link';
-                link.href = pin['Link'];
-                link.target = '_blank';
-                link.textContent = pin['Link'];
-                link.title = pin['Link'];
-                link.onclick = (e) => e.stopPropagation();
+                const a = document.createElement('a');
+                a.href = pin['Link'];
+                a.target = '_blank';
+                a.textContent = pin['Link'];
+                a.className = 'card-link';
+                a.onclick = e => e.stopPropagation();
                 linkItem.appendChild(document.createTextNode('🔗 '));
-                linkItem.appendChild(link);
+                linkItem.appendChild(a);
                 meta.appendChild(linkItem);
             }
 
             content.appendChild(title);
-            content.appendChild(description);
             content.appendChild(meta);
 
-            card.appendChild(cardNumber);
-            card.appendChild(checkbox);
-            card.appendChild(imageContainer);
+            card.appendChild(num);
+            card.appendChild(cb);
+            card.appendChild(imgWrap);
             card.appendChild(content);
 
-            // Drag events
             card.addEventListener('dragstart', handleDragStart);
-            card.addEventListener('dragover', handleDragOver);
+            card.addEventListener('dragover', handleDragOverCard);
             card.addEventListener('drop', handleDrop);
             card.addEventListener('dragend', handleDragEnd);
             card.addEventListener('dragenter', handleDragEnter);
@@ -991,381 +826,318 @@
             return card;
         }
 
-        // Image Preview
-        function showImagePreview(imageUrl) {
+        // Title tooltip (full title + description)
+        function showTitleTooltip(e, pin) {
+            hideTitleTooltip();
+            tooltipEl = document.createElement('div');
+            tooltipEl.className = 'title-tooltip';
+            const title = pin['Title'] || 'Untitled';
+            const desc = pin['Description'] || 'No description';
+            tooltipEl.innerHTML = `
+                <div class="title-tooltip-label">Title:</div>
+                <div class="title-tooltip-text">${escapeHtml(title)}</div>
+                <div class="title-tooltip-label">Description:</div>
+                <div class="title-tooltip-text">${escapeHtml(desc)}</div>
+            `;
+            document.body.appendChild(tooltipEl);
+            moveTitleTooltip(e);
+        }
+
+        function moveTitleTooltip(e) {
+            if (!tooltipEl) return;
+            const padding = 10;
+            let x = e.clientX + padding;
+            let y = e.clientY + padding;
+            const rect = tooltipEl.getBoundingClientRect();
+            if (x + rect.width > window.innerWidth) x = e.clientX - rect.width - padding;
+            if (y + rect.height > window.innerHeight) y = e.clientY - rect.height - padding;
+            tooltipEl.style.left = x + 'px';
+            tooltipEl.style.top = y + 'px';
+        }
+
+        function hideTitleTooltip() {
+            if (tooltipEl) { tooltipEl.remove(); tooltipEl = null; }
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+        }
+
+        // Image preview
+        function showImagePreview(url) {
             const overlay = document.getElementById('imagePreview');
             const img = document.getElementById('imagePreviewImg');
-            img.src = imageUrl;
+            img.src = url;
             overlay.classList.add('active');
         }
-
         function hideImagePreview() {
-            const overlay = document.getElementById('imagePreview');
-            overlay.classList.remove('active');
+            document.getElementById('imagePreview').classList.remove('active');
         }
 
-        // Drag and Drop for Reordering
+        // Drag reordering
         function handleDragStart(e) {
             draggedIndex = parseInt(e.currentTarget.dataset.index);
             e.currentTarget.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
         }
-
-        function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
-
+        function handleDragOverCard(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
         function handleDragEnter(e) {
             const card = e.currentTarget;
-            if (card.dataset.index != draggedIndex) {
-                card.classList.add('drag-over');
-            }
+            if (parseInt(card.dataset.index) !== draggedIndex) card.classList.add('drag-over');
         }
-
-        function handleDragLeave(e) {
-            e.currentTarget.classList.remove('drag-over');
-        }
-
+        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
         function handleDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
             e.preventDefault();
-
             const targetCard = e.currentTarget;
             targetCard.classList.remove('drag-over');
-
             const targetIndex = parseInt(targetCard.dataset.index);
-
-            if (draggedIndex !== null && draggedIndex !== targetIndex) {
-                saveHistory();
-
-                // Get dates before swap
-                const draggedDate = pins[draggedIndex]['Publish date'];
-                const targetDate = pins[targetIndex]['Publish date'];
-
-                // Swap pins
-                const temp = pins[draggedIndex];
-                pins[draggedIndex] = pins[targetIndex];
-                pins[targetIndex] = temp;
-
-                // Restore dates to positions
-                pins[draggedIndex]['Publish date'] = draggedDate;
-                pins[targetIndex]['Publish date'] = targetDate;
-
-                filteredPins = [...pins];
-                renderPins();
-                showToast('Pins reordered (schedule times preserved)', 'success');
-            }
-
-            return false;
+            if (draggedIndex === null || draggedIndex === targetIndex) return;
+            saveHistory();
+            const dDate = pins[draggedIndex]['Publish date'];
+            const tDate = pins[targetIndex]['Publish date'];
+            const tmp = pins[draggedIndex];
+            pins[draggedIndex] = pins[targetIndex];
+            pins[targetIndex] = tmp;
+            pins[draggedIndex]['Publish date'] = dDate;
+            pins[targetIndex]['Publish date'] = tDate;
+            filteredPins = [...pins];
+            renderPins();
+            showToast('Pins swapped (times preserved)', 'success');
         }
-
         function handleDragEnd(e) {
             e.currentTarget.classList.remove('dragging');
-            document.querySelectorAll('.card').forEach(card => {
-                card.classList.remove('drag-over');
-            });
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
             draggedIndex = null;
         }
 
         // Selection
         function toggleSelection(index) {
-            if (selectedIndices.has(index)) {
-                selectedIndices.delete(index);
-            } else {
-                selectedIndices.add(index);
-            }
+            if (selectedIndices.has(index)) selectedIndices.delete(index); else selectedIndices.add(index);
             renderPins();
             updateUI();
         }
-
         function selectAll() {
-            pins.forEach((pin, index) => {
-                selectedIndices.add(index);
-            });
-            renderPins();
-            updateUI();
+            pins.forEach((_, i) => selectedIndices.add(i));
+            renderPins(); updateUI();
         }
-
         function deselectAll() {
             selectedIndices.clear();
-            renderPins();
+            renderPins(); updateUI();
+        }
+
+        // Quick actions (single pin)
+        function quickDelete(index) {
+            selectedIndices = new Set([index]);
+            showDeleteModal();
+        }
+        function quickChangeLink(index) {
+            selectedIndices = new Set([index]);
+            document.getElementById('changeLinkModal').classList.add('active');
             updateUI();
+        }
+        function quickChangeBoard(index) {
+            selectedIndices = new Set([index]);
+            document.getElementById('boardChangeCount').textContent = selectedIndices.size;
+            document.getElementById('changeBoardModal').classList.add('active');
+            updateUI();
+        }
+        function quickAdjustTime(index) {
+            timeAdjustIndex = index;
+            const pin = pins[index];
+            const current = pin['Publish date'] || '';
+            document.getElementById('currentTimeLabel').textContent = current || 'N/A';
+            document.getElementById('newTime').value = current;
+            document.getElementById('adjustTimeModal').classList.add('active');
         }
 
         // Select First 100
         function showSelect100Modal() {
-            if (pins.length <= 100) {
-                showToast('You have 100 or fewer pins already', 'warning');
-                return;
-            }
-
-            const deleteCount = pins.length - 100;
-            document.getElementById('deleteRestCount').textContent = deleteCount;
+            if (pins.length <= 100) { showToast('You have 100 or fewer pins already', 'warning'); return; }
+            document.getElementById('deleteRestCount').textContent = pins.length - 100;
             document.getElementById('select100Modal').classList.add('active');
         }
-
         function confirmSelect100() {
             saveHistory();
-
-            selectedIndices.clear();
-
-            // Keep first 100
             pins = pins.slice(0, 100);
             filteredPins = [...pins];
-
+            selectedIndices.clear();
             closeModal('select100Modal');
-            renderPins();
-            updateUI();
+            renderPins(); updateUI();
             showToast('Kept first 100 pins, deleted the rest', 'success');
         }
 
         // Search
         function searchPins() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-
-            if (!query) {
-                filteredPins = [...pins];
-            } else {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            if (!q) filteredPins = [...pins];
+            else {
                 filteredPins = pins.filter(pin => {
-                    const title = (pin['Title'] || '').toLowerCase();
-                    const keywords = (pin['Keywords'] || '').toLowerCase();
-                    const description = (pin['Description'] || '').toLowerCase();
-                    return title.includes(query) || keywords.includes(query) || description.includes(query);
+                    const t = (pin['Title'] || '').toLowerCase();
+                    const k = (pin['Keywords'] || '').toLowerCase();
+                    const d = (pin['Description'] || '').toLowerCase();
+                    return t.includes(q) || k.includes(q) || d.includes(q);
                 });
             }
-
             renderPins();
         }
 
-        // Delete
+        // Delete (selected)
         function showDeleteModal() {
-            if (selectedIndices.size === 0) {
-                showToast('Please select pins to delete', 'warning');
-                return;
-            }
-
-            const message = `Are you sure you want to delete ${selectedIndices.size} selected pin(s)?`;
-            document.getElementById('deleteMessage').textContent = message;
+            if (selectedIndices.size === 0) { showToast('Select pins to delete', 'warning'); return; }
+            document.getElementById('deleteMessage').textContent = `Delete ${selectedIndices.size} selected pin(s)?`;
             document.getElementById('deleteModal').classList.add('active');
         }
-
         function confirmDelete() {
             saveHistory();
-
-            const indicesToDelete = Array.from(selectedIndices).sort((a, b) => b - a);
-
-            indicesToDelete.forEach(index => {
-                pins.splice(index, 1);
-            });
-
-            const deletedCount = selectedIndices.size;
+            const indices = Array.from(selectedIndices).sort((a,b) => b-a);
+            indices.forEach(i => pins.splice(i,1));
+            const deleted = indices.length;
             selectedIndices.clear();
             filteredPins = [...pins];
-
             closeModal('deleteModal');
-            renderPins();
-            updateUI();
-            showToast(`Deleted ${deletedCount} pin(s)`, 'success');
+            renderPins(); updateUI();
+            showToast(`Deleted ${deleted} pin(s)`, 'success');
         }
 
-        // Change Link
-        function showChangeLinkModal() {
-            if (selectedIndices.size === 0) {
-                showToast('Please select pins to change links', 'warning');
-                return;
-            }
-            document.getElementById('changeLinkModal').classList.add('active');
-        }
-
+        // Change link (selected)
         function confirmLinkChange() {
             const newDomain = document.getElementById('newDomain').value.trim();
-
-            if (!newDomain) {
-                showToast('Please enter a domain', 'error');
-                return;
-            }
-
+            if (!newDomain) { showToast('Enter a domain', 'error'); return; }
+            if (selectedIndices.size === 0) { showToast('Select pins first', 'warning'); return; }
             saveHistory();
-
-            let changedCount = 0;
-            selectedIndices.forEach(index => {
-                const pin = pins[index];
-                const oldLink = pin['Link'] || '';
-
-                // Extract slug
-                const slugMatch = oldLink.match(/\?(.+)$/);
-                const slug = slugMatch ? slugMatch[1] : '';
-
-                // Build new link
-                const domain = newDomain.replace(/\/$/, '');
+            let count = 0;
+            const domain = newDomain.replace(/\/$/, '');
+            selectedIndices.forEach(i => {
+                const pin = pins[i];
+                const old = pin['Link'] || '';
+                const m = old.match(/\?(.+)$/);
+                const slug = m ? m[1] : '';
                 pin['Link'] = slug ? `${domain}/?${slug}` : domain;
-                changedCount++;
+                count++;
             });
-
-            closeModal('changeLinkModal');
             document.getElementById('newDomain').value = '';
-            renderPins();
-            updateUI();
-            showToast(`Updated ${changedCount} link(s)`, 'success');
+            closeModal('changeLinkModal');
+            renderPins(); updateUI();
+            showToast(`Updated ${count} link(s)`, 'success');
         }
 
-        // Change Board
-        function showChangeBoardModal() {
-            if (selectedIndices.size === 0) {
-                showToast('Please select pins to change board', 'warning');
-                return;
-            }
-            document.getElementById('boardChangeCount').textContent = selectedIndices.size;
-            document.getElementById('changeBoardModal').classList.add('active');
-        }
-
+        // Change board (selected)
         function confirmBoardChange() {
             const newBoard = document.getElementById('newBoard').value.trim();
-
-            if (!newBoard) {
-                showToast('Please enter a board name', 'error');
-                return;
-            }
-
+            if (!newBoard) { showToast('Enter a board name', 'error'); return; }
+            if (selectedIndices.size === 0) { showToast('Select pins first', 'warning'); return; }
             saveHistory();
-
-            let changedCount = 0;
-            selectedIndices.forEach(index => {
-                pins[index]['Pinterest board'] = newBoard;
-                changedCount++;
-            });
-
-            closeModal('changeBoardModal');
+            let count = 0;
+            selectedIndices.forEach(i => { pins[i]['Pinterest board'] = newBoard; count++; });
             document.getElementById('newBoard').value = '';
-            renderPins();
-            updateUI();
-            showToast(`Updated ${changedCount} board(s)`, 'success');
+            closeModal('changeBoardModal');
+            renderPins(); updateUI();
+            showToast(`Updated ${count} board(s)`, 'success');
         }
 
-        // History
+        // Adjust time (single pin via quick action)
+        function confirmAdjustTime() {
+            if (timeAdjustIndex === null) { closeModal('adjustTimeModal'); return; }
+            const newTime = document.getElementById('newTime').value.trim();
+            if (!newTime) { showToast('Enter a time', 'error'); return; }
+            saveHistory();
+            pins[timeAdjustIndex]['Publish date'] = newTime;
+            filteredPins = [...pins];
+            closeModal('adjustTimeModal');
+            renderPins(); updateUI();
+            showToast('Publish time updated', 'success');
+            timeAdjustIndex = null;
+        }
+
+        // Swap two selected pins
+        function swapSelected() {
+            if (selectedIndices.size !== 2) return;
+            const [a,b] = Array.from(selectedIndices).sort((x,y)=>x-y);
+            saveHistory();
+            const dA = pins[a]['Publish date'];
+            const dB = pins[b]['Publish date'];
+            const tmp = pins[a]; pins[a] = pins[b]; pins[b] = tmp;
+            pins[a]['Publish date'] = dA;
+            pins[b]['Publish date'] = dB;
+            filteredPins = [...pins];
+            renderPins(); updateUI();
+            showToast('Swapped the two selected pins (times preserved)', 'success');
+        }
+
+        // History/Undo
         function saveHistory() {
-            history.push({
-                pins: JSON.parse(JSON.stringify(pins)),
-                selectedIndices: new Set(selectedIndices)
-            });
-
-            if (history.length > 10) {
-                history.shift();
-            }
-
+            history.push({ pins: JSON.parse(JSON.stringify(pins)), selected: new Set(selectedIndices) });
+            if (history.length > 20) history.shift();
             updateUI();
         }
-
         function undo() {
-            if (history.length === 0) {
-                showToast('Nothing to undo', 'warning');
-                return;
-            }
-
+            if (history.length === 0) { showToast('Nothing to undo', 'warning'); return; }
             const state = history.pop();
             pins = state.pins;
-            selectedIndices = state.selectedIndices;
+            selectedIndices = state.selected;
             filteredPins = [...pins];
-
-            renderPins();
-            updateUI();
+            renderPins(); updateUI();
             showToast('Undo successful', 'success');
         }
 
         // Export
         function exportCSV() {
-            if (pins.length === 0) {
-                showToast('No data to export', 'error');
-                return;
-            }
-
+            if (pins.length === 0) { showToast('No data to export', 'error'); return; }
             const headers = Object.keys(pins[0]);
-
-            let csvContent = headers.map(escapeCSV).join(',') + '\n';
-
+            let csv = headers.map(escapeCSV).join(',') + '\n';
             pins.forEach(pin => {
-                const row = headers.map(header => escapeCSV(pin[header] || '')).join(',');
-                csvContent += row + '\n';
+                csv += headers.map(h => escapeCSV(pin[h] || '')).join(',') + '\n';
             });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-
-            link.setAttribute('href', url);
-            link.setAttribute('download', `${originalFilename}_edited.csv`);
-            link.style.visibility = 'hidden';
+            link.href = URL.createObjectURL(blob);
+            link.download = `${originalFilename}_edited.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-
-            showToast('CSV exported successfully!', 'success');
+            showToast('CSV exported', 'success');
+        }
+        function escapeCSV(v) {
+            const s = String(v ?? '');
+            return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"'+s.replace(/"/g,'""')+'"' : s;
         }
 
-        function escapeCSV(value) {
-            if (value === null || value === undefined) return '';
-
-            const stringValue = String(value);
-
-            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-                return '"' + stringValue.replace(/"/g, '""') + '"';
-            }
-
-            return stringValue;
-        }
-
-        // UI Updates
+        // UI updates
         function updateUI() {
             const hasData = pins.length > 0;
-            const hasSelection = selectedIndices.size > 0;
-
+            const hasSel = selectedIndices.size > 0;
             document.getElementById('searchStatsBar').classList.toggle('hidden', !hasData);
+            document.getElementById('totalPins').textContent = pins.length;
+            document.getElementById('selectedCount').textContent = selectedIndices.size;
+            document.getElementById('filteredCount').textContent = filteredPins.length;
 
-            document.getElementById('selectAllBtn').disabled = !hasData;
-            document.getElementById('deselectAllBtn').disabled = !hasSelection;
-            document.getElementById('selectFirst100Btn').disabled = pins.length <= 100;
-            document.getElementById('deleteSelectedBtn').disabled = !hasSelection;
-            document.getElementById('changeLinkBtn').disabled = !hasSelection;
-            document.getElementById('changeBoardBtn').disabled = !hasSelection;
-            document.getElementById('exportBtn').disabled = !hasData;
-            document.getElementById('undoBtn').disabled = history.length === 0;
+            // Dock buttons
+            document.getElementById('dockSelectAll').disabled = !hasData;
+            document.getElementById('dockDeselectAll').disabled = !hasSel;
+            document.getElementById('dockSelect100').disabled = pins.length <= 100;
+            document.getElementById('dockDelete').disabled = !hasSel;
+            document.getElementById('dockLink').disabled = !hasSel;
+            document.getElementById('dockBoard').disabled = !hasSel;
+            document.getElementById('dockUndo').disabled = history.length === 0;
+            document.getElementById('dockExport').disabled = !hasData;
+            document.getElementById('dockSwap').disabled = selectedIndices.size !== 2;
         }
-
         function updateStats() {
             document.getElementById('totalPins').textContent = pins.length;
             document.getElementById('selectedCount').textContent = selectedIndices.size;
             document.getElementById('filteredCount').textContent = filteredPins.length;
         }
 
-        // Modal
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    closeModal(modal.id);
-                }
-            });
-        });
+        // Modals
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
 
         // Toast
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = `toast ${type} show`;
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+        function showToast(msg, type='success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast ' + type + ' show';
+            setTimeout(() => { t.classList.remove('show'); }, 2500);
         }
 
         // Theme
@@ -1373,13 +1145,28 @@
             document.body.classList.toggle('dark-mode');
             localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
         }
-
         function loadTheme() {
             const theme = localStorage.getItem('theme');
-            if (theme === 'dark') {
-                document.body.classList.add('dark-mode');
-            }
+            if (theme === 'dark') document.body.classList.add('dark-mode');
         }
+
+        // Dock show/hide on scroll
+        function setupScrollDockBehavior() {
+            let lastScroll = window.scrollY;
+            window.addEventListener('scroll', () => {
+                const dockHidden = document.body.classList.contains('dock-hidden');
+                const curr = window.scrollY;
+                if (curr > lastScroll + 60 && curr > 200 && !dockHidden) {
+                    // scrolling down -> hide dock
+                    document.body.classList.add('dock-hidden');
+                } else if (curr < lastScroll - 60 || curr < 100) {
+                    // scrolling up or near top -> show dock
+                    document.body.classList.remove('dock-hidden');
+                }
+                lastScroll = curr;
+            });
+        }
+        function showDock() { document.body.classList.remove('dock-hidden'); }
     </script>
 </body>
 </html>
