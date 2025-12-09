@@ -22,6 +22,8 @@
             --shadow: 0 1px 3px rgba(0,0,0,0.1);
             --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
             --dock-bg: rgba(33,37,41,0.95);
+            --btn-secondary-bg: #e9ecef;
+            --btn-secondary-border: #ced4da;
         }
 
         body.dark-mode {
@@ -34,6 +36,8 @@
             --shadow: 0 1px 3px rgba(0,0,0,0.3);
             --shadow-hover: 0 4px 12px rgba(0,0,0,0.4);
             --dock-bg: rgba(15,15,15,0.95);
+            --btn-secondary-bg: #343a40;
+            --btn-secondary-border: #495057;
         }
 
         body {
@@ -142,6 +146,7 @@
             gap: 1rem;
             max-width: 1800px;
             margin: 0 auto 5rem auto; /* bottom space for dock */
+            min-height: 40vh;
         }
 
         @media (min-width: 1000px) {
@@ -324,7 +329,7 @@
             background: var(--bg-card);
             padding: 1.5rem 1.75rem;
             border-radius: 12px;
-            max-width: 480px;
+            max-width: 520px;
             width: 100%;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
@@ -339,7 +344,70 @@
             font-size: 0.9rem;
         }
         .modal-hint { margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-secondary); }
-        .modal-buttons { display: flex; gap: 0.75rem; justify-content: flex-end; }
+        .modal-buttons {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 0.5rem;
+        }
+
+        .btn-modal {
+            min-width: 90px;
+            padding: 0.5rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-modal-secondary {
+            background: var(--btn-secondary-bg);
+            border-color: var(--btn-secondary-border);
+            color: var(--text-primary);
+        }
+        .btn-modal-secondary:hover {
+            box-shadow: var(--shadow);
+        }
+        .btn-modal-primary {
+            background: var(--accent-color);
+            border-color: var(--accent-hover);
+            color: #fff;
+        }
+        .btn-modal-primary:hover {
+            background: var(--accent-hover);
+            box-shadow: var(--shadow-hover);
+        }
+        .btn-modal-danger {
+            background: var(--danger-color);
+            border-color: #b02a37;
+            color: #fff;
+        }
+        .btn-modal-danger:hover {
+            background: #b02a37;
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Reschedule tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 0.75rem;
+        }
+        .tab {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+        }
+        .tab.active {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            font-weight: 600;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         .toast {
             position: fixed;
@@ -360,7 +428,16 @@
         .toast.error { border-left: 4px solid var(--danger-color); }
         .toast.warning { border-left: 4px solid var(--warning-color); }
 
-        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            min-height: 40vh;
+        }
+        .empty-state h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
 
         /* Floating Dock Toolbar (bottom center) */
         .dock-wrapper {
@@ -464,7 +541,7 @@
         <img class="image-preview-content" id="imagePreviewImg" src="">
     </div>
 
-    <!-- Modals -->
+    <!-- Select 100 Modal -->
     <div class="modal" id="select100Modal">
         <div class="modal-content">
             <h2 class="modal-title">💯 Keep First 100, Delete Rest</h2>
@@ -473,12 +550,13 @@
                 <p style="color: var(--danger-color); font-weight: 600;">You can still undo using the Undo button.</p>
             </div>
             <div class="modal-buttons">
-                <button class="btn btn-secondary" onclick="closeModal('select100Modal')">Cancel</button>
-                <button class="btn btn-danger" onclick="confirmSelect100()">Confirm</button>
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('select100Modal')">Cancel</button>
+                <button class="btn-modal btn-modal-danger" onclick="confirmSelect100()">Confirm</button>
             </div>
         </div>
     </div>
 
+    <!-- Delete Modal -->
     <div class="modal" id="deleteModal">
         <div class="modal-content">
             <h2 class="modal-title">🗑️ Confirm Deletion</h2>
@@ -487,12 +565,13 @@
                 <p style="color: var(--danger-color); font-weight: 600;">You can still undo using the Undo button.</p>
             </div>
             <div class="modal-buttons">
-                <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
-                <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+                <button class="btn-modal btn-modal-danger" onclick="confirmDelete()">Delete</button>
             </div>
         </div>
     </div>
 
+    <!-- Change Link Modal -->
     <div class="modal" id="changeLinkModal">
         <div class="modal-content">
             <h2 class="modal-title">🔗 Change Link Domain</h2>
@@ -502,12 +581,13 @@
                 <p class="modal-hint">Example: https://old.com/?Slug → https://new.com/?Slug</p>
             </div>
             <div class="modal-buttons">
-                <button class="btn btn-secondary" onclick="closeModal('changeLinkModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmLinkChange()">Apply</button>
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('changeLinkModal')">Cancel</button>
+                <button class="btn-modal btn-modal-primary" onclick="confirmLinkChange()">Apply</button>
             </div>
         </div>
     </div>
 
+    <!-- Change Board Modal -->
     <div class="modal" id="changeBoardModal">
         <div class="modal-content">
             <h2 class="modal-title">📋 Change Pinterest Board</h2>
@@ -517,12 +597,13 @@
                 <p class="modal-hint">Will update <strong><span id="boardChangeCount">0</span></strong> selected pin(s).</p>
             </div>
             <div class="modal-buttons">
-                <button class="btn btn-secondary" onclick="closeModal('changeBoardModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmBoardChange()">Apply</button>
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('changeBoardModal')">Cancel</button>
+                <button class="btn-modal btn-modal-primary" onclick="confirmBoardChange()">Apply</button>
             </div>
         </div>
     </div>
 
+    <!-- Adjust Time Modal (single pin) -->
     <div class="modal" id="adjustTimeModal">
         <div class="modal-content">
             <h2 class="modal-title">⏰ Adjust Publish Time</h2>
@@ -532,8 +613,63 @@
                 <input type="text" class="modal-input" id="newTime" placeholder="2025-12-10T11:00:00">
             </div>
             <div class="modal-buttons">
-                <button class="btn btn-secondary" onclick="closeModal('adjustTimeModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmAdjustTime()">Apply</button>
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('adjustTimeModal')">Cancel</button>
+                <button class="btn-modal btn-modal-primary" onclick="confirmAdjustTime()">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reschedule All Modal -->
+    <div class="modal" id="rescheduleModal">
+        <div class="modal-content">
+            <h2 class="modal-title">📅 Reschedule All Pins</h2>
+            <div class="tabs">
+                <div class="tab active" id="tab-shift" onclick="setRescheduleTab('shift')">Shift by New First Time</div>
+                <div class="tab" id="tab-interval" onclick="setRescheduleTab('interval')">Rebuild Intervals</div>
+            </div>
+            <div class="modal-body">
+                <!-- Tab 1: shift -->
+                <div class="tab-content active" id="tab-content-shift">
+                    <p>Adjust all pins by changing the first pin's time. All pins will shift by the same difference.</p>
+                    <p style="margin-top:0.4rem;">Current first pin time: <strong><span id="shiftCurrentFirst"></span></strong></p>
+                    <label class="modal-label" for="shiftNewFirst">New first pin time (YYYY-MM-DDTHH:MM:SS):</label>
+                    <input type="text" class="modal-input" id="shiftNewFirst" placeholder="2025-12-10T00:00:00" oninput="updateShiftPreview()">
+                    <p class="modal-hint" id="shiftPreview">Adjusting all pins by: 0s</p>
+                </div>
+                <!-- Tab 2: intervals -->
+                <div class="tab-content" id="tab-content-interval">
+                    <p>Rebuild the schedule using fixed or random intervals.</p>
+                    <label class="modal-label">Mode:</label>
+                    <div style="margin-bottom:0.6rem;">
+                        <label style="font-size:0.85rem;margin-right:0.75rem;">
+                            <input type="radio" name="intervalMode" value="fixed" checked onclick="updateIntervalMode()"> Fixed interval
+                        </label>
+                        <label style="font-size:0.85rem;">
+                            <input type="radio" name="intervalMode" value="random" onclick="updateIntervalMode()"> Random interval
+                        </label>
+                    </div>
+                    <label class="modal-label" for="intervalStart">Start time for first pin (YYYY-MM-DDTHH:MM:SS):</label>
+                    <input type="text" class="modal-input" id="intervalStart" placeholder="2025-12-10T00:00:00">
+
+                    <div id="intervalFixedFields" style="margin-top:0.6rem;">
+                        <label class="modal-label" for="intervalMinutes">Interval between pins (minutes):</label>
+                        <input type="number" class="modal-input" id="intervalMinutes" min="0" step="1" placeholder="30">
+                        <p class="modal-hint">All pins keep order. Each next pin is previous time + this interval.</p>
+                    </div>
+
+                    <div id="intervalRandomFields" style="margin-top:0.6rem; display:none;">
+                        <label class="modal-label">Random interval range (minutes):</label>
+                        <div style="display:flex; gap:0.5rem; margin-bottom:0.4rem;">
+                            <input type="number" class="modal-input" id="intervalMin" min="0" step="1" placeholder="10" style="flex:1;">
+                            <input type="number" class="modal-input" id="intervalMax" min="0" step="1" placeholder="60" style="flex:1;">
+                        </div>
+                        <p class="modal-hint">Each gap between pins will be a random number of minutes between min and max, keeping the order.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('rescheduleModal')">Cancel</button>
+                <button class="btn-modal btn-modal-primary" onclick="applyReschedule()">Apply</button>
             </div>
         </div>
     </div>
@@ -567,6 +703,9 @@
             </button>
             <button class="dock-btn" id="dockSwap" onclick="swapSelected()" disabled>
                 🔁 <span class="label">Swap</span>
+            </button>
+            <button class="dock-btn" id="dockReschedule" onclick="showRescheduleModal()" disabled>
+                📅 <span class="label">Reschedule</span>
             </button>
             <button class="dock-btn" id="dockUndo" onclick="undo()" disabled>
                 ↶ <span class="label">Undo</span>
@@ -711,6 +850,14 @@
             card.dataset.index = index;
             if (selectedIndices.has(index)) card.classList.add('selected');
 
+            // Click to toggle selection
+            card.addEventListener('click', e => {
+                // Ignore clicks on links or buttons
+                const tag = e.target.tagName.toLowerCase();
+                if (tag === 'a' || tag === 'button' || e.target.classList.contains('card-checkbox')) return;
+                toggleSelection(index);
+            });
+
             const num = document.createElement('div');
             num.className = 'card-number';
             num.textContent = '#' + (index + 1);
@@ -728,9 +875,14 @@
             const imageUrl = pin['Media URL'] || pin['Thumbnail'] || '';
             img.src = imageUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="350"%3E%3Crect fill="%23ddd" width="300" height="350"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E';
             img.onerror = () => { img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="350"%3E%3Crect fill="%23ddd" width="300" height="350"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E'; };
+
+            // Double click image to preview
             if (imageUrl) {
                 imgWrap.style.cursor = 'pointer';
-                imgWrap.onclick = e => { e.stopPropagation(); showImagePreview(imageUrl); };
+                imgWrap.addEventListener('dblclick', e => {
+                    e.stopPropagation();
+                    showImagePreview(imageUrl);
+                });
             }
 
             // Quick actions on image
@@ -999,7 +1151,11 @@
             showToast(`Deleted ${deleted} pin(s)`, 'success');
         }
 
-        // Change link (selected)
+        // Change link (selected from dock or quick)
+        function showChangeLinkModal() {
+            if (selectedIndices.size === 0) { showToast('Select pins to change links', 'warning'); return; }
+            document.getElementById('changeLinkModal').classList.add('active');
+        }
         function confirmLinkChange() {
             const newDomain = document.getElementById('newDomain').value.trim();
             if (!newDomain) { showToast('Enter a domain', 'error'); return; }
@@ -1017,11 +1173,17 @@
             });
             document.getElementById('newDomain').value = '';
             closeModal('changeLinkModal');
+            filteredPins = [...pins];
             renderPins(); updateUI();
             showToast(`Updated ${count} link(s)`, 'success');
         }
 
         // Change board (selected)
+        function showChangeBoardModal() {
+            if (selectedIndices.size === 0) { showToast('Select pins to change board', 'warning'); return; }
+            document.getElementById('boardChangeCount').textContent = selectedIndices.size;
+            document.getElementById('changeBoardModal').classList.add('active');
+        }
         function confirmBoardChange() {
             const newBoard = document.getElementById('newBoard').value.trim();
             if (!newBoard) { showToast('Enter a board name', 'error'); return; }
@@ -1031,6 +1193,7 @@
             selectedIndices.forEach(i => { pins[i]['Pinterest board'] = newBoard; count++; });
             document.getElementById('newBoard').value = '';
             closeModal('changeBoardModal');
+            filteredPins = [...pins];
             renderPins(); updateUI();
             showToast(`Updated ${count} board(s)`, 'success');
         }
@@ -1038,10 +1201,12 @@
         // Adjust time (single pin via quick action)
         function confirmAdjustTime() {
             if (timeAdjustIndex === null) { closeModal('adjustTimeModal'); return; }
-            const newTime = document.getElementById('newTime').value.trim();
-            if (!newTime) { showToast('Enter a time', 'error'); return; }
+            const newTimeStr = document.getElementById('newTime').value.trim();
+            if (!newTimeStr) { showToast('Enter a time', 'error'); return; }
+            const newDate = parseISODate(newTimeStr);
+            if (!newDate) { showToast('Invalid time format', 'error'); return; }
             saveHistory();
-            pins[timeAdjustIndex]['Publish date'] = newTime;
+            pins[timeAdjustIndex]['Publish date'] = newTimeStr;
             filteredPins = [...pins];
             closeModal('adjustTimeModal');
             renderPins(); updateUI();
@@ -1062,6 +1227,188 @@
             filteredPins = [...pins];
             renderPins(); updateUI();
             showToast('Swapped the two selected pins (times preserved)', 'success');
+        }
+
+        // Reschedule All
+        function showRescheduleModal() {
+            if (pins.length === 0) { showToast('No pins to reschedule', 'warning'); return; }
+            const first = getFirstPinByDate();
+            document.getElementById('shiftCurrentFirst').textContent = first ? (first['Publish date'] || 'N/A') : 'N/A';
+            document.getElementById('shiftNewFirst').value = first ? (first['Publish date'] || '') : '';
+            updateShiftPreview();
+            // default tab
+            setRescheduleTab('shift');
+            document.getElementById('rescheduleModal').classList.add('active');
+        }
+
+        function setRescheduleTab(name) {
+            const tabShift = document.getElementById('tab-shift');
+            const tabInterval = document.getElementById('tab-interval');
+            const contentShift = document.getElementById('tab-content-shift');
+            const contentInterval = document.getElementById('tab-content-interval');
+            if (name === 'shift') {
+                tabShift.classList.add('active');
+                tabInterval.classList.remove('active');
+                contentShift.classList.add('active');
+                contentInterval.classList.remove('active');
+            } else {
+                tabShift.classList.remove('active');
+                tabInterval.classList.add('active');
+                contentShift.classList.remove('active');
+                contentInterval.classList.add('active');
+            }
+        }
+
+        function getFirstPinByDate() {
+            if (pins.length === 0) return null;
+            const withDates = pins.filter(p => p['Publish date']);
+            if (withDates.length === 0) return pins[0];
+            withDates.sort((a,b) => {
+                const da = parseISODate(a['Publish date']) || new Date(0);
+                const db = parseISODate(b['Publish date']) || new Date(0);
+                return da - db;
+            });
+            return withDates[0];
+        }
+
+        function parseISODate(str) {
+            // Expect YYYY-MM-DDTHH:MM:SS
+            const m = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/);
+            if (!m) return null;
+            const [_,y,mo,d,h,mi,s] = m;
+            const date = new Date(Number(y), Number(mo)-1, Number(d), Number(h), Number(mi), Number(s));
+            return isNaN(date.getTime()) ? null : date;
+        }
+
+        function formatDuration(ms) {
+            const sign = ms < 0 ? '-' : '+';
+            let sec = Math.abs(Math.round(ms / 1000));
+            const h = Math.floor(sec / 3600);
+            sec -= h*3600;
+            const m = Math.floor(sec / 60);
+            sec -= m*60;
+            const parts = [];
+            if (h) parts.push(h + 'h');
+            if (m) parts.push(m + 'm');
+            if (sec || parts.length === 0) parts.push(sec + 's');
+            return sign + parts.join(' ');
+        }
+
+        function updateShiftPreview() {
+            const currentStr = document.getElementById('shiftCurrentFirst').textContent;
+            const newStr = document.getElementById('shiftNewFirst').value.trim();
+            const preview = document.getElementById('shiftPreview');
+            const currentDate = parseISODate(currentStr);
+            const newDate = parseISODate(newStr);
+            if (!currentDate || !newStr || !newDate) {
+                preview.textContent = 'Adjusting all pins by: 0s';
+                return;
+            }
+            const diff = newDate.getTime() - currentDate.getTime();
+            preview.textContent = 'Adjusting all pins by: ' + formatDuration(diff);
+        }
+
+        function updateIntervalMode() {
+            const mode = document.querySelector('input[name=\"intervalMode\"]:checked').value;
+            document.getElementById('intervalFixedFields').style.display = mode === 'fixed' ? 'block' : 'none';
+            document.getElementById('intervalRandomFields').style.display = mode === 'random' ? 'block' : 'none';
+        }
+
+        function applyReschedule() {
+            if (pins.length === 0) { closeModal('rescheduleModal'); return; }
+            const activeTab = document.getElementById('tab-shift').classList.contains('active') ? 'shift' : 'interval';
+            if (activeTab === 'shift') {
+                applyShiftReschedule();
+            } else {
+                applyIntervalReschedule();
+            }
+        }
+
+        function applyShiftReschedule() {
+            const first = getFirstPinByDate();
+            if (!first || !first['Publish date']) {
+                showToast('First pin has no publish date to base on', 'error');
+                return;
+            }
+            const currentStr = first['Publish date'];
+            const newStr = document.getElementById('shiftNewFirst').value.trim();
+            const currentDate = parseISODate(currentStr);
+            const newDate = parseISODate(newStr);
+            if (!currentDate || !newDate) {
+                showToast('Invalid date format. Use YYYY-MM-DDTHH:MM:SS', 'error');
+                return;
+            }
+            const diff = newDate.getTime() - currentDate.getTime();
+            saveHistory();
+            pins.forEach(pin => {
+                const tStr = pin['Publish date'];
+                if (!tStr) return;
+                const d = parseISODate(tStr);
+                if (!d) return;
+                const shifted = new Date(d.getTime() + diff);
+                pin['Publish date'] = isoStringFromDate(shifted);
+            });
+            filteredPins = [...pins];
+            closeModal('rescheduleModal');
+            renderPins(); updateUI();
+            showToast('All pins rescheduled by ' + formatDuration(diff), 'success');
+        }
+
+        function isoStringFromDate(d) {
+            const pad = n => String(n).padStart(2,'0');
+            return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) +
+                   'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+        }
+
+        function applyIntervalReschedule() {
+            const startStr = document.getElementById('intervalStart').value.trim();
+            const startDate = parseISODate(startStr);
+            if (!startDate) {
+                showToast('Invalid start time (tab 2). Use YYYY-MM-DDTHH:MM:SS', 'error');
+                return;
+            }
+            const mode = document.querySelector('input[name=\"intervalMode\"]:checked').value;
+            let minMinutes = 0, maxMinutes = 0, fixedMinutes = 0;
+
+            if (mode === 'fixed') {
+                fixedMinutes = Number(document.getElementById('intervalMinutes').value);
+                if (isNaN(fixedMinutes) || fixedMinutes < 0) {
+                    showToast('Invalid fixed interval minutes', 'error');
+                    return;
+                }
+            } else {
+                minMinutes = Number(document.getElementById('intervalMin').value);
+                maxMinutes = Number(document.getElementById('intervalMax').value);
+                if (isNaN(minMinutes) || isNaN(maxMinutes) || minMinutes < 0 || maxMinutes <= 0 || maxMinutes < minMinutes) {
+                    showToast('Invalid random interval range', 'error');
+                    return;
+                }
+            }
+
+            // Sort pins by current date but keep mapping to original
+            const pinsWithIndex = pins.map((p,i) => ({pin:p, index:i}));
+            pinsWithIndex.sort((a,b) => {
+                const da = parseISODate(a.pin['Publish date']) || new Date(0);
+                const db = parseISODate(b.pin['Publish date']) || new Date(0);
+                return da - db;
+            });
+
+            saveHistory();
+            let currentTime = new Date(startDate.getTime());
+            pinsWithIndex.forEach((item, idx) => {
+                item.pin['Publish date'] = isoStringFromDate(currentTime);
+                if (mode === 'fixed') {
+                    currentTime = new Date(currentTime.getTime() + fixedMinutes*60000);
+                } else {
+                    const randMin = Math.floor(Math.random()*(maxMinutes-minMinutes+1)) + minMinutes;
+                    currentTime = new Date(currentTime.getTime() + randMin*60000);
+                }
+            });
+
+            filteredPins = [...pins];
+            closeModal('rescheduleModal');
+            renderPins(); updateUI();
+            showToast('Schedule rebuilt using ' + (mode === 'fixed' ? 'fixed' : 'random') + ' intervals', 'success');
         }
 
         // History/Undo
@@ -1121,6 +1468,7 @@
             document.getElementById('dockUndo').disabled = history.length === 0;
             document.getElementById('dockExport').disabled = !hasData;
             document.getElementById('dockSwap').disabled = selectedIndices.size !== 2;
+            document.getElementById('dockReschedule').disabled = !hasData;
         }
         function updateStats() {
             document.getElementById('totalPins').textContent = pins.length;
