@@ -1281,17 +1281,23 @@ function updateKeepPreview() {
         return;
     }
 
+    // Snapshot of original times BEFORE trimming
+    const originalDates = pins
+        .map(p => p['Publish date'])
+        .filter(Boolean);
+
     saveHistory();
     const deleted = pins.length - keepAmount;
     pins = pins.slice(0, keepAmount);
 
-    // NEW: repack times after reducing the list
-    repackPublishDates();
+    // NEW: repack using original times
+    repackPublishDatesWithOriginalTimes(originalDates);
 
     filteredPins = [...pins];
     selectedIndices.clear();
     closeModal('select100Modal');
-    renderPins(); updateUI();
+    renderPins(); 
+    updateUI();
     showToast(`Kept first ${keepAmount} pins, deleted ${deleted}`, 'success');
 }
 
@@ -1317,30 +1323,36 @@ function updateKeepPreview() {
             document.getElementById('deleteModal').classList.add('active');
         }
         function confirmDelete() {
-            saveHistory();
-        
-            // Use single pin action if set, otherwise use selectedIndices
-            const indicesToDelete = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
-        
-            if (indicesToDelete.length === 0) { 
-                closeModal('deleteModal'); 
-                return; 
-            }
-        
-            const indices = indicesToDelete.sort((a,b) => b-a);
-            indices.forEach(i => pins.splice(i,1));
-            const deleted = indices.length;
-            selectedIndices.clear();
-            singlePinActionIndex = null; // Reset
-        
-            // NEW: repack times so there are no gaps
-            repackPublishDates();
-        
-            filteredPins = [...pins];
-            closeModal('deleteModal');
-            renderPins(); updateUI();
-            showToast(`Deleted ${deleted} pin(s)`, 'success');
-        }
+    // Take snapshot of all publish dates BEFORE deletion
+    const originalDates = pins
+        .map(p => p['Publish date'])
+        .filter(Boolean);
+
+    saveHistory();
+
+    // Use single pin action if set, otherwise use selectedIndices
+    const indicesToDelete = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
+
+    if (indicesToDelete.length === 0) { 
+        closeModal('deleteModal'); 
+        return; 
+    }
+
+    const indices = indicesToDelete.sort((a,b) => b-a);
+    indices.forEach(i => pins.splice(i,1));
+    const deleted = indices.length;
+    selectedIndices.clear();
+    singlePinActionIndex = null; // Reset
+
+    // NEW: repack using original times
+    repackPublishDatesWithOriginalTimes(originalDates);
+
+    filteredPins = [...pins];
+    closeModal('deleteModal');
+    renderPins(); 
+    updateUI();
+    showToast(`Deleted ${deleted} pin(s)`, 'success');
+}
 
         // Change link (selected from dock or quick)
         function showChangeLinkModal() {
@@ -1594,22 +1606,15 @@ function updateKeepPreview() {
                    'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
         }
 
-        function repackPublishDates() {
-    if (!pins.length) return;
+        function repackPublishDatesWithOriginalTimes(originalDatesBeforeDelete) {
+    // originalDatesBeforeDelete is the list of all publish dates BEFORE deletion
+    if (!pins.length || !originalDatesBeforeDelete || !originalDatesBeforeDelete.length) return;
 
-    const dateStrings = pins
-        .map(p => p['Publish date'])
-        .filter(Boolean);
+    // Sort original times ascending (ISO strings sort lexicographically)
+    const sorted = originalDatesBeforeDelete.slice().sort((a, b) => a > b ? 1 : -1);  // keep earliest first
+    const toKeep = sorted.slice(0, pins.length);  // keep earliest N times (N = remaining pins)
 
-    console.log('Before repack:', dateStrings); // ADD THIS
-
-    if (!dateStrings.length) return;
-
-    const sorted = dateStrings.slice().sort((a, b) => a > b ? 1 : -1);
-    const toKeep = sorted.slice(0, pins.length);
-
-    console.log('After repack:', toKeep); // ADD THIS
-
+    // Assign those times to remaining pins in their current order
     for (let i = 0; i < pins.length; i++) {
         pins[i]['Publish date'] = toKeep[i] || '';
     }
