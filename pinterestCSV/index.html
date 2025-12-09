@@ -543,6 +543,9 @@
         }
 
         .hidden { display: none !important; }
+        .dock-btn .label {
+    white-space: nowrap;
+}
     </style>
 </head>
 <body>
@@ -923,11 +926,13 @@
             if (selectedIndices.has(index)) card.classList.add('selected');
 
             // Click to toggle selection
-            card.addEventListener('click', e => {
-                const tag = e.target.tagName.toLowerCase();
-                if (tag === 'a' || tag === 'button' || e.target.classList.contains('card-checkbox')) return;
-                toggleSelection(index);
-            });
+card.addEventListener('click', e => {
+    const tag = e.target.tagName.toLowerCase();
+    // Ignore clicks on links, buttons, checkbox, or inside action overlay
+    if (tag === 'a' || tag === 'button' || e.target.classList.contains('card-checkbox') || 
+        e.target.closest('.card-actions-overlay')) return;
+    toggleSelection(index);
+});
 
             const num = document.createElement('div');
             num.className = 'card-number';
