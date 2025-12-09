@@ -554,7 +554,7 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
         }
 
         .dock-hidden .dock-wrapper { transform: translate(-50%, 120%); opacity: 0; }
-        .dock-hidden .dock-indicator { opacity: 1; pointer-events: auto; }
+        .dock-hidden .dock-indicator { opacity: 1; pointer-events: auto; background: var(--bg-secondary);     padding: 0.5rem;     border-radius: 20px;}
 
         @media (max-width: 600px) {
             .dock { gap: 0.3rem; }
@@ -811,7 +811,7 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
             </button>
         </div>
     </div>
-    <div class="dock-indicator" id="dockIndicator" onclick="showDock()">▲ Toolbar hidden (hover/scroll up to show)</div>
+    <div class="dock-indicator" id="dockIndicator" onclick="showDock()">▲ Toolbar hidden (click here or scroll up to show)</div>
 
     <script>
         let pins = [];
