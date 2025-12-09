@@ -1174,13 +1174,13 @@ card.addEventListener('click', e => {
         function quickChangeLink(index) {
             selectedIndices = new Set([index]);
             document.getElementById('changeLinkModal').classList.add('active');
-            updateUI();
+            // updateUI();
         }
         function quickChangeBoard(index) {
             selectedIndices = new Set([index]);
             document.getElementById('boardChangeCount').textContent = selectedIndices.size;
             document.getElementById('changeBoardModal').classList.add('active');
-            updateUI();
+            // updateUI();
         }
         function quickChangeKeywords(index) {
     selectedIndices = new Set([index]);
@@ -1188,7 +1188,7 @@ card.addEventListener('click', e => {
     document.getElementById('currentKeywordsLabel').textContent = currentKeywords || 'None';
     document.getElementById('newKeywords').value = currentKeywords;
     document.getElementById('changeKeywordsModal').classList.add('active');
-    updateUI();
+    // updateUI();
 }
         function quickAdjustTime(index) {
             timeAdjustIndex = index;
