@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinterest CSV Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-card: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --border-color: #e0e0e0;
+            --accent-color: #e60023;
+            --accent-hover: #c6001c;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        body.dark-mode {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-card: #252525;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border-color: #404040;
+            --shadow: 0 2px 8px rgba(0,0,0,0.3);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.4);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Header & Toolbar */
+        .header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .theme-toggle {
+            margin-left: auto;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 0.4rem 0.8rem;
+            cursor: pointer;
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            margin: 2rem auto;
+            max-width: 600px;
+            padding: 3rem;
+            background: var(--bg-card);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--accent-color);
+            background: var(--bg-secondary);
+        }
+
+        .upload-zone input[type="file"] {
+            display: none;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            background: var(--bg-card);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--accent-color);
+        }
+
+        /* Search Bar */
+        .search-bar {
+            padding: 1rem 2rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 500px;
+            padding: 0.7rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        /* Cards Grid */
+        .cards-container {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1400px) {
+            .cards-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .cards-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .cards-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            .header, .stats-bar, .search-bar {
+                padding: 1rem;
+            }
+            .toolbar {
+                gap: 0.5rem;
+            }
+            .btn {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            cursor: move;
+            position: relative;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .card.selected {
+            outline: 3px solid var(--accent-color);
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+        }
+
+        .card-number {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 10;
+        }
+
+        .card-checkbox {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .card-image-container {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .card-image-container:hover .card-image {
+            transform: scale(1.05);
+        }
+
+        /* Image Hover Preview */
+        .image-preview {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            max-width: 500px;
+            max-height: 500px;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+
+        .card-image-container:hover ~ .image-preview {
+            display: block;
+        }
+
+        .card-content {
+            padding: 1rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .card-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .card-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .card-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>📌 Pinterest CSV Editor</h1>
+        <div class="toolbar">
+            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                📁 Load CSV
+            </button>
+            <button class="btn btn-secondary" id="selectAllBtn" onclick="selectAll()" disabled>
+                ☑️ Select All
+            </button>
+            <button class="btn btn-secondary" id="deselectAllBtn" onclick="deselectAll()" disabled>
+                ⬜ Deselect All
+            </button>
+            <button class="btn btn-secondary" id="selectFirst100Btn" onclick="selectFirst100()" disabled>
+                💯 Select First 100
+            </button>
+            <button class="btn btn-danger" id="deleteSelectedBtn" onclick="deleteSelected()" disabled>
+                🗑️ Delete Selected
+            </button>
+            <button class="btn btn-secondary" id="changeLinkBtn" onclick="showChangeLinkModal()" disabled>
+                🔗 Change Link
+            </button>
+            <button class="btn btn-secondary" id="changeBoardBtn" onclick="showChangeBoardModal()" disabled>
+                📋 Change Board
+            </button>
+            <button class="btn btn-secondary" id="undoBtn" onclick="undo()" disabled>
+                ↶ Undo
+            </button>
+            <button class="btn btn-success" id="exportBtn" onclick="exportCSV()" disabled>
+                💾 Export CSV
+            </button>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                🌓 Theme
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar hidden" id="statsBar">
+        <div class="stat">
+            <span>Total Pins:</span>
+            <span class="stat-value" id="totalPins">0</span>
+        </div>
+        <div class="stat">
+            <span>Selected:</span>
+            <span class="stat-value" id="selectedCount">0</span>
+        </div>
+        <div class="stat">
+            <span>Filtered:</span>
+            <span class="stat-value" id="filteredCount">0</span>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-bar hidden" id="searchBar">
+        <input 
+            type="text" 
+            class="search-input" 
+            id="searchInput" 
+            placeholder="🔍 Search by title or keywords..."
+            oninput="searchPins()"
+        >
+    </div>
+
+    <!-- Upload Zone -->
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" accept=".csv" multiple onchange="handleFileSelect(event)">
+        <h2>📁 Drop CSV files here or click to browse</h2>
+        <p style="margin-top: 1rem; color: var(--text-secondary);">
+            You can upload multiple CSV files to merge them
+        </p>
+    </div>
+
+    <!-- Cards Container -->
+    <div class="cards-container" id="cardsContainer"></div>
+
+    <!-- Change Link Modal -->
+    <div class="modal" id="changeLinkModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Change Link Domain</h2>
+            <div class="modal-body">
+                <label for="newDomain">New Domain (slug will be preserved):</label>
+                <input 
+                    type="text" 
+                    class="modal-input" 
+                    id="newDomain" 
+                    placeholder="https://example.com"
+                >
+                <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+                    Example: https://example.com → https://newsite.com/?slug
+                </p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('changeLinkModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="applyLinkChange()">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Board Modal -->
+    <div class="modal" id="changeBoardModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Change Pinterest Board</h2>
+            <div class="modal-body">
+                <label for="newBoard">New Board Name:</label>
+                <input 
+                    type="text" 
+                    class="modal-input" 
+                    id="newBoard" 
+                    placeholder="My Board Name"
+                >
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('changeBoardModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="applyBoardChange()">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Confirm Deletion</h2>
+            <div class="modal-body">
+                <p id="deleteMessage"></p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // State Management
+        let pins = [];
+        let filteredPins = [];
+        let history = [];
+        let selectedIndices = new Set();
+        let draggedIndex = null;
+        let originalFilename = 'pinterest';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupDragAndDrop();
+            loadTheme();
+        });
+
+        // File Handling
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            showToast('Loading CSV files...', 'success');
+
+            const readers = [];
+            for (let file of files) {
+                if (!originalFilename || originalFilename === 'pinterest') {
+                    originalFilename = file.name.replace('.csv', '');
+                }
+                readers.push(readCSV(file));
+            }
+
+            Promise.all(readers).then(results => {
+                const allPins = results.flat();
+                if (allPins.length === 0) {
+                    showToast('No valid data found in CSV files', 'error');
+                    return;
+                }
+
+                saveHistory();
+                pins = allPins;
+                filteredPins = [...pins];
+                renderPins();
+                updateUI();
+                showToast(`Loaded ${pins.length} pins successfully!`, 'success');
+            }).catch(error => {
+                showToast('Error loading CSV: ' + error.message, 'error');
+            });
+        }
+
+        function readCSV(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const text = e.target.result;
+                        const lines = text.split('\n').filter(line => line.trim());
+
+                        if (lines.length < 2) {
+                            reject(new Error('CSV file is empty or invalid'));
+                            return;
+                        }
+
+                        const headers = parseCSVLine(lines[0]);
+                        const data = [];
+
+                        for (let i = 1; i < lines.length; i++) {
+                            const values = parseCSVLine(lines[i]);
+                            if (values.length === headers.length) {
+                                const pin = {};
+                                headers.forEach((header, index) => {
+                                    pin[header.trim()] = values[index];
+                                });
+                                data.push(pin);
+                            }
+                        }
+
+                        resolve(data);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsText(file);
+            });
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+
+            return result.map(value => value.trim());
+        }
+
+        // Drag and Drop Setup
+        function setupDragAndDrop() {
+            const uploadZone = document.getElementById('uploadZone');
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, () => {
+                    uploadZone.classList.add('dragover');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, () => {
+                    uploadZone.classList.remove('dragover');
+                }, false);
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                document.getElementById('fileInput').files = files;
+                handleFileSelect({ target: { files } });
+            }, false);
+        }
+
+        // Rendering
+        function renderPins() {
+            const container = document.getElementById('cardsContainer');
+            const uploadZone = document.getElementById('uploadZone');
+
+            if (filteredPins.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h2>No pins to display</h2><p>Upload a CSV file to get started</p></div>';
+                uploadZone.classList.remove('hidden');
+                return;
+            }
+
+            uploadZone.classList.add('hidden');
+            container.innerHTML = '';
+
+            filteredPins.forEach((pin, index) => {
+                const actualIndex = pins.indexOf(pin);
+                const card = createCard(pin, actualIndex);
+                container.appendChild(card);
+            });
+
+            updateStats();
+        }
+
+        function createCard(pin, index) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.draggable = true;
+            card.dataset.index = index;
+
+            if (selectedIndices.has(index)) {
+                card.classList.add('selected');
+            }
+
+            // Card Number
+            const cardNumber = document.createElement('div');
+            cardNumber.className = 'card-number';
+            cardNumber.textContent = `#${index + 1}`;
+
+            // Checkbox
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'card-checkbox';
+            checkbox.checked = selectedIndices.has(index);
+            checkbox.onclick = (e) => {
+                e.stopPropagation();
+                toggleSelection(index);
+            };
+
+            // Image
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'card-image-container';
+
+            const img = document.createElement('img');
+            img.className = 'card-image';
+            img.src = pin['Media URL'] || pin['Thumbnail'] || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3C/svg%3E';
+            img.alt = pin['Title'] || 'Pin image';
+            img.onerror = () => {
+                img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3ENo Image%3C/text%3E%3C/svg%3E';
+            };
+
+            // Hover preview
+            imageContainer.addEventListener('mouseenter', (e) => {
+                showImagePreview(e, pin['Media URL'] || pin['Thumbnail']);
+            });
+            imageContainer.addEventListener('mousemove', (e) => {
+                updateImagePreviewPosition(e);
+            });
+            imageContainer.addEventListener('mouseleave', hideImagePreview);
+
+            imageContainer.appendChild(img);
+
+            // Content
+            const content = document.createElement('div');
+            content.className = 'card-content';
+
+            const title = document.createElement('div');
+            title.className = 'card-title';
+            title.textContent = pin['Title'] || 'Untitled';
+
+            const description = document.createElement('div');
+            description.className = 'card-description';
+            description.textContent = pin['Description'] || 'No description';
+
+            const meta = document.createElement('div');
+            meta.className = 'card-meta';
+
+            if (pin['Publish date']) {
+                const dateItem = document.createElement('div');
+                dateItem.className = 'card-meta-item';
+                dateItem.innerHTML = `📅 ${pin['Publish date']}`;
+                meta.appendChild(dateItem);
+            }
+
+            if (pin['Pinterest board']) {
+                const boardItem = document.createElement('div');
+                boardItem.className = 'card-meta-item';
+                boardItem.innerHTML = `📌 ${pin['Pinterest board']}`;
+                meta.appendChild(boardItem);
+            }
+
+            if (pin['Link']) {
+                const linkItem = document.createElement('div');
+                linkItem.className = 'card-meta-item';
+                const link = document.createElement('a');
+                link.className = 'card-link';
+                link.href = pin['Link'];
+                link.target = '_blank';
+                link.textContent = pin['Link'];
+                linkItem.appendChild(document.createTextNode('🔗 '));
+                linkItem.appendChild(link);
+                meta.appendChild(linkItem);
+            }
+
+            content.appendChild(title);
+            content.appendChild(description);
+            content.appendChild(meta);
+
+            card.appendChild(cardNumber);
+            card.appendChild(checkbox);
+            card.appendChild(imageContainer);
+            card.appendChild(content);
+
+            // Drag events
+            card.addEventListener('dragstart', handleDragStart);
+            card.addEventListener('dragover', handleDragOver);
+            card.addEventListener('drop', handleDrop);
+            card.addEventListener('dragend', handleDragEnd);
+
+            return card;
+        }
+
+        // Image Preview on Hover
+        let imagePreviewEl = null;
+
+        function showImagePreview(e, imageUrl) {
+            if (!imageUrl) return;
+
+            hideImagePreview();
+
+            imagePreviewEl = document.createElement('img');
+            imagePreviewEl.className = 'image-preview';
+            imagePreviewEl.src = imageUrl;
+            imagePreviewEl.style.left = (e.clientX + 20) + 'px';
+            imagePreviewEl.style.top = (e.clientY + 20) + 'px';
+            document.body.appendChild(imagePreviewEl);
+        }
+
+        function updateImagePreviewPosition(e) {
+            if (imagePreviewEl) {
+                imagePreviewEl.style.left = (e.clientX + 20) + 'px';
+                imagePreviewEl.style.top = (e.clientY + 20) + 'px';
+            }
+        }
+
+        function hideImagePreview() {
+            if (imagePreviewEl) {
+                imagePreviewEl.remove();
+                imagePreviewEl = null;
+            }
+        }
+
+        // Drag and Drop for Reordering
+        function handleDragStart(e) {
+            draggedIndex = parseInt(e.target.dataset.index);
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            const targetIndex = parseInt(e.target.closest('.card').dataset.index);
+
+            if (draggedIndex !== null && draggedIndex !== targetIndex) {
+                saveHistory();
+
+                // Get publish dates before swap
+                const draggedDate = pins[draggedIndex]['Publish date'];
+                const targetDate = pins[targetIndex]['Publish date'];
+
+                // Swap pins but keep dates in original positions
+                const temp = pins[draggedIndex];
+                pins[draggedIndex] = pins[targetIndex];
+                pins[targetIndex] = temp;
+
+                // Restore dates to original positions
+                pins[draggedIndex]['Publish date'] = draggedDate;
+                pins[targetIndex]['Publish date'] = targetDate;
+
+                filteredPins = [...pins];
+                renderPins();
+                showToast('Pins reordered (times preserved)', 'success');
+            }
+
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedIndex = null;
+        }
+
+        // Selection
+        function toggleSelection(index) {
+            if (selectedIndices.has(index)) {
+                selectedIndices.delete(index);
+            } else {
+                selectedIndices.add(index);
+            }
+            renderPins();
+        }
+
+        function selectAll() {
+            filteredPins.forEach((pin) => {
+                const index = pins.indexOf(pin);
+                selectedIndices.add(index);
+            });
+            renderPins();
+        }
+
+        function deselectAll() {
+            selectedIndices.clear();
+            renderPins();
+        }
+
+        function selectFirst100() {
+            saveHistory();
+            selectedIndices.clear();
+            for (let i = 0; i < Math.min(100, pins.length); i++) {
+                selectedIndices.add(i);
+            }
+
+            // Delete the rest
+            const toKeep = [];
+            pins.forEach((pin, index) => {
+                if (selectedIndices.has(index)) {
+                    toKeep.push(pin);
+                }
+            });
+
+            pins = toKeep;
+            selectedIndices.clear();
+            filteredPins = [...pins];
+            renderPins();
+            showToast('Kept first 100 pins, deleted the rest', 'success');
+        }
+
+        // Search
+        function searchPins() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+
+            if (!query) {
+                filteredPins = [...pins];
+            } else {
+                filteredPins = pins.filter(pin => {
+                    const title = (pin['Title'] || '').toLowerCase();
+                    const keywords = (pin['Keywords'] || '').toLowerCase();
+                    const description = (pin['Description'] || '').toLowerCase();
+                    return title.includes(query) || keywords.includes(query) || description.includes(query);
+                });
+            }
+
+            renderPins();
+        }
+
+        // Delete
+        function deleteSelected() {
+            if (selectedIndices.size === 0) {
+                showToast('No pins selected', 'error');
+                return;
+            }
+
+            const message = `Are you sure you want to delete ${selectedIndices.size} selected pin(s)?`;
+            document.getElementById('deleteMessage').textContent = message;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function confirmDelete() {
+            saveHistory();
+
+            const toKeep = [];
+            pins.forEach((pin, index) => {
+                if (!selectedIndices.has(index)) {
+                    toKeep.push(pin);
+                }
+            });
+
+            const deletedCount = selectedIndices.size;
+            pins = toKeep;
+            selectedIndices.clear();
+            filteredPins = [...pins];
+
+            closeModal('deleteModal');
+            renderPins();
+            showToast(`Deleted ${deletedCount} pin(s)`, 'success');
+        }
+
+        // Change Link
+        function showChangeLinkModal() {
+            if (selectedIndices.size === 0) {
+                showToast('No pins selected', 'error');
+                return;
+            }
+            document.getElementById('changeLinkModal').classList.add('active');
+        }
+
+        function applyLinkChange() {
+            const newDomain = document.getElementById('newDomain').value.trim();
+
+            if (!newDomain) {
+                showToast('Please enter a domain', 'error');
+                return;
+            }
+
+            saveHistory();
+
+            let changedCount = 0;
+            selectedIndices.forEach(index => {
+                const pin = pins[index];
+                const oldLink = pin['Link'] || '';
+
+                // Extract slug from old link
+                const slugMatch = oldLink.match(/\?(.+)$/);
+                const slug = slugMatch ? slugMatch[1] : '';
+
+                // Build new link
+                const domain = newDomain.replace(/\/$/, ''); // Remove trailing slash
+                pin['Link'] = slug ? `${domain}/?${slug}` : domain;
+                changedCount++;
+            });
+
+            closeModal('changeLinkModal');
+            document.getElementById('newDomain').value = '';
+            renderPins();
+            showToast(`Updated ${changedCount} link(s)`, 'success');
+        }
+
+        // Change Board
+        function showChangeBoardModal() {
+            if (selectedIndices.size === 0) {
+                showToast('No pins selected', 'error');
+                return;
+            }
+            document.getElementById('changeBoardModal').classList.add('active');
+        }
+
+        function applyBoardChange() {
+            const newBoard = document.getElementById('newBoard').value.trim();
+
+            if (!newBoard) {
+                showToast('Please enter a board name', 'error');
+                return;
+            }
+
+            saveHistory();
+
+            let changedCount = 0;
+            selectedIndices.forEach(index => {
+                pins[index]['Pinterest board'] = newBoard;
+                changedCount++;
+            });
+
+            closeModal('changeBoardModal');
+            document.getElementById('newBoard').value = '';
+            renderPins();
+            showToast(`Updated ${changedCount} board(s)`, 'success');
+        }
+
+        // History/Undo
+        function saveHistory() {
+            history.push({
+                pins: JSON.parse(JSON.stringify(pins)),
+                selectedIndices: new Set(selectedIndices)
+            });
+
+            // Keep only last 10 states
+            if (history.length > 10) {
+                history.shift();
+            }
+
+            updateUI();
+        }
+
+        function undo() {
+            if (history.length === 0) {
+                showToast('Nothing to undo', 'error');
+                return;
+            }
+
+            const state = history.pop();
+            pins = state.pins;
+            selectedIndices = state.selectedIndices;
+            filteredPins = [...pins];
+
+            renderPins();
+            showToast('Undo successful', 'success');
+        }
+
+        // Export
+        function exportCSV() {
+            if (pins.length === 0) {
+                showToast('No data to export', 'error');
+                return;
+            }
+
+            // Get headers from first pin
+            const headers = Object.keys(pins[0]);
+
+            // Build CSV content
+            let csvContent = headers.map(escapeCSV).join(',') + '\n';
+
+            pins.forEach(pin => {
+                const row = headers.map(header => escapeCSV(pin[header] || '')).join(',');
+                csvContent += row + '\n';
+            });
+
+            // Download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${originalFilename}_edited.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast('CSV exported successfully!', 'success');
+        }
+
+        function escapeCSV(value) {
+            if (value === null || value === undefined) return '';
+
+            const stringValue = String(value);
+
+            // If contains comma, quote, or newline, wrap in quotes and escape quotes
+            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                return '"' + stringValue.replace(/"/g, '""') + '"';
+            }
+
+            return stringValue;
+        }
+
+        // UI Updates
+        function updateUI() {
+            const hasData = pins.length > 0;
+            const hasSelection = selectedIndices.size > 0;
+
+            document.getElementById('statsBar').classList.toggle('hidden', !hasData);
+            document.getElementById('searchBar').classList.toggle('hidden', !hasData);
+
+            document.getElementById('selectAllBtn').disabled = !hasData;
+            document.getElementById('deselectAllBtn').disabled = !hasSelection;
+            document.getElementById('selectFirst100Btn').disabled = !hasData;
+            document.getElementById('deleteSelectedBtn').disabled = !hasSelection;
+            document.getElementById('changeLinkBtn').disabled = !hasSelection;
+            document.getElementById('changeBoardBtn').disabled = !hasSelection;
+            document.getElementById('exportBtn').disabled = !hasData;
+            document.getElementById('undoBtn').disabled = history.length === 0;
+        }
+
+        function updateStats() {
+            document.getElementById('totalPins').textContent = pins.length;
+            document.getElementById('selectedCount').textContent = selectedIndices.size;
+            document.getElementById('filteredCount').textContent = filteredPins.length;
+        }
+
+        // Modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal(modal.id);
+                }
+            });
+        });
+
+        // Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Theme
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        }
+
+        function loadTheme() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+        }
+    </script>
+</body>
+</html>
