@@ -776,11 +776,11 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
             <button class="dock-btn" onclick="document.getElementById('fileInput').click()">
                 📁 <span class="label">Load</span>
             </button>
-            <button class="dock-btn" id="dockSelectAll" onclick="selectAll()" disabled>
-                ☑️ <span class="label">All</span>
+            <button class="dock-btn" id="dockSelectAll" onclick="selectAll()" style="border-right: 0;border-top-right-radius: 0;border-bottom-right-radius: 0;" disabled>
+                ☑️ <span class="label">Select All</span>
             </button>
-            <button class="dock-btn" id="dockDeselectAll" onclick="deselectAll()" disabled>
-                ⬜ <span class="label">None</span>
+            <button class="dock-btn" id="dockDeselectAll" onclick="deselectAll()" style="border-left: 0;border-top-left-radius: 0;border-bottom-left-radius: 0;margin-left: -8px;" disabled>
+                <span class="label">Select None</span> ⬜
             </button>
             <button class="dock-btn" id="dockSelect100" onclick="showSelect100Modal()" disabled>
     💯 <span class="label" style="white-space:nowrap;">Keep First #</span>
