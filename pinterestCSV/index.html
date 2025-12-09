@@ -650,8 +650,8 @@
     <div class="modal-content">
         <h2 class="modal-title">🏷️ Change Keywords</h2>
         <div class="modal-body">
-            <p>Current keywords: <strong><span id="currentKeywordsLabel">None</span></strong></p>
-            <label class="modal-label" for="newKeywords" style="margin-top:0.6rem;">New Keywords (comma-separated or text):</label>
+            <p>· Current keywords:<br/><strong><span id="currentKeywordsLabel">None</span></strong></p>
+            <label class="modal-label" for="newKeywords" style="margin-top:0.6rem;">· New Keywords (comma-separated or text):</label>
             <input type="text" class="modal-input" id="newKeywords" placeholder="keyword1, keyword2, ...">
             <p class="modal-hint">Will replace the Keywords field for the selected pin(s).</p>
         </div>
@@ -954,7 +954,7 @@
             const btnPreview = document.createElement('button');
             btnPreview.className = 'card-action-btn';
             btnPreview.title = 'Preview image';
-            btnPreview.textContent = '🔍';
+            btnPreview.textContent = '👁';
             btnPreview.onclick = e => { e.stopPropagation(); if (imageUrl) showImagePreview(imageUrl); };
 
             const btnDel = document.createElement('button');
