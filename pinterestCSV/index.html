@@ -1270,20 +1270,24 @@ function updateKeepPreview() {
 
         function confirmSelect100() {
     const keepAmount = parseInt(document.getElementById('keepAmount').value);
-    
+
     if (!keepAmount || keepAmount < 1) {
         showToast('Enter a valid number', 'error');
         return;
     }
-    
+
     if (keepAmount >= pins.length) {
         showToast('Keep amount must be less than total pins', 'warning');
         return;
     }
-    
+
     saveHistory();
     const deleted = pins.length - keepAmount;
     pins = pins.slice(0, keepAmount);
+
+    // NEW: repack times after reducing the list
+    repackPublishDates();
+
     filteredPins = [...pins];
     selectedIndices.clear();
     closeModal('select100Modal');
@@ -1313,26 +1317,30 @@ function updateKeepPreview() {
             document.getElementById('deleteModal').classList.add('active');
         }
         function confirmDelete() {
-    saveHistory();
-    
-    // Use single pin action if set, otherwise use selectedIndices
-    const indicesToDelete = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
-    
-    if (indicesToDelete.length === 0) { 
-        closeModal('deleteModal'); 
-        return; 
-    }
-    
-    const indices = indicesToDelete.sort((a,b) => b-a);
-    indices.forEach(i => pins.splice(i,1));
-    const deleted = indices.length;
-    selectedIndices.clear();
-    singlePinActionIndex = null; // Reset
-    filteredPins = [...pins];
-    closeModal('deleteModal');
-    renderPins(); updateUI();
-    showToast(`Deleted ${deleted} pin(s)`, 'success');
-}
+            saveHistory();
+        
+            // Use single pin action if set, otherwise use selectedIndices
+            const indicesToDelete = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
+        
+            if (indicesToDelete.length === 0) { 
+                closeModal('deleteModal'); 
+                return; 
+            }
+        
+            const indices = indicesToDelete.sort((a,b) => b-a);
+            indices.forEach(i => pins.splice(i,1));
+            const deleted = indices.length;
+            selectedIndices.clear();
+            singlePinActionIndex = null; // Reset
+        
+            // NEW: repack times so there are no gaps
+            repackPublishDates();
+        
+            filteredPins = [...pins];
+            closeModal('deleteModal');
+            renderPins(); updateUI();
+            showToast(`Deleted ${deleted} pin(s)`, 'success');
+        }
 
         // Change link (selected from dock or quick)
         function showChangeLinkModal() {
@@ -1585,6 +1593,28 @@ function updateKeepPreview() {
             return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) +
                    'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
         }
+
+        function repackPublishDates() {
+    if (!pins.length) return;
+
+    // Collect all valid publish dates as strings
+    const dateStrings = pins
+        .map(p => p['Publish date'])
+        .filter(Boolean); // remove empty/undefined
+
+    if (!dateStrings.length) return;
+
+    // ISO format is lexicographically sortable
+    const sorted = dateStrings.slice().sort((a, b) => a > b ? 1 : -1);
+
+    // We keep only the earliest N dates, where N = remaining pins
+    const toKeep = sorted.slice(0, pins.length);
+
+    // Reassign sequentially to pins in their current order
+    for (let i = 0; i < pins.length; i++) {
+        pins[i]['Publish date'] = toKeep[i] || '';
+    }
+}
 
         function applyIntervalReschedule() {
             const startStr = document.getElementById('intervalStart').value.trim();
