@@ -24,6 +24,7 @@
             --dock-bg: rgba(33,37,41,0.95);
             --btn-secondary-bg: #e9ecef;
             --btn-secondary-border: #ced4da;
+            --pill-bg: #f1f3f5;
         }
 
         body.dark-mode {
@@ -38,6 +39,7 @@
             --dock-bg: rgba(15,15,15,0.95);
             --btn-secondary-bg: #343a40;
             --btn-secondary-border: #495057;
+            --pill-bg: #343a40;
         }
 
         body {
@@ -328,20 +330,33 @@
         .modal-content {
             background: var(--bg-card);
             padding: 1.5rem 1.75rem;
-            border-radius: 12px;
+            border-radius: 16px;
             max-width: 520px;
             width: 100%;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            box-shadow: 0 18px 45px rgba(0,0,0,0.55);
         }
-        .modal-title { font-size: 1.3rem; margin-bottom: 0.8rem; font-weight: 600; }
+        .modal-title { font-size: 1.35rem; margin-bottom: 0.8rem; font-weight: 650; display:flex;align-items:center;gap:0.4rem;}
+        .modal-title span.badge {
+            font-size: 0.7rem;
+            background: var(--pill-bg);
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
         .modal-body { margin-bottom: 1.2rem; font-size: 0.9rem; }
         .modal-label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; }
         .modal-input {
-            width: 100%; padding: 0.6rem 0.7rem; border-radius: 6px;
+            width: 100%; padding: 0.6rem 0.7rem; border-radius: 8px;
             border: 1px solid var(--border-color);
             background: var(--bg-secondary);
             color: var(--text-primary);
             font-size: 0.9rem;
+        }
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 1px rgba(230,0,35,0.3);
         }
         .modal-hint { margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-secondary); }
         .modal-buttons {
@@ -390,24 +405,45 @@
 
         /* Reschedule tabs */
         .tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 0.75rem;
+            display: inline-flex;
+            background: var(--pill-bg);
+            border-radius: 999px;
+            padding: 2px;
+            margin-bottom: 0.9rem;
         }
         .tab {
-            padding: 0.4rem 0.75rem;
-            font-size: 0.85rem;
+            padding: 0.3rem 0.9rem;
+            font-size: 0.8rem;
             cursor: pointer;
-            border-bottom: 2px solid transparent;
+            border-radius: 999px;
             color: var(--text-secondary);
+            white-space: nowrap;
         }
         .tab.active {
-            color: var(--accent-color);
-            border-color: var(--accent-color);
+            color: #fff;
+            background: var(--accent-color);
             font-weight: 600;
         }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+
+        .tab-pill-row {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            margin-bottom:0.4rem;
+            font-size:0.8rem;
+            color:var(--text-secondary);
+        }
+
+        .pill-info {
+            display:inline-flex;
+            align-items:center;
+            gap:0.3rem;
+            background: var(--pill-bg);
+            border-radius:999px;
+            padding:0.2rem 0.6rem;
+        }
 
         .toast {
             position: fixed;
@@ -428,6 +464,12 @@
         .toast.error { border-left: 4px solid var(--danger-color); }
         .toast.warning { border-left: 4px solid var(--warning-color); }
 
+        .empty-state-wrapper {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .empty-state {
             text-align: center;
             color: var(--text-secondary);
@@ -603,6 +645,22 @@
         </div>
     </div>
 
+    <!-- Change Keywords Modal -->
+    <div class="modal" id="changeKeywordsModal">
+        <div class="modal-content">
+            <h2 class="modal-title">🏷️ Change Keywords</h2>
+            <div class="modal-body">
+                <label class="modal-label" for="newKeywords">New Keywords (comma-separated or text):</label>
+                <input type="text" class="modal-input" id="newKeywords" placeholder="keyword1, keyword2, ...">
+                <p class="modal-hint">Will replace the Keywords field for the selected pin(s).</p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('changeKeywordsModal')">Cancel</button>
+                <button class="btn-modal btn-modal-primary" onclick="confirmKeywordsChange()">Apply</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Adjust Time Modal (single pin) -->
     <div class="modal" id="adjustTimeModal">
         <div class="modal-content">
@@ -622,10 +680,19 @@
     <!-- Reschedule All Modal -->
     <div class="modal" id="rescheduleModal">
         <div class="modal-content">
-            <h2 class="modal-title">📅 Reschedule All Pins</h2>
+            <h2 class="modal-title">
+                📅 Reschedule All Pins
+                <span class="badge">Schedule tools</span>
+            </h2>
             <div class="tabs">
-                <div class="tab active" id="tab-shift" onclick="setRescheduleTab('shift')">Shift by New First Time</div>
-                <div class="tab" id="tab-interval" onclick="setRescheduleTab('interval')">Rebuild Intervals</div>
+                <div class="tab active" id="tab-shift" onclick="setRescheduleTab('shift')">Shift by first pin</div>
+                <div class="tab" id="tab-interval" onclick="setRescheduleTab('interval')">Rebuild intervals</div>
+            </div>
+            <div class="tab-pill-row">
+                <span class="pill-info">
+                    <span>⚙️</span>
+                    <span id="reschedCountLabel">Total pins: 0</span>
+                </span>
             </div>
             <div class="modal-body">
                 <!-- Tab 1: shift -->
@@ -638,7 +705,7 @@
                 </div>
                 <!-- Tab 2: intervals -->
                 <div class="tab-content" id="tab-content-interval">
-                    <p>Rebuild the schedule using fixed or random intervals.</p>
+                    <p>Rebuild the schedule using fixed or random intervals while keeping pin order.</p>
                     <label class="modal-label">Mode:</label>
                     <div style="margin-bottom:0.6rem;">
                         <label style="font-size:0.85rem;margin-right:0.75rem;">
@@ -654,7 +721,7 @@
                     <div id="intervalFixedFields" style="margin-top:0.6rem;">
                         <label class="modal-label" for="intervalMinutes">Interval between pins (minutes):</label>
                         <input type="number" class="modal-input" id="intervalMinutes" min="0" step="1" placeholder="30">
-                        <p class="modal-hint">All pins keep order. Each next pin is previous time + this interval.</p>
+                        <p class="modal-hint">All pins keep order. Each next pin is previous time + this fixed interval.</p>
                     </div>
 
                     <div id="intervalRandomFields" style="margin-top:0.6rem; display:none;">
@@ -663,7 +730,7 @@
                             <input type="number" class="modal-input" id="intervalMin" min="0" step="1" placeholder="10" style="flex:1;">
                             <input type="number" class="modal-input" id="intervalMax" min="0" step="1" placeholder="60" style="flex:1;">
                         </div>
-                        <p class="modal-hint">Each gap between pins will be a random number of minutes between min and max, keeping the order.</p>
+                        <p class="modal-hint">Each gap will be a random number of minutes between min and max.</p>
                     </div>
                 </div>
             </div>
@@ -700,6 +767,9 @@
             </button>
             <button class="dock-btn" id="dockBoard" onclick="showChangeBoardModal()" disabled>
                 📋 <span class="label">Board</span>
+            </button>
+            <button class="dock-btn" id="dockKeywords" onclick="showChangeKeywordsModal()" disabled>
+                🏷️ <span class="label">Keywords</span>
             </button>
             <button class="dock-btn" id="dockSwap" onclick="swapSelected()" disabled>
                 🔁 <span class="label">Swap</span>
@@ -825,12 +895,12 @@
             const container = document.getElementById('cardsContainer');
             const uploadZone = document.getElementById('uploadZone');
             if (filteredPins.length === 0 && pins.length === 0) {
-                container.innerHTML = '<div class="empty-state"><h2>No pins to display</h2><p>Upload a CSV file to get started</p></div>';
+                container.innerHTML = '<div class="empty-state-wrapper"><div class="empty-state"><h2>No pins to display</h2><p>Upload a CSV file to get started</p></div></div>';
                 uploadZone.classList.remove('hidden');
                 return;
             }
             if (filteredPins.length === 0 && pins.length > 0) {
-                container.innerHTML = '<div class="empty-state"><h2>No pins match your search</h2><p>Try a different search term</p></div>';
+                container.innerHTML = '<div class="empty-state-wrapper"><div class="empty-state"><h2>No pins match your search</h2><p>Try a different search term</p></div></div>';
                 uploadZone.classList.add('hidden');
                 return;
             }
@@ -852,7 +922,6 @@
 
             // Click to toggle selection
             card.addEventListener('click', e => {
-                // Ignore clicks on links or buttons
                 const tag = e.target.tagName.toLowerCase();
                 if (tag === 'a' || tag === 'button' || e.target.classList.contains('card-checkbox')) return;
                 toggleSelection(index);
@@ -876,18 +945,15 @@
             img.src = imageUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="350"%3E%3Crect fill="%23ddd" width="300" height="350"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E';
             img.onerror = () => { img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="350"%3E%3Crect fill="%23ddd" width="300" height="350"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E'; };
 
-            // Double click image to preview
-            if (imageUrl) {
-                imgWrap.style.cursor = 'pointer';
-                imgWrap.addEventListener('dblclick', e => {
-                    e.stopPropagation();
-                    showImagePreview(imageUrl);
-                });
-            }
-
-            // Quick actions on image
+            // Quick actions on image (including preview)
             const actions = document.createElement('div');
             actions.className = 'card-actions-overlay';
+
+            const btnPreview = document.createElement('button');
+            btnPreview.className = 'card-action-btn';
+            btnPreview.title = 'Preview image';
+            btnPreview.textContent = '🔍';
+            btnPreview.onclick = e => { e.stopPropagation(); if (imageUrl) showImagePreview(imageUrl); };
 
             const btnDel = document.createElement('button');
             btnDel.className = 'card-action-btn';
@@ -907,15 +973,23 @@
             btnBoard.textContent = '📋';
             btnBoard.onclick = e => { e.stopPropagation(); quickChangeBoard(index); };
 
+            const btnKeywords = document.createElement('button');
+            btnKeywords.className = 'card-action-btn';
+            btnKeywords.title = 'Change keywords for this pin';
+            btnKeywords.textContent = '🏷️';
+            btnKeywords.onclick = e => { e.stopPropagation(); quickChangeKeywords(index); };
+
             const btnTime = document.createElement('button');
             btnTime.className = 'card-action-btn';
             btnTime.title = 'Adjust publish time';
             btnTime.textContent = '⏰';
             btnTime.onclick = e => { e.stopPropagation(); quickAdjustTime(index); };
 
+            actions.appendChild(btnPreview);
             actions.appendChild(btnDel);
             actions.appendChild(btnLink);
             actions.appendChild(btnBoard);
+            actions.appendChild(btnKeywords);
             actions.appendChild(btnTime);
 
             imgWrap.appendChild(img);
@@ -1093,6 +1167,11 @@
             document.getElementById('changeBoardModal').classList.add('active');
             updateUI();
         }
+        function quickChangeKeywords(index) {
+            selectedIndices = new Set([index]);
+            document.getElementById('changeKeywordsModal').classList.add('active');
+            updateUI();
+        }
         function quickAdjustTime(index) {
             timeAdjustIndex = index;
             const pin = pins[index];
@@ -1198,6 +1277,25 @@
             showToast(`Updated ${count} board(s)`, 'success');
         }
 
+        // Change keywords (selected)
+        function showChangeKeywordsModal() {
+            if (selectedIndices.size === 0) { showToast('Select pins to change keywords', 'warning'); return; }
+            document.getElementById('changeKeywordsModal').classList.add('active');
+        }
+        function confirmKeywordsChange() {
+            const newKeywords = document.getElementById('newKeywords').value.trim();
+            if (!newKeywords) { showToast('Enter keywords', 'error'); return; }
+            if (selectedIndices.size === 0) { showToast('Select pins first', 'warning'); return; }
+            saveHistory();
+            let count = 0;
+            selectedIndices.forEach(i => { pins[i]['Keywords'] = newKeywords; count++; });
+            document.getElementById('newKeywords').value = '';
+            closeModal('changeKeywordsModal');
+            filteredPins = [...pins];
+            renderPins(); updateUI();
+            showToast(`Updated keywords for ${count} pin(s)`, 'success');
+        }
+
         // Adjust time (single pin via quick action)
         function confirmAdjustTime() {
             if (timeAdjustIndex === null) { closeModal('adjustTimeModal'); return; }
@@ -1235,8 +1333,8 @@
             const first = getFirstPinByDate();
             document.getElementById('shiftCurrentFirst').textContent = first ? (first['Publish date'] || 'N/A') : 'N/A';
             document.getElementById('shiftNewFirst').value = first ? (first['Publish date'] || '') : '';
+            document.getElementById('reschedCountLabel').textContent = 'Total pins: ' + pins.length;
             updateShiftPreview();
-            // default tab
             setRescheduleTab('shift');
             document.getElementById('rescheduleModal').classList.add('active');
         }
@@ -1272,8 +1370,7 @@
         }
 
         function parseISODate(str) {
-            // Expect YYYY-MM-DDTHH:MM:SS
-            const m = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/);
+            const m = str && str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/);
             if (!m) return null;
             const [_,y,mo,d,h,mi,s] = m;
             const date = new Date(Number(y), Number(mo)-1, Number(d), Number(h), Number(mi), Number(s));
@@ -1309,7 +1406,7 @@
         }
 
         function updateIntervalMode() {
-            const mode = document.querySelector('input[name=\"intervalMode\"]:checked').value;
+            const mode = document.querySelector('input[name="intervalMode"]:checked').value;
             document.getElementById('intervalFixedFields').style.display = mode === 'fixed' ? 'block' : 'none';
             document.getElementById('intervalRandomFields').style.display = mode === 'random' ? 'block' : 'none';
         }
@@ -1367,7 +1464,7 @@
                 showToast('Invalid start time (tab 2). Use YYYY-MM-DDTHH:MM:SS', 'error');
                 return;
             }
-            const mode = document.querySelector('input[name=\"intervalMode\"]:checked').value;
+            const mode = document.querySelector('input[name="intervalMode"]:checked').value;
             let minMinutes = 0, maxMinutes = 0, fixedMinutes = 0;
 
             if (mode === 'fixed') {
@@ -1385,7 +1482,6 @@
                 }
             }
 
-            // Sort pins by current date but keep mapping to original
             const pinsWithIndex = pins.map((p,i) => ({pin:p, index:i}));
             pinsWithIndex.sort((a,b) => {
                 const da = parseISODate(a.pin['Publish date']) || new Date(0);
@@ -1395,7 +1491,7 @@
 
             saveHistory();
             let currentTime = new Date(startDate.getTime());
-            pinsWithIndex.forEach((item, idx) => {
+            pinsWithIndex.forEach(item => {
                 item.pin['Publish date'] = isoStringFromDate(currentTime);
                 if (mode === 'fixed') {
                     currentTime = new Date(currentTime.getTime() + fixedMinutes*60000);
@@ -1458,13 +1554,13 @@
             document.getElementById('selectedCount').textContent = selectedIndices.size;
             document.getElementById('filteredCount').textContent = filteredPins.length;
 
-            // Dock buttons
             document.getElementById('dockSelectAll').disabled = !hasData;
             document.getElementById('dockDeselectAll').disabled = !hasSel;
             document.getElementById('dockSelect100').disabled = pins.length <= 100;
             document.getElementById('dockDelete').disabled = !hasSel;
             document.getElementById('dockLink').disabled = !hasSel;
             document.getElementById('dockBoard').disabled = !hasSel;
+            document.getElementById('dockKeywords').disabled = !hasSel;
             document.getElementById('dockUndo').disabled = history.length === 0;
             document.getElementById('dockExport').disabled = !hasData;
             document.getElementById('dockSwap').disabled = selectedIndices.size !== 2;
@@ -1505,10 +1601,8 @@
                 const dockHidden = document.body.classList.contains('dock-hidden');
                 const curr = window.scrollY;
                 if (curr > lastScroll + 60 && curr > 200 && !dockHidden) {
-                    // scrolling down -> hide dock
                     document.body.classList.add('dock-hidden');
                 } else if (curr < lastScroll - 60 || curr < 100) {
-                    // scrolling up or near top -> show dock
                     document.body.classList.remove('dock-hidden');
                 }
                 lastScroll = curr;
