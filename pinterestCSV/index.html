@@ -803,6 +803,7 @@
         let originalFilename = 'pinterest';
         let tooltipEl = null;
         let timeAdjustIndex = null;
+        let singlePinActionIndex = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             setupDragAndDrop();
@@ -1168,28 +1169,27 @@ card.addEventListener('click', e => {
 
         // Quick actions (single pin)
         function quickDelete(index) {
-            selectedIndices = new Set([index]);
-            showDeleteModal();
-        }
+    singlePinActionIndex = index;
+    document.getElementById('deleteMessage').textContent = `Delete this pin?`;
+    document.getElementById('deleteModal').classList.add('active');
+}
         function quickChangeLink(index) {
-            selectedIndices = new Set([index]);
+            singlePinActionIndex = index;
             document.getElementById('changeLinkModal').classList.add('active');
-            // updateUI();
         }
         function quickChangeBoard(index) {
-            selectedIndices = new Set([index]);
-            document.getElementById('boardChangeCount').textContent = selectedIndices.size;
+            singlePinActionIndex = index;
+            document.getElementById('boardChangeCount').textContent = 1;
             document.getElementById('changeBoardModal').classList.add('active');
-            // updateUI();
         }
         function quickChangeKeywords(index) {
-    selectedIndices = new Set([index]);
-    const currentKeywords = pins[index]['Keywords'] || '';
-    document.getElementById('currentKeywordsLabel').textContent = currentKeywords || 'None';
-    document.getElementById('newKeywords').value = currentKeywords;
-    document.getElementById('changeKeywordsModal').classList.add('active');
-    // updateUI();
-}
+            singlePinActionIndex = index;
+            const currentKeywords = pins[index]['Keywords'] || '';
+            document.getElementById('currentKeywordsLabel').textContent = currentKeywords || 'None';
+            document.getElementById('newKeywords').value = currentKeywords;
+            document.getElementById('changeKeywordsModal').classList.add('active');
+        }
+
         function quickAdjustTime(index) {
             timeAdjustIndex = index;
             const pin = pins[index];
@@ -1237,16 +1237,26 @@ card.addEventListener('click', e => {
             document.getElementById('deleteModal').classList.add('active');
         }
         function confirmDelete() {
-            saveHistory();
-            const indices = Array.from(selectedIndices).sort((a,b) => b-a);
-            indices.forEach(i => pins.splice(i,1));
-            const deleted = indices.length;
-            selectedIndices.clear();
-            filteredPins = [...pins];
-            closeModal('deleteModal');
-            renderPins(); updateUI();
-            showToast(`Deleted ${deleted} pin(s)`, 'success');
-        }
+    saveHistory();
+    
+    // Use single pin action if set, otherwise use selectedIndices
+    const indicesToDelete = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
+    
+    if (indicesToDelete.length === 0) { 
+        closeModal('deleteModal'); 
+        return; 
+    }
+    
+    const indices = indicesToDelete.sort((a,b) => b-a);
+    indices.forEach(i => pins.splice(i,1));
+    const deleted = indices.length;
+    selectedIndices.clear();
+    singlePinActionIndex = null; // Reset
+    filteredPins = [...pins];
+    closeModal('deleteModal');
+    renderPins(); updateUI();
+    showToast(`Deleted ${deleted} pin(s)`, 'success');
+}
 
         // Change link (selected from dock or quick)
         function showChangeLinkModal() {
@@ -1254,26 +1264,32 @@ card.addEventListener('click', e => {
             document.getElementById('changeLinkModal').classList.add('active');
         }
         function confirmLinkChange() {
-            const newDomain = document.getElementById('newDomain').value.trim();
-            if (!newDomain) { showToast('Enter a domain', 'error'); return; }
-            if (selectedIndices.size === 0) { showToast('Select pins first', 'warning'); return; }
-            saveHistory();
-            let count = 0;
-            const domain = newDomain.replace(/\/$/, '');
-            selectedIndices.forEach(i => {
-                const pin = pins[i];
-                const old = pin['Link'] || '';
-                const m = old.match(/\?(.+)$/);
-                const slug = m ? m[1] : '';
-                pin['Link'] = slug ? `${domain}/?${slug}` : domain;
-                count++;
-            });
-            document.getElementById('newDomain').value = '';
-            closeModal('changeLinkModal');
-            filteredPins = [...pins];
-            renderPins(); updateUI();
-            showToast(`Updated ${count} link(s)`, 'success');
-        }
+    const newDomain = document.getElementById('newDomain').value.trim();
+    if (!newDomain) { showToast('Enter a domain', 'error'); return; }
+    
+    // Use single pin action if set, otherwise use selectedIndices
+    const indicesToUpdate = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
+    
+    if (indicesToUpdate.length === 0) { showToast('Select pins first', 'warning'); return; }
+    
+    saveHistory();
+    let count = 0;
+    const domain = newDomain.replace(/\/$/, '');
+    indicesToUpdate.forEach(i => {
+        const pin = pins[i];
+        const old = pin['Link'] || '';
+        const m = old.match(/\?(.+)$/);
+        const slug = m ? m[1] : '';
+        pin['Link'] = slug ? `${domain}/?${slug}` : domain;
+        count++;
+    });
+    document.getElementById('newDomain').value = '';
+    singlePinActionIndex = null; // Reset
+    closeModal('changeLinkModal');
+    filteredPins = [...pins];
+    renderPins(); updateUI();
+    showToast(`Updated ${count} link(s)`, 'success');
+}
 
         // Change board (selected)
         function showChangeBoardModal() {
@@ -1282,18 +1298,24 @@ card.addEventListener('click', e => {
             document.getElementById('changeBoardModal').classList.add('active');
         }
         function confirmBoardChange() {
-            const newBoard = document.getElementById('newBoard').value.trim();
-            if (!newBoard) { showToast('Enter a board name', 'error'); return; }
-            if (selectedIndices.size === 0) { showToast('Select pins first', 'warning'); return; }
-            saveHistory();
-            let count = 0;
-            selectedIndices.forEach(i => { pins[i]['Pinterest board'] = newBoard; count++; });
-            document.getElementById('newBoard').value = '';
-            closeModal('changeBoardModal');
-            filteredPins = [...pins];
-            renderPins(); updateUI();
-            showToast(`Updated ${count} board(s)`, 'success');
-        }
+    const newBoard = document.getElementById('newBoard').value.trim();
+    if (!newBoard) { showToast('Enter a board name', 'error'); return; }
+    
+    // Use single pin action if set, otherwise use selectedIndices
+    const indicesToUpdate = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
+    
+    if (indicesToUpdate.length === 0) { showToast('Select pins first', 'warning'); return; }
+    
+    saveHistory();
+    let count = 0;
+    indicesToUpdate.forEach(i => { pins[i]['Pinterest board'] = newBoard; count++; });
+    document.getElementById('newBoard').value = '';
+    singlePinActionIndex = null; // Reset
+    closeModal('changeBoardModal');
+    filteredPins = [...pins];
+    renderPins(); updateUI();
+    showToast(`Updated ${count} board(s)`, 'success');
+}
 
         // Change keywords (selected)
         function showChangeKeywordsModal() {
@@ -1308,18 +1330,24 @@ card.addEventListener('click', e => {
     document.getElementById('changeKeywordsModal').classList.add('active');
 }
         function confirmKeywordsChange() {
-            const newKeywords = document.getElementById('newKeywords').value.trim();
-            if (!newKeywords) { showToast('Enter keywords', 'error'); return; }
-            if (selectedIndices.size === 0) { showToast('Select pins first', 'warning'); return; }
-            saveHistory();
-            let count = 0;
-            selectedIndices.forEach(i => { pins[i]['Keywords'] = newKeywords; count++; });
-            document.getElementById('newKeywords').value = '';
-            closeModal('changeKeywordsModal');
-            filteredPins = [...pins];
-            renderPins(); updateUI();
-            showToast(`Updated keywords for ${count} pin(s)`, 'success');
-        }
+    const newKeywords = document.getElementById('newKeywords').value.trim();
+    if (!newKeywords) { showToast('Enter keywords', 'error'); return; }
+    
+    // Use single pin action if set, otherwise use selectedIndices
+    const indicesToUpdate = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
+    
+    if (indicesToUpdate.length === 0) { showToast('Select pins first', 'warning'); return; }
+    
+    saveHistory();
+    let count = 0;
+    indicesToUpdate.forEach(i => { pins[i]['Keywords'] = newKeywords; count++; });
+    document.getElementById('newKeywords').value = '';
+    singlePinActionIndex = null; // Reset
+    closeModal('changeKeywordsModal');
+    filteredPins = [...pins];
+    renderPins(); updateUI();
+    showToast(`Updated keywords for ${count} pin(s)`, 'success');
+}
 
         // Adjust time (single pin via quick action)
         function confirmAdjustTime() {
