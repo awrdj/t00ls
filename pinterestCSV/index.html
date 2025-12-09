@@ -807,6 +807,7 @@
         let tooltipEl = null;
         let timeAdjustIndex = null;
         let singlePinActionIndex = null;
+        let lastSelectedIndex = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             setupDragAndDrop();
@@ -941,9 +942,14 @@ card.addEventListener('click', e => {
         e.target.closest('.card-action-btn')) {
         return;
     }
-    toggleSelection(index);
+    
+    // Shift+Click for range selection
+    if (e.shiftKey && lastSelectedIndex !== null && lastSelectedIndex !== index) {
+        selectRange(lastSelectedIndex, index);
+    } else {
+        toggleSelection(index);
+    }
 });
-
 
             const num = document.createElement('div');
             num.className = 'card-number';
@@ -953,7 +959,16 @@ card.addEventListener('click', e => {
             cb.type = 'checkbox';
             cb.className = 'card-checkbox';
             cb.checked = selectedIndices.has(index);
-            cb.onclick = e => { e.stopPropagation(); toggleSelection(index); };
+            cb.onclick = e => { 
+    e.stopPropagation(); 
+    
+    // Shift+Click for range selection
+    if (e.shiftKey && lastSelectedIndex !== null && lastSelectedIndex !== index) {
+        selectRange(lastSelectedIndex, index);
+    } else {
+        toggleSelection(index);
+    }
+};
 
             const imgWrap = document.createElement('div');
             imgWrap.className = 'card-image-container';
@@ -1157,18 +1172,39 @@ card.addEventListener('click', e => {
 
         // Selection
         function toggleSelection(index) {
-            if (selectedIndices.has(index)) selectedIndices.delete(index); else selectedIndices.add(index);
-            renderPins();
-            updateUI();
-        }
+    if (selectedIndices.has(index)) {
+        selectedIndices.delete(index);
+        // Don't update lastSelectedIndex when deselecting
+    } else {
+        selectedIndices.add(index);
+        lastSelectedIndex = index;  // Track last selected
+    }
+    renderPins();
+    updateUI();
+}
         function selectAll() {
             pins.forEach((_, i) => selectedIndices.add(i));
             renderPins(); updateUI();
         }
         function deselectAll() {
-            selectedIndices.clear();
-            renderPins(); updateUI();
-        }
+    selectedIndices.clear();
+    lastSelectedIndex = null;  // ADD THIS LINE
+    renderPins(); 
+    updateUI();
+}
+        function selectRange(startIndex, endIndex) {
+    const start = Math.min(startIndex, endIndex);
+    const end = Math.max(startIndex, endIndex);
+    
+    // Select all pins in the range
+    for (let i = start; i <= end; i++) {
+        selectedIndices.add(i);
+    }
+    
+    lastSelectedIndex = endIndex;
+    renderPins();
+    updateUI();
+}
 
         // Quick actions (single pin)
         function quickDelete(index) {
