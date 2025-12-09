@@ -1597,20 +1597,19 @@ function updateKeepPreview() {
         function repackPublishDates() {
     if (!pins.length) return;
 
-    // Collect all valid publish dates as strings
     const dateStrings = pins
         .map(p => p['Publish date'])
-        .filter(Boolean); // remove empty/undefined
+        .filter(Boolean);
+
+    console.log('Before repack:', dateStrings); // ADD THIS
 
     if (!dateStrings.length) return;
 
-    // ISO format is lexicographically sortable
     const sorted = dateStrings.slice().sort((a, b) => a > b ? 1 : -1);
-
-    // We keep only the earliest N dates, where N = remaining pins
     const toKeep = sorted.slice(0, pins.length);
 
-    // Reassign sequentially to pins in their current order
+    console.log('After repack:', toKeep); // ADD THIS
+
     for (let i = 0; i < pins.length; i++) {
         pins[i]['Publish date'] = toKeep[i] || '';
     }
