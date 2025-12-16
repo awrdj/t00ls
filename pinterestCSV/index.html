@@ -782,6 +782,15 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
             <button class="dock-btn" id="dockDeselectAll" onclick="deselectAll()" style="border-left: 0;border-top-left-radius: 0;border-bottom-left-radius: 0;margin-left: -8px;" disabled>
                 <span class="label">Unselect All</span> ⬜
             </button>
+
+            <!-- ODD & EVEN -->
+            <button class="dock-btn" id="dockSelectOdds" onclick="selectOdds()" style="margin-left: 8px;" disabled>
+                🔢 <span class="label">Odds</span>
+            </button>
+            <button class="dock-btn" id="dockSelectEvens" onclick="selectEvens()" disabled>
+                🔢 <span class="label">Evens</span>
+            </button>
+
             <button class="dock-btn" id="dockSelect100" onclick="showSelect100Modal()" disabled>
     💯 <span class="label" style="white-space:nowrap;">Keep First #</span>
 </button>
@@ -1719,6 +1728,11 @@ function updateKeepPreview() {
 
             document.getElementById('dockSelectAll').disabled = !hasData;
             document.getElementById('dockDeselectAll').disabled = !hasSel;
+
+            // ODD & EVEN
+            document.getElementById('dockSelectOdds').disabled = !hasData;
+            document.getElementById('dockSelectEvens').disabled = !hasData;
+            
             document.getElementById('dockSelect100').disabled = pins.length <= 1;
             document.getElementById('dockDelete').disabled = !hasSel;
             document.getElementById('dockLink').disabled = !hasSel;
@@ -1788,6 +1802,32 @@ function setupScrollDockBehavior() {
     });
 }
         function showDock() { document.body.classList.remove('dock-hidden'); }
+
+    // ODD & EVEN
+    function selectOdds() {
+            saveHistory();
+            selectedIndices.clear();
+            for (let i = 0; i < pins.length; i++) {
+                if ((i + 1) % 2 === 1) { // i+1 because card numbers are 1-based
+                    selectedIndices.add(i);
+                }
+            }
+            renderPins();
+            updateUI();
+            showToast(`Selected ${selectedIndices.size} odd pins`, 'success');
+    }
+    function selectEvens() {
+            saveHistory();
+            selectedIndices.clear();
+            for (let i = 0; i < pins.length; i++) {
+                if ((i + 1) % 2 === 0) { // i+1 because card numbers are 1-based
+                    selectedIndices.add(i);
+                }
+            }
+            renderPins();
+            updateUI();
+            showToast(`Selected ${selectedIndices.size} even pins`, 'success');
+    }
     </script>
 </body>
 </html>
