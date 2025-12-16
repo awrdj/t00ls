@@ -777,17 +777,17 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
                 📁 <span class="label">Load</span>
             </button>
             <button class="dock-btn" id="dockSelectAll" onclick="selectAll()" style="border-right: 1px var(--border-color) solid;border-top-right-radius: 0;border-bottom-right-radius: 0;" disabled>
-                ☑️ <span class="label">Select All</span>
+                ☑️ <span class="label">All</span>
             </button>
             <button class="dock-btn" id="dockDeselectAll" onclick="deselectAll()" style="border-left: 0;border-top-left-radius: 0;border-bottom-left-radius: 0;margin-left: -8px;" disabled>
-                <span class="label">Unselect All</span> ⬜
+                <span class="label">None</span> ⬜
             </button>
 
             <!-- ODD & EVEN -->
-            <button class="dock-btn" id="dockSelectOdds" onclick="selectOdds()" style="margin-left: 8px;" disabled>
+            <button class="dock-btn" id="dockSelectOdds" onclick="selectOdds()" style="border-right: 1px var(--border-color) solid;border-top-right-radius: 0;border-bottom-right-radius: 0;" disabled>
                 🔢 <span class="label">Odds</span>
             </button>
-            <button class="dock-btn" id="dockSelectEvens" onclick="selectEvens()" disabled>
+            <button class="dock-btn" id="dockSelectEvens" onclick="selectEvens()" style="border-left: 0;border-top-left-radius: 0;border-bottom-left-radius: 0;margin-left: -8px;" disabled>
                 🔢 <span class="label">Evens</span>
             </button>
 
