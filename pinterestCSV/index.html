@@ -854,17 +854,16 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
 
     <script>
         let pendingFiles = null;
-        let loadedFilenames = new Set();
-        let pins = [];
-        let filteredPins = [];
-        let history = [];
-        let selectedIndices = new Set();
-        let draggedIndex = null;
-        let originalFilename = 'pinterest';
-        let tooltipEl = null;
-        let timeAdjustIndex = null;
-        let singlePinActionIndex = null;
-        let lastSelectedIndex = null;
+let pins = [];
+let filteredPins = [];
+let history = [];
+let selectedIndices = new Set();
+let draggedIndex = null;
+let originalFilename = 'pinterest';
+let tooltipEl = null;
+let timeAdjustIndex = null;
+let singlePinActionIndex = null;
+let lastSelectedIndex = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             setupDragAndDrop();
