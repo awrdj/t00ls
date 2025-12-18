@@ -926,47 +926,20 @@ function processFileLoad(mode) {
         // Prepare base pins (empty if replace, existing if merge)
         let basePins = isReplace ? [] : [...pins];
         
-        // Clear loaded filenames if replacing
-        if (isReplace) {
-            loadedFilenames.clear();
-        }
-        
-        // Process each file
+        // Process each file and tag pins
         let newPinsAdded = 0;
-        let duplicatesSkipped = 0;
-        let filesSkipped = [];
         
         results.forEach((result, fileIndex) => {
             const { filename, pins: filePins } = result;
             
-            // Check if this exact filename was already loaded (in merge mode)
-            if (!isReplace && loadedFilenames.has(filename)) {
-                filesSkipped.push(filename);
-                duplicatesSkipped += filePins.length;
-                return;
-            }
-            
-            // Add filename to tracking
-            loadedFilenames.add(filename);
-            
-            // Tag and filter duplicates
+            // Tag and add all pins (no duplicate filtering)
             filePins.forEach((pin, rowIndex) => {
-                // Check for duplicate based on Title + Link
-                const isDuplicate = basePins.some(existingPin => 
-                    existingPin['Title'] === pin['Title'] && 
-                    existingPin['Link'] === pin['Link']
-                );
-                
-                if (!isDuplicate) {
-                    basePins.push({
-                        ...pin,
-                        _sourceFileIndex: fileIndex,
-                        _sourceRowIndex: rowIndex
-                    });
-                    newPinsAdded++;
-                } else {
-                    duplicatesSkipped++;
-                }
+                basePins.push({
+                    ...pin,
+                    _sourceFileIndex: fileIndex,
+                    _sourceRowIndex: rowIndex
+                });
+                newPinsAdded++;
             });
         });
         
@@ -1022,14 +995,6 @@ function processFileLoad(mode) {
             message = `Loaded ${fileCount} ${fileWord}, sorted ${pins.length} pins chronologically ✓`;
         } else {
             message = `Added ${newPinsAdded} new pins to existing ${existingPinsCount} pins, re-sorted ${pins.length} total ✓`;
-        }
-        
-        if (duplicatesSkipped > 0) {
-            message += ` (${duplicatesSkipped} duplicates skipped)`;
-        }
-        
-        if (filesSkipped.length > 0) {
-            message += ` ⚠️ Skipped ${filesSkipped.length} already-loaded file(s)`;
         }
         
         showToast(message, 'success');
