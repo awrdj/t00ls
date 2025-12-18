@@ -523,6 +523,42 @@
 .dock-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .dock-btn:not(:disabled):hover { background: rgba(255,255,255,0.2); }
 
+        /* Export Dropdown */
+.export-dropdown {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.2);
+    min-width: 220px;
+    z-index: 20000;
+    overflow: hidden;
+}
+
+.export-dropdown-item {
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.export-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.export-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+.export-dropdown-item:active {
+    background: var(--border-color);
+}
+
 /* ADD THESE NEW RULES FOR LIGHT MODE */
 body:not(.dark-mode) .dock {
     background: rgba(255,255,255,0.95);
@@ -797,6 +833,113 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
     </div>
 </div>
 
+    <!-- Export Batch Size Modal -->
+<div class="modal" id="exportBatchModal">
+    <div class="modal-content">
+        <h2 class="modal-title">📦 Export by Batch Size</h2>
+        <div class="modal-body">
+            <label class="modal-label" for="batchSize">Pins per file:</label>
+            <input type="number" class="modal-input" id="batchSize" min="1" placeholder="100" value="100">
+            <p class="modal-hint">Will create multiple CSV files with this many pins each.</p>
+            <p style="margin-top: 0.5rem;">Total pins: <strong><span id="batchTotalPins">0</span></strong> → Estimated files: <strong><span id="batchEstimatedFiles">0</span></strong></p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('exportBatchModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmExportBatch()">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Export Date Split Modal -->
+<div class="modal" id="exportDateSplitModal">
+    <div class="modal-content">
+        <h2 class="modal-title">📅 Export by Date Split</h2>
+        <div class="modal-body">
+            <label class="modal-label">Split by:</label>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                <label style="cursor: pointer;">
+                    <input type="radio" name="dateSplitMode" value="day" checked> Daily (one file per day)
+                </label>
+                <label style="cursor: pointer;">
+                    <input type="radio" name="dateSplitMode" value="week"> Weekly (one file per week)
+                </label>
+                <label style="cursor: pointer;">
+                    <input type="radio" name="dateSplitMode" value="month"> Monthly (one file per month)
+                </label>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('exportDateSplitModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmExportDateSplit()">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Export Date Range Modal -->
+<div class="modal" id="exportDateRangeModal">
+    <div class="modal-content">
+        <h2 class="modal-title">📆 Export Date Range</h2>
+        <div class="modal-body">
+            <label class="modal-label" for="rangeStartDate">Start Date:</label>
+            <input type="date" class="modal-input" id="rangeStartDate">
+            
+            <label class="modal-label" style="margin-top: 0.8rem;" for="rangeEndDate">End Date:</label>
+            <input type="date" class="modal-input" id="rangeEndDate">
+            
+            <p class="modal-hint" style="margin-top: 0.6rem;">Export only pins scheduled between these dates.</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('exportDateRangeModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmExportDateRange()">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Export First/Last N Modal -->
+<div class="modal" id="exportFirstLastModal">
+    <div class="modal-content">
+        <h2 class="modal-title">🔢 Export First/Last N Pins</h2>
+        <div class="modal-body">
+            <label class="modal-label" for="firstLastCount">Number of pins:</label>
+            <input type="number" class="modal-input" id="firstLastCount" min="1" placeholder="100" value="100">
+            
+            <label class="modal-label" style="margin-top: 0.8rem;">Export from:</label>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                <label style="cursor: pointer;">
+                    <input type="radio" name="firstLastMode" value="first" checked> First (earliest dates)
+                </label>
+                <label style="cursor: pointer;">
+                    <input type="radio" name="firstLastMode" value="last"> Last (latest dates)
+                </label>
+            </div>
+            
+            <p class="modal-hint" style="margin-top: 0.6rem;">Current total: <strong><span id="firstLastTotal">0</span></strong> pins</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('exportFirstLastModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmExportFirstLast()">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Export by Time Gaps Modal -->
+<div class="modal" id="exportGapsModal">
+    <div class="modal-content">
+        <h2 class="modal-title">⏱️ Export by Time Gaps</h2>
+        <div class="modal-body">
+            <label class="modal-label" for="gapThreshold">Gap threshold (hours):</label>
+            <input type="number" class="modal-input" id="gapThreshold" min="1" placeholder="24" value="24">
+            
+            <p class="modal-hint">Splits pins into separate files when there's a gap longer than this many hours between consecutive pins.</p>
+            <p style="margin-top: 0.5rem;">Example: 24 hours = 1 day gap</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('exportGapsModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmExportGaps()">Export</button>
+        </div>
+    </div>
+</div>
+
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
@@ -845,9 +988,40 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
             <button class="dock-btn" id="dockUndo" onclick="undo()" disabled>
                 ↶ <span class="label">Undo</span>
             </button>
-            <button class="dock-btn" id="dockExport" onclick="exportCSV()" disabled>
-                💾 <span class="label">Export</span>
-            </button>
+            <!-- Export Split Button -->
+            <div class="export-split-btn" style="display: inline-flex; position: relative;">
+                <button class="dock-btn" id="dockExport" onclick="exportCSV()" disabled style="border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: 0;">
+                    💾 <span class="label">Export</span>
+                </button>
+                <button class="dock-btn" id="dockExportDropdown" onclick="toggleExportDropdown()" disabled style="border-top-left-radius: 0; border-bottom-left-radius: 0; padding-left: 0.4rem; padding-right: 0.4rem; margin-left: -1px;">
+                    ▲
+                </button>
+                
+                <!-- Dropdown Menu (opens upward) -->
+                <div class="export-dropdown hidden" id="exportDropdown">
+                    <div class="export-dropdown-item" onclick="exportByBoard()">
+                        📋 Export by Board
+                    </div>
+                    <div class="export-dropdown-item" onclick="showExportBatchModal()">
+                        📦 Export by Batch Size
+                    </div>
+                    <div class="export-dropdown-item" onclick="showExportDateSplitModal()">
+                        📅 Export by Date Split
+                    </div>
+                    <div class="export-dropdown-item" onclick="exportSelectedOnly()">
+                        ☑️ Export Selected Only
+                    </div>
+                    <div class="export-dropdown-item" onclick="showExportDateRangeModal()">
+                        📆 Export Date Range
+                    </div>
+                    <div class="export-dropdown-item" onclick="showExportFirstLastModal()">
+                        🔢 Export First/Last N
+                    </div>
+                    <div class="export-dropdown-item" onclick="showExportGapsModal()">
+                        ⏱️ Export by Time Gaps
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="dock-indicator" id="dockIndicator" onclick="showDock()">▲ Toolbar hidden (click here or scroll up to show)</div>
@@ -1879,6 +2053,9 @@ function updateKeepPreview() {
             document.getElementById('dockKeywords').disabled = !hasSel;
             document.getElementById('dockUndo').disabled = history.length === 0;
             document.getElementById('dockExport').disabled = !hasData;
+
+    document.getElementById('dockExportDropdown').disabled = !hasData;
+            
             document.getElementById('dockSwap').disabled = selectedIndices.size !== 2;
             document.getElementById('dockReschedule').disabled = !hasData;
         }
@@ -1967,6 +2144,335 @@ function setupScrollDockBehavior() {
             updateUI();
             showToast(`Selected ${selectedIndices.size} even pins`, 'success');
     }
+
+    // Export Dropdown Toggle
+function toggleExportDropdown() {
+    const dropdown = document.getElementById('exportDropdown');
+    dropdown.classList.toggle('hidden');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('exportDropdown');
+    const exportSplit = document.querySelector('.export-split-btn');
+    if (dropdown && !exportSplit.contains(e.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
+
+// 1. Export by Board
+function exportByBoard() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    
+    // Group pins by board
+    const boards = {};
+    pins.forEach(pin => {
+        const board = pin['Pinterest board'] || 'No_Board';
+        if (!boards[board]) boards[board] = [];
+        boards[board].push(pin);
+    });
+    
+    const boardNames = Object.keys(boards);
+    if (boardNames.length === 0) {
+        showToast('No boards found', 'error');
+        return;
+    }
+    
+    // Export each board as separate CSV
+    boardNames.forEach(boardName => {
+        const boardPins = boards[boardName];
+        const csvContent = generateCSV(boardPins);
+        const safeBoard = boardName.replace(/[^a-z0-9]/gi, '_');
+        downloadCSV(csvContent, `${originalFilename}_${safeBoard}.csv`);
+    });
+    
+    showToast(`Exported ${boardNames.length} board(s) as separate CSV files ✓`, 'success');
+}
+
+// 2. Export by Batch Size
+function showExportBatchModal() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    document.getElementById('batchTotalPins').textContent = pins.length;
+    updateBatchEstimate();
+    document.getElementById('exportBatchModal').classList.add('active');
+}
+
+function updateBatchEstimate() {
+    const batchSize = parseInt(document.getElementById('batchSize').value) || 100;
+    const total = pins.length;
+    const estimated = Math.ceil(total / batchSize);
+    document.getElementById('batchEstimatedFiles').textContent = estimated;
+}
+
+// Add input listener for batch size
+document.addEventListener('DOMContentLoaded', () => {
+    const batchInput = document.getElementById('batchSize');
+    if (batchInput) {
+        batchInput.addEventListener('input', updateBatchEstimate);
+    }
+});
+
+function confirmExportBatch() {
+    const batchSize = parseInt(document.getElementById('batchSize').value);
+    if (!batchSize || batchSize < 1) {
+        showToast('Enter a valid batch size', 'error');
+        return;
+    }
+    
+    const batches = [];
+    for (let i = 0; i < pins.length; i += batchSize) {
+        batches.push(pins.slice(i, i + batchSize));
+    }
+    
+    batches.forEach((batch, index) => {
+        const csvContent = generateCSV(batch);
+        downloadCSV(csvContent, `${originalFilename}_batch_${index + 1}.csv`);
+    });
+    
+    closeModal('exportBatchModal');
+    showToast(`Exported ${batches.length} batch file(s) ✓`, 'success');
+}
+
+// 3. Export by Date Split
+function showExportDateSplitModal() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    document.getElementById('exportDateSplitModal').classList.add('active');
+}
+
+function confirmExportDateSplit() {
+    const mode = document.querySelector('input[name="dateSplitMode"]:checked').value;
+    
+    // Group pins by date period
+    const groups = {};
+    pins.forEach(pin => {
+        const date = parseISODate(pin['Publish date']);
+        if (!date) return;
+        
+        let key;
+        if (mode === 'day') {
+            key = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        } else if (mode === 'week') {
+            const weekNum = getWeekNumber(date);
+            key = `${date.getFullYear()}_Week_${weekNum}`;
+        } else if (mode === 'month') {
+            key = `${date.getFullYear()}_${String(date.getMonth() + 1).padStart(2, '0')}`;
+        }
+        
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(pin);
+    });
+    
+    const keys = Object.keys(groups).sort();
+    keys.forEach(key => {
+        const csvContent = generateCSV(groups[key]);
+        downloadCSV(csvContent, `${originalFilename}_${key}.csv`);
+    });
+    
+    closeModal('exportDateSplitModal');
+    showToast(`Exported ${keys.length} file(s) by ${mode} ✓`, 'success');
+}
+
+function getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+// 4. Export Selected Only
+function exportSelectedOnly() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    
+    if (selectedIndices.size === 0) {
+        showToast('No pins selected', 'warning');
+        return;
+    }
+    
+    const selectedPins = Array.from(selectedIndices).map(i => pins[i]);
+    const csvContent = generateCSV(selectedPins);
+    downloadCSV(csvContent, `${originalFilename}_selected.csv`);
+    showToast(`Exported ${selectedPins.length} selected pin(s) ✓`, 'success');
+}
+
+// 5. Export Date Range
+function showExportDateRangeModal() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    document.getElementById('exportDateRangeModal').classList.add('active');
+}
+
+function confirmExportDateRange() {
+    const startStr = document.getElementById('rangeStartDate').value;
+    const endStr = document.getElementById('rangeEndDate').value;
+    
+    if (!startStr || !endStr) {
+        showToast('Please select both start and end dates', 'error');
+        return;
+    }
+    
+    const startDate = new Date(startStr);
+    const endDate = new Date(endStr);
+    endDate.setHours(23, 59, 59, 999); // Include entire end day
+    
+    if (startDate > endDate) {
+        showToast('Start date must be before end date', 'error');
+        return;
+    }
+    
+    const filtered = pins.filter(pin => {
+        const date = parseISODate(pin['Publish date']);
+        return date && date >= startDate && date <= endDate;
+    });
+    
+    if (filtered.length === 0) {
+        showToast('No pins found in this date range', 'warning');
+        return;
+    }
+    
+    const csvContent = generateCSV(filtered);
+    downloadCSV(csvContent, `${originalFilename}_${startStr}_to_${endStr}.csv`);
+    closeModal('exportDateRangeModal');
+    showToast(`Exported ${filtered.length} pin(s) from date range ✓`, 'success');
+}
+
+// 6. Export First/Last N
+function showExportFirstLastModal() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    document.getElementById('firstLastTotal').textContent = pins.length;
+    document.getElementById('exportFirstLastModal').classList.add('active');
+}
+
+function confirmExportFirstLast() {
+    const count = parseInt(document.getElementById('firstLastCount').value);
+    const mode = document.querySelector('input[name="firstLastMode"]:checked').value;
+    
+    if (!count || count < 1) {
+        showToast('Enter a valid number', 'error');
+        return;
+    }
+    
+    if (count > pins.length) {
+        showToast(`Only ${pins.length} pins available`, 'warning');
+        return;
+    }
+    
+    let exportPins;
+    if (mode === 'first') {
+        exportPins = pins.slice(0, count);
+    } else {
+        exportPins = pins.slice(-count);
+    }
+    
+    const csvContent = generateCSV(exportPins);
+    downloadCSV(csvContent, `${originalFilename}_${mode}_${count}.csv`);
+    closeModal('exportFirstLastModal');
+    showToast(`Exported ${mode} ${count} pin(s) ✓`, 'success');
+}
+
+// 7. Export by Time Gaps
+function showExportGapsModal() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    document.getElementById('exportGapsModal').classList.add('active');
+}
+
+function confirmExportGaps() {
+    const thresholdHours = parseInt(document.getElementById('gapThreshold').value);
+    
+    if (!thresholdHours || thresholdHours < 1) {
+        showToast('Enter a valid gap threshold', 'error');
+        return;
+    }
+    
+    const thresholdMs = thresholdHours * 60 * 60 * 1000;
+    const batches = [];
+    let currentBatch = [];
+    
+    pins.forEach((pin, index) => {
+        const date = parseISODate(pin['Publish date']);
+        if (!date) return;
+        
+        if (currentBatch.length === 0) {
+            currentBatch.push(pin);
+        } else {
+            const prevPin = currentBatch[currentBatch.length - 1];
+            const prevDate = parseISODate(prevPin['Publish date']);
+            const gap = date - prevDate;
+            
+            if (gap > thresholdMs) {
+                // Gap detected, start new batch
+                batches.push(currentBatch);
+                currentBatch = [pin];
+            } else {
+                currentBatch.push(pin);
+            }
+        }
+    });
+    
+    // Add last batch
+    if (currentBatch.length > 0) {
+        batches.push(currentBatch);
+    }
+    
+    if (batches.length === 1) {
+        showToast('No time gaps detected with this threshold', 'warning');
+        return;
+    }
+    
+    batches.forEach((batch, index) => {
+        const csvContent = generateCSV(batch);
+        downloadCSV(csvContent, `${originalFilename}_gap_batch_${index + 1}.csv`);
+    });
+    
+    closeModal('exportGapsModal');
+    showToast(`Exported ${batches.length} batch(es) based on time gaps ✓`, 'success');
+}
+
+// Helper: Generate CSV from pins array
+function generateCSV(pinsArray) {
+    if (pinsArray.length === 0) return '';
+    const headers = Object.keys(pinsArray[0]);
+    let csv = headers.map(escapeCSV).join(',') + '\n';
+    pinsArray.forEach(pin => {
+        csv += headers.map(h => escapeCSV(pin[h] || '')).join(',') + '\n';
+    });
+    return csv;
+}
+
+// Helper: Download CSV
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
     </script>
 </body>
 </html>
