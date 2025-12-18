@@ -2328,8 +2328,10 @@ function confirmExportDateRange() {
     }
     
     const startDate = new Date(startStr);
+    startDate.setHours(0, 0, 0, 0); // Start of day in local time
+    
     const endDate = new Date(endStr);
-    endDate.setHours(23, 59, 59, 999); // Include entire end day
+    endDate.setHours(23, 59, 59, 999); // End of day in local time
     
     if (startDate > endDate) {
         showToast('Start date must be before end date', 'error');
