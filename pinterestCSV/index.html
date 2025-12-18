@@ -765,6 +765,36 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
                 <button class="btn-modal btn-modal-primary" onclick="applyReschedule()">Apply</button>
             </div>
         </div>
+        <!-- Replace or Merge Modal -->
+<div class="modal" id="replaceMergeModal">
+    <div class="modal-content">
+        <h2 class="modal-title">📁 Load More Files</h2>
+        <div class="modal-body">
+            <p>You already have <strong><span id="existingPinsCount">0</span></strong> pins loaded.</p>
+            <p style="margin-top: 0.8rem;">How would you like to proceed?</p>
+            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <label style="padding: 0.6rem; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="radio" name="loadMode" value="merge" checked style="cursor: pointer;">
+                    <div>
+                        <strong>Merge</strong> - Add new pins and sort all chronologically
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">Duplicates will be detected and skipped</div>
+                    </div>
+                </label>
+                <label style="padding: 0.6rem; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="radio" name="loadMode" value="replace" style="cursor: pointer;">
+                    <div>
+                        <strong>Replace</strong> - Remove existing pins and load new files
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">Current pins will be cleared</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="cancelLoadFiles()">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmLoadFiles()">Continue</button>
+        </div>
+    </div>
+</div>
     </div>
 
     <!-- Toast -->
@@ -823,6 +853,8 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
     <div class="dock-indicator" id="dockIndicator" onclick="showDock()">▲ Toolbar hidden (click here or scroll up to show)</div>
 
     <script>
+        let pendingFiles = null;
+        let loadedFilenames = new Set();
         let pins = [];
         let filteredPins = [];
         let history = [];
@@ -841,83 +873,176 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
         });
 
         // File Handling
-        function handleFileSelect(event) {
-            const files = event.target.files;
-            if (!files || files.length === 0) return;
+function handleFileSelect(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-            showToast('Loading CSV files...', 'success');
-            const readers = Array.from(files).map(file => {
-                if (!originalFilename || originalFilename === 'pinterest') {
-                    originalFilename = file.name.replace('.csv', '');
-                }
-                return readCSV(file);
-            });
+    // Store pending files
+    pendingFiles = files;
 
-            Promise.all(readers).then(results => {
-                // Tag each pin with its source file index and row index
-                const taggedResults = results.map((filePins, fileIndex) => 
-                    filePins.map((pin, rowIndex) => ({
+    // If pins already exist, ask user to replace or merge
+    if (pins.length > 0) {
+        document.getElementById('existingPinsCount').textContent = pins.length;
+        document.getElementById('replaceMergeModal').classList.add('active');
+        // Reset radio to merge by default
+        document.querySelector('input[name="loadMode"][value="merge"]').checked = true;
+    } else {
+        // No existing pins, just load directly
+        processFileLoad('replace');
+    }
+}
+
+function cancelLoadFiles() {
+    pendingFiles = null;
+    document.getElementById('fileInput').value = ''; // Clear file input
+    closeModal('replaceMergeModal');
+}
+
+function confirmLoadFiles() {
+    const mode = document.querySelector('input[name="loadMode"]:checked').value;
+    closeModal('replaceMergeModal');
+    processFileLoad(mode);
+}
+
+function processFileLoad(mode) {
+    if (!pendingFiles) return;
+
+    const files = pendingFiles;
+    const isReplace = mode === 'replace';
+    
+    showToast('Loading CSV files...', 'success');
+    
+    const readers = Array.from(files).map(file => {
+        if (!originalFilename || originalFilename === 'pinterest') {
+            originalFilename = file.name.replace('.csv', '');
+        }
+        return readCSV(file).then(pins => ({ filename: file.name, pins }));
+    });
+
+    Promise.all(readers).then(results => {
+        // Track existing pins count before merge
+        const existingPinsCount = isReplace ? 0 : pins.length;
+        
+        // Prepare base pins (empty if replace, existing if merge)
+        let basePins = isReplace ? [] : [...pins];
+        
+        // Clear loaded filenames if replacing
+        if (isReplace) {
+            loadedFilenames.clear();
+        }
+        
+        // Process each file
+        let newPinsAdded = 0;
+        let duplicatesSkipped = 0;
+        let filesSkipped = [];
+        
+        results.forEach((result, fileIndex) => {
+            const { filename, pins: filePins } = result;
+            
+            // Check if this exact filename was already loaded (in merge mode)
+            if (!isReplace && loadedFilenames.has(filename)) {
+                filesSkipped.push(filename);
+                duplicatesSkipped += filePins.length;
+                return;
+            }
+            
+            // Add filename to tracking
+            loadedFilenames.add(filename);
+            
+            // Tag and filter duplicates
+            filePins.forEach((pin, rowIndex) => {
+                // Check for duplicate based on Title + Link
+                const isDuplicate = basePins.some(existingPin => 
+                    existingPin['Title'] === pin['Title'] && 
+                    existingPin['Link'] === pin['Link']
+                );
+                
+                if (!isDuplicate) {
+                    basePins.push({
                         ...pin,
                         _sourceFileIndex: fileIndex,
                         _sourceRowIndex: rowIndex
-                    }))
-                );
-                
-                const allPins = taggedResults.flat();
-                
-                if (allPins.length === 0) {
-                    showToast('No valid data found in CSV files', 'error');
-                    return;
+                    });
+                    newPinsAdded++;
+                } else {
+                    duplicatesSkipped++;
                 }
-                
-                // Sort chronologically with robust handling
-                allPins.sort((a, b) => {
-                    const dateA = parseISODate(a['Publish date']);
-                    const dateB = parseISODate(b['Publish date']);
-                    
-                    // Pins without valid dates go to the end
-                    if (!dateA && !dateB) {
-                        // Both invalid: maintain file order, then row order
-                        if (a._sourceFileIndex !== b._sourceFileIndex) {
-                            return a._sourceFileIndex - b._sourceFileIndex;
-                        }
-                        return a._sourceRowIndex - b._sourceRowIndex;
-                    }
-                    if (!dateA) return 1;  // a goes to end
-                    if (!dateB) return -1; // b goes to end
-                    
-                    // Both have valid dates: sort chronologically
-                    const timeDiff = dateA - dateB;
-                    if (timeDiff !== 0) return timeDiff;
-                    
-                    // Same date: maintain file order, then row order
-                    if (a._sourceFileIndex !== b._sourceFileIndex) {
-                        return a._sourceFileIndex - b._sourceFileIndex;
-                    }
-                    return a._sourceRowIndex - b._sourceRowIndex;
-                });
-                
-                // Clean up temporary metadata
-                allPins.forEach(pin => {
-                    delete pin._sourceFileIndex;
-                    delete pin._sourceRowIndex;
-                });
-                
-                saveHistory();
-                pins = allPins;
-                filteredPins = [...pins];
-                renderPins();
-                updateUI();
-                
-                // Enhanced feedback message
-                const fileCount = results.length;
-                const fileWord = fileCount === 1 ? 'file' : 'files';
-                showToast(`Merged ${fileCount} ${fileWord}, sorted ${pins.length} pins chronologically ✓`, 'success');
-            }).catch(err => {
-                console.error(err);
-                showToast('Error loading CSV', 'error');
             });
+        });
+        
+        if (basePins.length === 0) {
+            showToast('No valid data found in CSV files', 'error');
+            pendingFiles = null;
+            return;
         }
+        
+        // Sort chronologically with robust handling
+        basePins.sort((a, b) => {
+            const dateA = parseISODate(a['Publish date']);
+            const dateB = parseISODate(b['Publish date']);
+            
+            // Pins without valid dates go to the end
+            if (!dateA && !dateB) {
+                if (a._sourceFileIndex !== b._sourceFileIndex) {
+                    return a._sourceFileIndex - b._sourceFileIndex;
+                }
+                return a._sourceRowIndex - b._sourceRowIndex;
+            }
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            
+            // Both have valid dates: sort chronologically
+            const timeDiff = dateA - dateB;
+            if (timeDiff !== 0) return timeDiff;
+            
+            if (a._sourceFileIndex !== b._sourceFileIndex) {
+                return a._sourceFileIndex - b._sourceFileIndex;
+            }
+            return a._sourceRowIndex - b._sourceRowIndex;
+        });
+        
+        // Clean up temporary metadata
+        basePins.forEach(pin => {
+            delete pin._sourceFileIndex;
+            delete pin._sourceRowIndex;
+        });
+        
+        saveHistory();
+        pins = basePins;
+        filteredPins = [...pins];
+        renderPins();
+        updateUI();
+        
+        // Enhanced feedback message
+        const fileCount = results.length;
+        const fileWord = fileCount === 1 ? 'file' : 'files';
+        let message = '';
+        
+        if (isReplace) {
+            message = `Loaded ${fileCount} ${fileWord}, sorted ${pins.length} pins chronologically ✓`;
+        } else {
+            message = `Added ${newPinsAdded} new pins to existing ${existingPinsCount} pins, re-sorted ${pins.length} total ✓`;
+        }
+        
+        if (duplicatesSkipped > 0) {
+            message += ` (${duplicatesSkipped} duplicates skipped)`;
+        }
+        
+        if (filesSkipped.length > 0) {
+            message += ` ⚠️ Skipped ${filesSkipped.length} already-loaded file(s)`;
+        }
+        
+        showToast(message, 'success');
+        
+        // Clear pending files and file input
+        pendingFiles = null;
+        document.getElementById('fileInput').value = '';
+    }).catch(err => {
+        console.error(err);
+        showToast('Error loading CSV', 'error');
+        pendingFiles = null;
+    });
+}
 
         function readCSV(file) {
             return new Promise((resolve, reject) => {
