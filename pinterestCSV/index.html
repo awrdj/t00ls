@@ -778,7 +778,7 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
                     <input type="radio" name="loadMode" value="merge" checked style="cursor: pointer;">
                     <div>
                         <strong>Merge</strong> - Add new pins and sort all chronologically
-                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">Duplicates will be detected and skipped</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">All pins will be kept (duplicates or not).</div>
                     </div>
                 </label>
                 <label style="padding: 0.6rem; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
@@ -1345,10 +1345,12 @@ card.addEventListener('click', e => {
     updateUI();
 }
         function selectAll() {
+            saveHistory();
             pins.forEach((_, i) => selectedIndices.add(i));
             renderPins(); updateUI();
         }
         function deselectAll() {
+            saveHistory();
     selectedIndices.clear();
     lastSelectedIndex = null;  // ADD THIS LINE
     renderPins(); 
