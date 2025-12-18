@@ -854,26 +854,65 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
             });
 
             Promise.all(readers).then(results => {
-                const allPins = results.flat();
-
-                // Sort pins chronologically by Publish date
-                allPins.sort((a, b) => {
-                    const dateA = parseISODate(a['Publish date']) || new Date(0);
-                    const dateB = parseISODate(b['Publish date']) || new Date(0);
-                    return dateA - dateB;
-                });
+                // Tag each pin with its source file index and row index
+                const taggedResults = results.map((filePins, fileIndex) => 
+                    filePins.map((pin, rowIndex) => ({
+                        ...pin,
+                        _sourceFileIndex: fileIndex,
+                        _sourceRowIndex: rowIndex
+                    }))
+                );
                 
+                const allPins = taggedResults.flat();
                 
                 if (allPins.length === 0) {
                     showToast('No valid data found in CSV files', 'error');
                     return;
                 }
+                
+                // Sort chronologically with robust handling
+                allPins.sort((a, b) => {
+                    const dateA = parseISODate(a['Publish date']);
+                    const dateB = parseISODate(b['Publish date']);
+                    
+                    // Pins without valid dates go to the end
+                    if (!dateA && !dateB) {
+                        // Both invalid: maintain file order, then row order
+                        if (a._sourceFileIndex !== b._sourceFileIndex) {
+                            return a._sourceFileIndex - b._sourceFileIndex;
+                        }
+                        return a._sourceRowIndex - b._sourceRowIndex;
+                    }
+                    if (!dateA) return 1;  // a goes to end
+                    if (!dateB) return -1; // b goes to end
+                    
+                    // Both have valid dates: sort chronologically
+                    const timeDiff = dateA - dateB;
+                    if (timeDiff !== 0) return timeDiff;
+                    
+                    // Same date: maintain file order, then row order
+                    if (a._sourceFileIndex !== b._sourceFileIndex) {
+                        return a._sourceFileIndex - b._sourceFileIndex;
+                    }
+                    return a._sourceRowIndex - b._sourceRowIndex;
+                });
+                
+                // Clean up temporary metadata
+                allPins.forEach(pin => {
+                    delete pin._sourceFileIndex;
+                    delete pin._sourceRowIndex;
+                });
+                
                 saveHistory();
                 pins = allPins;
                 filteredPins = [...pins];
                 renderPins();
                 updateUI();
-                showToast(`Loaded ${pins.length} pins successfully!`, 'success');
+                
+                // Enhanced feedback message
+                const fileCount = results.length;
+                const fileWord = fileCount === 1 ? 'file' : 'files';
+                showToast(`Merged ${fileCount} ${fileWord}, sorted ${pins.length} pins chronologically ✓`, 'success');
             }).catch(err => {
                 console.error(err);
                 showToast('Error loading CSV', 'error');
