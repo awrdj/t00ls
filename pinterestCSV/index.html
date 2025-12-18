@@ -994,7 +994,7 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
                     💾 <span class="label">Export</span>
                 </button>
                 <button class="dock-btn" id="dockExportDropdown" onclick="toggleExportDropdown()" disabled style="border-top-left-radius: 0; border-bottom-left-radius: 0; padding-left: 0.4rem; padding-right: 0.4rem; margin-left: -1px;">
-                    ▲
+                    ▼
                 </button>
                 
                 <!-- Dropdown Menu (opens upward) -->
@@ -1039,11 +1039,18 @@ let timeAdjustIndex = null;
 let singlePinActionIndex = null;
 let lastSelectedIndex = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            setupDragAndDrop();
-            loadTheme();
-            setupScrollDockBehavior();
-        });
+
+document.addEventListener('DOMContentLoaded', () => {
+    setupDragAndDrop();
+    loadTheme();
+    setupScrollDockBehavior();
+    
+    // Add batch input listener here
+    const batchInput = document.getElementById('batchSize');
+    if (batchInput) {
+        batchInput.addEventListener('input', updateBatchEstimate);
+    }
+});
 
         // File Handling
 function handleFileSelect(event) {
@@ -1686,18 +1693,25 @@ function updateKeepPreview() {
 
         // Search
         function searchPins() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            if (!q) filteredPins = [...pins];
-            else {
-                filteredPins = pins.filter(pin => {
-                    const t = (pin['Title'] || '').toLowerCase();
-                    const k = (pin['Keywords'] || '').toLowerCase();
-                    const d = (pin['Description'] || '').toLowerCase();
-                    return t.includes(q) || k.includes(q) || d.includes(q);
-                });
-            }
-            renderPins();
-        }
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    if (!q) {
+        filteredPins = [...pins];
+    } else {
+        filteredPins = pins.filter(pin => {
+            const t = (pin['Title'] || '').toLowerCase();
+            const k = (pin['Keywords'] || '').toLowerCase();
+            const d = (pin['Description'] || '').toLowerCase();
+            return t.includes(q) || k.includes(q) || d.includes(q);
+        });
+    }
+    
+    // Clear selection context when filter changes
+    if (filteredPins.length === 0) {
+        lastSelectedIndex = null;
+    }
+    
+    renderPins();
+}
 
         // Delete (selected)
         function showDeleteModal() {
@@ -2209,8 +2223,13 @@ function setupScrollDockBehavior() {
     // Export Dropdown Toggle
 function toggleExportDropdown() {
     const dropdown = document.getElementById('exportDropdown');
+    const arrow = document.getElementById('dockExportDropdown');
     dropdown.classList.toggle('hidden');
+    
+    // Update arrow icon based on state
+    arrow.textContent = dropdown.classList.contains('hidden') ? '▼' : '▲';
 }
+
 
 // Close dropdown when clicking outside
 document.addEventListener('click', (e) => {
@@ -2275,12 +2294,12 @@ function updateBatchEstimate() {
 }
 
 // Add input listener for batch size
-document.addEventListener('DOMContentLoaded', () => {
+/* document.addEventListener('DOMContentLoaded', () => {
     const batchInput = document.getElementById('batchSize');
     if (batchInput) {
         batchInput.addEventListener('input', updateBatchEstimate);
     }
-});
+}); */
 
 function confirmExportBatch() {
     const batchSize = parseInt(document.getElementById('batchSize').value);
