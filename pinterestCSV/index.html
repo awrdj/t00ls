@@ -994,7 +994,7 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
                     💾 <span class="label">Export</span>
                 </button>
                 <button class="dock-btn" id="dockExportDropdown" onclick="toggleExportDropdown()" disabled style="border-top-left-radius: 0; border-bottom-left-radius: 0; padding-left: 0.4rem; padding-right: 0.4rem; margin-left: -1px;">
-                    ▼
+                    ▾
                 </button>
                 
                 <!-- Dropdown Menu (opens upward) -->
@@ -2226,8 +2226,8 @@ function toggleExportDropdown() {
     const arrow = document.getElementById('dockExportDropdown');
     dropdown.classList.toggle('hidden');
     
-    // Update arrow icon based on state
-    arrow.textContent = dropdown.classList.contains('hidden') ? '▼' : '▲';
+    // Update arrow icon based on state ▲▼
+    arrow.textContent = dropdown.classList.contains('hidden') ? '▾' : '▴';
 }
 
 
