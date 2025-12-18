@@ -1345,12 +1345,12 @@ card.addEventListener('click', e => {
     updateUI();
 }
         function selectAll() {
-            saveHistory();
+            // saveHistory();
             pins.forEach((_, i) => selectedIndices.add(i));
             renderPins(); updateUI();
         }
         function deselectAll() {
-            saveHistory();
+            // saveHistory();
     selectedIndices.clear();
     lastSelectedIndex = null;  // ADD THIS LINE
     renderPins(); 
@@ -1944,7 +1944,7 @@ function setupScrollDockBehavior() {
 
     // ODD & EVEN
     function selectOdds() {
-            saveHistory();
+            // saveHistory();
             selectedIndices.clear();
             for (let i = 0; i < pins.length; i++) {
                 if ((i + 1) % 2 === 1) { // i+1 because card numbers are 1-based
@@ -1956,7 +1956,7 @@ function setupScrollDockBehavior() {
             showToast(`Selected ${selectedIndices.size} odd pins`, 'success');
     }
     function selectEvens() {
-            saveHistory();
+            // saveHistory();
             selectedIndices.clear();
             for (let i = 0; i < pins.length; i++) {
                 if ((i + 1) % 2 === 0) { // i+1 because card numbers are 1-based
