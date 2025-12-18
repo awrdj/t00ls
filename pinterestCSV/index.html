@@ -1147,11 +1147,64 @@ function processFileLoad(mode) {
             return a._sourceRowIndex - b._sourceRowIndex;
         });
         
-        // Clean up temporary metadata
+                // Clean up temporary metadata
         basePins.forEach(pin => {
             delete pin._sourceFileIndex;
             delete pin._sourceRowIndex;
         });
+        
+        // ===== DUPLICATE DETECTION & NUMBERING =====
+        const titleCounts = {};
+        const descCounts = {};
+        
+        basePins.forEach((pin, index) => {
+            const title = pin['Title'] || '';
+            const desc = pin['Description'] || '';
+            
+            // Track title duplicates
+            if (title) {
+                if (!titleCounts[title]) {
+                    titleCounts[title] = 1;
+                } else {
+                    titleCounts[title]++;
+                    const num = titleCounts[title];
+                    
+                    // Update title with #2, #3, etc
+                    pin['Title'] = `${title} #${num}`;
+                    
+                    // Update slug in Link
+                    if (pin['Link']) {
+                        const linkParts = pin['Link'].split('?');
+                        if (linkParts.length === 2) {
+                            const domain = linkParts[0];
+                            const slug = linkParts[1];
+                            pin['Link'] = `${domain}?${slug}-${num}`;
+                        }
+                    }
+                }
+            }
+            
+            // Track description duplicates
+            if (desc) {
+                if (!descCounts[desc]) {
+                    descCounts[desc] = 1;
+                } else {
+                    descCounts[desc]++;
+                    const num = descCounts[desc];
+                    
+                    // Update description with #2, #3, etc
+                    pin['Description'] = `${desc} #${num}`;
+                }
+            }
+        });
+        
+        // Count how many duplicates were found
+        let titleDuplicates = 0;
+        let descDuplicates = 0;
+        Object.values(titleCounts).forEach(count => { if (count > 1) titleDuplicates += (count - 1); });
+        Object.values(descCounts).forEach(count => { if (count > 1) descDuplicates += (count - 1); });
+        
+        // ===== END DUPLICATE DETECTION =====
         
         saveHistory();
         pins = basePins;
@@ -1168,6 +1221,14 @@ function processFileLoad(mode) {
             message = `Loaded ${fileCount} ${fileWord}, sorted ${pins.length} pins chronologically ✓`;
         } else {
             message = `Added ${newPinsAdded} new pins to existing ${existingPinsCount} pins, re-sorted ${pins.length} total ✓`;
+        }
+        
+        // Add duplicate info to message
+        if (titleDuplicates > 0 || descDuplicates > 0) {
+            const dupParts = [];
+            if (titleDuplicates > 0) dupParts.push(`${titleDuplicates} title duplicates`);
+            if (descDuplicates > 0) dupParts.push(`${descDuplicates} description duplicates`);
+            message += ` (Renamed: ${dupParts.join(', ')})`;
         }
         
         showToast(message, 'success');
