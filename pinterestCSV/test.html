@@ -1744,6 +1744,9 @@ function deleteCurrentPreviewPin() {
     updatePreviewImage();
     renderPins();
     updateStats();
+
+    // IMPORTANT: Re-apply preview mode dock restrictions after UI updates
+    updateDockForPreview();
 }
 
 function hideImagePreview() {
