@@ -2431,16 +2431,18 @@ function showDeleteModal() {
         }
         
         // TO DEFAULT TO LIGHT MODE, UNCOMMENT THIS
-        /*function loadTheme() {
+        /*
+        function loadTheme() {
             const theme = localStorage.getItem('theme');
             if (theme === 'dark') document.body.classList.add('dark-mode');
-        }*/
+        }
+        */
         function loadTheme() {
             const theme = localStorage.getItem('theme');
             // Apply dark mode by default if no theme is saved, or if theme is 'dark'
             if (theme === null || theme === 'dark') {
                 document.body.classList.add('dark-mode');
-                // Save dark as default for future visits
+                // Save dark as default for future visits if no theme was saved
                 if (theme === null) {
                     localStorage.setItem('theme', 'dark');
                 }
@@ -2453,6 +2455,13 @@ function setupScrollDockBehavior() {
     const header = document.querySelector('.header');
     
     window.addEventListener('scroll', () => {
+
+         // Always keep dock visible in preview mode
+        if (previewMode) {
+            document.body.classList.remove('dock-hidden');
+            return;
+        }
+        
         const dockHidden = document.body.classList.contains('dock-hidden');
         const curr = window.scrollY;
         
