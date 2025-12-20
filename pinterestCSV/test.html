@@ -311,9 +311,7 @@
     z-index: 9998;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
-    padding-top: 0;
-    padding-bottom: 4rem;
+    padding: 4rem 2rem;
 }
 .image-preview-overlay.active { display: flex; }
 .image-preview-content { 
@@ -323,6 +321,7 @@
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     position: relative;
     z-index: 9999;
+    margin:auto;
 }
 
 .preview-overlay-clickable {
@@ -336,17 +335,17 @@
 
 .preview-position-indicator {
     position: absolute;
-    top: 1.5rem;
+    top: 0.5rem;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0,0,0,0.75);
     color: white;
-    padding: 0.5rem 1rem;
+    padding: 8px 12.8px;
     border-radius: 999px;
     font-size: 0.9rem;
     font-weight: 600;
     z-index: 10000;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(1px);
 }
 
 .preview-nav-btn {
@@ -559,7 +558,7 @@
             position: fixed;
             left: 50%;
             transform: translateX(-50%);
-            bottom: 18px;
+            bottom: 0.5rem;
             z-index: 15000;
             transition: transform 0.3s ease, opacity 0.3s ease;
         }
