@@ -311,12 +311,12 @@
     z-index: 9998;
     align-items: center;
     justify-content: center;
-    padding: 4rem 2rem;
+    padding: 3.2rem 2rem 4rem;
 }
 .image-preview-overlay.active { display: flex; }
 .image-preview-content { 
-    max-width: 90%; 
-    max-height: 90%; 
+    max-width: 100%; /* WAS 90% */
+    max-height: 100%; /* WAS 90% */
     border-radius: 8px; 
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     position: relative;
@@ -355,8 +355,9 @@
     background: rgba(0,0,0,0.75);
     color: white;
     border: 2px solid rgba(255,255,255,0.3);
-    width: 50px;
-    height: 50px;
+    /*width: 50px;*/
+    /*height: 50px;*/
+    width:0; height:0;
     border-radius: 50%;
     font-size: 2rem;
     cursor: pointer;
@@ -371,16 +372,16 @@
 .preview-nav-btn:hover {
     background: rgba(0,0,0,0.9);
     border-color: rgba(255,255,255,0.6);
-    transform: translateY(-50%) scale(1.1);
+    transform: translateY(-50%) scale(1.2);
 }
 
-.preview-nav-left { left: 2rem; }
-.preview-nav-right { right: 2rem; }
+.preview-nav-left { left: 3rem; }
+.preview-nav-right { right: 3rem; }
 
 @media (max-width: 768px) {
     .preview-nav-btn {
-        width: 40px;
-        height: 40px;
+        width: 0px;
+        height: 0px;
         font-size: 1.5rem;
     }
     .preview-nav-left { left: 1rem; }
@@ -708,9 +709,9 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
     <!-- Image Preview Overlay -->
 <div class="image-preview-overlay" id="imagePreview">
     <div class="preview-position-indicator" id="previewPosition">📌 1 / 1</div>
-    <button class="preview-nav-btn preview-nav-left" id="previewPrevBtn" onclick="navigatePreview(-1)">‹</button>
+    <button class="preview-nav-btn preview-nav-left" id="previewPrevBtn" onclick="navigatePreview(-1)">⬅️</button>
     <img class="image-preview-content" id="imagePreviewImg" src="" onclick="event.stopPropagation()">
-    <button class="preview-nav-btn preview-nav-right" id="previewNextBtn" onclick="navigatePreview(1)">›</button>
+    <button class="preview-nav-btn preview-nav-right" id="previewNextBtn" onclick="navigatePreview(1)">➡️</button>
     <div class="preview-overlay-clickable" onclick="hideImagePreview()"></div>
 </div>
 
