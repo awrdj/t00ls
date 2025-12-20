@@ -1700,13 +1700,21 @@ function deleteCurrentPreviewPin() {
     
     if (originalIndex === -1) return;
     
+    // IMPORTANT: Take snapshot of all publish dates BEFORE deletion (same as confirmDelete)
+    const originalDates = pins
+        .map(p => p['Publish date'])
+        .filter(Boolean);
+    
     // Save state for undo
     saveHistory();
     
     // Delete the pin
     pins.splice(originalIndex, 1);
     
-    // UPDATE FILTERED PINS ARRAY
+    // REPACK TIMES - Keep earliest scheduled times, remove latest (same as card delete)
+    repackPublishDatesWithOriginalTimes(originalDates);
+    
+    // Update filtered pins array
     filteredPins = [...pins];
     
     // Remove from visible pins array
