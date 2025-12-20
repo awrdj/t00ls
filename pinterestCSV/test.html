@@ -1706,6 +1706,9 @@ function deleteCurrentPreviewPin() {
     // Delete the pin
     pins.splice(originalIndex, 1);
     
+    // UPDATE FILTERED PINS ARRAY
+    filteredPins = [...pins];
+    
     // Remove from visible pins array
     previewVisiblePins.splice(previewCurrentIndex, 1);
     
@@ -2843,10 +2846,10 @@ document.addEventListener('keydown', (e) => {
     } else if (e.key === 'Escape') {
         e.preventDefault();
         hideImagePreview();
-    } else if (e.key === 'Delete') {
-        e.preventDefault();
-        deleteCurrentPreviewPin();
-    }
+    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault();
+    deleteCurrentPreviewPin();
+}
 });
     </script>
 </body>
