@@ -2155,7 +2155,7 @@ function updateKeepPreview() {
         // Theme
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'light' : 'dark');
         }
         function loadTheme() {
             const theme = localStorage.getItem('theme');
