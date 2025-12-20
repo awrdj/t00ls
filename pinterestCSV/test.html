@@ -1767,24 +1767,27 @@ function updateDockForPreview() {
         keywords: document.getElementById('dockKeywords'),
         swap: document.getElementById('dockSwap'),
         reschedule: document.getElementById('dockReschedule'),
-        export: document.getElementById('dockExport'),
-        exportDropdown: document.getElementById('dockExportDropdown'),
     };
     
-    // Get Load button (first button in dock without ID)
+    // Get Load and Export buttons separately
     const loadBtn = document.querySelector('.dock-btn[onclick*="fileInput"]');
+    const exportBtn = document.getElementById('dockExport');
+    const exportDropdownBtn = document.getElementById('dockExportDropdown');
 
     if (previewMode) {
         // Disable all except delete and undo
         Object.values(dockBtns).forEach(btn => btn.disabled = true);
         dockBtns.delete.disabled = false;
         
-        // Disable Load and Export buttons
+        // Disable Load and Export buttons separately
         if (loadBtn) loadBtn.disabled = true;
+        if (exportBtn) exportBtn.disabled = true;
+        if (exportDropdownBtn) exportDropdownBtn.disabled = true;
     } else {
         // Re-enable based on normal logic
         const hasData = pins.length > 0;
         const hasSelection = selectedIndices.size > 0;
+        
         dockBtns.selectAll.disabled = !hasData;
         dockBtns.deselectAll.disabled = !hasSelection;
         dockBtns.selectOdds.disabled = !hasData;
@@ -1797,8 +1800,10 @@ function updateDockForPreview() {
         dockBtns.swap.disabled = selectedIndices.size !== 2;
         dockBtns.reschedule.disabled = !hasData;
         
-        // Re-enable Load button (always enabled when not in preview)
+        // Re-enable Load and Export buttons
         if (loadBtn) loadBtn.disabled = false;
+        if (exportBtn) exportBtn.disabled = !hasData;
+        if (exportDropdownBtn) exportDropdownBtn.disabled = !hasData;
     }
 }
 
