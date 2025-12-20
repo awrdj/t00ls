@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinterest CSV Editor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --border-color: #dee2e6;
+            --accent-color: #e60023;
+            --accent-hover: #ad081b;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+            --dock-bg: rgba(33,37,41,0.95);
+            --btn-secondary-bg: #e9ecef;
+            --btn-secondary-border: #ced4da;
+            --pill-bg: #f1f3f5;
+        }
+
+        body.dark-mode {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-card: #252525;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border-color: #404040;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.4);
+            --dock-bg: rgba(15,15,15,0.95);
+            --btn-secondary-bg: #343a40;
+            --btn-secondary-border: #495057;
+            --pill-bg: #343a40;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* Compact Header */
+        .header {
+            background: var(--bg-card);
+            border-bottom: 2px solid var(--border-color);
+            padding: 0.5rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .header-title {
+            font-size: 1.3rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0.3rem 0.8rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .theme-toggle span {
+            font-size: 0.8rem;
+        }
+
+        .theme-toggle:hover {
+            background: var(--border-color);
+        }
+
+        /* Search + Stats */
+        .search-stats-bar {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 0.4rem 1.5rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-container { flex: 1; max-width: 500px; }
+
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .stats-container { display: flex; gap: 1.5rem; margin-left: auto; }
+        .stat { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; }
+        .stat-value { font-weight: 700; font-size: 1rem; color: var(--accent-color); }
+
+        /* Upload Zone */
+        .upload-zone {
+            margin: 2rem auto;
+            max-width: 700px;
+            padding: 3rem 2rem;
+            background: var(--bg-card);
+            border: 3px dashed var(--border-color);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-zone:hover,
+        .upload-zone.dragover { border-color: var(--accent-color); background: var(--bg-secondary); }
+        .upload-zone input[type="file"] { display: none; }
+
+        /* Cards Grid - 6 from 1000px up */
+        .cards-container {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            max-width: 1800px;
+            margin: 0 auto 5rem auto; /* bottom space for dock */
+            min-height: 40vh;
+        }
+
+        @media (min-width: 1000px) {
+            .cards-container { grid-template-columns: repeat(6, 1fr); }
+        }
+
+        @media (max-width: 999px) and (min-width: 768px) {
+            .cards-container { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 767px) {
+            .cards-container { grid-template-columns: repeat(2, 1fr); padding: 1rem; }
+            .search-stats-bar { flex-direction: column; align-items: flex-start; }
+            .stats-container { margin-left: 0; }
+        }
+
+        @media (max-width: 480px) {
+            .cards-container { grid-template-columns: 1fr; }
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.2s;
+            cursor: grab;
+            position: relative;
+            border: 2px solid transparent;
+        }
+        .card:active { cursor: grabbing; }
+        .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+        .card.selected { border-color: var(--accent-color); }
+        .card.dragging { opacity: 0.4; cursor: grabbing; }
+        .card.drag-over { border-color: var(--accent-color); border-style: dashed; }
+
+        .card-number {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: rgba(0,0,0,0.75);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            z-index: 10;
+        }
+
+        .card-checkbox {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            z-index: 10;
+            accent-color: var(--accent-color);
+        }
+
+        .card-image-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+        .card-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        /* Quick action buttons on image bottom-center */
+        .card-actions-overlay {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            background: rgba(0,0,0,0.55);
+            padding: 4px 6px;
+            border-radius: 999px;
+            align-items: center;
+        }
+
+        .card-action-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .card-action-btn:hover { background: white; transform: translateY(-1px); }
+
+        .card-content { padding: 0.6rem 0.7rem 0.7rem; }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+            cursor: help;
+        }
+
+        .card-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            padding-top: 0.4rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .card-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .card-link { color: var(--accent-color); text-decoration: none; }
+        .card-link:hover { text-decoration: underline; }
+
+        /* Hover tooltip for title/description */
+        .title-tooltip {
+            position: fixed;
+            max-width: 400px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            padding: 0.75rem 1rem;
+            z-index: 9999;
+            font-size: 0.85rem;
+            border: 1px solid var(--border-color);
+        }
+        .title-tooltip-label { font-weight: 600; font-size: 0.8rem; opacity: 0.8; }
+        .title-tooltip-text { margin-bottom: 0.4rem; }
+
+        /* Image Preview Overlay */
+        .image-preview-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 9998;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+                padding-top: 0;
+    padding-bottom: 4rem;
+        }
+        .image-preview-overlay.active { display: flex; }
+        .image-preview-content { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg-card);
+            padding: 1.5rem 1.75rem;
+            border-radius: 16px;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.55);
+        }
+        .modal-title { font-size: 1.35rem; margin-bottom: 0.8rem; font-weight: 650; display:flex;align-items:center;gap:0.4rem;}
+        .modal-title span.badge {
+            font-size: 0.7rem;
+            background: var(--pill-bg);
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .modal-body { margin-bottom: 1.2rem; font-size: 0.9rem; }
+        .modal-label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; }
+        .modal-input {
+            width: 100%; padding: 0.6rem 0.7rem; border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 1px rgba(230,0,35,0.3);
+        }
+        .modal-hint { margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-secondary); }
+        .modal-buttons {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 0.5rem;
+        }
+
+        .btn-modal {
+            min-width: 90px;
+            padding: 0.5rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-modal-secondary {
+            background: var(--btn-secondary-bg);
+            border-color: var(--btn-secondary-border);
+            color: var(--text-primary);
+        }
+        .btn-modal-secondary:hover {
+            box-shadow: var(--shadow);
+        }
+        .btn-modal-primary {
+            background: var(--accent-color);
+            border-color: var(--accent-hover);
+            color: #fff;
+        }
+        .btn-modal-primary:hover {
+            background: var(--accent-hover);
+            box-shadow: var(--shadow-hover);
+        }
+        .btn-modal-danger {
+            background: var(--danger-color);
+            border-color: #b02a37;
+            color: #fff;
+        }
+        .btn-modal-danger:hover {
+            background: #b02a37;
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Reschedule tabs */
+        .tabs {
+            display: inline-flex;
+            background: var(--pill-bg);
+            border-radius: 999px;
+            padding: 2px;
+            margin-bottom: 0.9rem;
+        }
+        .tab {
+            padding: 0.3rem 0.9rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 999px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .tab.active {
+            color: #fff;
+            background: var(--accent-color);
+            font-weight: 600;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tab-pill-row {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            margin-bottom:0.4rem;
+            font-size:0.8rem;
+            color:var(--text-secondary);
+        }
+
+        .pill-info {
+            display:inline-flex;
+            align-items:center;
+            gap:0.3rem;
+            background: var(--pill-bg);
+            border-radius:999px;
+            padding:0.2rem 0.6rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem; right: 2rem;
+            background: var(--bg-card);
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            transform: translateY(120px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 20000;
+            max-width: 380px;
+            font-size: 0.9rem;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-left: 4px solid var(--success-color); }
+        .toast.error { border-left: 4px solid var(--danger-color); }
+        .toast.warning { border-left: 4px solid var(--warning-color); }
+
+        .empty-state-wrapper {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            min-height: 40vh;
+        }
+        .empty-state h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+
+        /* Floating Dock Toolbar (bottom center) */
+        .dock-wrapper {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 18px;
+            z-index: 15000;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .dock {
+            display: inline-flex;
+            gap: 0.5rem;
+            background: var(--dock-bg);
+            padding: 0.5rem 0.8rem;
+            border-radius: 999px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            backdrop-filter: blur(16px);
+            align-items: center;
+        }
+
+        .dock-btn {
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: rgba(255,255,255,0.1);
+    color: #f8f9fa;
+    border: 1px solid rgba(255,255,255,0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.dock-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.dock-btn:not(:disabled):hover { background: rgba(255,255,255,0.2); }
+
+        /* Export Dropdown */
+.export-dropdown {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.2);
+    min-width: 220px;
+    z-index: 20000;
+    overflow: hidden;
+}
+
+.export-dropdown-item {
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.export-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.export-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+.export-dropdown-item:active {
+    background: var(--border-color);
+}
+
+/* ADD THESE NEW RULES FOR LIGHT MODE */
+body:not(.dark-mode) .dock {
+    background: rgba(255,255,255,0.95);
+    border: 1px solid var(--border-color);
+}
+
+body:not(.dark-mode) .dock-btn {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body:not(.dark-mode) .dock-btn:not(:disabled):hover {
+    background: var(--border-color);
+}
+
+        .dock-indicator {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 8px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 14000;
+        }
+
+        .dock-hidden .dock-wrapper { transform: translate(-50%, 120%); opacity: 0; }
+        .dock-hidden .dock-indicator { opacity: 1; pointer-events: auto; background: var(--bg-secondary);     padding: 0.5rem;     border-radius: 20px;}
+
+        @media (max-width: 600px) {
+            .dock { gap: 0.3rem; }
+            .dock-btn span.label { display: none; }
+        }
+
+        .hidden { display: none !important; }
+        .dock-btn .label {
+    white-space: nowrap;
+}
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-inner">
+            <div class="header-title">📌 Pinterest CSV Editor</div>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span>🌓</span><!--<span>Theme</span>-->
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Stats Bar -->
+    <div class="search-stats-bar hidden" id="searchStatsBar">
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search Pins..." oninput="searchPins()">
+        </div>
+        <div class="stats-container">
+            <div class="stat"><span>Total:</span><span class="stat-value" id="totalPins">0</span></div>
+            <div class="stat"><span>Selected:</span><span class="stat-value" id="selectedCount">0</span></div>
+            <div class="stat"><span>Showing:</span><span class="stat-value" id="filteredCount">0</span></div>
+        </div>
+    </div>
+
+    <!-- Upload Zone -->
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" accept=".csv" multiple onchange="handleFileSelect(event)">
+        <h2>📁 Drop CSV files here or click to browse</h2>
+        <p>You can upload multiple CSV files to merge them</p>
+    </div>
+
+    <!-- Cards -->
+    <div class="cards-container" id="cardsContainer"></div>
+
+    <!-- Image Preview Overlay -->
+    <div class="image-preview-overlay" id="imagePreview" onclick="hideImagePreview()">
+        <img class="image-preview-content" id="imagePreviewImg" src="">
+    </div>
+
+    <!-- Keep First N Modal -->
+<div class="modal" id="select100Modal">
+    <div class="modal-content">
+        <h2 class="modal-title">💯 Keep First N Pins</h2>
+        <div class="modal-body">
+            <label class="modal-label" for="keepAmount">How many pins to keep:</label>
+            <input type="number" class="modal-input" id="keepAmount" min="1" placeholder="100" value="100" oninput="updateKeepPreview()">
+            <p style="margin-top:0.6rem;">This will keep the first <strong><span id="keepAmountPreview">100</span></strong> pins and delete the remaining <strong><span id="deleteRestCount">0</span></strong> pins.</p>
+            <p style="color: var(--danger-color); font-weight: 600; margin-top:0.4rem;">You can still undo using the Undo button.</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('select100Modal')">Cancel</button>
+            <button class="btn-modal btn-modal-danger" onclick="confirmSelect100()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+    <!-- Delete Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h2 class="modal-title">🗑️ Confirm Deletion</h2>
+            <div class="modal-body">
+                <p id="deleteMessage"></p>
+                <p style="color: var(--danger-color); font-weight: 600;">You can still undo using the Undo button.</p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+                <button class="btn-modal btn-modal-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Link Modal -->
+    <div class="modal" id="changeLinkModal">
+        <div class="modal-content">
+            <h2 class="modal-title">🔗 Change Link Domain</h2>
+            <div class="modal-body">
+                <label class="modal-label" for="newDomain">New Domain (slug preserved):</label>
+                <input type="text" class="modal-input" id="newDomain" placeholder="https://example.com">
+                <p class="modal-hint">Example: https://old.com/?Slug → https://new.com/?Slug</p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('changeLinkModal')">Cancel</button>
+                <button class="btn-modal btn-modal-primary" onclick="confirmLinkChange()">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Board Modal -->
+    <div class="modal" id="changeBoardModal">
+        <div class="modal-content">
+            <h2 class="modal-title">📋 Change Pinterest Board</h2>
+            <div class="modal-body">
+                <label class="modal-label" for="newBoard">New Board Name:</label>
+                <input type="text" class="modal-input" id="newBoard" placeholder="My Board Name">
+                <p class="modal-hint">Will update <strong><span id="boardChangeCount">0</span></strong> selected pin(s).</p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('changeBoardModal')">Cancel</button>
+                <button class="btn-modal btn-modal-primary" onclick="confirmBoardChange()">Apply</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Change Keywords Modal -->
+<div class="modal" id="changeKeywordsModal">
+    <div class="modal-content">
+        <h2 class="modal-title">🏷️ Change Keywords</h2>
+        <div class="modal-body">
+            <p>· Current keywords:<br/><strong><span id="currentKeywordsLabel">None</span></strong></p>
+            <label class="modal-label" for="newKeywords" style="margin-top:0.6rem;">· New Keywords (comma-separated or text):</label>
+            <input type="text" class="modal-input" id="newKeywords" placeholder="keyword1, keyword2, ...">
+            <p class="modal-hint">Will replace the Keywords field for the selected pin(s).</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('changeKeywordsModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmKeywordsChange()">Apply</button>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Adjust Time Modal (single pin) -->
+    <div class="modal" id="adjustTimeModal">
+        <div class="modal-content">
+            <h2 class="modal-title">⏰ Adjust Publish Time</h2>
+            <div class="modal-body">
+                <p>Current time: <strong><span id="currentTimeLabel"></span></strong></p>
+                <label class="modal-label" for="newTime">New Publish Date/Time (YYYY-MM-DDTHH:MM:SS):</label>
+                <input type="text" class="modal-input" id="newTime" placeholder="2025-12-10T11:00:00">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('adjustTimeModal')">Cancel</button>
+                <button class="btn-modal btn-modal-primary" onclick="confirmAdjustTime()">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reschedule All Modal -->
+    <div class="modal" id="rescheduleModal">
+        <div class="modal-content">
+            <h2 class="modal-title">
+                📅 Reschedule All Pins
+                <span class="badge">Schedule tools</span>
+            </h2>
+            <div class="tabs">
+                <div class="tab active" id="tab-shift" onclick="setRescheduleTab('shift')">Shift by first pin</div>
+                <div class="tab" id="tab-interval" onclick="setRescheduleTab('interval')">Rebuild intervals</div>
+            </div>
+            <div class="tab-pill-row">
+                <span class="pill-info">
+                    <span>⚙️</span>
+                    <span id="reschedCountLabel">Total pins: 0</span>
+                </span>
+            </div>
+            <div class="modal-body">
+                <!-- Tab 1: shift -->
+                <div class="tab-content active" id="tab-content-shift">
+                    <p>Adjust all pins by changing the first pin's time. All pins will shift by the same difference.</p>
+                    <p style="margin-top:0.4rem;">Current first pin time: <strong><span id="shiftCurrentFirst"></span></strong></p>
+                    <label class="modal-label" for="shiftNewFirst">New first pin time (YYYY-MM-DDTHH:MM:SS):</label>
+                    <input type="text" class="modal-input" id="shiftNewFirst" placeholder="2025-12-10T00:00:00" oninput="updateShiftPreview()">
+                    <p class="modal-hint" id="shiftPreview">Adjusting all pins by: 0s</p>
+                </div>
+                <!-- Tab 2: intervals -->
+                <div class="tab-content" id="tab-content-interval">
+                    <p>Rebuild the schedule using fixed or random intervals while keeping pin order.</p>
+                    <label class="modal-label">Mode:</label>
+                    <div style="margin-bottom:0.6rem;">
+                        <label style="font-size:0.85rem;margin-right:0.75rem;">
+                            <input type="radio" name="intervalMode" value="fixed" checked onclick="updateIntervalMode()"> Fixed interval
+                        </label>
+                        <label style="font-size:0.85rem;">
+                            <input type="radio" name="intervalMode" value="random" onclick="updateIntervalMode()"> Random interval
+                        </label>
+                    </div>
+                    <label class="modal-label" for="intervalStart">Start time for first pin (YYYY-MM-DDTHH:MM:SS):</label>
+                    <input type="text" class="modal-input" id="intervalStart" placeholder="2025-12-10T00:00:00">
+
+                    <div id="intervalFixedFields" style="margin-top:0.6rem;">
+                        <label class="modal-label" for="intervalMinutes">Interval between pins (minutes):</label>
+                        <input type="number" class="modal-input" id="intervalMinutes" min="0" step="1" placeholder="30">
+                        <p class="modal-hint">All pins keep order. Each next pin is previous time + this fixed interval.</p>
+                    </div>
+
+                    <div id="intervalRandomFields" style="margin-top:0.6rem; display:none;">
+                        <label class="modal-label">Random interval range (minutes):</label>
+                        <div style="display:flex; gap:0.5rem; margin-bottom:0.4rem;">
+                            <input type="number" class="modal-input" id="intervalMin" min="0" step="1" placeholder="10" style="flex:1;">
+                            <input type="number" class="modal-input" id="intervalMax" min="0" step="1" placeholder="60" style="flex:1;">
+                        </div>
+                        <p class="modal-hint">Each gap will be a random number of minutes between min and max.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-modal-secondary" onclick="closeModal('rescheduleModal')">Cancel</button>
+                <button class="btn-modal btn-modal-primary" onclick="applyReschedule()">Apply</button>
+            </div>
+        </div>
+    </div>
+        <!-- Replace or Merge Modal -->
+<div class="modal" id="replaceMergeModal">
+    <div class="modal-content">
+        <h2 class="modal-title">📁 Load More Files</h2>
+        <div class="modal-body">
+            <p>You already have <strong><span id="existingPinsCount">0</span></strong> pins loaded.</p>
+            <p style="margin-top: 0.8rem;">How would you like to proceed?</p>
+            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <label style="padding: 0.6rem; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="radio" name="loadMode" value="merge" checked style="cursor: pointer;">
+                    <div>
+                        <strong>Merge</strong> - Add new pins and sort all chronologically
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">All pins will be kept (duplicates or not).</div>
+                    </div>
+                </label>
+                <label style="padding: 0.6rem; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="radio" name="loadMode" value="replace" style="cursor: pointer;">
+                    <div>
+                        <strong>Replace</strong> - Remove existing pins and load new files
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">Current pins will be cleared</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="cancelLoadFiles()">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmLoadFiles()">Continue</button>
+        </div>
+    </div>
+</div>
+
+    <!-- Export Batch Size Modal -->
+<div class="modal" id="exportBatchModal">
+    <div class="modal-content">
+        <h2 class="modal-title">📦 Export by Batch Size</h2>
+        <div class="modal-body">
+            <label class="modal-label" for="batchSize">Pins per file:</label>
+            <input type="number" class="modal-input" id="batchSize" min="1" placeholder="100" value="100">
+            <p class="modal-hint">Will create multiple CSV files with this many pins each.</p>
+            <p style="margin-top: 0.5rem;">Total pins: <strong><span id="batchTotalPins">0</span></strong> → Estimated files: <strong><span id="batchEstimatedFiles">0</span></strong></p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('exportBatchModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmExportBatch()">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Export Date Split Modal -->
+<div class="modal" id="exportDateSplitModal">
+    <div class="modal-content">
+        <h2 class="modal-title">📅 Export by Date Split</h2>
+        <div class="modal-body">
+            <label class="modal-label">Split by:</label>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                <label style="cursor: pointer;">
+                    <input type="radio" name="dateSplitMode" value="day" checked> Daily (one file per day)
+                </label>
+                <label style="cursor: pointer;">
+                    <input type="radio" name="dateSplitMode" value="week"> Weekly (one file per week)
+                </label>
+                <label style="cursor: pointer;">
+                    <input type="radio" name="dateSplitMode" value="month"> Monthly (one file per month)
+                </label>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('exportDateSplitModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmExportDateSplit()">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Export Date Range Modal -->
+<div class="modal" id="exportDateRangeModal">
+    <div class="modal-content">
+        <h2 class="modal-title">📆 Export Date Range</h2>
+        <div class="modal-body">
+            <label class="modal-label" for="rangeStartDate">Start Date:</label>
+            <input type="date" class="modal-input" id="rangeStartDate">
+            
+            <label class="modal-label" style="margin-top: 0.8rem;" for="rangeEndDate">End Date:</label>
+            <input type="date" class="modal-input" id="rangeEndDate">
+            
+            <p class="modal-hint" style="margin-top: 0.6rem;">Export only pins scheduled between these dates.</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('exportDateRangeModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmExportDateRange()">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Export First/Last N Modal -->
+<div class="modal" id="exportFirstLastModal">
+    <div class="modal-content">
+        <h2 class="modal-title">🔢 Export First/Last N Pins</h2>
+        <div class="modal-body">
+            <label class="modal-label" for="firstLastCount">Number of pins:</label>
+            <input type="number" class="modal-input" id="firstLastCount" min="1" placeholder="100" value="100">
+            
+            <label class="modal-label" style="margin-top: 0.8rem;">Export from:</label>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                <label style="cursor: pointer;">
+                    <input type="radio" name="firstLastMode" value="first" checked> First (earliest dates)
+                </label>
+                <label style="cursor: pointer;">
+                    <input type="radio" name="firstLastMode" value="last"> Last (latest dates)
+                </label>
+            </div>
+            
+            <p class="modal-hint" style="margin-top: 0.6rem;">Current total: <strong><span id="firstLastTotal">0</span></strong> pins</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('exportFirstLastModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmExportFirstLast()">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Export by Time Gaps Modal -->
+<div class="modal" id="exportGapsModal">
+    <div class="modal-content">
+        <h2 class="modal-title">⏱️ Export by Time Gaps</h2>
+        <div class="modal-body">
+            <label class="modal-label" for="gapThreshold">Gap threshold (hours):</label>
+            <input type="number" class="modal-input" id="gapThreshold" min="1" placeholder="24" value="24">
+            
+            <p class="modal-hint">Splits pins into separate files when there's a gap longer than this many hours between consecutive pins.</p>
+            <p style="margin-top: 0.5rem;">Example: 24 hours = 1 day gap</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('exportGapsModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmExportGaps()">Export</button>
+        </div>
+    </div>
+</div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Dock Toolbar -->
+    <div class="dock-wrapper" id="dockWrapper">
+        <div class="dock">
+            <button class="dock-btn" onclick="document.getElementById('fileInput').click()">
+                📁 <span class="label">Load</span>
+            </button>
+            <button class="dock-btn" id="dockSelectAll" onclick="selectAll()" style="border-right: 1px var(--border-color) solid;border-top-right-radius: 0;border-bottom-right-radius: 0;" disabled>
+                ☑️ <span class="label">All</span>
+            </button>
+            <button class="dock-btn" id="dockDeselectAll" onclick="deselectAll()" style="border-left: 0;border-top-left-radius: 0;border-bottom-left-radius: 0;margin-left: -8px;" disabled>
+                <span class="label">None</span> ⬜
+            </button>
+
+            <!-- ODD & EVEN -->
+            <button class="dock-btn" id="dockSelectOdds" onclick="selectOdds()" style="border-right: 1px var(--border-color) solid;border-top-right-radius: 0;border-bottom-right-radius: 0;" disabled>
+                🔢 <span class="label">Odds</span>
+            </button>
+            <button class="dock-btn" id="dockSelectEvens" onclick="selectEvens()" style="border-left: 0;border-top-left-radius: 0;border-bottom-left-radius: 0;margin-left: -8px;" disabled>
+                🔢 <span class="label">Evens</span>
+            </button>
+
+            <button class="dock-btn" id="dockSelect100" onclick="showSelect100Modal()" disabled>
+    💯 <span class="label" style="white-space:nowrap;">Keep First #</span>
+</button>
+            <button class="dock-btn" id="dockDelete" onclick="showDeleteModal()" disabled>
+                🗑️ <span class="label">Delete</span>
+            </button>
+            <button class="dock-btn" id="dockLink" onclick="showChangeLinkModal()" disabled>
+                🔗 <span class="label">Link</span>
+            </button>
+            <button class="dock-btn" id="dockBoard" onclick="showChangeBoardModal()" disabled>
+                📋 <span class="label">Board</span>
+            </button>
+            <button class="dock-btn" id="dockKeywords" onclick="showChangeKeywordsModal()" disabled>
+                🏷️ <span class="label">Keywords</span>
+            </button>
+            <button class="dock-btn" id="dockSwap" onclick="swapSelected()" disabled>
+                🔁 <span class="label">Swap</span>
+            </button>
+            <button class="dock-btn" id="dockReschedule" onclick="showRescheduleModal()" disabled>
+                📅 <span class="label">Reschedule</span>
+            </button>
+            <button class="dock-btn" id="dockUndo" onclick="undo()" disabled>
+                ↶ <span class="label">Undo</span>
+            </button>
+            <!-- Export Split Button -->
+            <div class="export-split-btn" style="display: inline-flex; position: relative;">
+                <button class="dock-btn" id="dockExport" onclick="exportCSV()" disabled style="border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: 0;">
+                    💾 <span class="label">Export</span>
+                </button>
+                <button class="dock-btn" id="dockExportDropdown" onclick="toggleExportDropdown()" disabled style="border-top-left-radius: 0; border-bottom-left-radius: 0; padding-left: 0.4rem; padding-right: 0.5rem; padding-bottom: 0.5rem; margin-left: -1px;">
+                    ▾
+                </button>
+                
+                <!-- Dropdown Menu (opens upward) -->
+                <div class="export-dropdown hidden" id="exportDropdown">
+                    <div class="export-dropdown-item" onclick="exportByBoard()">
+                        📋 Export by Board
+                    </div>
+                    <div class="export-dropdown-item" onclick="showExportBatchModal()">
+                        📦 Export by Batch Size
+                    </div>
+                    <div class="export-dropdown-item" onclick="showExportDateSplitModal()">
+                        📅 Export by Date Split
+                    </div>
+                    <div class="export-dropdown-item" onclick="exportSelectedOnly()">
+                        ☑️ Export Selected Only
+                    </div>
+                    <div class="export-dropdown-item" onclick="showExportDateRangeModal()">
+                        📆 Export Date Range
+                    </div>
+                    <div class="export-dropdown-item" onclick="showExportFirstLastModal()">
+                        🔢 Export First/Last N
+                    </div>
+                    <div class="export-dropdown-item" onclick="showExportGapsModal()">
+                        ⏱️ Export by Time Gaps
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dock-indicator" id="dockIndicator" onclick="showDock()">▲ Toolbar hidden (click here or scroll up to show)</div>
+
+    <script>
+        let pendingFiles = null;
+let pins = [];
+let filteredPins = [];
+let history = [];
+let selectedIndices = new Set();
+let draggedIndex = null;
+let originalFilename = 'pinterest';
+let tooltipEl = null;
+let timeAdjustIndex = null;
+let singlePinActionIndex = null;
+let lastSelectedIndex = null;
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    setupDragAndDrop();
+    loadTheme();
+    setupScrollDockBehavior();
+    
+    // Add batch input listener here
+    const batchInput = document.getElementById('batchSize');
+    if (batchInput) {
+        batchInput.addEventListener('input', updateBatchEstimate);
+    }
+});
+
+        // File Handling
+function handleFileSelect(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    // Store pending files
+    pendingFiles = files;
+
+    // If pins already exist, ask user to replace or merge
+    if (pins.length > 0) {
+        document.getElementById('existingPinsCount').textContent = pins.length;
+        document.getElementById('replaceMergeModal').classList.add('active');
+        // Reset radio to merge by default
+        document.querySelector('input[name="loadMode"][value="merge"]').checked = true;
+    } else {
+        // No existing pins, just load directly
+        processFileLoad('replace');
+    }
+}
+
+function cancelLoadFiles() {
+    pendingFiles = null;
+    document.getElementById('fileInput').value = ''; // Clear file input
+    closeModal('replaceMergeModal');
+}
+
+function confirmLoadFiles() {
+    const mode = document.querySelector('input[name="loadMode"]:checked').value;
+    closeModal('replaceMergeModal');
+    processFileLoad(mode);
+}
+
+function processFileLoad(mode) {
+    if (!pendingFiles) return;
+
+    const files = pendingFiles;
+    const isReplace = mode === 'replace';
+    
+    showToast('Loading CSV files...', 'success');
+    
+    const readers = Array.from(files).map(file => {
+        if (!originalFilename || originalFilename === 'pinterest') {
+            originalFilename = file.name.replace('.csv', '');
+        }
+        return readCSV(file).then(pins => ({ filename: file.name, pins }));
+    });
+
+    Promise.all(readers).then(results => {
+        // Track existing pins count before merge
+        const existingPinsCount = isReplace ? 0 : pins.length;
+        
+        // Prepare base pins (empty if replace, existing if merge)
+        let basePins = isReplace ? [] : [...pins];
+        
+        // Process each file and tag pins
+        let newPinsAdded = 0;
+        
+        results.forEach((result, fileIndex) => {
+            const { filename, pins: filePins } = result;
+            
+            // Tag and add all pins (no duplicate filtering)
+            filePins.forEach((pin, rowIndex) => {
+                basePins.push({
+                    ...pin,
+                    _sourceFileIndex: fileIndex,
+                    _sourceRowIndex: rowIndex
+                });
+                newPinsAdded++;
+            });
+        });
+        
+        if (basePins.length === 0) {
+            showToast('No valid data found in CSV files', 'error');
+            pendingFiles = null;
+            return;
+        }
+        
+        // Sort chronologically with robust handling
+        basePins.sort((a, b) => {
+            const dateA = parseISODate(a['Publish date']);
+            const dateB = parseISODate(b['Publish date']);
+            
+            // Pins without valid dates go to the end
+            if (!dateA && !dateB) {
+                if (a._sourceFileIndex !== b._sourceFileIndex) {
+                    return a._sourceFileIndex - b._sourceFileIndex;
+                }
+                return a._sourceRowIndex - b._sourceRowIndex;
+            }
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            
+            // Both have valid dates: sort chronologically
+            const timeDiff = dateA - dateB;
+            if (timeDiff !== 0) return timeDiff;
+            
+            if (a._sourceFileIndex !== b._sourceFileIndex) {
+                return a._sourceFileIndex - b._sourceFileIndex;
+            }
+            return a._sourceRowIndex - b._sourceRowIndex;
+        });
+        
+                // Clean up temporary metadata
+        basePins.forEach(pin => {
+            delete pin._sourceFileIndex;
+            delete pin._sourceRowIndex;
+        });
+        
+        // ===== DUPLICATE DETECTION & NUMBERING =====
+        const titleCounts = {};
+        const descCounts = {};
+        
+        basePins.forEach((pin, index) => {
+            const title = pin['Title'] || '';
+            const desc = pin['Description'] || '';
+            
+            // Track title duplicates
+            if (title) {
+                if (!titleCounts[title]) {
+                    titleCounts[title] = 1;
+                } else {
+                    titleCounts[title]++;
+                    const num = titleCounts[title];
+                    
+                    // Update title with #2, #3, etc
+                    pin['Title'] = `${title} #${num}`;
+                    
+                    // Update slug in Link
+                    if (pin['Link']) {
+                        const linkParts = pin['Link'].split('?');
+                        if (linkParts.length === 2) {
+                            const domain = linkParts[0];
+                            const slug = linkParts[1];
+                            pin['Link'] = `${domain}?${slug}-${num}`;
+                        }
+                    }
+                }
+            }
+            
+            // Track description duplicates
+            if (desc) {
+                if (!descCounts[desc]) {
+                    descCounts[desc] = 1;
+                } else {
+                    descCounts[desc]++;
+                    const num = descCounts[desc];
+                    
+                    // Update description with #2, #3, etc
+                    pin['Description'] = `${desc} #${num}`;
+                }
+            }
+        });
+        
+        // Count how many duplicates were found
+        let titleDuplicates = 0;
+        let descDuplicates = 0;
+        Object.values(titleCounts).forEach(count => { if (count > 1) titleDuplicates += (count - 1); });
+        Object.values(descCounts).forEach(count => { if (count > 1) descDuplicates += (count - 1); });
+        
+        // ===== END DUPLICATE DETECTION =====
+        
+        saveHistory();
+        pins = basePins;
+        filteredPins = [...pins];
+        renderPins();
+        updateUI();
+        
+        // Enhanced feedback message
+        const fileCount = results.length;
+        const fileWord = fileCount === 1 ? 'file' : 'files';
+        let message = '';
+        
+        if (isReplace) {
+            message = `Loaded ${fileCount} ${fileWord}, sorted ${pins.length} pins chronologically ✓`;
+        } else {
+            message = `Added ${newPinsAdded} new pins to existing ${existingPinsCount} pins, re-sorted ${pins.length} total ✓`;
+        }
+        
+        // Add duplicate info to message
+        if (titleDuplicates > 0 || descDuplicates > 0) {
+            const dupParts = [];
+            if (titleDuplicates > 0) dupParts.push(`${titleDuplicates} title duplicates`);
+            if (descDuplicates > 0) dupParts.push(`${descDuplicates} description duplicates`);
+            message += ` (Renamed: ${dupParts.join(', ')})`;
+        }
+        
+        showToast(message, 'success');
+        
+        // Clear pending files and file input
+        pendingFiles = null;
+        document.getElementById('fileInput').value = '';
+    }).catch(err => {
+        console.error(err);
+        showToast('Error loading CSV', 'error');
+        pendingFiles = null;
+    });
+}
+
+        function readCSV(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    try {
+                        const text = e.target.result;
+                        const lines = text.split('\n').filter(line => line.trim());
+                        if (lines.length < 2) return resolve([]);
+                        const headers = parseCSVLine(lines[0]);
+                        const data = [];
+                        for (let i = 1; i < lines.length; i++) {
+                            const values = parseCSVLine(lines[i]);
+                            if (values.length === headers.length) {
+                                const pin = {};
+                                headers.forEach((h, idx) => pin[h.trim()] = values[idx]);
+                                data.push(pin);
+                            }
+                        }
+                        resolve(data);
+                    } catch (e2) { reject(e2); }
+                };
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsText(file);
+            });
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+                    else { inQuotes = !inQuotes; }
+                } else if (ch === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else { current += ch; }
+            }
+            result.push(current);
+            return result.map(v => v.replace(/^"|"$/g, '').trim());
+        }
+
+        // Drag & Drop upload
+        function setupDragAndDrop() {
+            const uploadZone = document.getElementById('uploadZone');
+            ['dragenter','dragover','dragleave','drop'].forEach(ev => uploadZone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }));
+            ['dragenter','dragover'].forEach(ev => uploadZone.addEventListener(ev, () => uploadZone.classList.add('dragover')));
+            ['dragleave','drop'].forEach(ev => uploadZone.addEventListener(ev, () => uploadZone.classList.remove('dragover')));
+            uploadZone.addEventListener('drop', e => {
+                const files = e.dataTransfer.files;
+                handleFileSelect({ target: { files } });
+            });
+        }
+
+        // Rendering
+        function renderPins() {
+            const container = document.getElementById('cardsContainer');
+            const uploadZone = document.getElementById('uploadZone');
+            if (filteredPins.length === 0 && pins.length === 0) {
+                container.innerHTML = '<div class="empty-state-wrapper"><div class="empty-state"><h2>No pins to display</h2><p>Upload a CSV file to get started</p></div></div>';
+                uploadZone.classList.remove('hidden');
+                return;
+            }
+            if (filteredPins.length === 0 && pins.length > 0) {
+                container.innerHTML = '<div class="empty-state-wrapper"><div class="empty-state"><h2>No pins match your search</h2><p>Try a different search term</p></div></div>';
+                uploadZone.classList.add('hidden');
+                return;
+            }
+            uploadZone.classList.add('hidden');
+            container.innerHTML = '';
+            filteredPins.forEach(pin => {
+                const idx = pins.indexOf(pin);
+                container.appendChild(createCard(pin, idx));
+            });
+            updateStats();
+        }
+
+        function createCard(pin, index) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.draggable = true;
+            card.dataset.index = index;
+            if (selectedIndices.has(index)) card.classList.add('selected');
+
+// Click to toggle selection (only on card content, not buttons)
+card.addEventListener('click', e => {
+    // Ignore if clicking on interactive elements
+    if (e.target.tagName.toLowerCase() === 'a' || 
+        e.target.tagName.toLowerCase() === 'button' ||
+        e.target.classList.contains('card-checkbox') ||
+        e.target.closest('.card-actions-overlay') ||
+        e.target.closest('.card-action-btn')) {
+        return;
+    }
+    
+    // Shift+Click for range selection
+    if (e.shiftKey && lastSelectedIndex !== null && lastSelectedIndex !== index) {
+        selectRange(lastSelectedIndex, index);
+    } else {
+        toggleSelection(index);
+    }
+});
+
+            const num = document.createElement('div');
+            num.className = 'card-number';
+            num.textContent = '#' + (index + 1);
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'card-checkbox';
+            cb.checked = selectedIndices.has(index);
+            cb.onclick = e => { 
+    e.stopPropagation(); 
+    
+    // Shift+Click for range selection
+    if (e.shiftKey && lastSelectedIndex !== null && lastSelectedIndex !== index) {
+        selectRange(lastSelectedIndex, index);
+    } else {
+        toggleSelection(index);
+    }
+};
+
+            const imgWrap = document.createElement('div');
+            imgWrap.className = 'card-image-container';
+            const img = document.createElement('img');
+            img.className = 'card-image';
+            const imageUrl = pin['Media URL'] || pin['Thumbnail'] || '';
+            img.src = imageUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="350"%3E%3Crect fill="%23ddd" width="300" height="350"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E';
+            img.onerror = () => { img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="350"%3E%3Crect fill="%23ddd" width="300" height="350"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E'; };
+
+            // Quick actions on image (including preview)
+            const actions = document.createElement('div');
+            actions.className = 'card-actions-overlay';
+
+            const btnPreview = document.createElement('button');
+            btnPreview.className = 'card-action-btn';
+            btnPreview.title = 'Preview image';
+            btnPreview.textContent = '👁';
+            btnPreview.onclick = e => { e.stopPropagation(); if (imageUrl) showImagePreview(imageUrl); };
+
+
+            const btnDel = document.createElement('button');
+            btnDel.className = 'card-action-btn';
+            btnDel.title = 'Delete this pin';
+            btnDel.textContent = '🗑️';
+            btnDel.onclick = e => { e.stopPropagation(); quickDelete(index); };
+
+            const btnLink = document.createElement('button');
+            btnLink.className = 'card-action-btn';
+            btnLink.title = 'Change link domain for this pin';
+            btnLink.textContent = '🔗';
+            btnLink.onclick = e => { e.stopPropagation(); quickChangeLink(index); };
+
+            const btnBoard = document.createElement('button');
+            btnBoard.className = 'card-action-btn';
+            btnBoard.title = 'Change board for this pin';
+            btnBoard.textContent = '📋';
+            btnBoard.onclick = e => { e.stopPropagation(); quickChangeBoard(index); };
+
+            const btnKeywords = document.createElement('button');
+            btnKeywords.className = 'card-action-btn';
+            btnKeywords.title = 'Change keywords for this pin';
+            btnKeywords.textContent = '🏷️';
+            btnKeywords.onclick = e => { e.stopPropagation(); quickChangeKeywords(index); };
+
+            const btnTime = document.createElement('button');
+            btnTime.className = 'card-action-btn';
+            btnTime.title = 'Adjust publish time';
+            btnTime.textContent = '⏰';
+            btnTime.onclick = e => { e.stopPropagation(); quickAdjustTime(index); };
+
+            actions.appendChild(btnPreview);
+            actions.appendChild(btnDel);
+            actions.appendChild(btnLink);
+            actions.appendChild(btnBoard);
+            actions.appendChild(btnKeywords);
+            actions.appendChild(btnTime);
+
+            imgWrap.appendChild(img);
+            imgWrap.appendChild(actions);
+
+            const content = document.createElement('div');
+            content.className = 'card-content';
+
+            const title = document.createElement('div');
+            title.className = 'card-title';
+            title.textContent = pin['Title'] || 'Untitled';
+            title.addEventListener('mouseenter', e => showTitleTooltip(e, pin));
+            title.addEventListener('mousemove', e => moveTitleTooltip(e));
+            title.addEventListener('mouseleave', hideTitleTooltip);
+
+            const meta = document.createElement('div');
+            meta.className = 'card-meta';
+
+            if (pin['Publish date']) {
+                const dateItem = document.createElement('div');
+                dateItem.className = 'card-meta-item';
+                dateItem.textContent = '📅 ' + pin['Publish date'];
+                meta.appendChild(dateItem);
+            }
+            if (pin['Pinterest board']) {
+                const boardItem = document.createElement('div');
+                boardItem.className = 'card-meta-item';
+                boardItem.textContent = '📌 ' + pin['Pinterest board'];
+                meta.appendChild(boardItem);
+            }
+            if (pin['Link']) {
+                const linkItem = document.createElement('div');
+                linkItem.className = 'card-meta-item';
+                const a = document.createElement('a');
+                a.href = pin['Link'];
+                a.target = '_blank';
+                a.textContent = pin['Link'];
+                a.className = 'card-link';
+                a.onclick = e => e.stopPropagation();
+                linkItem.appendChild(document.createTextNode('🔗 '));
+                linkItem.appendChild(a);
+                meta.appendChild(linkItem);
+            }
+
+            content.appendChild(title);
+            content.appendChild(meta);
+
+            card.appendChild(num);
+            card.appendChild(cb);
+            card.appendChild(imgWrap);
+            card.appendChild(content);
+
+            card.addEventListener('dragstart', handleDragStart);
+            card.addEventListener('dragover', handleDragOverCard);
+            card.addEventListener('drop', handleDrop);
+            card.addEventListener('dragend', handleDragEnd);
+            card.addEventListener('dragenter', handleDragEnter);
+            card.addEventListener('dragleave', handleDragLeave);
+
+            return card;
+        }
+
+        // Title tooltip (full title + description)
+        function showTitleTooltip(e, pin) {
+            hideTitleTooltip();
+            tooltipEl = document.createElement('div');
+            tooltipEl.className = 'title-tooltip';
+            const title = pin['Title'] || 'Untitled';
+            const desc = pin['Description'] || 'No description';
+            tooltipEl.innerHTML = `
+                <div class="title-tooltip-label">Title:</div>
+                <div class="title-tooltip-text">${escapeHtml(title)}</div>
+                <div class="title-tooltip-label">Description:</div>
+                <div class="title-tooltip-text">${escapeHtml(desc)}</div>
+            `;
+            document.body.appendChild(tooltipEl);
+            moveTitleTooltip(e);
+        }
+
+        function moveTitleTooltip(e) {
+            if (!tooltipEl) return;
+            const padding = 10;
+            let x = e.clientX + padding;
+            let y = e.clientY + padding;
+            const rect = tooltipEl.getBoundingClientRect();
+            if (x + rect.width > window.innerWidth) x = e.clientX - rect.width - padding;
+            if (y + rect.height > window.innerHeight) y = e.clientY - rect.height - padding;
+            tooltipEl.style.left = x + 'px';
+            tooltipEl.style.top = y + 'px';
+        }
+
+        function hideTitleTooltip() {
+            if (tooltipEl) { tooltipEl.remove(); tooltipEl = null; }
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+        }
+
+        // Image preview
+        function showImagePreview(url) {
+            const overlay = document.getElementById('imagePreview');
+            const img = document.getElementById('imagePreviewImg');
+            img.src = url;
+            overlay.classList.add('active');
+        }
+        function hideImagePreview() {
+            document.getElementById('imagePreview').classList.remove('active');
+        }
+
+        // Drag reordering
+        function handleDragStart(e) {
+            draggedIndex = parseInt(e.currentTarget.dataset.index);
+            e.currentTarget.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+        function handleDragOverCard(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+        function handleDragEnter(e) {
+            const card = e.currentTarget;
+            if (parseInt(card.dataset.index) !== draggedIndex) card.classList.add('drag-over');
+        }
+        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+        function handleDrop(e) {
+            e.preventDefault();
+            const targetCard = e.currentTarget;
+            targetCard.classList.remove('drag-over');
+            const targetIndex = parseInt(targetCard.dataset.index);
+            if (draggedIndex === null || draggedIndex === targetIndex) return;
+            saveHistory();
+            const dDate = pins[draggedIndex]['Publish date'];
+            const tDate = pins[targetIndex]['Publish date'];
+            const tmp = pins[draggedIndex];
+            pins[draggedIndex] = pins[targetIndex];
+            pins[targetIndex] = tmp;
+            pins[draggedIndex]['Publish date'] = dDate;
+            pins[targetIndex]['Publish date'] = tDate;
+            filteredPins = [...pins];
+            renderPins();
+            showToast('Pins swapped (times preserved)', 'success');
+        }
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
+            draggedIndex = null;
+        }
+
+        // Selection
+        function toggleSelection(index) {
+    if (selectedIndices.has(index)) {
+        selectedIndices.delete(index);
+        // Don't update lastSelectedIndex when deselecting
+    } else {
+        selectedIndices.add(index);
+        lastSelectedIndex = index;  // Track last selected
+    }
+    renderPins();
+    updateUI();
+}
+        function selectAll() {
+            // saveHistory();
+            pins.forEach((_, i) => selectedIndices.add(i));
+            renderPins(); updateUI();
+        }
+        function deselectAll() {
+            // saveHistory();
+    selectedIndices.clear();
+    lastSelectedIndex = null;  // ADD THIS LINE
+    renderPins(); 
+    updateUI();
+}
+        function selectRange(startIndex, endIndex) {
+    const start = Math.min(startIndex, endIndex);
+    const end = Math.max(startIndex, endIndex);
+    
+    // Select all pins in the range
+    for (let i = start; i <= end; i++) {
+        selectedIndices.add(i);
+    }
+    
+    lastSelectedIndex = endIndex;
+    renderPins();
+    updateUI();
+}
+
+        // Quick actions (single pin)
+        function quickDelete(index) {
+    singlePinActionIndex = index;
+    document.getElementById('deleteMessage').textContent = `Delete this pin?`;
+    document.getElementById('deleteModal').classList.add('active');
+}
+        function quickChangeLink(index) {
+            singlePinActionIndex = index;
+            document.getElementById('changeLinkModal').classList.add('active');
+        }
+        function quickChangeBoard(index) {
+            singlePinActionIndex = index;
+            document.getElementById('boardChangeCount').textContent = 1;
+            document.getElementById('changeBoardModal').classList.add('active');
+        }
+        function quickChangeKeywords(index) {
+            singlePinActionIndex = index;
+            const currentKeywords = pins[index]['Keywords'] || '';
+            document.getElementById('currentKeywordsLabel').textContent = currentKeywords || 'None';
+            document.getElementById('newKeywords').value = currentKeywords;
+            document.getElementById('changeKeywordsModal').classList.add('active');
+        }
+
+        function quickAdjustTime(index) {
+            timeAdjustIndex = index;
+            const pin = pins[index];
+            const current = pin['Publish date'] || '';
+            document.getElementById('currentTimeLabel').textContent = current || 'N/A';
+            document.getElementById('newTime').value = current;
+            document.getElementById('adjustTimeModal').classList.add('active');
+        }
+
+        // Select First 100
+        function showSelect100Modal() {
+    if (pins.length <= 1) { showToast('You need at least 2 pins', 'warning'); return; }
+    document.getElementById('keepAmount').value = Math.min(100, pins.length);
+    updateKeepPreview();
+    document.getElementById('select100Modal').classList.add('active');
+}
+function updateKeepPreview() {
+    const keepAmount = parseInt(document.getElementById('keepAmount').value) || 0;
+    const deleteAmount = Math.max(0, pins.length - keepAmount);
+    document.getElementById('keepAmountPreview').textContent = keepAmount;
+    document.getElementById('deleteRestCount').textContent = deleteAmount;
+}
+
+        function confirmSelect100() {
+    const keepAmount = parseInt(document.getElementById('keepAmount').value);
+
+    if (!keepAmount || keepAmount < 1) {
+        showToast('Enter a valid number', 'error');
+        return;
+    }
+
+    if (keepAmount >= pins.length) {
+        showToast('Keep amount must be less than total pins', 'warning');
+        return;
+    }
+
+    // Snapshot of original times BEFORE trimming
+    const originalDates = pins
+        .map(p => p['Publish date'])
+        .filter(Boolean);
+
+    saveHistory();
+    const deleted = pins.length - keepAmount;
+    pins = pins.slice(0, keepAmount);
+
+    // NEW: repack using original times
+    repackPublishDatesWithOriginalTimes(originalDates);
+
+    filteredPins = [...pins];
+    selectedIndices.clear();
+    closeModal('select100Modal');
+    renderPins(); 
+    updateUI();
+    showToast(`Kept first ${keepAmount} pins, deleted ${deleted}`, 'success');
+}
+
+        // Search
+        function searchPins() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    if (!q) {
+        filteredPins = [...pins];
+    } else {
+        filteredPins = pins.filter(pin => {
+            const t = (pin['Title'] || '').toLowerCase();
+            const k = (pin['Keywords'] || '').toLowerCase();
+            const d = (pin['Description'] || '').toLowerCase();
+            return t.includes(q) || k.includes(q) || d.includes(q);
+        });
+    }
+    
+    // Clear selection context when filter changes
+    if (filteredPins.length === 0) {
+        lastSelectedIndex = null;
+    }
+    
+    renderPins();
+}
+
+        // Delete (selected)
+        function showDeleteModal() {
+            if (selectedIndices.size === 0) { showToast('Select pins to delete', 'warning'); return; }
+            document.getElementById('deleteMessage').textContent = `Delete ${selectedIndices.size} selected pin(s)?`;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+        function confirmDelete() {
+    // Take snapshot of all publish dates BEFORE deletion
+    const originalDates = pins
+        .map(p => p['Publish date'])
+        .filter(Boolean);
+
+    saveHistory();
+
+    // Use single pin action if set, otherwise use selectedIndices
+    const indicesToDelete = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
+
+    if (indicesToDelete.length === 0) { 
+        closeModal('deleteModal'); 
+        return; 
+    }
+
+    const indices = indicesToDelete.sort((a,b) => b-a);
+    indices.forEach(i => pins.splice(i,1));
+    const deleted = indices.length;
+    selectedIndices.clear();
+    singlePinActionIndex = null; // Reset
+
+    // NEW: repack using original times
+    repackPublishDatesWithOriginalTimes(originalDates);
+
+    filteredPins = [...pins];
+    closeModal('deleteModal');
+    renderPins(); 
+    updateUI();
+    showToast(`Deleted ${deleted} pin(s)`, 'success');
+}
+
+        // Change link (selected from dock or quick)
+        function showChangeLinkModal() {
+            if (selectedIndices.size === 0) { showToast('Select pins to change links', 'warning'); return; }
+            document.getElementById('changeLinkModal').classList.add('active');
+        }
+        function confirmLinkChange() {
+    const newDomain = document.getElementById('newDomain').value.trim();
+    if (!newDomain) { showToast('Enter a domain', 'error'); return; }
+    
+    // Use single pin action if set, otherwise use selectedIndices
+    const indicesToUpdate = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
+    
+    if (indicesToUpdate.length === 0) { showToast('Select pins first', 'warning'); return; }
+    
+    saveHistory();
+    let count = 0;
+    const domain = newDomain.replace(/\/$/, '');
+    indicesToUpdate.forEach(i => {
+        const pin = pins[i];
+        const old = pin['Link'] || '';
+        const m = old.match(/\?(.+)$/);
+        const slug = m ? m[1] : '';
+        pin['Link'] = slug ? `${domain}/?${slug}` : domain;
+        count++;
+    });
+    document.getElementById('newDomain').value = '';
+    singlePinActionIndex = null; // Reset
+    closeModal('changeLinkModal');
+    filteredPins = [...pins];
+    renderPins(); updateUI();
+    showToast(`Updated ${count} link(s)`, 'success');
+}
+
+        // Change board (selected)
+        function showChangeBoardModal() {
+            if (selectedIndices.size === 0) { showToast('Select pins to change board', 'warning'); return; }
+            document.getElementById('boardChangeCount').textContent = selectedIndices.size;
+            document.getElementById('changeBoardModal').classList.add('active');
+        }
+        function confirmBoardChange() {
+    const newBoard = document.getElementById('newBoard').value.trim();
+    if (!newBoard) { showToast('Enter a board name', 'error'); return; }
+    
+    // Use single pin action if set, otherwise use selectedIndices
+    const indicesToUpdate = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
+    
+    if (indicesToUpdate.length === 0) { showToast('Select pins first', 'warning'); return; }
+    
+    saveHistory();
+    let count = 0;
+    indicesToUpdate.forEach(i => { pins[i]['Pinterest board'] = newBoard; count++; });
+    document.getElementById('newBoard').value = '';
+    singlePinActionIndex = null; // Reset
+    closeModal('changeBoardModal');
+    filteredPins = [...pins];
+    renderPins(); updateUI();
+    showToast(`Updated ${count} board(s)`, 'success');
+}
+
+        // Change keywords (selected)
+        function showChangeKeywordsModal() {
+    if (selectedIndices.size === 0) { showToast('Select pins to change keywords', 'warning'); return; }
+    
+    // Show keywords from first selected pin as example
+    const firstIndex = Array.from(selectedIndices)[0];
+    const currentKeywords = pins[firstIndex]['Keywords'] || '';
+    document.getElementById('currentKeywordsLabel').textContent = currentKeywords || 'None';
+    document.getElementById('newKeywords').value = currentKeywords;
+    
+    document.getElementById('changeKeywordsModal').classList.add('active');
+}
+        function confirmKeywordsChange() {
+    const newKeywords = document.getElementById('newKeywords').value.trim();
+    if (!newKeywords) { showToast('Enter keywords', 'error'); return; }
+    
+    // Use single pin action if set, otherwise use selectedIndices
+    const indicesToUpdate = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
+    
+    if (indicesToUpdate.length === 0) { showToast('Select pins first', 'warning'); return; }
+    
+    saveHistory();
+    let count = 0;
+    indicesToUpdate.forEach(i => { pins[i]['Keywords'] = newKeywords; count++; });
+    document.getElementById('newKeywords').value = '';
+    singlePinActionIndex = null; // Reset
+    closeModal('changeKeywordsModal');
+    filteredPins = [...pins];
+    renderPins(); updateUI();
+    showToast(`Updated keywords for ${count} pin(s)`, 'success');
+}
+
+        // Adjust time (single pin via quick action)
+        function confirmAdjustTime() {
+            if (timeAdjustIndex === null) { closeModal('adjustTimeModal'); return; }
+            const newTimeStr = document.getElementById('newTime').value.trim();
+            if (!newTimeStr) { showToast('Enter a time', 'error'); return; }
+            const newDate = parseISODate(newTimeStr);
+            if (!newDate) { showToast('Invalid time format', 'error'); return; }
+            saveHistory();
+            pins[timeAdjustIndex]['Publish date'] = newTimeStr;
+            filteredPins = [...pins];
+            closeModal('adjustTimeModal');
+            renderPins(); updateUI();
+            showToast('Publish time updated', 'success');
+            timeAdjustIndex = null;
+        }
+
+        // Swap two selected pins
+        function swapSelected() {
+            if (selectedIndices.size !== 2) return;
+            const [a,b] = Array.from(selectedIndices).sort((x,y)=>x-y);
+            saveHistory();
+            const dA = pins[a]['Publish date'];
+            const dB = pins[b]['Publish date'];
+            const tmp = pins[a]; pins[a] = pins[b]; pins[b] = tmp;
+            pins[a]['Publish date'] = dA;
+            pins[b]['Publish date'] = dB;
+            filteredPins = [...pins];
+            renderPins(); updateUI();
+            showToast('Swapped the two selected pins (times preserved)', 'success');
+        }
+
+        // Reschedule All
+        function showRescheduleModal() {
+            if (pins.length === 0) { showToast('No pins to reschedule', 'warning'); return; }
+            const first = getFirstPinByDate();
+            document.getElementById('shiftCurrentFirst').textContent = first ? (first['Publish date'] || 'N/A') : 'N/A';
+            document.getElementById('shiftNewFirst').value = first ? (first['Publish date'] || '') : '';
+            document.getElementById('reschedCountLabel').textContent = 'Total pins: ' + pins.length;
+            updateShiftPreview();
+            setRescheduleTab('shift');
+            document.getElementById('rescheduleModal').classList.add('active');
+        }
+
+        function setRescheduleTab(name) {
+            const tabShift = document.getElementById('tab-shift');
+            const tabInterval = document.getElementById('tab-interval');
+            const contentShift = document.getElementById('tab-content-shift');
+            const contentInterval = document.getElementById('tab-content-interval');
+            if (name === 'shift') {
+                tabShift.classList.add('active');
+                tabInterval.classList.remove('active');
+                contentShift.classList.add('active');
+                contentInterval.classList.remove('active');
+            } else {
+                tabShift.classList.remove('active');
+                tabInterval.classList.add('active');
+                contentShift.classList.remove('active');
+                contentInterval.classList.add('active');
+            }
+        }
+
+        function getFirstPinByDate() {
+            if (pins.length === 0) return null;
+            const withDates = pins.filter(p => p['Publish date']);
+            if (withDates.length === 0) return pins[0];
+            withDates.sort((a,b) => {
+                const da = parseISODate(a['Publish date']) || new Date(0);
+                const db = parseISODate(b['Publish date']) || new Date(0);
+                return da - db;
+            });
+            return withDates[0];
+        }
+
+        function parseISODate(str) {
+            const m = str && str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/);
+            if (!m) return null;
+            const [_,y,mo,d,h,mi,s] = m;
+            const date = new Date(Number(y), Number(mo)-1, Number(d), Number(h), Number(mi), Number(s));
+            return isNaN(date.getTime()) ? null : date;
+        }
+
+        function formatDuration(ms) {
+            const sign = ms < 0 ? '-' : '+';
+            let sec = Math.abs(Math.round(ms / 1000));
+            const h = Math.floor(sec / 3600);
+            sec -= h*3600;
+            const m = Math.floor(sec / 60);
+            sec -= m*60;
+            const parts = [];
+            if (h) parts.push(h + 'h');
+            if (m) parts.push(m + 'm');
+            if (sec || parts.length === 0) parts.push(sec + 's');
+            return sign + parts.join(' ');
+        }
+
+        function updateShiftPreview() {
+            const currentStr = document.getElementById('shiftCurrentFirst').textContent;
+            const newStr = document.getElementById('shiftNewFirst').value.trim();
+            const preview = document.getElementById('shiftPreview');
+            const currentDate = parseISODate(currentStr);
+            const newDate = parseISODate(newStr);
+            if (!currentDate || !newStr || !newDate) {
+                preview.textContent = 'Adjusting all pins by: 0s';
+                return;
+            }
+            const diff = newDate.getTime() - currentDate.getTime();
+            preview.textContent = 'Adjusting all pins by: ' + formatDuration(diff);
+        }
+
+        function updateIntervalMode() {
+            const mode = document.querySelector('input[name="intervalMode"]:checked').value;
+            document.getElementById('intervalFixedFields').style.display = mode === 'fixed' ? 'block' : 'none';
+            document.getElementById('intervalRandomFields').style.display = mode === 'random' ? 'block' : 'none';
+        }
+
+        function applyReschedule() {
+            if (pins.length === 0) { closeModal('rescheduleModal'); return; }
+            const activeTab = document.getElementById('tab-shift').classList.contains('active') ? 'shift' : 'interval';
+            if (activeTab === 'shift') {
+                applyShiftReschedule();
+            } else {
+                applyIntervalReschedule();
+            }
+        }
+
+        function applyShiftReschedule() {
+            const first = getFirstPinByDate();
+            if (!first || !first['Publish date']) {
+                showToast('First pin has no publish date to base on', 'error');
+                return;
+            }
+            const currentStr = first['Publish date'];
+            const newStr = document.getElementById('shiftNewFirst').value.trim();
+            const currentDate = parseISODate(currentStr);
+            const newDate = parseISODate(newStr);
+            if (!currentDate || !newDate) {
+                showToast('Invalid date format. Use YYYY-MM-DDTHH:MM:SS', 'error');
+                return;
+            }
+            const diff = newDate.getTime() - currentDate.getTime();
+            saveHistory();
+            pins.forEach(pin => {
+                const tStr = pin['Publish date'];
+                if (!tStr) return;
+                const d = parseISODate(tStr);
+                if (!d) return;
+                const shifted = new Date(d.getTime() + diff);
+                pin['Publish date'] = isoStringFromDate(shifted);
+            });
+            filteredPins = [...pins];
+            closeModal('rescheduleModal');
+            renderPins(); updateUI();
+            showToast('All pins rescheduled by ' + formatDuration(diff), 'success');
+        }
+
+        function isoStringFromDate(d) {
+            const pad = n => String(n).padStart(2,'0');
+            return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) +
+                   'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+        }
+
+        function repackPublishDatesWithOriginalTimes(originalDatesBeforeDelete) {
+    // originalDatesBeforeDelete is the list of all publish dates BEFORE deletion
+    if (!pins.length || !originalDatesBeforeDelete || !originalDatesBeforeDelete.length) return;
+
+    // Sort original times ascending (ISO strings sort lexicographically)
+    const sorted = originalDatesBeforeDelete.slice().sort((a, b) => a > b ? 1 : -1);  // keep earliest first
+    const toKeep = sorted.slice(0, pins.length);  // keep earliest N times (N = remaining pins)
+
+    // Assign those times to remaining pins in their current order
+    for (let i = 0; i < pins.length; i++) {
+        pins[i]['Publish date'] = toKeep[i] || '';
+    }
+}
+
+        function applyIntervalReschedule() {
+            const startStr = document.getElementById('intervalStart').value.trim();
+            const startDate = parseISODate(startStr);
+            if (!startDate) {
+                showToast('Invalid start time (tab 2). Use YYYY-MM-DDTHH:MM:SS', 'error');
+                return;
+            }
+            const mode = document.querySelector('input[name="intervalMode"]:checked').value;
+            let minMinutes = 0, maxMinutes = 0, fixedMinutes = 0;
+
+            if (mode === 'fixed') {
+                fixedMinutes = Number(document.getElementById('intervalMinutes').value);
+                if (isNaN(fixedMinutes) || fixedMinutes < 0) {
+                    showToast('Invalid fixed interval minutes', 'error');
+                    return;
+                }
+            } else {
+                minMinutes = Number(document.getElementById('intervalMin').value);
+                maxMinutes = Number(document.getElementById('intervalMax').value);
+                if (isNaN(minMinutes) || isNaN(maxMinutes) || minMinutes < 0 || maxMinutes <= 0 || maxMinutes < minMinutes) {
+                    showToast('Invalid random interval range', 'error');
+                    return;
+                }
+            }
+
+            const pinsWithIndex = pins.map((p,i) => ({pin:p, index:i}));
+            pinsWithIndex.sort((a,b) => {
+                const da = parseISODate(a.pin['Publish date']) || new Date(0);
+                const db = parseISODate(b.pin['Publish date']) || new Date(0);
+                return da - db;
+            });
+
+            saveHistory();
+            let currentTime = new Date(startDate.getTime());
+            pinsWithIndex.forEach(item => {
+                item.pin['Publish date'] = isoStringFromDate(currentTime);
+                if (mode === 'fixed') {
+                    currentTime = new Date(currentTime.getTime() + fixedMinutes*60000);
+                } else {
+                    const randMin = Math.floor(Math.random()*(maxMinutes-minMinutes+1)) + minMinutes;
+                    currentTime = new Date(currentTime.getTime() + randMin*60000);
+                }
+            });
+
+            filteredPins = [...pins];
+            closeModal('rescheduleModal');
+            renderPins(); updateUI();
+            showToast('Schedule rebuilt using ' + (mode === 'fixed' ? 'fixed' : 'random') + ' intervals', 'success');
+        }
+
+        // History/Undo
+        function saveHistory() {
+            history.push({ pins: JSON.parse(JSON.stringify(pins)), selected: new Set(selectedIndices) });
+            if (history.length > 20) history.shift();
+            updateUI();
+        }
+        function undo() {
+            if (history.length === 0) { showToast('Nothing to undo', 'warning'); return; }
+            const state = history.pop();
+            pins = state.pins;
+            selectedIndices = state.selected;
+            filteredPins = [...pins];
+            renderPins(); updateUI();
+            showToast('Undo successful', 'success');
+        }
+
+        // Export
+        function exportCSV() {
+            if (pins.length === 0) { showToast('No data to export', 'error'); return; }
+            const headers = Object.keys(pins[0]);
+            let csv = headers.map(escapeCSV).join(',') + '\n';
+            pins.forEach(pin => {
+                csv += headers.map(h => escapeCSV(pin[h] || '')).join(',') + '\n';
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${originalFilename}_edited.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('CSV exported', 'success');
+        }
+        function escapeCSV(v) {
+            const s = String(v ?? '');
+            return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"'+s.replace(/"/g,'""')+'"' : s;
+        }
+
+        // UI updates
+        function updateUI() {
+            const hasData = pins.length > 0;
+            const hasSel = selectedIndices.size > 0;
+            document.getElementById('searchStatsBar').classList.toggle('hidden', !hasData);
+            document.getElementById('totalPins').textContent = pins.length;
+            document.getElementById('selectedCount').textContent = selectedIndices.size;
+            document.getElementById('filteredCount').textContent = filteredPins.length;
+
+            document.getElementById('dockSelectAll').disabled = !hasData;
+            document.getElementById('dockDeselectAll').disabled = !hasSel;
+
+            // ODD & EVEN
+            document.getElementById('dockSelectOdds').disabled = !hasData;
+            document.getElementById('dockSelectEvens').disabled = !hasData;
+            
+            document.getElementById('dockSelect100').disabled = pins.length <= 1;
+            document.getElementById('dockDelete').disabled = !hasSel;
+            document.getElementById('dockLink').disabled = !hasSel;
+            document.getElementById('dockBoard').disabled = !hasSel;
+            document.getElementById('dockKeywords').disabled = !hasSel;
+            document.getElementById('dockUndo').disabled = history.length === 0;
+            document.getElementById('dockExport').disabled = !hasData;
+
+    document.getElementById('dockExportDropdown').disabled = !hasData;
+            
+            document.getElementById('dockSwap').disabled = selectedIndices.size !== 2;
+            document.getElementById('dockReschedule').disabled = !hasData;
+        }
+        function updateStats() {
+            document.getElementById('totalPins').textContent = pins.length;
+            document.getElementById('selectedCount').textContent = selectedIndices.size;
+            document.getElementById('filteredCount').textContent = filteredPins.length;
+        }
+
+        // Modals
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
+
+        // Toast
+        function showToast(msg, type='success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast ' + type + ' show';
+            setTimeout(() => { t.classList.remove('show'); }, 2500);
+        }
+
+        // Theme
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        }
+        
+        // TO DEFAULT TO LIGHT MODE, UNCOMMENT THIS
+        /*function loadTheme() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark') document.body.classList.add('dark-mode');
+        }*/
+        function loadTheme() {
+            const theme = localStorage.getItem('theme');
+            // Apply dark mode by default if no theme is saved, or if theme is 'dark'
+            if (theme === null || theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                // Save dark as default for future visits
+                if (theme === null) {
+                    localStorage.setItem('theme', 'dark');
+                }
+            }
+        }
+
+        // Dock and Header show/hide on scroll
+function setupScrollDockBehavior() {
+    let lastScroll = window.scrollY;
+    const header = document.querySelector('.header');
+    
+    window.addEventListener('scroll', () => {
+        const dockHidden = document.body.classList.contains('dock-hidden');
+        const curr = window.scrollY;
+        
+        // Hide dock when scrolling down
+        /* OLD HIDE IT SO MUCH
+        if (curr > lastScroll + 60 && curr > 200 && !dockHidden) {
+            document.body.classList.add('dock-hidden');
+        } else if (curr < lastScroll - 60 || curr < 100) {
+            document.body.classList.remove('dock-hidden');
+        }
+        */  
+        
+        // Hide header when scrolling down
+        if (curr > lastScroll && curr > 80) {
+            header.style.transform = 'translateY(-100%)';
+            document.body.classList.add('dock-hidden');
+        } else if (curr < lastScroll || curr < 50) {
+            header.style.transform = 'translateY(0)';
+            document.body.classList.remove('dock-hidden');
+        }
+        
+        lastScroll = curr;
+    });
+}
+        function showDock() { document.body.classList.remove('dock-hidden'); }
+
+    // ODD & EVEN
+    function selectOdds() {
+            // saveHistory();
+            selectedIndices.clear();
+            for (let i = 0; i < pins.length; i++) {
+                if ((i + 1) % 2 === 1) { // i+1 because card numbers are 1-based
+                    selectedIndices.add(i);
+                }
+            }
+            renderPins();
+            updateUI();
+            showToast(`Selected ${selectedIndices.size} odd pins`, 'success');
+    }
+    function selectEvens() {
+            // saveHistory();
+            selectedIndices.clear();
+            for (let i = 0; i < pins.length; i++) {
+                if ((i + 1) % 2 === 0) { // i+1 because card numbers are 1-based
+                    selectedIndices.add(i);
+                }
+            }
+            renderPins();
+            updateUI();
+            showToast(`Selected ${selectedIndices.size} even pins`, 'success');
+    }
+
+    // Export Dropdown Toggle
+function toggleExportDropdown() {
+    const dropdown = document.getElementById('exportDropdown');
+    const arrow = document.getElementById('dockExportDropdown');
+    dropdown.classList.toggle('hidden');
+    
+    // Update arrow icon based on state ▲▼
+    arrow.textContent = dropdown.classList.contains('hidden') ? '▾' : '▴';
+}
+
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('exportDropdown');
+    const exportSplit = document.querySelector('.export-split-btn');
+    if (dropdown && !exportSplit.contains(e.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
+
+// 1. Export by Board
+function exportByBoard() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    
+    // Group pins by board
+    const boards = {};
+    pins.forEach(pin => {
+        const board = pin['Pinterest board'] || 'No_Board';
+        if (!boards[board]) boards[board] = [];
+        boards[board].push(pin);
+    });
+    
+    const boardNames = Object.keys(boards);
+    if (boardNames.length === 0) {
+        showToast('No boards found', 'error');
+        return;
+    }
+    
+    // Export each board as separate CSV
+    boardNames.forEach(boardName => {
+        const boardPins = boards[boardName];
+        const csvContent = generateCSV(boardPins);
+        const safeBoard = boardName.replace(/[^a-z0-9]/gi, '_');
+        downloadCSV(csvContent, `${originalFilename}_${safeBoard}.csv`);
+    });
+    
+    showToast(`Exported ${boardNames.length} board(s) as separate CSV files ✓`, 'success');
+}
+
+// 2. Export by Batch Size
+function showExportBatchModal() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    document.getElementById('batchTotalPins').textContent = pins.length;
+    updateBatchEstimate();
+    document.getElementById('exportBatchModal').classList.add('active');
+}
+
+function updateBatchEstimate() {
+    const batchSize = parseInt(document.getElementById('batchSize').value) || 100;
+    const total = pins.length;
+    const estimated = Math.ceil(total / batchSize);
+    document.getElementById('batchEstimatedFiles').textContent = estimated;
+}
+
+// Add input listener for batch size
+/* document.addEventListener('DOMContentLoaded', () => {
+    const batchInput = document.getElementById('batchSize');
+    if (batchInput) {
+        batchInput.addEventListener('input', updateBatchEstimate);
+    }
+}); */
+
+function confirmExportBatch() {
+    const batchSize = parseInt(document.getElementById('batchSize').value);
+    if (!batchSize || batchSize < 1) {
+        showToast('Enter a valid batch size', 'error');
+        return;
+    }
+    
+    const batches = [];
+    for (let i = 0; i < pins.length; i += batchSize) {
+        batches.push(pins.slice(i, i + batchSize));
+    }
+    
+    batches.forEach((batch, index) => {
+        const csvContent = generateCSV(batch);
+        downloadCSV(csvContent, `${originalFilename}_batch_${index + 1}.csv`);
+    });
+    
+    closeModal('exportBatchModal');
+    showToast(`Exported ${batches.length} batch file(s) ✓`, 'success');
+}
+
+// 3. Export by Date Split
+function showExportDateSplitModal() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    document.getElementById('exportDateSplitModal').classList.add('active');
+}
+
+function confirmExportDateSplit() {
+    const mode = document.querySelector('input[name="dateSplitMode"]:checked').value;
+    
+    // Group pins by date period
+    const groups = {};
+    pins.forEach(pin => {
+        const date = parseISODate(pin['Publish date']);
+        if (!date) return;
+        
+        let key;
+        if (mode === 'day') {
+            key = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        } else if (mode === 'week') {
+            const weekNum = getWeekNumber(date);
+            key = `${date.getFullYear()}_Week_${weekNum}`;
+        } else if (mode === 'month') {
+            key = `${date.getFullYear()}_${String(date.getMonth() + 1).padStart(2, '0')}`;
+        }
+        
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(pin);
+    });
+    
+    const keys = Object.keys(groups).sort();
+    keys.forEach(key => {
+        const csvContent = generateCSV(groups[key]);
+        downloadCSV(csvContent, `${originalFilename}_${key}.csv`);
+    });
+    
+    closeModal('exportDateSplitModal');
+    showToast(`Exported ${keys.length} file(s) by ${mode} ✓`, 'success');
+}
+
+function getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+// 4. Export Selected Only
+function exportSelectedOnly() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    
+    if (selectedIndices.size === 0) {
+        showToast('No pins selected', 'warning');
+        return;
+    }
+    
+    const selectedPins = Array.from(selectedIndices).map(i => pins[i]);
+    const csvContent = generateCSV(selectedPins);
+    downloadCSV(csvContent, `${originalFilename}_selected.csv`);
+    showToast(`Exported ${selectedPins.length} selected pin(s) ✓`, 'success');
+}
+
+// 5. Export Date Range
+function showExportDateRangeModal() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    document.getElementById('exportDateRangeModal').classList.add('active');
+}
+
+function confirmExportDateRange() {
+    const startStr = document.getElementById('rangeStartDate').value;
+    const endStr = document.getElementById('rangeEndDate').value;
+    
+    if (!startStr || !endStr) {
+        showToast('Please select both start and end dates', 'error');
+        return;
+    }
+    
+    const startDate = new Date(startStr);
+    startDate.setHours(0, 0, 0, 0); // Start of day in local time
+    
+    const endDate = new Date(endStr);
+    endDate.setHours(23, 59, 59, 999); // End of day in local time
+    
+    if (startDate > endDate) {
+        showToast('Start date must be before end date', 'error');
+        return;
+    }
+    
+    const filtered = pins.filter(pin => {
+        const date = parseISODate(pin['Publish date']);
+        return date && date >= startDate && date <= endDate;
+    });
+    
+    if (filtered.length === 0) {
+        showToast('No pins found in this date range', 'warning');
+        return;
+    }
+    
+    const csvContent = generateCSV(filtered);
+    downloadCSV(csvContent, `${originalFilename}_${startStr}_to_${endStr}.csv`);
+    closeModal('exportDateRangeModal');
+    showToast(`Exported ${filtered.length} pin(s) from date range ✓`, 'success');
+}
+
+// 6. Export First/Last N
+function showExportFirstLastModal() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    document.getElementById('firstLastTotal').textContent = pins.length;
+    document.getElementById('exportFirstLastModal').classList.add('active');
+}
+
+function confirmExportFirstLast() {
+    const count = parseInt(document.getElementById('firstLastCount').value);
+    const mode = document.querySelector('input[name="firstLastMode"]:checked').value;
+    
+    if (!count || count < 1) {
+        showToast('Enter a valid number', 'error');
+        return;
+    }
+    
+    if (count > pins.length) {
+        showToast(`Only ${pins.length} pins available`, 'warning');
+        return;
+    }
+    
+    let exportPins;
+    if (mode === 'first') {
+        exportPins = pins.slice(0, count);
+    } else {
+        exportPins = pins.slice(-count);
+    }
+    
+    const csvContent = generateCSV(exportPins);
+    downloadCSV(csvContent, `${originalFilename}_${mode}_${count}.csv`);
+    closeModal('exportFirstLastModal');
+    showToast(`Exported ${mode} ${count} pin(s) ✓`, 'success');
+}
+
+// 7. Export by Time Gaps
+function showExportGapsModal() {
+    document.getElementById('exportDropdown').classList.add('hidden');
+    if (pins.length === 0) {
+        showToast('No pins to export', 'error');
+        return;
+    }
+    document.getElementById('exportGapsModal').classList.add('active');
+}
+
+function confirmExportGaps() {
+    const thresholdHours = parseInt(document.getElementById('gapThreshold').value);
+    
+    if (!thresholdHours || thresholdHours < 1) {
+        showToast('Enter a valid gap threshold', 'error');
+        return;
+    }
+    
+    const thresholdMs = thresholdHours * 60 * 60 * 1000;
+    const batches = [];
+    let currentBatch = [];
+    
+    pins.forEach((pin, index) => {
+        const date = parseISODate(pin['Publish date']);
+        if (!date) return;
+        
+        if (currentBatch.length === 0) {
+            currentBatch.push(pin);
+        } else {
+            const prevPin = currentBatch[currentBatch.length - 1];
+            const prevDate = parseISODate(prevPin['Publish date']);
+            const gap = date - prevDate;
+            
+            if (gap > thresholdMs) {
+                // Gap detected, start new batch
+                batches.push(currentBatch);
+                currentBatch = [pin];
+            } else {
+                currentBatch.push(pin);
+            }
+        }
+    });
+    
+    // Add last batch
+    if (currentBatch.length > 0) {
+        batches.push(currentBatch);
+    }
+    
+    if (batches.length === 1) {
+        showToast('No time gaps detected with this threshold', 'warning');
+        return;
+    }
+    
+    batches.forEach((batch, index) => {
+        const csvContent = generateCSV(batch);
+        downloadCSV(csvContent, `${originalFilename}_gap_batch_${index + 1}.csv`);
+    });
+    
+    closeModal('exportGapsModal');
+    showToast(`Exported ${batches.length} batch(es) based on time gaps ✓`, 'success');
+}
+
+// Helper: Generate CSV from pins array
+function generateCSV(pinsArray) {
+    if (pinsArray.length === 0) return '';
+    const headers = Object.keys(pinsArray[0]);
+    let csv = headers.map(escapeCSV).join(',') + '\n';
+    pinsArray.forEach(pin => {
+        csv += headers.map(h => escapeCSV(pin[h] || '')).join(',') + '\n';
+    });
+    return csv;
+}
+
+// Helper: Download CSV
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+    </script>
+</body>
+</html>
