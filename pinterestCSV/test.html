@@ -1661,6 +1661,10 @@ function openPreviewDirect(pinIndex) {
     
     // Enter preview mode
     previewMode = true;
+
+    // Force dock to be visible in preview mode
+    document.body.classList.remove('dock-hidden');
+    
     updatePreviewImage();
     document.getElementById('imagePreview').classList.add('active');
     updateDockForPreview();
