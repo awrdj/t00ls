@@ -1628,7 +1628,7 @@ function showImagePreview(imageUrl, pinIndex = null) {
     if (selectedCount > 1) {
         pendingPreviewIndex = pinIndex;
         document.getElementById('previewWarningCount').textContent = selectedCount;
-        openModal('previewWarningModal');
+        document.getElementById('previewWarningModal').classList.add('active');
         return;
     }
     
@@ -1645,7 +1645,7 @@ function confirmOpenPreview() {
 function openPreviewDirect(pinIndex) {
     // Clear all selections
     selectedIndices.clear();
-    updateSelectedCount();
+    updateUI();
     renderPins();
     
     // Get visible pins
