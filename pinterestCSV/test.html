@@ -303,20 +303,90 @@
         .title-tooltip-text { margin-bottom: 0.4rem; }
 
         /* Image Preview Overlay */
-        .image-preview-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 9998;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-                padding-top: 0;
+.image-preview-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 9998;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    padding-top: 0;
     padding-bottom: 4rem;
-        }
-        .image-preview-overlay.active { display: flex; }
-        .image-preview-content { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+}
+.image-preview-overlay.active { display: flex; }
+.image-preview-content { 
+    max-width: 90%; 
+    max-height: 90%; 
+    border-radius: 8px; 
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    position: relative;
+    z-index: 9999;
+}
+
+.preview-overlay-clickable {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9998;
+}
+
+.preview-position-indicator {
+    position: absolute;
+    top: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.75);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    z-index: 10000;
+    backdrop-filter: blur(8px);
+}
+
+.preview-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.75);
+    color: white;
+    border: 2px solid rgba(255,255,255,0.3);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+}
+
+.preview-nav-btn:hover {
+    background: rgba(0,0,0,0.9);
+    border-color: rgba(255,255,255,0.6);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.preview-nav-left { left: 2rem; }
+.preview-nav-right { right: 2rem; }
+
+@media (max-width: 768px) {
+    .preview-nav-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.5rem;
+    }
+    .preview-nav-left { left: 1rem; }
+    .preview-nav-right { right: 1rem; }
+}
 
         /* Modals */
         .modal {
@@ -637,9 +707,28 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
     <div class="cards-container" id="cardsContainer"></div>
 
     <!-- Image Preview Overlay -->
-    <div class="image-preview-overlay" id="imagePreview" onclick="hideImagePreview()">
-        <img class="image-preview-content" id="imagePreviewImg" src="">
+<div class="image-preview-overlay" id="imagePreview">
+    <div class="preview-position-indicator" id="previewPosition">📌 1 / 1</div>
+    <button class="preview-nav-btn preview-nav-left" id="previewPrevBtn" onclick="navigatePreview(-1)">‹</button>
+    <img class="image-preview-content" id="imagePreviewImg" src="" onclick="event.stopPropagation()">
+    <button class="preview-nav-btn preview-nav-right" id="previewNextBtn" onclick="navigatePreview(1)">›</button>
+    <div class="preview-overlay-clickable" onclick="hideImagePreview()"></div>
+</div>
+
+    <!-- Preview Selection Warning Modal -->
+<div class="modal" id="previewWarningModal">
+    <div class="modal-content">
+        <h2 class="modal-title">⚠️ Clear Selection?</h2>
+        <div class="modal-body">
+            <p>You have <strong><span id="previewWarningCount">0</span></strong> pins selected. Opening preview will clear your selection.</p>
+            <p style="margin-top: 0.6rem;">Do you want to continue?</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('previewWarningModal')">Cancel</button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmOpenPreview()">Continue</button>
+        </div>
     </div>
+</div>
 
     <!-- Keep First N Modal -->
 <div class="modal" id="select100Modal">
@@ -1038,6 +1127,10 @@ let tooltipEl = null;
 let timeAdjustIndex = null;
 let singlePinActionIndex = null;
 let lastSelectedIndex = null;
+        let previewMode = false;
+let previewCurrentIndex = 0;
+let previewVisiblePins = [];
+let pendingPreviewIndex = null;
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1390,7 +1483,7 @@ card.addEventListener('click', e => {
             btnPreview.className = 'card-action-btn';
             btnPreview.title = 'Preview image';
             btnPreview.textContent = '👁';
-            btnPreview.onclick = e => { e.stopPropagation(); if (imageUrl) showImagePreview(imageUrl); };
+            btnPreview.onclick = (e) => { e.stopPropagation(); if (imageUrl) showImagePreview(imageUrl, index); };
 
 
             const btnDel = document.createElement('button');
@@ -1528,15 +1621,172 @@ card.addEventListener('click', e => {
         }
 
         // Image preview
-        function showImagePreview(url) {
-            const overlay = document.getElementById('imagePreview');
-            const img = document.getElementById('imagePreviewImg');
-            img.src = url;
-            overlay.classList.add('active');
-        }
-        function hideImagePreview() {
-            document.getElementById('imagePreview').classList.remove('active');
-        }
+function showImagePreview(imageUrl, pinIndex = null) {
+    const selectedCount = pinsData.filter(p => p.selected).length;
+    
+    // If more than 1 selected, show warning modal
+    if (selectedCount > 1) {
+        pendingPreviewIndex = pinIndex;
+        document.getElementById('previewWarningCount').textContent = selectedCount;
+        openModal('previewWarningModal');
+        return;
+    }
+    
+    // Otherwise open directly
+    openPreviewDirect(pinIndex);
+}
+
+function confirmOpenPreview() {
+    closeModal('previewWarningModal');
+    openPreviewDirect(pendingPreviewIndex);
+    pendingPreviewIndex = null;
+}
+
+function openPreviewDirect(pinIndex) {
+    // Clear all selections
+    selectedIndices.clear();
+    updateSelectedCount();
+    renderPins();
+    
+    // Get visible pins
+    previewVisiblePins = getVisiblePins();
+    
+    // Find index in visible pins
+    if (pinIndex !== null) {
+        const visibleIndex = previewVisiblePins.findIndex(p => pins.indexOf(p) === pinIndex);
+        previewCurrentIndex = visibleIndex >= 0 ? visibleIndex : 0;
+    } else {
+        previewCurrentIndex = 0;
+    }
+    
+    // Enter preview mode
+    previewMode = true;
+    updatePreviewImage();
+    document.getElementById('imagePreview').classList.add('active');
+    updateDockForPreview();
+}
+
+function updatePreviewImage() {
+    if (previewVisiblePins.length === 0) {
+        hideImagePreview();
+        return;
+    }
+    
+    const pin = previewVisiblePins[previewCurrentIndex];
+    document.getElementById('imagePreviewImg').src = pin['Media URL'] || pin['Thumbnail'];
+    document.getElementById('previewPosition').textContent = 
+        `📌 ${previewCurrentIndex + 1} / ${previewVisiblePins.length}`;
+}
+
+function navigatePreview(direction) {
+    const newIndex = previewCurrentIndex + direction;
+    
+    if (newIndex < 0) {
+        previewCurrentIndex = previewVisiblePins.length - 1; // Loop to last
+    } else if (newIndex >= previewVisiblePins.length) {
+        previewCurrentIndex = 0; // Loop to first
+    } else {
+        previewCurrentIndex = newIndex;
+    }
+    
+    updatePreviewImage();
+}
+
+function deleteCurrentPreviewPin() {
+    if (!previewMode || previewVisiblePins.length === 0) return;
+    
+    const pin = previewVisiblePins[previewCurrentIndex];
+    const originalIndex = pins.indexOf(pin);
+    
+    if (originalIndex === -1) return;
+    
+    // Save state for undo
+    saveHistory();
+    
+    // Delete the pin
+    pins.splice(originalIndex, 1);
+    
+    // Remove from visible pins array
+    previewVisiblePins.splice(previewCurrentIndex, 1);
+    
+    // Show toast
+    showToast('Pin deleted', 'success');
+    
+    // If no more pins, close preview
+    if (previewVisiblePins.length === 0) {
+        hideImagePreview();
+        renderPins();
+        updateStats();
+        return;
+    }
+    
+    // Adjust index if at end
+    if (previewCurrentIndex >= previewVisiblePins.length) {
+        previewCurrentIndex = previewVisiblePins.length - 1;
+    }
+    
+    // Update preview and UI
+    updatePreviewImage();
+    renderPins();
+    updateStats();
+}
+
+function hideImagePreview() {
+    document.getElementById('imagePreview').classList.remove('active');
+    previewMode = false;
+    previewCurrentIndex = 0;
+    previewVisiblePins = [];
+    updateDockForPreview();
+}
+
+function updateDockForPreview() {
+    const dockBtns = {
+        selectAll: document.getElementById('dockSelectAll'),
+        deselectAll: document.getElementById('dockDeselectAll'),
+        selectOdds: document.getElementById('dockSelectOdds'),
+        selectEvens: document.getElementById('dockSelectEvens'),
+        select100: document.getElementById('dockSelect100'),
+        delete: document.getElementById('dockDelete'),
+        link: document.getElementById('dockLink'),
+        board: document.getElementById('dockBoard'),
+        keywords: document.getElementById('dockKeywords'),
+        swap: document.getElementById('dockSwap'),
+        reschedule: document.getElementById('dockReschedule'),
+    };
+    
+    if (previewMode) {
+        // Disable all except delete and undo
+        Object.values(dockBtns).forEach(btn => btn.disabled = true);
+        dockBtns.delete.disabled = false;
+    } else {
+        // Re-enable based on normal logic
+        const hasData = pins.length > 0;
+        const hasSelection = selectedIndices.size > 0;
+        
+        dockBtns.selectAll.disabled = !hasData;
+        dockBtns.deselectAll.disabled = !hasSelection;
+        dockBtns.selectOdds.disabled = !hasData;
+        dockBtns.selectEvens.disabled = !hasData;
+        dockBtns.select100.disabled = pins.length < 2;
+        dockBtns.delete.disabled = !hasSelection;
+        dockBtns.link.disabled = !hasSelection;
+        dockBtns.board.disabled = !hasSelection;
+        dockBtns.keywords.disabled = !hasSelection;
+        dockBtns.swap.disabled = selectedIndices.size !== 2;
+        dockBtns.reschedule.disabled = !hasData;
+    }
+}
+
+function getVisiblePins() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    if (!searchTerm) return [...pins];
+    
+    return pins.filter(pin => {
+        return (pin.Title || '').toLowerCase().includes(searchTerm) ||
+               (pin.Description || '').toLowerCase().includes(searchTerm) ||
+               (pin['Pinterest Board'] || '').toLowerCase().includes(searchTerm);
+    });
+}
 
         // Drag reordering
         function handleDragStart(e) {
@@ -1714,39 +1964,50 @@ function updateKeepPreview() {
 }
 
         // Delete (selected)
-        function showDeleteModal() {
-            if (selectedIndices.size === 0) { showToast('Select pins to delete', 'warning'); return; }
-            document.getElementById('deleteMessage').textContent = `Delete ${selectedIndices.size} selected pin(s)?`;
-            document.getElementById('deleteModal').classList.add('active');
-        }
+        // Delete selected
+function showDeleteModal() {
+    if (previewMode) {
+        deleteCurrentPreviewPin();
+        return;
+    }
+    
+    if (selectedIndices.size === 0) {
+        showToast('Select pins to delete', 'warning');
+        return;
+    }
+    document.getElementById('deleteMessage').textContent = `Delete ${selectedIndices.size} selected pin(s)?`;
+    document.getElementById('deleteModal').classList.add('active');
+}
         function confirmDelete() {
-    // Take snapshot of all publish dates BEFORE deletion
+    if (previewMode) {
+        // In preview mode, delete current pin
+        closeModal('deleteModal');
+        deleteCurrentPreviewPin();
+        return;
+    }
+    
+    // Normal delete logic
     const originalDates = pins
         .map(p => p['Publish date'])
         .filter(Boolean);
-
     saveHistory();
-
-    // Use single pin action if set, otherwise use selectedIndices
+    
     const indicesToDelete = singlePinActionIndex !== null ? [singlePinActionIndex] : Array.from(selectedIndices);
-
-    if (indicesToDelete.length === 0) { 
-        closeModal('deleteModal'); 
-        return; 
+    if (indicesToDelete.length === 0) {
+        closeModal('deleteModal');
+        return;
     }
-
     const indices = indicesToDelete.sort((a,b) => b-a);
     indices.forEach(i => pins.splice(i,1));
     const deleted = indices.length;
     selectedIndices.clear();
-    singlePinActionIndex = null; // Reset
-
-    // NEW: repack using original times
+    singlePinActionIndex = null;
+    
     repackPublishDatesWithOriginalTimes(originalDates);
-
+    
     filteredPins = [...pins];
     closeModal('deleteModal');
-    renderPins(); 
+    renderPins();
     updateUI();
     showToast(`Deleted ${deleted} pin(s)`, 'success');
 }
@@ -2568,6 +2829,25 @@ function downloadCSV(csvContent, filename) {
     link.click();
     document.body.removeChild(link);
 }
+
+        // Keyboard navigation for preview
+document.addEventListener('keydown', (e) => {
+    if (!previewMode) return;
+    
+    if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigatePreview(-1);
+    } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        navigatePreview(1);
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        hideImagePreview();
+    } else if (e.key === 'Delete') {
+        e.preventDefault();
+        deleteCurrentPreviewPin();
+    }
+});
     </script>
 </body>
 </html>
