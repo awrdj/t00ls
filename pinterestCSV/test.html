@@ -1622,7 +1622,7 @@ card.addEventListener('click', e => {
 
         // Image preview
 function showImagePreview(imageUrl, pinIndex = null) {
-    const selectedCount = pinsData.filter(p => p.selected).length;
+    const selectedCount = Array.from(selectedIndices).length;
     
     // If more than 1 selected, show warning modal
     if (selectedCount > 1) {
