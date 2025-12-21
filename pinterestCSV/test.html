@@ -1982,7 +1982,13 @@ function updateKeepPreview() {
     // NEW: repack using original times
     repackPublishDatesWithOriginalTimes(originalDates);
 
+    // Re-apply search filter if active
+const searchValue = document.getElementById('searchInput').value;
+if (searchValue.trim()) {
+    searchPins();
+} else {
     filteredPins = [...pins];
+}
     selectedIndices.clear();
     closeModal('select100Modal');
     renderPins(); 
@@ -2054,7 +2060,13 @@ function showDeleteModal() {
     
     repackPublishDatesWithOriginalTimes(originalDates);
     
+    // Re-apply search filter if active
+const searchValue = document.getElementById('searchInput').value;
+if (searchValue.trim()) {
+    searchPins();
+} else {
     filteredPins = [...pins];
+}
     closeModal('deleteModal');
     renderPins();
     updateUI();
@@ -2089,7 +2101,13 @@ function showDeleteModal() {
     document.getElementById('newDomain').value = '';
     singlePinActionIndex = null; // Reset
     closeModal('changeLinkModal');
+    // Re-apply search filter if active
+const searchValue = document.getElementById('searchInput').value;
+if (searchValue.trim()) {
+    searchPins();
+} else {
     filteredPins = [...pins];
+}
     renderPins(); updateUI();
     showToast(`Updated ${count} link(s)`, 'success');
 }
@@ -2115,7 +2133,13 @@ function showDeleteModal() {
     document.getElementById('newBoard').value = '';
     singlePinActionIndex = null; // Reset
     closeModal('changeBoardModal');
+    // Re-apply search filter if active
+const searchValue = document.getElementById('searchInput').value;
+if (searchValue.trim()) {
+    searchPins();
+} else {
     filteredPins = [...pins];
+}
     renderPins(); updateUI();
     showToast(`Updated ${count} board(s)`, 'success');
 }
@@ -2147,7 +2171,13 @@ function showDeleteModal() {
     document.getElementById('newKeywords').value = '';
     singlePinActionIndex = null; // Reset
     closeModal('changeKeywordsModal');
+    // Re-apply search filter if active
+const searchValue = document.getElementById('searchInput').value;
+if (searchValue.trim()) {
+    searchPins();
+} else {
     filteredPins = [...pins];
+}
     renderPins(); updateUI();
     showToast(`Updated keywords for ${count} pin(s)`, 'success');
 }
@@ -2161,7 +2191,13 @@ function showDeleteModal() {
             if (!newDate) { showToast('Invalid time format', 'error'); return; }
             saveHistory();
             pins[timeAdjustIndex]['Publish date'] = newTimeStr;
-            filteredPins = [...pins];
+            // Re-apply search filter if active
+const searchValue = document.getElementById('searchInput').value;
+if (searchValue.trim()) {
+    searchPins();
+} else {
+    filteredPins = [...pins];
+}
             closeModal('adjustTimeModal');
             renderPins(); updateUI();
             showToast('Publish time updated', 'success');
@@ -2178,7 +2214,13 @@ function showDeleteModal() {
             const tmp = pins[a]; pins[a] = pins[b]; pins[b] = tmp;
             pins[a]['Publish date'] = dA;
             pins[b]['Publish date'] = dB;
-            filteredPins = [...pins];
+            // Re-apply search filter if active
+const searchValue = document.getElementById('searchInput').value;
+if (searchValue.trim()) {
+    searchPins();
+} else {
+    filteredPins = [...pins];
+}
             renderPins(); updateUI();
             showToast('Swapped the two selected pins (times preserved)', 'success');
         }
@@ -2301,7 +2343,13 @@ function showDeleteModal() {
                 const shifted = new Date(d.getTime() + diff);
                 pin['Publish date'] = isoStringFromDate(shifted);
             });
-            filteredPins = [...pins];
+            // Re-apply search filter if active
+const searchValue = document.getElementById('searchInput').value;
+if (searchValue.trim()) {
+    searchPins();
+} else {
+    filteredPins = [...pins];
+}
             closeModal('rescheduleModal');
             renderPins(); updateUI();
             showToast('All pins rescheduled by ' + formatDuration(diff), 'success');
