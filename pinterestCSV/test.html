@@ -1815,9 +1815,9 @@ function getVisiblePins() {
     if (!searchTerm) return [...pins];
     
     return pins.filter(pin => {
-        return (pin.Title || '').toLowerCase().includes(searchTerm) ||
-               (pin.Description || '').toLowerCase().includes(searchTerm) ||
-               (pin['Pinterest Board'] || '').toLowerCase().includes(searchTerm);
+        const t = (pin['Title'] || '').toLowerCase();
+        const d = (pin['Description'] || '').toLowerCase();
+        return t.includes(searchTerm) || d.includes(searchTerm);
     });
 }
 
@@ -1847,7 +1847,13 @@ function getVisiblePins() {
             pins[targetIndex] = tmp;
             pins[draggedIndex]['Publish date'] = dDate;
             pins[targetIndex]['Publish date'] = tDate;
-            filteredPins = [...pins];
+            // Re-apply search filter if active
+    const searchValue = document.getElementById('searchInput').value;
+    if (searchValue.trim()) {
+        searchPins();
+    } else {
+        filteredPins = [...pins];
+    }
             renderPins();
             showToast('Pins swapped (times preserved)', 'success');
         }
@@ -2004,9 +2010,8 @@ if (searchValue.trim()) {
     } else {
         filteredPins = pins.filter(pin => {
             const t = (pin['Title'] || '').toLowerCase();
-            const k = (pin['Keywords'] || '').toLowerCase();
             const d = (pin['Description'] || '').toLowerCase();
-            return t.includes(q) || k.includes(q) || d.includes(q);
+            return t.includes(q) || d.includes(q);
         });
     }
     
@@ -2017,6 +2022,7 @@ if (searchValue.trim()) {
     
     renderPins();
 }
+
 
         // Delete (selected)
         // Delete selected
@@ -2419,7 +2425,13 @@ if (searchValue.trim()) {
                 }
             });
 
-            filteredPins = [...pins];
+            // Re-apply search filter if active
+    const searchValue = document.getElementById('searchInput').value;
+    if (searchValue.trim()) {
+        searchPins();
+    } else {
+        filteredPins = [...pins];
+    }
             closeModal('rescheduleModal');
             renderPins(); updateUI();
             showToast('Schedule rebuilt using ' + (mode === 'fixed' ? 'fixed' : 'random') + ' intervals', 'success');
@@ -2436,7 +2448,13 @@ if (searchValue.trim()) {
             const state = history.pop();
             pins = state.pins;
             selectedIndices = state.selected;
-            filteredPins = [...pins];
+            // Re-apply search filter if active
+    const searchValue = document.getElementById('searchInput').value;
+    if (searchValue.trim()) {
+        searchPins();
+    } else {
+        filteredPins = [...pins];
+    }
             renderPins(); updateUI();
             showToast('Undo successful', 'success');
         }
