@@ -1870,24 +1870,40 @@ function getVisiblePins() {
     updateUI();
 }
         function selectAll() {
-            // saveHistory();
-            pins.forEach((_, i) => selectedIndices.add(i));
-            renderPins(); updateUI();
-        }
+    saveHistory();
+    // Select only visible/filtered pins
+    filteredPins.forEach(pin => {
+        const index = pins.indexOf(pin);
+        selectedIndices.add(index);
+    });
+    renderPins();
+    updateUI();
+}
         function deselectAll() {
-            // saveHistory();
-    selectedIndices.clear();
-    lastSelectedIndex = null;  // ADD THIS LINE
-    renderPins(); 
+    saveHistory();
+    // Only deselect visible/filtered pins
+    filteredPins.forEach(pin => {
+        const index = pins.indexOf(pin);
+        selectedIndices.delete(index);
+    });
+    lastSelectedIndex = null;
+    renderPins();
     updateUI();
 }
         function selectRange(startIndex, endIndex) {
-    const start = Math.min(startIndex, endIndex);
-    const end = Math.max(startIndex, endIndex);
+    // Find positions in filteredPins array
+    const startFilteredIndex = filteredPins.findIndex(p => pins.indexOf(p) === startIndex);
+    const endFilteredIndex = filteredPins.findIndex(p => pins.indexOf(p) === endIndex);
     
-    // Select all pins in the range
+    if (startFilteredIndex === -1 || endFilteredIndex === -1) return;
+    
+    const start = Math.min(startFilteredIndex, endFilteredIndex);
+    const end = Math.max(startFilteredIndex, endFilteredIndex);
+    
+    // Select only visible pins in the range
     for (let i = start; i <= end; i++) {
-        selectedIndices.add(i);
+        const actualIndex = pins.indexOf(filteredPins[i]);
+        selectedIndices.add(actualIndex);
     }
     
     lastSelectedIndex = endIndex;
@@ -2511,30 +2527,34 @@ function setupScrollDockBehavior() {
         function showDock() { document.body.classList.remove('dock-hidden'); }
 
     // ODD & EVEN
-    function selectOdds() {
-            // saveHistory();
-            selectedIndices.clear();
-            for (let i = 0; i < pins.length; i++) {
-                if ((i + 1) % 2 === 1) { // i+1 because card numbers are 1-based
-                    selectedIndices.add(i);
-                }
-            }
-            renderPins();
-            updateUI();
-            showToast(`Selected ${selectedIndices.size} odd pins`, 'success');
-    }
-    function selectEvens() {
-            // saveHistory();
-            selectedIndices.clear();
-            for (let i = 0; i < pins.length; i++) {
-                if ((i + 1) % 2 === 0) { // i+1 because card numbers are 1-based
-                    selectedIndices.add(i);
-                }
-            }
-            renderPins();
-            updateUI();
-            showToast(`Selected ${selectedIndices.size} even pins`, 'success');
-    }
+function selectOdds() {
+    saveHistory();
+    selectedIndices.clear();
+    // Select only odd positions from visible/filtered pins
+    filteredPins.forEach((pin, displayIndex) => {
+        if ((displayIndex + 1) % 2 === 1) { // displayIndex+1 for 1-based card numbers
+            const actualIndex = pins.indexOf(pin);
+            selectedIndices.add(actualIndex);
+        }
+    });
+    renderPins();
+    updateUI();
+    showToast(`Selected ${selectedIndices.size} odd pins`, 'success');
+}
+function selectEvens() {
+    saveHistory();
+    selectedIndices.clear();
+    // Select only even positions from visible/filtered pins
+    filteredPins.forEach((pin, displayIndex) => {
+        if ((displayIndex + 1) % 2 === 0) { // displayIndex+1 for 1-based card numbers
+            const actualIndex = pins.indexOf(pin);
+            selectedIndices.add(actualIndex);
+        }
+    });
+    renderPins();
+    updateUI();
+    showToast(`Selected ${selectedIndices.size} even pins`, 'success');
+}
 
     // Export Dropdown Toggle
 function toggleExportDropdown() {
