@@ -1,0 +1,24 @@
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Optional: if you add build process later
+node_modules/
+dist/
+build/
+
+# Optional: test files
+test/
+*.test.js

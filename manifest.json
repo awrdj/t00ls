@@ -1,0 +1,35 @@
+{
+    "name": "Mockup Editor Pro",
+    "short_name": "Mockup Editor",
+    "description": "Professional mockup editor for applying designs to product mockups",
+    "start_url": "./",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#3b82f6",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["productivity", "design", "graphics"],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "New Mockup",
+            "short_name": "New",
+            "description": "Create a new mockup",
+            "url": "./?action=new",
+            "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+        }
+    ]
+}
