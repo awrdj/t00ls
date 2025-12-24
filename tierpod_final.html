@@ -2056,24 +2056,30 @@
 
             progressModal.classList.add('active');
 
-            const mockupsWithData = Object.keys(state.savedMockupData).filter(id => state.mockupEnabled[id] !== false);
+            // Filter to only enabled templates
+const allMockupIds = Object.keys(state.savedMockupData);
+const mockupsWithData = allMockupIds.filter(id => {
+    const isEnabled = state.mockupEnabled[id] !== false;
+    return isEnabled;
+});
 
-            if (mockupsWithData.length === 0) {
-                progressModal.classList.remove('active');
-                alert('⚠️ No enabled templates!\n\nEnable at least one template using the toggle switches.');
-                return;
-            }
+if (mockupsWithData.length === 0) {
+    progressModal.classList.remove('active');
+    alert('⚠️ No enabled templates!\n\nEnable at least one template using the toggle switches.');
+    return;
+}
 
-            const total = pngFiles.length * mockupsWithData.length;
-            let completed = 0;
+const total = pngFiles.length * mockupsWithData.length;
+let completed = 0;
 
-            const zip = new JSZip();
+const zip = new JSZip();
 
-            for (const pngFile of pngFiles) {
-                const pngDataUrl = await readFileAsDataURL(pngFile);
-                const pngImg = await loadImage(pngDataUrl);
+for (const pngFile of pngFiles) {
+    const pngDataUrl = await readFileAsDataURL(pngFile);
+    const pngImg = await loadImage(pngDataUrl);
 
-                for (const mockupId of mockupsWithData) {
+    // ONLY process enabled mockups
+    for (const mockupId of mockupsWithData) {
                     const mockup = state.mockups.find(m => m.id === mockupId);
                     const savedData = state.savedMockupData[mockupId];
 
@@ -2109,13 +2115,12 @@
                         ctx.restore();
                     }
 
-                    /*
                     const fileName = `${pngFile.name.replace('.png', '')}_${mockup.name}`;
                     const dataUrl = canvas.toDataURL('image/png', 1.0);
                     const base64 = dataUrl.split(',')[1];
                     zip.file(fileName, base64, { base64: true });
-                    */
 
+                    /* 
                     const fileName = `${pngFile.name.replace('.png', '')}_${mockup.name}`;
                     // Export as JPEG with 0.92 quality (good balance of size/quality)
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
@@ -2123,6 +2128,7 @@
                     // Change extension to .jpg
                     const jpgFileName = fileName.replace(/\.(png|jpg|jpeg)$/i, '.jpg');
                     zip.file(jpgFileName, base64, { base64: true });
+                    */
 
                     completed++;
                     const progress = Math.round((completed / total) * 100);
@@ -2142,9 +2148,12 @@
             link.click();
 
             setTimeout(() => {
-                progressModal.classList.remove('active');
-                alert(`✅ Generated ${total} mockups!`);
-            }, 500);
+    progressModal.classList.remove('active');
+    alert(`✅ Generated ${total} mockups!\n\n📦 Downloaded as ZIP file.`);
+    
+    // Reset file input so same file can be uploaded again
+    document.getElementById('designPngsInput').value = '';
+}, 500);
         });
 
         function readFileAsDataURL(file) {
