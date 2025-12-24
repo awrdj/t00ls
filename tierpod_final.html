@@ -1706,28 +1706,28 @@
             }
 
             mockupList.innerHTML = state.mockups.map(m => {
-                const saved = state.savedMockupData[m.id];
-                const elementCount = saved ? saved.elements.length : 0;
-                const isEnabled = state.mockupEnabled[m.id] !== false;
-                return `
-                    <li class="mockup-item ${state.currentMockup?.id === m.id ? 'selected' : ''} ${!isEnabled ? 'disabled' : ''}" 
-                        data-id="${m.id}">
-                        <div class="mockup-name">
-                            <i class="fas fa-image"></i>
-                            <span>${m.name}</span>
-                        </div>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            ${elementCount > 0 ? \`<div class="mockup-badge"><i class="fas fa-check"></i> ${elementCount}</div>\` : ''}
-                            <div class="mockup-toggle ${isEnabled ? 'enabled' : ''}" onclick="event.stopPropagation(); toggleMockup('${m.id}')" title="${isEnabled ? 'Enabled' : 'Disabled'}">
-                                <div class="mockup-toggle-slider"></div>
-                            </div>
-                            <button class="delete-mockup-btn" onclick="event.stopPropagation(); deleteMockup('${m.id}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </li>
-                `;
-            }).join('');
+    const saved = state.savedMockupData[m.id];
+    const elementCount = saved ? saved.elements.length : 0;
+    const isEnabled = state.mockupEnabled[m.id] !== false;
+    return `
+        <li class="mockup-item ${state.currentMockup?.id === m.id ? 'selected' : ''} ${!isEnabled ? 'disabled' : ''}" 
+            data-id="${m.id}">
+            <div class="mockup-name">
+                <i class="fas fa-image"></i>
+                <span>${m.name}</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                ${elementCount > 0 ? `<div class="mockup-badge"><i class="fas fa-check"></i> ${elementCount}</div>` : ''}
+                <div class="mockup-toggle ${isEnabled ? 'enabled' : ''}" onclick="event.stopPropagation(); toggleMockup('${m.id}')" title="${isEnabled ? 'Enabled' : 'Disabled'}">
+                    <div class="mockup-toggle-slider"></div>
+                </div>
+                <button class="delete-mockup-btn" onclick="event.stopPropagation(); deleteMockup('${m.id}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </li>
+    `;
+}).join('');
 
             document.querySelectorAll('.mockup-item').forEach(item => {
                 item.addEventListener('click', () => selectMockup(item.dataset.id));
