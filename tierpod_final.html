@@ -1457,8 +1457,11 @@
         }
 
         function toggleMockup(mockupId) {
-            const currentState = state.mockupEnabled[mockupId];
-            state.mockupEnabled[mockupId] = currentState === false ? true : false;
+            // Toggle: if currently false, make true; otherwise make false
+            const newState = state.mockupEnabled[mockupId] === false ? true : false;
+            state.mockupEnabled[mockupId] = newState;
+
+            console.log(`Toggled ${mockupId}: ${newState ? 'ENABLED' : 'DISABLED'}`);
 
             try {
                 localStorage.setItem('tierpod_enabled', JSON.stringify(state.mockupEnabled));
@@ -2106,10 +2109,20 @@
                         ctx.restore();
                     }
 
+                    /*
                     const fileName = `${pngFile.name.replace('.png', '')}_${mockup.name}`;
                     const dataUrl = canvas.toDataURL('image/png', 1.0);
                     const base64 = dataUrl.split(',')[1];
                     zip.file(fileName, base64, { base64: true });
+                    */
+
+                    const fileName = `${pngFile.name.replace('.png', '')}_${mockup.name}`;
+                    // Export as JPEG with 0.92 quality (good balance of size/quality)
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+                    const base64 = dataUrl.split(',')[1];
+                    // Change extension to .jpg
+                    const jpgFileName = fileName.replace(/\.(png|jpg|jpeg)$/i, '.jpg');
+                    zip.file(jpgFileName, base64, { base64: true });
 
                     completed++;
                     const progress = Math.round((completed / total) * 100);
