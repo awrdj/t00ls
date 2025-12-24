@@ -2104,12 +2104,24 @@ for (const pngFile of pngFiles) {
 
                     const mockupImg = await loadImage(mockup.dataUrl);
 
-                    const canvas = document.createElement('canvas');
-                    canvas.width = mockup.originalWidth;
-                    canvas.height = mockup.originalHeight;
-                    const ctx = canvas.getContext('2d', { alpha: false });
+                    // Calculate optimized dimensions (reduce to 85% for smaller files)
+const targetWidth = Math.round(mockup.originalWidth * 0.85);
+const targetHeight = Math.round(mockup.originalHeight * 0.85);
 
-                    ctx.drawImage(mockupImg, 0, 0, canvas.width, canvas.height);
+const canvas = document.createElement('canvas');
+canvas.width = targetWidth;
+canvas.height = targetHeight;
+const ctx = canvas.getContext('2d', { 
+    alpha: false,
+    willReadFrequently: false 
+});
+
+// Fill with white background (removes alpha channel)
+ctx.fillStyle = '#FFFFFF';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+// Draw mockup scaled down
+ctx.drawImage(mockupImg, 0, 0, targetWidth, targetHeight);
 
                     const scaleX = canvas.width / savedData.previewBounds.width;
                     const scaleY = canvas.height / savedData.previewBounds.height;
@@ -2159,20 +2171,40 @@ for (const pngFile of pngFiles) {
                 }
             }
 
-            progressText.textContent = 'Creating download...';
-            const blob = await zip.generateAsync({ type: 'blob' });
-            const link = document.createElement('a');
-            link.download = `tierpod_mockups_${Date.now()}.zip`;
-            link.href = URL.createObjectURL(blob);
-            link.click();
-
-            setTimeout(() => {
-    progressModal.classList.remove('active');
-    alert(`✅ Generated ${total} mockups!\n\n📦 Downloaded as ZIP file.`);
+            // Check if only 1 image to export
+if (total === 1) {
+    // Single image - download directly (no ZIP)
+    progressText.textContent = 'Downloading image...';
     
-    // Reset file input so same file can be uploaded again
-    document.getElementById('designPngsInput').value = '';
-}, 500);
+    const firstFile = zip.file(Object.keys(zip.files)[0]);
+    const base64Data = await firstFile.async('base64');
+    
+    const link = document.createElement('a');
+    link.download = Object.keys(zip.files)[0];
+    link.href = 'data:image/png;base64,' + base64Data;
+    link.click();
+    
+    setTimeout(() => {
+        progressModal.classList.remove('active');
+        alert(`✅ Generated 1 mockup!\n\n📥 Downloaded as PNG file.`);
+        document.getElementById('designPngsInput').value = '';
+    }, 500);
+    
+} else {
+    // Multiple images - create ZIP
+    progressText.textContent = 'Creating ZIP...';
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const link = document.createElement('a');
+    link.download = `tierpod_mockups_${Date.now()}.zip`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    
+    setTimeout(() => {
+        progressModal.classList.remove('active');
+        alert(`✅ Generated ${total} mockups!\n\n📦 Downloaded as ZIP file.`);
+        document.getElementById('designPngsInput').value = '';
+    }, 500);
+}
         });
 
         function readFileAsDataURL(file) {
