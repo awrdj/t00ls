@@ -2107,7 +2107,7 @@ for (const pngFile of pngFiles) {
                     const canvas = document.createElement('canvas');
                     canvas.width = mockup.originalWidth;
                     canvas.height = mockup.originalHeight;
-                    const ctx = canvas.getContext('2d', { alpha: true });
+                    const ctx = canvas.getContext('2d', { alpha: false });
 
                     ctx.drawImage(mockupImg, 0, 0, canvas.width, canvas.height);
 
