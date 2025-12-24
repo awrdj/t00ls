@@ -2033,7 +2033,7 @@
 
             const btn = document.getElementById('loadExportBtn');
             if (hasData && enabledWithData.length < Object.keys(state.savedMockupData).length) {
-                btn.innerHTML = \`<i class="fas fa-rocket"></i><span>Generate ${enabledWithData.length} Template\${enabledWithData.length > 1 ? 's' : ''}</span>\`;
+                btn.innerHTML = `<i class="fas fa-rocket"></i><span>Generate ${enabledWithData.length} Template\${enabledWithData.length > 1 ? 's' : ''}</span>`;
             } else if (hasData) {
                 btn.innerHTML = '<i class="fas fa-rocket"></i><span>Generate & Download</span>';
             }
