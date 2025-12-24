@@ -2104,25 +2104,27 @@ for (const pngFile of pngFiles) {
 
         const mockupImg = await loadImage(mockup.dataUrl);
 
-        // Use ORIGINAL mockup dimensions (no scaling)
+        // Use ORIGINAL mockup dimensions and format
         const canvas = document.createElement('canvas');
         canvas.width = mockup.originalWidth;
         canvas.height = mockup.originalHeight;
+        
+        // Detect if mockup has transparency
+        const mockupExtension = mockup.name.toLowerCase();
+        const isPNG = mockupExtension.endsWith('.png');
+        
         const ctx = canvas.getContext('2d', { 
-            alpha: false,
+            alpha: isPNG, // Keep alpha if mockup is PNG
             willReadFrequently: false 
         });
 
-        // Fill with white background (removes alpha channel)
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Draw mockup at ORIGINAL size (pixel-perfect)
+        // Draw mockup at ORIGINAL size (pixel-perfect copy)
         ctx.drawImage(mockupImg, 0, 0, mockup.originalWidth, mockup.originalHeight);
 
         const scaleX = canvas.width / savedData.previewBounds.width;
         const scaleY = canvas.height / savedData.previewBounds.height;
 
+        // Overlay design elements
         for (const element of savedData.elements) {
             ctx.save();
 
@@ -2143,12 +2145,23 @@ for (const pngFile of pngFiles) {
             ctx.restore();
         }
 
-        // Export as JPEG (NO alpha channel)
-        const fileName = `${pngFile.name.replace('.png', '')}_${mockup.name}`;
-        const dataUrl = canvas.toDataURL('image/jpeg', 1);
+        // Export in SAME format as mockup with MAXIMUM quality
+        const baseName = pngFile.name.replace(/\.(png|jpg|jpeg)$/i, '');
+        let dataUrl, finalFileName;
+        
+        if (isPNG) {
+            // Mockup is PNG - export as PNG (max quality, keeps transparency)
+            dataUrl = canvas.toDataURL('image/png');
+            finalFileName = `${baseName}_${mockup.name}`;
+        } else {
+            // Mockup is JPG - export as JPG (quality 1.0 = maximum)
+            dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+            const mockupBaseName = mockup.name.replace(/\.(png|jpg|jpeg)$/i, '');
+            finalFileName = `${baseName}_${mockupBaseName}.jpg`;
+        }
+        
         const base64 = dataUrl.split(',')[1];
-        const jpgFileName = fileName.replace(/\.(png|jpg|jpeg)$/i, '.jpg');
-        zip.file(jpgFileName, base64, { base64: true });
+        zip.file(finalFileName, base64, { base64: true });
 
         completed++;
         const progress = Math.round((completed / total) * 100);
