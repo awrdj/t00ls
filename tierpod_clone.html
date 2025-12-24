@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TierPOD Clone - Mockup Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #e5e7eb;
+            --dark: #1f2937;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f9fafb;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5em;
+        }
+
+        .nav-menu {
+            padding: 15px;
+        }
+
+        .nav-item {
+            padding: 12px;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .nav-item:hover {
+            background: #f3f4f6;
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Pages */
+        .page {
+            display: none;
+            padding: 30px;
+            overflow-y: auto;
+            height: calc(100vh - 70px);
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Generator Layout */
+        .generator-layout {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .panel h3 {
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        /* Preview Container */
+        .preview-container {
+            position: relative;
+            background: #e5e7eb;
+            border-radius: 12px;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #mockupPreview {
+            max-width: 90%;
+            max-height: 90%;
+            display: none;
+        }
+
+        #watermarkOverlay {
+            position: absolute;
+            max-width: 90%;
+            max-height: 90%;
+            pointer-events: none;
+            display: none;
+            opacity: 0.5;
+        }
+
+        /* Design Wrapper - Draggable/Resizable Element */
+        .design-wrapper {
+            position: absolute;
+            border: 2px dashed var(--primary);
+            cursor: move;
+            display: none;
+        }
+
+        .design-wrapper.active {
+            display: block;
+        }
+
+        .design-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        .resize-handle {
+            position: absolute;
+            right: -5px;
+            bottom: -5px;
+            width: 15px;
+            height: 15px;
+            background: white;
+            border: 2px solid var(--primary);
+            cursor: nwse-resize;
+            border-radius: 50%;
+        }
+
+        .rotate-handle {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background: var(--success);
+            border-radius: 50%;
+            cursor: grab;
+        }
+
+        .remove-handle {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 25px;
+            height: 25px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* Mockup List */
+        .mockup-item {
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .mockup-item:hover {
+            border-color: var(--primary);
+        }
+
+        .mockup-item.selected {
+            background: #f0f4ff;
+            border-color: var(--primary);
+        }
+
+        /* Controls */
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+        }
+
+        /* Listings Grid */
+        .listings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .listing-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .listing-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .listing-info {
+            padding: 15px;
+        }
+
+        .listing-actions {
+            display: flex;
+            gap: 10px;
+            padding: 10px 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            flex: 1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .progress-bar {
+            height: 30px;
+            background: #f3f4f6;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>🎨 TierPOD</h1>
+                <p>Mockup Generator</p>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item active" data-page="generator">⚡ Generator</div>
+                <div class="nav-item" data-page="listings">📋 Listings</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <h2 id="pageTitle">Mockup Generator</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" id="loadExportBtn" disabled>
+                        📤 Load PNGs & Generate
+                    </button>
+                </div>
+            </div>
+
+            <!-- Generator Page -->
+            <div class="page active" id="generatorPage">
+                <div class="generator-layout">
+                    <!-- Left: Mockups List -->
+                    <div class="panel">
+                        <h3>🖼️ Mockups</h3>
+                        <button class="btn btn-primary" id="loadMockupsBtn" style="width: 100%; margin-bottom: 15px;">
+                            + Load Mockups
+                        </button>
+                        <input type="file" id="mockupInput" multiple accept="image/*" style="display: none;">
+                        <div id="mockupList"></div>
+                    </div>
+
+                    <!-- Center: Preview -->
+                    <div class="panel">
+                        <h3>👁️ Mockup Preview</h3>
+                        <div class="preview-container" id="previewContainer">
+                            <p id="noMockupText">Select a mockup from the list</p>
+                            <img id="mockupPreview" alt="Mockup">
+                            <img id="watermarkOverlay" alt="Watermark">
+                            <div id="designWrapper" class="design-wrapper">
+                                <img id="designImage" alt="Design">
+                                <div class="resize-handle"></div>
+                                <div class="rotate-handle"></div>
+                                <div class="remove-handle">×</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button class="btn btn-success" id="addPngBtn" disabled>
+                                + Add PNG Element
+                            </button>
+                            <button class="btn btn-primary" id="savePositionBtn" disabled>
+                                💾 Save Position
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Controls -->
+                    <div class="panel">
+                        <h3>⚙️ Controls</h3>
+
+                        <div class="control-group">
+                            <label>Watermark</label>
+                            <select id="watermarkSelect" disabled>
+                                <option value="">No Watermark</option>
+                                <option value="text">Text Watermark</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Opacity</label>
+                            <input type="range" id="opacitySlider" min="0" max="1" step="0.01" value="1" disabled>
+                            <span id="opacityValue">100%</span>
+                        </div>
+
+                        <div style="margin-top: 30px;">
+                            <h4 style="margin-bottom: 10px;">📖 Instructions</h4>
+                            <ol style="font-size: 0.9em; line-height: 1.8; padding-left: 20px;">
+                                <li>Load mockup templates</li>
+                                <li>Select a mockup</li>
+                                <li>Click "Add PNG Element"</li>
+                                <li>Drag, resize, rotate the element</li>
+                                <li>Click "Save Position"</li>
+                                <li>Repeat for more mockups</li>
+                                <li>Click "Load PNGs & Generate" to create mockups</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Listings Page -->
+            <div class="page" id="listingsPage">
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-success" id="downloadAllBtn">💾 Download All</button>
+                    <button class="btn btn-danger" id="clearAllBtn" style="margin-left: 10px;">🗑️ Clear All</button>
+                </div>
+                <div class="listings-grid" id="listingsGrid">
+                    <div class="empty-state">
+                        <p>No mockups generated yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div class="modal" id="progressModal">
+        <div class="modal-content">
+            <h3>⚡ Generating Mockups...</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <p id="progressText">Processing...</p>
+        </div>
+    </div>
+
+    <!-- PNG Input for Generation -->
+    <input type="file" id="designPngsInput" multiple accept=".png" style="display: none;">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        // State
+        const state = {
+            mockups: [],
+            currentMockup: null,
+            generatedMockups: [],
+            savedPositions: {} // mockupId: { x, y, width, height, rotation, opacity }
+        };
+
+        // DOM Elements
+        const mockupInput = document.getElementById('mockupInput');
+        const mockupList = document.getElementById('mockupList');
+        const mockupPreview = document.getElementById('mockupPreview');
+        const designWrapper = document.getElementById('designWrapper');
+        const designImage = document.getElementById('designImage');
+        const addPngBtn = document.getElementById('addPngBtn');
+        const savePositionBtn = document.getElementById('savePositionBtn');
+        const loadExportBtn = document.getElementById('loadExportBtn');
+        const designPngsInput = document.getElementById('designPngsInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const noMockupText = document.getElementById('noMockupText');
+        const opacitySlider = document.getElementById('opacitySlider');
+        const watermarkSelect = document.getElementById('watermarkSelect');
+        const listingsGrid = document.getElementById('listingsGrid');
+
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(item.dataset.page + 'Page').classList.add('active');
+
+                const titles = { 'generator': 'Mockup Generator', 'listings': 'Generated Listings' };
+                document.getElementById('pageTitle').textContent = titles[item.dataset.page];
+
+                if (item.dataset.page === 'listings') renderListings();
+            });
+        });
+
+        // Load Mockups
+        document.getElementById('loadMockupsBtn').addEventListener('click', () => mockupInput.click());
+        mockupInput.addEventListener('change', (e) => {
+            Array.from(e.target.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const mockup = {
+                        id: Date.now() + Math.random(),
+                        name: file.name,
+                        dataUrl: e.target.result
+                    };
+                    state.mockups.push(mockup);
+                    renderMockups();
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function renderMockups() {
+            if (state.mockups.length === 0) {
+                mockupList.innerHTML = '<div class="empty-state"><p>No mockups loaded</p></div>';
+                return;
+            }
+
+            mockupList.innerHTML = state.mockups.map(m => `
+                <div class="mockup-item ${state.currentMockup?.id === m.id ? 'selected' : ''}" 
+                     data-id="${m.id}">
+                    ${m.name}
+                    ${state.savedPositions[m.id] ? ' ✅' : ''}
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.mockup-item').forEach(item => {
+                item.addEventListener('click', () => selectMockup(item.dataset.id));
+            });
+        }
+
+        function selectMockup(id) {
+            state.currentMockup = state.mockups.find(m => m.id == id);
+            mockupPreview.src = state.currentMockup.dataUrl;
+            mockupPreview.style.display = 'block';
+            noMockupText.style.display = 'none';
+
+            addPngBtn.disabled = false;
+            watermarkSelect.disabled = false;
+            opacitySlider.disabled = false;
+
+            // Load saved position if exists
+            if (state.savedPositions[id]) {
+                const pos = state.savedPositions[id];
+                designWrapper.style.left = pos.x + 'px';
+                designWrapper.style.top = pos.y + 'px';
+                designWrapper.style.width = pos.width + 'px';
+                designWrapper.style.height = pos.height + 'px';
+                designWrapper.style.transform = `rotate(${pos.rotation}deg)`;
+                opacitySlider.value = pos.opacity;
+                designImage.style.opacity = pos.opacity;
+                designWrapper.classList.add('active');
+                savePositionBtn.disabled = false;
+            } else {
+                designWrapper.classList.remove('active');
+                savePositionBtn.disabled = true;
+            }
+
+            renderMockups();
+            updateGenerateButton();
+        }
+
+        // Add PNG Element
+        addPngBtn.addEventListener('click', () => {
+            if (!state.currentMockup) return;
+
+            // Create placeholder element
+            const rect = previewContainer.getBoundingClientRect();
+            const mockupRect = mockupPreview.getBoundingClientRect();
+
+            designWrapper.style.left = (mockupRect.left - rect.left + 50) + 'px';
+            designWrapper.style.top = (mockupRect.top - rect.top + 50) + 'px';
+            designWrapper.style.width = '200px';
+            designWrapper.style.height = '200px';
+            designWrapper.style.transform = 'rotate(0deg)';
+            designImage.style.opacity = opacitySlider.value;
+
+            // Use a placeholder image
+            designImage.src = 'data:image/svg+xml,' + encodeURIComponent(
+                '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">' +
+                '<rect width="200" height="200" fill="#e5e7eb"/>' +
+                '<text x="100" y="100" text-anchor="middle" fill="#6b7280" font-size="16">Design Area</text>' +
+                '</svg>'
+            );
+
+            designWrapper.classList.add('active');
+            savePositionBtn.disabled = false;
+        });
+
+        // Dragging
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+
+        designWrapper.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('resize-handle') || 
+                e.target.classList.contains('rotate-handle') ||
+                e.target.classList.contains('remove-handle')) return;
+
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialLeft = parseInt(designWrapper.style.left) || 0;
+            initialTop = parseInt(designWrapper.style.top) || 0;
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            designWrapper.style.left = (initialLeft + dx) + 'px';
+            designWrapper.style.top = (initialTop + dy) + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Resizing
+        let isResizing = false;
+        let startWidth, startHeight;
+
+        document.querySelector('.resize-handle').addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = parseInt(designWrapper.style.width);
+            startHeight = parseInt(designWrapper.style.height);
+            e.stopPropagation();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            designWrapper.style.width = (startWidth + dx) + 'px';
+            designWrapper.style.height = (startHeight + dy) + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            isResizing = false;
+        });
+
+        // Rotating
+        let isRotating = false;
+        let centerX, centerY, startAngle;
+
+        document.querySelector('.rotate-handle').addEventListener('mousedown', (e) => {
+            isRotating = true;
+            const rect = designWrapper.getBoundingClientRect();
+            centerX = rect.left + rect.width / 2;
+            centerY = rect.top + rect.height / 2;
+            startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+            e.stopPropagation();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isRotating) return;
+            const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+            const rotation = (angle - startAngle) * (180 / Math.PI);
+            const currentRotation = parseInt(designWrapper.style.transform.match(/rotate\(([^)]+)deg\)/)?.[1] || 0);
+            designWrapper.style.transform = `rotate(${currentRotation + rotation}deg)`;
+            startAngle = angle;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isRotating = false;
+        });
+
+        // Remove
+        document.querySelector('.remove-handle').addEventListener('click', () => {
+            designWrapper.classList.remove('active');
+            savePositionBtn.disabled = true;
+        });
+
+        // Opacity
+        opacitySlider.addEventListener('input', (e) => {
+            designImage.style.opacity = e.target.value;
+            document.getElementById('opacityValue').textContent = Math.round(e.target.value * 100) + '%';
+        });
+
+        // Save Position
+        savePositionBtn.addEventListener('click', () => {
+            if (!state.currentMockup) return;
+
+            state.savedPositions[state.currentMockup.id] = {
+                x: parseInt(designWrapper.style.left),
+                y: parseInt(designWrapper.style.top),
+                width: parseInt(designWrapper.style.width),
+                height: parseInt(designWrapper.style.height),
+                rotation: parseInt(designWrapper.style.transform.match(/rotate\(([^)]+)deg\)/)?.[1] || 0),
+                opacity: parseFloat(opacitySlider.value)
+            };
+
+            alert('✅ Position saved for ' + state.currentMockup.name);
+            renderMockups();
+            updateGenerateButton();
+        });
+
+        function updateGenerateButton() {
+            const hasSavedPositions = Object.keys(state.savedPositions).length > 0;
+            loadExportBtn.disabled = !hasSavedPositions;
+        }
+
+        // Load PNGs & Generate
+        loadExportBtn.addEventListener('click', () => designPngsInput.click());
+
+        designPngsInput.addEventListener('change', async (e) => {
+            const pngFiles = Array.from(e.target.files);
+            if (pngFiles.length === 0) return;
+
+            const progressModal = document.getElementById('progressModal');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+
+            progressModal.classList.add('active');
+
+            const total = pngFiles.length * Object.keys(state.savedPositions).length;
+            let completed = 0;
+
+            for (const pngFile of pngFiles) {
+                const pngReader = new FileReader();
+                await new Promise((resolve) => {
+                    pngReader.onload = async (e) => {
+                        const pngImg = new Image();
+                        pngImg.onload = async () => {
+                            // Generate mockup for each saved position
+                            for (const [mockupId, position] of Object.entries(state.savedPositions)) {
+                                const mockup = state.mockups.find(m => m.id == mockupId);
+                                if (!mockup) continue;
+
+                                const mockupImg = new Image();
+                                await new Promise((res) => {
+                                    mockupImg.onload = async () => {
+                                        // Create canvas
+                                        const canvas = document.createElement('canvas');
+                                        canvas.width = mockupImg.width;
+                                        canvas.height = mockupImg.height;
+                                        const ctx = canvas.getContext('2d');
+
+                                        // Draw mockup
+                                        ctx.drawImage(mockupImg, 0, 0);
+
+                                        // Calculate scale factor
+                                        const mockupRect = mockupPreview.getBoundingClientRect();
+                                        const scaleX = mockupImg.width / mockupRect.width;
+                                        const scaleY = mockupImg.height / mockupRect.height;
+
+                                        // Draw design
+                                        ctx.save();
+                                        ctx.globalAlpha = position.opacity;
+
+                                        const scaledX = position.x * scaleX;
+                                        const scaledY = position.y * scaleY;
+                                        const scaledWidth = position.width * scaleX;
+                                        const scaledHeight = position.height * scaleY;
+
+                                        ctx.translate(scaledX + scaledWidth/2, scaledY + scaledHeight/2);
+                                        ctx.rotate(position.rotation * Math.PI / 180);
+                                        ctx.drawImage(pngImg, -scaledWidth/2, -scaledHeight/2, scaledWidth, scaledHeight);
+                                        ctx.restore();
+
+                                        // Save result
+                                        const result = {
+                                            id: Date.now() + Math.random(),
+                                            name: `${pngFile.name.split('.')[0]}_${mockup.name.split('.')[0]}.png`,
+                                            dataUrl: canvas.toDataURL('image/png'),
+                                            timestamp: new Date().toLocaleString()
+                                        };
+                                        state.generatedMockups.push(result);
+
+                                        completed++;
+                                        const progress = Math.round((completed / total) * 100);
+                                        progressFill.style.width = progress + '%';
+                                        progressFill.textContent = progress + '%';
+                                        progressText.textContent = `Generated ${completed} of ${total} mockups`;
+
+                                        res();
+                                    };
+                                    mockupImg.src = mockup.dataUrl;
+                                });
+                            }
+                            resolve();
+                        };
+                        pngImg.src = e.target.result;
+                    };
+                    pngReader.readAsDataURL(pngFile);
+                });
+            }
+
+            setTimeout(() => {
+                progressModal.classList.remove('active');
+                alert(`✅ Generated ${total} mockups!`);
+                document.querySelector('[data-page="listings"]').click();
+            }, 500);
+        });
+
+        // Listings
+        function renderListings() {
+            if (state.generatedMockups.length === 0) {
+                listingsGrid.innerHTML = '<div class="empty-state"><p>No mockups generated yet</p></div>';
+                return;
+            }
+
+            listingsGrid.innerHTML = state.generatedMockups.map(m => `
+                <div class="listing-card">
+                    <img src="${m.dataUrl}" class="listing-image" alt="${m.name}">
+                    <div class="listing-info">
+                        <strong>${m.name}</strong>
+                        <p style="font-size: 0.8em; color: #6b7280; margin-top: 5px;">${m.timestamp}</p>
+                    </div>
+                    <div class="listing-actions">
+                        <button class="btn btn-success btn-small" onclick="downloadMockup('${m.id}')">
+                            💾 Download
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="deleteMockup('${m.id}')">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function downloadMockup(id) {
+            const mockup = state.generatedMockups.find(m => m.id == id);
+            if (!mockup) return;
+            const link = document.createElement('a');
+            link.download = mockup.name;
+            link.href = mockup.dataUrl;
+            link.click();
+        }
+
+        function deleteMockup(id) {
+            if (confirm('Delete this mockup?')) {
+                state.generatedMockups = state.generatedMockups.filter(m => m.id != id);
+                renderListings();
+            }
+        }
+
+        document.getElementById('downloadAllBtn').addEventListener('click', async () => {
+            if (state.generatedMockups.length === 0) return;
+
+            if (typeof JSZip !== 'undefined') {
+                const zip = new JSZip();
+                state.generatedMockups.forEach(m => {
+                    const base64 = m.dataUrl.split(',')[1];
+                    zip.file(m.name, base64, { base64: true });
+                });
+                const blob = await zip.generateAsync({ type: 'blob' });
+                const link = document.createElement('a');
+                link.download = `mockups_${Date.now()}.zip`;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+            } else {
+                for (const m of state.generatedMockups) {
+                    downloadMockup(m.id);
+                    await new Promise(r => setTimeout(r, 500));
+                }
+            }
+        });
+
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
+            if (confirm('Clear all generated mockups?')) {
+                state.generatedMockups = [];
+                renderListings();
+            }
+        });
+
+        // Initialize
+        renderMockups();
+        updateGenerateButton();
+    </script>
+</body>
+</html>
