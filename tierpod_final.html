@@ -2099,77 +2099,69 @@ for (const pngFile of pngFiles) {
 
     // ONLY process enabled mockups
     for (const mockupId of mockupsWithData) {
-                    const mockup = state.mockups.find(m => m.id === mockupId);
-                    const savedData = state.savedMockupData[mockupId];
+        const mockup = state.mockups.find(m => m.id === mockupId);
+        const savedData = state.savedMockupData[mockupId];
 
-                    const mockupImg = await loadImage(mockup.dataUrl);
+        const mockupImg = await loadImage(mockup.dataUrl);
 
-                    // Calculate optimized dimensions (reduce to 85% for smaller files)
-const targetWidth = Math.round(mockup.originalWidth * 0.85);
-const targetHeight = Math.round(mockup.originalHeight * 0.85);
+        // Calculate optimized dimensions (reduce to 85% for smaller files)
+        const targetWidth = Math.round(mockup.originalWidth * 1);
+        const targetHeight = Math.round(mockup.originalHeight * 1);
 
-const canvas = document.createElement('canvas');
-canvas.width = targetWidth;
-canvas.height = targetHeight;
-const ctx = canvas.getContext('2d', { 
-    alpha: false,
-    willReadFrequently: false 
-});
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d', { 
+            alpha: false,
+            willReadFrequently: false 
+        });
 
-// Fill with white background (removes alpha channel)
-ctx.fillStyle = '#FFFFFF';
-ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Fill with white background (removes alpha channel visually)
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-// Draw mockup scaled down
-ctx.drawImage(mockupImg, 0, 0, targetWidth, targetHeight);
+        // Draw mockup scaled down
+        ctx.drawImage(mockupImg, 0, 0, targetWidth, targetHeight);
 
-                    const scaleX = canvas.width / savedData.previewBounds.width;
-                    const scaleY = canvas.height / savedData.previewBounds.height;
+        const scaleX = canvas.width / savedData.previewBounds.width;
+        const scaleY = canvas.height / savedData.previewBounds.height;
 
-                    for (const element of savedData.elements) {
-                        ctx.save();
+        for (const element of savedData.elements) {
+            ctx.save();
 
-                        const scaledLeft = (element.left - savedData.previewBounds.left) * scaleX;
-                        const scaledTop = (element.top - savedData.previewBounds.top) * scaleY;
-                        const scaledWidth = element.width * scaleX;
-                        const scaledHeight = element.height * scaleY;
+            const scaledLeft = (element.left - savedData.previewBounds.left) * scaleX;
+            const scaledTop = (element.top - savedData.previewBounds.top) * scaleY;
+            const scaledWidth = element.width * scaleX;
+            const scaledHeight = element.height * scaleY;
 
-                        ctx.globalAlpha = element.opacity;
-                        ctx.translate(scaledLeft + scaledWidth/2, scaledTop + scaledHeight/2);
-                        ctx.rotate(element.rotation * Math.PI / 180);
+            ctx.globalAlpha = element.opacity;
+            ctx.translate(scaledLeft + scaledWidth/2, scaledTop + scaledHeight/2);
+            ctx.rotate(element.rotation * Math.PI / 180);
 
-                        ctx.imageSmoothingEnabled = true;
-                        ctx.imageSmoothingQuality = 'high';
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
 
-                        ctx.drawImage(pngImg, -scaledWidth/2, -scaledHeight/2, scaledWidth, scaledHeight);
+            ctx.drawImage(pngImg, -scaledWidth/2, -scaledHeight/2, scaledWidth, scaledHeight);
 
-                        ctx.restore();
-                    }
+            ctx.restore();
+        }
 
-                    const fileName = `${pngFile.name.replace('.png', '')}_${mockup.name}`;
-                    const dataUrl = canvas.toDataURL('image/png', 1.0);
-                    const base64 = dataUrl.split(',')[1];
-                    zip.file(fileName, base64, { base64: true });
+        // Export as JPEG (NO alpha channel - 80% smaller files)
+        const fileName = `${pngFile.name.replace('.png', '')}_${mockup.name}`;
+        const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+        const base64 = dataUrl.split(',')[1];
+        const jpgFileName = fileName.replace(/\.(png|jpg|jpeg)$/i, '.jpg');
+        zip.file(jpgFileName, base64, { base64: true });
 
-                    /* 
-                    const fileName = `${pngFile.name.replace('.png', '')}_${mockup.name}`;
-                    // Export as JPEG with 0.92 quality (good balance of size/quality)
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-                    const base64 = dataUrl.split(',')[1];
-                    // Change extension to .jpg
-                    const jpgFileName = fileName.replace(/\.(png|jpg|jpeg)$/i, '.jpg');
-                    zip.file(jpgFileName, base64, { base64: true });
-                    */
+        completed++;
+        const progress = Math.round((completed / total) * 100);
+        progressFill.style.width = progress + '%';
+        progressFill.textContent = progress + '%';
+        progressText.textContent = `Generated ${completed} of ${total}...`;
 
-                    completed++;
-                    const progress = Math.round((completed / total) * 100);
-                    progressFill.style.width = progress + '%';
-                    progressFill.textContent = progress + '%';
-                    progressText.textContent = `Generated ${completed} of ${total}...`;
-
-                    await new Promise(resolve => setTimeout(resolve, 50));
-                }
-            }
+        await new Promise(resolve => setTimeout(resolve, 50));
+    }
+}
 
             // Check if only 1 image to export
 if (total === 1) {
