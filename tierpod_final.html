@@ -1709,7 +1709,7 @@
                 const saved = state.savedMockupData[m.id];
                 const elementCount = saved ? saved.elements.length : 0;
                 const isEnabled = state.mockupEnabled[m.id] !== false;
-                return \`
+                return `
                     <li class="mockup-item ${state.currentMockup?.id === m.id ? 'selected' : ''} ${!isEnabled ? 'disabled' : ''}" 
                         data-id="${m.id}">
                         <div class="mockup-name">
@@ -1726,7 +1726,7 @@
                             </button>
                         </div>
                     </li>
-                \`;
+                `;
             }).join('');
 
             document.querySelectorAll('.mockup-item').forEach(item => {
