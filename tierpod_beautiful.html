@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TierPOD Pro - Professional Mockup Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --border: #e5e7eb;
+            --dark: #1f2937;
+            --gray: #6b7280;
+            --light-bg: #f9fafb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--light-bg);
+            color: var(--dark);
+            overflow: hidden;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.6em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .nav-menu {
+            padding: 20px 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-section-title {
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--gray);
+            margin: 20px 0 10px 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin: 4px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95em;
+        }
+
+        .nav-item i {
+            font-size: 1.1em;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-item:hover {
+            background: #f3f4f6;
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            background: #f9fafb;
+        }
+
+        .stats-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.75em;
+            color: var(--gray);
+            margin-top: 2px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            z-index: 50;
+        }
+
+        .top-bar h2 {
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .btn i {
+            font-size: 1em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 2px solid var(--border);
+            color: var(--dark);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Pages */
+        .page {
+            display: none;
+            height: calc(100vh - 70px);
+            overflow-y: auto;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Generator Layout */
+        .generator-wrapper {
+            padding: 24px;
+        }
+
+        .generator-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr 340px;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .panel-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Folder Management */
+        .folder-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .folder-select {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95em;
+            cursor: pointer;
+        }
+
+        .btn-icon {
+            padding: 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Mockup List */
+        .mockup-list {
+            list-style: none;
+        }
+
+        .mockup-item {
+            padding: 14px;
+            margin: 8px 0;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+        }
+
+        .mockup-item:hover {
+            border-color: var(--primary);
+            background: #f8faff;
+            transform: translateX(4px);
+        }
+
+        .mockup-item.selected {
+            background: linear-gradient(to right, #f0f4ff, #faf5ff);
+            border-color: var(--primary);
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .mockup-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .mockup-name i {
+            color: var(--primary);
+        }
+
+        .mockup-name span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mockup-badge {
+            background: var(--success);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Preview Container */
+        .preview-wrapper {
+            position: relative;
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            border-radius: 16px;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 20px;
+            border: 2px dashed var(--border);
+        }
+
+        .preview-container {
+            position: relative;
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #mockupPreview {
+            max-width: 100%;
+            max-height: 700px;
+            display: none;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border-radius: 12px;
+        }
+
+        #mockupPreview.visible {
+            display: block;
+        }
+
+        .preview-placeholder {
+            text-align: center;
+            color: var(--gray);
+        }
+
+        .preview-placeholder i {
+            font-size: 5em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        /* Design Elements */
+        .design-wrapper {
+            position: absolute;
+            border: 3px dashed var(--primary);
+            cursor: move;
+            background: rgba(102, 126, 234, 0.08);
+            min-width: 50px;
+            min-height: 50px;
+            transition: border-color 0.2s;
+        }
+
+        .design-wrapper.active {
+            border-color: var(--success);
+            border-style: solid;
+            background: rgba(16, 185, 129, 0.08);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        .design-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        .design-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: var(--primary);
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
+        }
+
+        .resize-handle {
+            position: absolute;
+            right: -8px;
+            bottom: -8px;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border: 3px solid var(--primary);
+            cursor: nwse-resize;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .rotate-handle {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 28px;
+            background: var(--success);
+            border-radius: 50%;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .rotate-handle:active {
+            cursor: grabbing;
+        }
+
+        .remove-handle {
+            position: absolute;
+            top: -14px;
+            right: -14px;
+            width: 32px;
+            height: 32px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+            transition: transform 0.2s;
+        }
+
+        .remove-handle:hover {
+            transform: scale(1.1);
+        }
+
+        .element-label {
+            position: absolute;
+            top: -32px;
+            left: 0;
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+
+        /* Controls */
+        .controls-section {
+            margin-bottom: 24px;
+        }
+
+        .controls-title {
+            font-size: 1em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--dark);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: var(--dark);
+        }
+
+        .control-value {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95em;
+            cursor: pointer;
+            background: white;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-left: 4px solid var(--warning);
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            line-height: 1.7;
+            margin-top: 20px;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .info-box ol {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin: 4px 0;
+        }
+
+        /* Mockup Info Bar */
+        .mockup-info-bar {
+            background: linear-gradient(to right, #f0f4ff, #faf5ff);
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e0e7ff;
+        }
+
+        .mockup-info-text {
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .element-counter {
+            background: var(--success);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 700;
+        }
+
+        /* Listings Grid */
+        .listings-wrapper {
+            padding: 30px;
+        }
+
+        .listings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .listings-stats {
+            display: flex;
+            gap: 20px;
+            color: var(--gray);
+            font-size: 0.95em;
+        }
+
+        .listings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .listing-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+        }
+
+        .listing-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .listing-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            background: #f5f5f5;
+        }
+
+        .listing-info {
+            padding: 16px;
+        }
+
+        .listing-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .listing-meta {
+            font-size: 0.8em;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .listing-actions {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.85em;
+            flex: 1;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--gray);
+            grid-column: 1 / -1;
+        }
+
+        .empty-state i {
+            font-size: 5em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+
+        .empty-state p {
+            font-size: 1em;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 520px;
+            width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.8em;
+            cursor: pointer;
+            color: var(--gray);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .close-modal:hover {
+            background: #f3f4f6;
+            color: var(--dark);
+        }
+
+        .progress-container {
+            margin-top: 24px;
+        }
+
+        .progress-bar {
+            height: 40px;
+            background: #f3f4f6;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: var(--gray);
+            font-size: 0.95em;
+        }
+
+        /* Tooltips */
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 12px;
+            background: var(--dark);
+            color: white;
+            border-radius: 6px;
+            font-size: 0.85em;
+            white-space: nowrap;
+            margin-bottom: 8px;
+            z-index: 1000;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Drag and Drop Zone */
+        .drop-zone {
+            border: 3px dashed var(--border);
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background: #f8faff;
+        }
+
+        .drop-zone i {
+            font-size: 3em;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .drop-zone p {
+            margin: 8px 0;
+        }
+
+        .drop-zone strong {
+            color: var(--dark);
+            font-size: 1.1em;
+        }
+
+        .drop-zone small {
+            color: var(--gray);
+            font-size: 0.9em;
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .generator-grid {
+                grid-template-columns: 280px 1fr 300px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .generator-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .panel {
+                max-height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                z-index: 200;
+                transition: left 0.3s;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .listings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Success animation */
+        @keyframes successPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .success-icon {
+            animation: successPop 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-magic"></i> TierPOD Pro</h1>
+                <p>Professional Mockup Generator</p>
+            </div>
+
+            <div class="nav-menu">
+                <div class="nav-section-title">MAIN</div>
+                <div class="nav-item active" data-page="mockups">
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                    <span>Generator</span>
+                </div>
+                <div class="nav-item" data-page="listings">
+                    <i class="fas fa-list-check"></i>
+                    <span>My Mockups</span>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="stats-box">
+                    <div class="stat-item">
+                        <div class="stat-value" id="mockupCount">0</div>
+                        <div class="stat-label">Templates</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="generatedCount">0</div>
+                        <div class="stat-label">Generated</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="top-bar">
+                <h2>
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                    <span id="pageTitle">Mockup Generator</span>
+                </h2>
+                <div class="top-bar-actions">
+                    <button class="btn btn-secondary" id="helpBtn" data-tooltip="View Tutorial">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
+                    <button class="btn btn-primary" id="loadExportBtn" disabled data-tooltip="Generate mockups from your designs">
+                        <i class="fas fa-rocket"></i>
+                        <span>Generate Mockups</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Generator Page -->
+            <div class="page active" id="page-mockups">
+                <div class="generator-wrapper">
+                    <div class="generator-grid">
+                        <!-- Left Panel: Mockups -->
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h3 class="panel-title">
+                                    <i class="fas fa-images"></i>
+                                    Mockup Templates
+                                </h3>
+                            </div>
+
+                            <div class="drop-zone" id="mockupDropZone">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p><strong>Drop mockup templates here</strong></p>
+                                <p><small>or click to browse</small></p>
+                                <p><small>PNG, JPG, WEBP</small></p>
+                            </div>
+                            <input type="file" id="mockupFilesInput" multiple accept="image/*" style="display: none;">
+
+                            <ul class="mockup-list" id="mockupList">
+                                <li class="empty-state" style="padding: 40px 20px;">
+                                    <i class="fas fa-image"></i>
+                                    <p>No templates loaded</p>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Center Panel: Preview -->
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h3 class="panel-title">
+                                    <i class="fas fa-eye"></i>
+                                    Live Preview
+                                </h3>
+                            </div>
+
+                            <div class="mockup-info-bar" id="mockupInfoBar">
+                                <div class="mockup-info-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span id="currentMockupInfo">No mockup selected</span>
+                                </div>
+                                <div class="element-counter" id="elementCounter" style="display: none;">
+                                    <i class="fas fa-layer-group"></i>
+                                    <span id="elementCount">0</span>
+                                </div>
+                            </div>
+
+                            <div class="preview-wrapper">
+                                <div class="preview-container" id="previewContainer">
+                                    <div class="preview-placeholder">
+                                        <i class="fas fa-image"></i>
+                                        <p>Select a mockup template to begin</p>
+                                    </div>
+                                    <img id="mockupPreview" alt="Mockup Preview">
+                                </div>
+                            </div>
+
+                            <div class="action-buttons">
+                                <button class="btn btn-success" id="addPngBtn" disabled data-tooltip="Add a design placeholder">
+                                    <i class="fas fa-plus"></i>
+                                    Add Element
+                                </button>
+                                <button class="btn btn-primary" id="savePositionBtn" disabled data-tooltip="Save element positions">
+                                    <i class="fas fa-save"></i>
+                                    Save Position
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Controls -->
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h3 class="panel-title">
+                                    <i class="fas fa-sliders"></i>
+                                    Controls
+                                </h3>
+                            </div>
+
+                            <div class="controls-section">
+                                <div class="controls-title">
+                                    <i class="fas fa-adjust"></i>
+                                    Element Settings
+                                </div>
+
+                                <div class="control-group">
+                                    <div class="control-label">
+                                        <span>Opacity</span>
+                                        <span class="control-value" id="opacityValue">100%</span>
+                                    </div>
+                                    <input type="range" id="opacitySlider" min="0" max="1" step="0.01" value="1" disabled>
+                                </div>
+
+                                <div class="control-group">
+                                    <label style="margin-bottom: 8px; display: block; font-weight: 600; font-size: 0.9em;">
+                                        <i class="fas fa-droplet"></i> Watermark
+                                    </label>
+                                    <select id="watermarkSelect" disabled>
+                                        <option value="">No Watermark</option>
+                                        <option value="text">Text Watermark</option>
+                                        <option value="logo">Logo Watermark</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="info-box">
+                                <strong><i class="fas fa-lightbulb"></i> Quick Guide</strong>
+                                <ol>
+                                    <li>Upload mockup templates</li>
+                                    <li>Select a mockup</li>
+                                    <li>Add design elements</li>
+                                    <li>Drag, resize & rotate</li>
+                                    <li>Save positions</li>
+                                    <li>Click "Generate Mockups"</li>
+                                </ol>
+                            </div>
+
+                            <div style="margin-top: 20px; padding: 12px; background: linear-gradient(135deg, #f0f4ff, #faf5ff); border-radius: 10px; text-align: center;">
+                                <div style="font-size: 0.85em; color: var(--gray); margin-bottom: 4px;">Keyboard Shortcuts</div>
+                                <div style="font-size: 0.8em; color: var(--gray);">
+                                    <strong>Delete</strong> - Remove element<br>
+                                    <strong>Ctrl+Z</strong> - Undo (coming soon)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Listings Page -->
+            <div class="page" id="page-listings">
+                <div class="listings-wrapper">
+                    <div class="listings-header">
+                        <div>
+                            <h2 style="font-size: 1.8em; margin-bottom: 8px;">
+                                <i class="fas fa-images"></i> Generated Mockups
+                            </h2>
+                            <div class="listings-stats">
+                                <span><i class="fas fa-image"></i> <span id="totalMockups">0</span> mockups</span>
+                                <span><i class="fas fa-clock"></i> Last updated: <span id="lastUpdated">Never</span></span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-success" id="downloadAllBtn">
+                                <i class="fas fa-download"></i>
+                                Download All
+                            </button>
+                            <button class="btn btn-danger" id="clearAllBtn">
+                                <i class="fas fa-trash"></i>
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="listings-grid" id="listingsGrid">
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>No mockups generated yet</h3>
+                            <p>Start by creating your first mockup in the Generator</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div class="modal" id="progressModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-rocket"></i> Generating Mockups</h3>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill">0%</div>
+                </div>
+                <p class="progress-text" id="progressText">Preparing...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-question-circle"></i> How to Use TierPOD Pro</h3>
+                <button class="close-modal" id="closeHelpModal">×</button>
+            </div>
+            <div style="line-height: 1.8;">
+                <h4 style="margin-top: 20px;"><i class="fas fa-upload"></i> 1. Upload Templates</h4>
+                <p>Drag and drop or click to upload your mockup template images (t-shirts, mugs, etc.)</p>
+
+                <h4 style="margin-top: 20px;"><i class="fas fa-mouse-pointer"></i> 2. Position Elements</h4>
+                <p>Select a mockup, click "Add Element", then drag/resize/rotate to position where your design should appear</p>
+
+                <h4 style="margin-top: 20px;"><i class="fas fa-save"></i> 3. Save Positions</h4>
+                <p>Click "Save Position" to remember element settings. Repeat for all mockups.</p>
+
+                <h4 style="margin-top: 20px;"><i class="fas fa-rocket"></i> 4. Generate</h4>
+                <p>Click "Generate Mockups" and select your design PNG files. The system will create all combinations automatically!</p>
+
+                <div style="margin-top: 24px; padding: 16px; background: #f0f4ff; border-radius: 10px;">
+                    <strong>💡 Pro Tip:</strong> Save different element positions for each mockup to create varied results!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PNG Input for Generation -->
+    <input type="file" id="designPngsInput" multiple accept=".png,image/png" style="display: none;">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        // State Management
+        const state = {
+            mockups: [],
+            currentMockup: null,
+            generatedMockups: [],
+            designElements: [],
+            activeElement: null,
+            savedMockupData: {}
+        };
+
+        let elementIdCounter = 0;
+
+        // Update stats
+        function updateStats() {
+            document.getElementById('mockupCount').textContent = state.mockups.length;
+            document.getElementById('generatedCount').textContent = state.generatedMockups.length;
+            document.getElementById('totalMockups').textContent = state.generatedMockups.length;
+        }
+
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('page-' + item.dataset.page).classList.add('active');
+
+                const titles = {
+                    'mockups': 'Mockup Generator',
+                    'listings': 'Generated Mockups'
+                };
+                document.getElementById('pageTitle').innerHTML = `<i class="fas fa-${item.dataset.page === 'mockups' ? 'wand-magic-sparkles' : 'images'}"></i> ${titles[item.dataset.page]}`;
+
+                if (item.dataset.page === 'listings') {
+                    renderListings();
+                    document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+                }
+            });
+        });
+
+        // Help Modal
+        document.getElementById('helpBtn').addEventListener('click', () => {
+            document.getElementById('helpModal').classList.add('active');
+        });
+
+        document.getElementById('closeHelpModal').addEventListener('click', () => {
+            document.getElementById('helpModal').classList.remove('active');
+        });
+
+        // Click outside modal to close
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Mockup Upload - Drag & Drop
+        const mockupDropZone = document.getElementById('mockupDropZone');
+        const mockupInput = document.getElementById('mockupFilesInput');
+
+        mockupDropZone.addEventListener('click', () => mockupInput.click());
+
+        mockupDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            mockupDropZone.classList.add('dragover');
+        });
+
+        mockupDropZone.addEventListener('dragleave', () => {
+            mockupDropZone.classList.remove('dragover');
+        });
+
+        mockupDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            mockupDropZone.classList.remove('dragover');
+            handleMockupFiles(e.dataTransfer.files);
+        });
+
+        mockupInput.addEventListener('change', (e) => {
+            handleMockupFiles(e.target.files);
+        });
+
+        function handleMockupFiles(files) {
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const mockup = {
+                            id: 'mockup_' + Date.now() + '_' + Math.random(),
+                            name: file.name,
+                            dataUrl: e.target.result,
+                            originalWidth: img.width,
+                            originalHeight: img.height
+                        };
+                        state.mockups.push(mockup);
+                        renderMockupList();
+                        updateStats();
+                        updateGenerateButton();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderMockupList() {
+            const mockupList = document.getElementById('mockupList');
+
+            if (state.mockups.length === 0) {
+                mockupList.innerHTML = `
+                    <li class="empty-state" style="padding: 40px 20px;">
+                        <i class="fas fa-image"></i>
+                        <p>No templates loaded</p>
+                    </li>
+                `;
+                return;
+            }
+
+            mockupList.innerHTML = state.mockups.map(m => {
+                const saved = state.savedMockupData[m.id];
+                const elementCount = saved ? saved.elements.length : 0;
+                return `
+                    <li class="mockup-item ${state.currentMockup?.id === m.id ? 'selected' : ''}" 
+                        data-id="${m.id}">
+                        <div class="mockup-name">
+                            <i class="fas fa-image"></i>
+                            <span>${m.name}</span>
+                        </div>
+                        ${elementCount > 0 ? `<div class="mockup-badge"><i class="fas fa-check"></i> ${elementCount}</div>` : ''}
+                    </li>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.mockup-item').forEach(item => {
+                item.addEventListener('click', () => selectMockup(item.dataset.id));
+            });
+        }
+
+        function selectMockup(id) {
+            if (state.currentMockup && state.designElements.length > 0) {
+                saveCurrentMockupElements();
+            }
+
+            state.currentMockup = state.mockups.find(m => m.id === id);
+
+            const mockupPreview = document.getElementById('mockupPreview');
+            mockupPreview.src = state.currentMockup.dataUrl;
+            mockupPreview.classList.add('visible');
+            document.querySelector('.preview-placeholder').style.display = 'none';
+
+            document.getElementById('currentMockupInfo').innerHTML = 
+                `<i class="fas fa-check-circle"></i> ${state.currentMockup.name}`;
+
+            clearDesignElements();
+
+            if (state.savedMockupData[id]) {
+                const savedData = state.savedMockupData[id];
+                mockupPreview.onload = () => {
+                    savedData.elements.forEach(elementData => {
+                        createDesignElement(elementData);
+                    });
+                    updateElementCounter();
+                };
+            }
+
+            document.getElementById('addPngBtn').disabled = false;
+            document.getElementById('opacitySlider').disabled = false;
+            document.getElementById('watermarkSelect').disabled = false;
+
+            renderMockupList();
+            updateGenerateButton();
+        }
+
+        // Add PNG Element
+        document.getElementById('addPngBtn').addEventListener('click', () => {
+            if (!state.currentMockup) return;
+
+            const mockupPreview = document.getElementById('mockupPreview');
+            const previewContainer = document.getElementById('previewContainer');
+            const mockupRect = mockupPreview.getBoundingClientRect();
+            const containerRect = previewContainer.getBoundingClientRect();
+
+            const elementData = {
+                id: 'element_' + (++elementIdCounter),
+                left: mockupRect.left - containerRect.left + 50,
+                top: mockupRect.top - containerRect.top + 50,
+                width: 200,
+                height: 200,
+                rotation: 0,
+                opacity: parseFloat(document.getElementById('opacitySlider').value)
+            };
+
+            createDesignElement(elementData);
+            document.getElementById('savePositionBtn').disabled = false;
+            updateElementCounter();
+        });
+
+        function createDesignElement(data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'design-wrapper';
+            wrapper.dataset.id = data.id;
+            wrapper.style.left = data.left + 'px';
+            wrapper.style.top = data.top + 'px';
+            wrapper.style.width = data.width + 'px';
+            wrapper.style.height = data.height + 'px';
+            wrapper.style.transform = `rotate(${data.rotation}deg)`;
+            wrapper.style.opacity = data.opacity;
+
+            const elementNum = state.designElements.length + 1;
+            wrapper.innerHTML = `
+                <div class="element-label">Element ${elementNum}</div>
+                <div class="design-placeholder">
+                    <i class="fas fa-layer-group" style="font-size: 2em; margin-bottom: 8px;"></i>
+                    <div>Design Area</div>
+                    <div style="font-size: 11px; margin-top: 4px;">${Math.round(data.width)} × ${Math.round(data.height)}</div>
+                </div>
+                <div class="resize-handle"></div>
+                <div class="rotate-handle"><i class="fas fa-rotate"></i></div>
+                <div class="remove-handle">×</div>
+            `;
+
+            document.getElementById('previewContainer').appendChild(wrapper);
+            state.designElements.push({ id: data.id, element: wrapper, data: data });
+
+            setupElementInteractions(wrapper, data);
+
+            wrapper.addEventListener('click', (e) => {
+                if (!e.target.closest('.remove-handle')) {
+                    setActiveElement(wrapper);
+                }
+            });
+        }
+
+        function setActiveElement(wrapper) {
+            document.querySelectorAll('.design-wrapper').forEach(w => w.classList.remove('active'));
+            wrapper.classList.add('active');
+            state.activeElement = wrapper;
+        }
+
+        function setupElementInteractions(wrapper, data) {
+            let isDragging = false, isResizing = false, isRotating = false;
+            let startX, startY, initialLeft, initialTop, startWidth, startHeight;
+            let centerX, centerY, startAngle, currentRotation = 0;
+
+            // Dragging
+            wrapper.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('resize-handle') || 
+                    e.target.closest('.rotate-handle') ||
+                    e.target.closest('.remove-handle')) return;
+
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = parseInt(wrapper.style.left);
+                initialTop = parseInt(wrapper.style.top);
+                setActiveElement(wrapper);
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    wrapper.style.left = (initialLeft + dx) + 'px';
+                    wrapper.style.top = (initialTop + dy) + 'px';
+                    data.left = parseInt(wrapper.style.left);
+                    data.top = parseInt(wrapper.style.top);
+                }
+
+                if (isResizing) {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    const newWidth = Math.max(50, startWidth + dx);
+                    const newHeight = Math.max(50, startHeight + dy);
+                    wrapper.style.width = newWidth + 'px';
+                    wrapper.style.height = newHeight + 'px';
+                    data.width = newWidth;
+                    data.height = newHeight;
+                    wrapper.querySelector('.design-placeholder div:last-child').textContent = 
+                        `${Math.round(newWidth)} × ${Math.round(newHeight)}`;
+                }
+
+                if (isRotating) {
+                    const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+                    const rotation = currentRotation + (angle - startAngle) * (180 / Math.PI);
+                    wrapper.style.transform = `rotate(${rotation}deg)`;
+                    data.rotation = rotation;
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = isResizing = isRotating = false;
+            });
+
+            // Resizing
+            wrapper.querySelector('.resize-handle').addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = parseInt(wrapper.style.width);
+                startHeight = parseInt(wrapper.style.height);
+                e.stopPropagation();
+                e.preventDefault();
+            });
+
+            // Rotating
+            wrapper.querySelector('.rotate-handle').addEventListener('mousedown', (e) => {
+                isRotating = true;
+                const rect = wrapper.getBoundingClientRect();
+                centerX = rect.left + rect.width / 2;
+                centerY = rect.top + rect.height / 2;
+                startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+                const match = wrapper.style.transform.match(/rotate\(([^)]+)deg\)/);
+                currentRotation = match ? parseFloat(match[1]) : 0;
+                e.stopPropagation();
+                e.preventDefault();
+            });
+
+            // Remove
+            wrapper.querySelector('.remove-handle').addEventListener('click', () => {
+                wrapper.remove();
+                state.designElements = state.designElements.filter(e => e.id !== data.id);
+                if (state.designElements.length === 0) {
+                    document.getElementById('savePositionBtn').disabled = true;
+                }
+                updateElementCounter();
+            });
+
+            // Delete key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Delete' && state.activeElement === wrapper) {
+                    wrapper.querySelector('.remove-handle').click();
+                }
+            });
+        }
+
+        function updateElementCounter() {
+            const counter = document.getElementById('elementCounter');
+            const count = state.designElements.length;
+
+            if (count > 0) {
+                counter.style.display = 'flex';
+                document.getElementById('elementCount').textContent = count;
+            } else {
+                counter.style.display = 'none';
+            }
+        }
+
+        // Opacity Control
+        document.getElementById('opacitySlider').addEventListener('input', (e) => {
+            const opacity = parseFloat(e.target.value);
+            document.getElementById('opacityValue').textContent = Math.round(opacity * 100) + '%';
+
+            if (state.activeElement) {
+                state.activeElement.style.opacity = opacity;
+                const elementData = state.designElements.find(el => el.element === state.activeElement);
+                if (elementData) elementData.data.opacity = opacity;
+            }
+        });
+
+        // Save Position
+        document.getElementById('savePositionBtn').addEventListener('click', () => {
+            if (!state.currentMockup || state.designElements.length === 0) return;
+
+            saveCurrentMockupElements();
+
+            // Show success feedback
+            const btn = document.getElementById('savePositionBtn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check success-icon"></i> Saved!';
+            btn.style.background = 'var(--success)';
+
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.background = '';
+            }, 2000);
+
+            renderMockupList();
+            updateGenerateButton();
+        });
+
+        function saveCurrentMockupElements() {
+            if (!state.currentMockup) return;
+
+            const mockupPreview = document.getElementById('mockupPreview');
+            const previewContainer = document.getElementById('previewContainer');
+            const mockupRect = mockupPreview.getBoundingClientRect();
+            const containerRect = previewContainer.getBoundingClientRect();
+
+            state.savedMockupData[state.currentMockup.id] = {
+                elements: state.designElements.map(el => ({...el.data})),
+                previewBounds: {
+                    width: mockupRect.width,
+                    height: mockupRect.height,
+                    left: mockupRect.left - containerRect.left,
+                    top: mockupRect.top - containerRect.top
+                }
+            };
+        }
+
+        function clearDesignElements() {
+            document.querySelectorAll('.design-wrapper').forEach(el => el.remove());
+            state.designElements = [];
+            state.activeElement = null;
+            updateElementCounter();
+        }
+
+        function updateGenerateButton() {
+            const hasData = Object.keys(state.savedMockupData).length > 0;
+            document.getElementById('loadExportBtn').disabled = !hasData;
+        }
+
+        // Generate Mockups
+        document.getElementById('loadExportBtn').addEventListener('click', () => {
+            document.getElementById('designPngsInput').click();
+        });
+
+        document.getElementById('designPngsInput').addEventListener('change', async (e) => {
+            const pngFiles = Array.from(e.target.files);
+            if (pngFiles.length === 0) return;
+
+            const progressModal = document.getElementById('progressModal');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+
+            progressModal.classList.add('active');
+
+            const mockupsWithData = Object.keys(state.savedMockupData);
+            const total = pngFiles.length * mockupsWithData.length;
+            let completed = 0;
+
+            for (const pngFile of pngFiles) {
+                const pngDataUrl = await readFileAsDataURL(pngFile);
+                const pngImg = await loadImage(pngDataUrl);
+
+                for (const mockupId of mockupsWithData) {
+                    const mockup = state.mockups.find(m => m.id === mockupId);
+                    const savedData = state.savedMockupData[mockupId];
+
+                    const mockupImg = await loadImage(mockup.dataUrl);
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = mockup.originalWidth;
+                    canvas.height = mockup.originalHeight;
+                    const ctx = canvas.getContext('2d');
+
+                    ctx.drawImage(mockupImg, 0, 0, canvas.width, canvas.height);
+
+                    const scaleX = canvas.width / savedData.previewBounds.width;
+                    const scaleY = canvas.height / savedData.previewBounds.height;
+
+                    for (const element of savedData.elements) {
+                        ctx.save();
+
+                        const scaledLeft = (element.left - savedData.previewBounds.left) * scaleX;
+                        const scaledTop = (element.top - savedData.previewBounds.top) * scaleY;
+                        const scaledWidth = element.width * scaleX;
+                        const scaledHeight = element.height * scaleY;
+
+                        ctx.globalAlpha = element.opacity;
+                        ctx.translate(scaledLeft + scaledWidth/2, scaledTop + scaledHeight/2);
+                        ctx.rotate(element.rotation * Math.PI / 180);
+                        ctx.drawImage(pngImg, -scaledWidth/2, -scaledHeight/2, scaledWidth, scaledHeight);
+
+                        ctx.restore();
+                    }
+
+                    const result = {
+                        id: 'result_' + Date.now() + '_' + Math.random(),
+                        name: `${pngFile.name.replace('.png', '')}_${mockup.name}`,
+                        dataUrl: canvas.toDataURL('image/png', 1.0),
+                        timestamp: new Date().toLocaleString()
+                    };
+                    state.generatedMockups.push(result);
+
+                    completed++;
+                    const progress = Math.round((completed / total) * 100);
+                    progressFill.style.width = progress + '%';
+                    progressFill.textContent = progress + '%';
+                    progressText.textContent = `Generated ${completed} of ${total} mockups...`;
+
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+            }
+
+            setTimeout(() => {
+                progressModal.classList.remove('active');
+                updateStats();
+                document.querySelector('[data-page="listings"]').click();
+            }, 500);
+        });
+
+        // Helper Functions
+        function readFileAsDataURL(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadImage(src) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.src = src;
+            });
+        }
+
+        // Listings
+        function renderListings() {
+            const listingsGrid = document.getElementById('listingsGrid');
+
+            if (state.generatedMockups.length === 0) {
+                listingsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No mockups generated yet</h3>
+                        <p>Start by creating your first mockup in the Generator</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listingsGrid.innerHTML = state.generatedMockups.map(m => `
+                <div class="listing-card">
+                    <img src="${m.dataUrl}" class="listing-image" alt="${m.name}">
+                    <div class="listing-info">
+                        <div class="listing-name">${m.name}</div>
+                        <div class="listing-meta">
+                            <i class="fas fa-clock"></i>
+                            ${m.timestamp}
+                        </div>
+                    </div>
+                    <div class="listing-actions">
+                        <button class="btn btn-success btn-small" onclick="downloadMockup('${m.id}')">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="deleteMockup('${m.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.downloadMockup = function(id) {
+            const mockup = state.generatedMockups.find(m => m.id === id);
+            if (!mockup) return;
+            const link = document.createElement('a');
+            link.download = mockup.name;
+            link.href = mockup.dataUrl;
+            link.click();
+        };
+
+        window.deleteMockup = function(id) {
+            if (confirm('Delete this mockup?')) {
+                state.generatedMockups = state.generatedMockups.filter(m => m.id !== id);
+                renderListings();
+                updateStats();
+            }
+        };
+
+        document.getElementById('downloadAllBtn').addEventListener('click', async () => {
+            if (state.generatedMockups.length === 0) return;
+
+            if (typeof JSZip !== 'undefined') {
+                const zip = new JSZip();
+                state.generatedMockups.forEach(m => {
+                    const base64 = m.dataUrl.split(',')[1];
+                    zip.file(m.name, base64, { base64: true });
+                });
+                const blob = await zip.generateAsync({ type: 'blob' });
+                const link = document.createElement('a');
+                link.download = `tierpod_mockups_${Date.now()}.zip`;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+            }
+        });
+
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
+            if (confirm('Clear all generated mockups? This cannot be undone.')) {
+                state.generatedMockups = [];
+                renderListings();
+                updateStats();
+            }
+        });
+
+        // Initialize
+        updateStats();
+        renderMockupList();
+        updateGenerateButton();
+    </script>
+</body>
+</html>
