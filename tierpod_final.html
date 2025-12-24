@@ -1368,7 +1368,8 @@
             try {
                 const size = await getDBSize();
                 const sizeMB = (size / (1024 * 1024)).toFixed(2);
-                const limit = 50 * 1024 * 1024;
+                // const limit = 50 * 1024 * 1024; // UP TO 50mb+
+                const limit = 500 * 1024 * 1024; // 500mb+
                 const percent = Math.min((size / limit) * 100, 100);
 
                 document.getElementById('storageSize').textContent = sizeMB + ' MB';
