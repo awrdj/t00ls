@@ -964,6 +964,47 @@
             color: #92400e;
             border-left: 3px solid #f59e0b;
         }
+
+                .mockup-toggle {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            background: #d1d5db;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+            flex-shrink: 0;
+        }
+
+        .mockup-toggle.enabled {
+            background: var(--success);
+        }
+
+        .mockup-toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .mockup-toggle.enabled .mockup-toggle-slider {
+            transform: translateX(16px);
+        }
+
+        .mockup-item.disabled {
+            opacity: 0.5;
+        }
+
+        .mockup-item.disabled .mockup-name {
+            text-decoration: line-through;
+            color: var(--gray);
+        }
+
     </style>
 </head>
 <body>
@@ -1333,7 +1374,8 @@
             designElements: [],
             activeElement: null,
             savedMockupData: {},
-            currentAspectRatio: 'free'
+            currentAspectRatio: 'free',
+            mockupEnabled: {}
         };
 
         let elementIdCounter = 0;
@@ -1358,6 +1400,16 @@
                 const savedData = localStorage.getItem('tierpod_positions');
                 if (savedData) {
                     state.savedMockupData = JSON.parse(savedData);
+                }
+                const enabledData = localStorage.getItem('tierpod_enabled');
+                if (enabledData) {
+                    state.mockupEnabled = JSON.parse(enabledData);
+                } else {
+                    state.mockups.forEach(m => {
+                        if (state.mockupEnabled[m.id] === undefined) {
+                            state.mockupEnabled[m.id] = true;
+                        }
+                    });
                 }
             } catch (error) {
                 console.error('Load error:', error);
@@ -1402,6 +1454,20 @@
             } catch (e) {
                 console.error('Position save error:', e);
             }
+        }
+
+        function toggleMockup(mockupId) {
+            const currentState = state.mockupEnabled[mockupId];
+            state.mockupEnabled[mockupId] = currentState === false ? true : false;
+
+            try {
+                localStorage.setItem('tierpod_enabled', JSON.stringify(state.mockupEnabled));
+            } catch (e) {
+                console.error('Error saving enabled state:', e);
+            }
+
+            renderMockupList();
+            updateGenerateButton();
         }
 
         async function deleteMockup(mockupId) {
@@ -1464,8 +1530,10 @@
                 try {
                     await clearAllDB();
                     localStorage.removeItem('tierpod_positions');
+                    localStorage.removeItem('tierpod_enabled');
                     state.mockups = [];
                     state.savedMockupData = {};
+                    state.mockupEnabled = {};
                     state.currentMockup = null;
                     clearDesignElements();
                     renderMockupList();
@@ -1608,6 +1676,7 @@
 
                             await saveMockupToDB(mockup);
                             state.mockups.push(mockup);
+                            state.mockupEnabled[mockup.id] = true;
                             renderMockupList();
                             updateStats();
                             updateGenerateButton();
@@ -1639,21 +1708,25 @@
             mockupList.innerHTML = state.mockups.map(m => {
                 const saved = state.savedMockupData[m.id];
                 const elementCount = saved ? saved.elements.length : 0;
-                return `
-                    <li class="mockup-item ${state.currentMockup?.id === m.id ? 'selected' : ''}" 
+                const isEnabled = state.mockupEnabled[m.id] !== false;
+                return \`
+                    <li class="mockup-item ${state.currentMockup?.id === m.id ? 'selected' : ''} ${!isEnabled ? 'disabled' : ''}" 
                         data-id="${m.id}">
                         <div class="mockup-name">
                             <i class="fas fa-image"></i>
                             <span>${m.name}</span>
                         </div>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            ${elementCount > 0 ? `<div class="mockup-badge"><i class="fas fa-check"></i> ${elementCount}</div>` : ''}
+                            ${elementCount > 0 ? \`<div class="mockup-badge"><i class="fas fa-check"></i> ${elementCount}</div>\` : ''}
+                            <div class="mockup-toggle ${isEnabled ? 'enabled' : ''}" onclick="event.stopPropagation(); toggleMockup('${m.id}')" title="${isEnabled ? 'Enabled' : 'Disabled'}">
+                                <div class="mockup-toggle-slider"></div>
+                            </div>
                             <button class="delete-mockup-btn" onclick="event.stopPropagation(); deleteMockup('${m.id}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </li>
-                `;
+                \`;
             }).join('');
 
             document.querySelectorAll('.mockup-item').forEach(item => {
@@ -1954,8 +2027,16 @@
         }
 
         function updateGenerateButton() {
-            const hasData = Object.keys(state.savedMockupData).length > 0;
+            const enabledWithData = Object.keys(state.savedMockupData).filter(id => state.mockupEnabled[id] !== false);
+            const hasData = enabledWithData.length > 0;
             document.getElementById('loadExportBtn').disabled = !hasData;
+
+            const btn = document.getElementById('loadExportBtn');
+            if (hasData && enabledWithData.length < Object.keys(state.savedMockupData).length) {
+                btn.innerHTML = \`<i class="fas fa-rocket"></i><span>Generate ${enabledWithData.length} Template\${enabledWithData.length > 1 ? 's' : ''}</span>\`;
+            } else if (hasData) {
+                btn.innerHTML = '<i class="fas fa-rocket"></i><span>Generate & Download</span>';
+            }
         }
 
         document.getElementById('loadExportBtn').addEventListener('click', () => {
@@ -1972,7 +2053,14 @@
 
             progressModal.classList.add('active');
 
-            const mockupsWithData = Object.keys(state.savedMockupData);
+            const mockupsWithData = Object.keys(state.savedMockupData).filter(id => state.mockupEnabled[id] !== false);
+
+            if (mockupsWithData.length === 0) {
+                progressModal.classList.remove('active');
+                alert('⚠️ No enabled templates!\n\nEnable at least one template using the toggle switches.');
+                return;
+            }
+
             const total = pngFiles.length * mockupsWithData.length;
             let completed = 0;
 
