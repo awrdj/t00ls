@@ -1457,11 +1457,15 @@
         }
 
         function toggleMockup(mockupId) {
-            // Toggle: if currently false, make true; otherwise make false
-            const newState = state.mockupEnabled[mockupId] === false ? true : false;
-            state.mockupEnabled[mockupId] = newState;
-
-            console.log(`Toggled ${mockupId}: ${newState ? 'ENABLED' : 'DISABLED'}`);
+    const currentState = state.mockupEnabled[mockupId];
+    const newState = (currentState === false) ? true : false;
+    state.mockupEnabled[mockupId] = newState;
+    
+    const mockup = state.mockups.find(m => m.id === mockupId);
+    console.log(`TOGGLE: ${mockup?.name} is now ${newState ? 'ENABLED' : 'DISABLED'}`);
+    
+    localStorage.setItem('tierpod_enabled', JSON.stringify(state.mockupEnabled));
+    console.log('Saved to localStorage:', state.mockupEnabled);
 
             try {
                 localStorage.setItem('tierpod_enabled', JSON.stringify(state.mockupEnabled));
@@ -2056,12 +2060,27 @@
 
             progressModal.classList.add('active');
 
-            // Filter to only enabled templates
+// Filter to ONLY enabled templates with debug logging
 const allMockupIds = Object.keys(state.savedMockupData);
+
+// Debug: Show all template states
+console.log('=== TEMPLATE STATUS ===');
+allMockupIds.forEach(id => {
+    const mockup = state.mockups.find(m => m.id === id);
+    const enabled = state.mockupEnabled[id];
+    console.log(`${mockup?.name}: ${enabled === false ? 'DISABLED' : 'ENABLED'} (value: ${enabled})`);
+});
+
 const mockupsWithData = allMockupIds.filter(id => {
     const isEnabled = state.mockupEnabled[id] !== false;
+    const mockup = state.mockups.find(m => m.id === id);
+    console.log(`Processing ${mockup?.name}: ${isEnabled ? 'YES' : 'NO'}`);
     return isEnabled;
 });
+
+console.log(`Total templates: ${allMockupIds.length}`);
+console.log(`Enabled templates: ${mockupsWithData.length}`);
+console.log(`Will generate: ${mockupsWithData.length} templates`);
 
 if (mockupsWithData.length === 0) {
     progressModal.classList.remove('active');
