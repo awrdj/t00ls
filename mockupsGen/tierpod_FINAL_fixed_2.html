@@ -663,8 +663,8 @@ function renderFolderList() {
         li.innerHTML = `
             <i class="fas ${folder.icon} folder-icon" style="color: ${folder.id === state.currentFolderId ? 'white' : folder.color};"></i>
             <span class="folder-name">${folder.name}</span>
-            <span class="folder-count">${count}</span>
             ${deleteBtn}
+            <span class="folder-count">${count}</span>
         `;
         // li.onclick = () => switchFolder(folder.id);
         li.onclick = () => {
