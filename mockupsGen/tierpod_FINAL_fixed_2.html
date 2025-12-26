@@ -47,7 +47,7 @@
         .watermark-controls { padding: 8px 0; }
         .watermark-opacity-control { margin-bottom: 10px; }
         .watermark-opacity-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; display: flex; justify-content: space-between; }
-        .watermark-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+        .watermark-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px; }
         .watermark-option { aspect-ratio: 1; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .watermark-option:hover { border-color: var(--accent); }
         .watermark-option.selected { border-color: var(--success); box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3); }
@@ -1239,14 +1239,25 @@ function renderMockupList() {
     });
 }
 
+function updateSaveButton() {
+    const saveBtn = document.getElementById('savePositionBtn');
+    if (saveBtn) {
+        saveBtn.disabled = state.designElements.length === 0;
+    }
+}
+
 function selectMockup(id) {
     if (state.currentMockup && state.designElements.length > 0) { saveCurrentMockupElements(); }
     state.currentMockup = state.mockups.find(m => m.id === id);
+    
+    // ALWAYS clear elements first
+    clearDesignElements();
+    
     const mockupPreview = document.getElementById('mockupPreview');
     mockupPreview.src = state.currentMockup.dataUrl;
     mockupPreview.classList.add('visible');
     document.querySelector('.preview-placeholder').style.display = 'none';
-    clearDesignElements();
+    // clearDesignElements();
     if (state.savedMockupData[state.currentFolderId]?.[id]) {
         const savedData = state.savedMockupData[state.currentFolderId][id];
         mockupPreview.onload = () => {
@@ -1261,6 +1272,7 @@ function selectMockup(id) {
     updateGenerateButton();
     setTimeout(() => updateWatermarkPreview(), 100);
     autoHideTemplatesPanel();
+    updateSaveButton(); 
 }
 
 function createDesignElement(data) {
@@ -1292,6 +1304,7 @@ function createDesignElement(data) {
         if (!e.target.closest('.remove-handle')) { setActiveElement(wrapper); }
     });
     setActiveElement(wrapper);
+    updateSaveButton();
 }
 
 function setActiveElement(wrapper) {
@@ -1379,9 +1392,11 @@ function setupElementInteractions(wrapper, data) {
     wrapper.querySelector('.remove-handle').addEventListener('click', () => {
         wrapper.remove();
         state.designElements = state.designElements.filter(e => e.id !== data.id);
-        if (state.designElements.length === 0) {
+
+        updateSaveButton();
+        /* if (state.designElements.length === 0) {
             document.getElementById('savePositionBtn').disabled = true;
-        }
+        }*/
         if (state.activeElement === wrapper) {
             state.activeElement = null;
         }
