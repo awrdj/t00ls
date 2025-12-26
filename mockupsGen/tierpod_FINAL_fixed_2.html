@@ -669,11 +669,11 @@ function renderFolderList() {
         // li.onclick = () => switchFolder(folder.id);
         li.onclick = () => {
             switchFolder(folder.id);
-            toggleTemplatesPanel(); // Always toggle on click
-            /* // If templates panel is hidden, show it
+            // toggleTemplatesPanel(); // Always toggle on click
+            // If templates panel is hidden, show it
             if (!state.templatesPanelVisible) {
                 toggleTemplatesPanel();
-            }*/
+            }
         };
 
         folderList.appendChild(li);
