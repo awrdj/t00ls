@@ -1398,7 +1398,6 @@ function setActiveElement(wrapper) {
     }
 }
 
-// ✅ ADD THIS COMPLETE FUNCTION
 function generatePreviewDesign(elementData) {
     const wrapper = elementData.element;
     
@@ -1411,39 +1410,61 @@ function generatePreviewDesign(elementData) {
         wrapper.insertBefore(canvas, wrapper.firstChild);
     }
     
-    // Set canvas size to element dimensions
-    canvas.width = elementData.data.width;
-    canvas.height = elementData.data.height;
+    // Hide the placeholder
+    const placeholder = wrapper.querySelector('.design-placeholder');
+    if (placeholder) {
+        placeholder.style.display = 'none';
+    }
     
-    const ctx = canvas.getContext('2d');
+    // Set canvas size to match wrapper dimensions
+    const rect = wrapper.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
     
-    // Apply filters and blend mode
-    ctx.globalAlpha = elementData.data.opacity || 1.0;
-    ctx.globalCompositeOperation = elementData.data.blendMode || 'source-over';
+    const ctx = canvas.getContext('2d', { alpha: true });
     
-    const brightness = elementData.data.brightness || 1.0;
-    const contrast = elementData.data.contrast || 1.0;
+    // Clear canvas completely
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Apply ALL adjustments in the correct order
+    ctx.save();
+    
+    // 1. Set opacity (this affects everything drawn after)
+    const opacity = elementData.data.opacity !== undefined ? elementData.data.opacity : 1.0;
+    ctx.globalAlpha = opacity;
+    
+    // 2. Set blend mode (won't be visible much without background, but it's there)
+    const blendMode = elementData.data.blendMode || 'source-over';
+    ctx.globalCompositeOperation = blendMode;
+    
+    // 3. Apply brightness and contrast filters
+    const brightness = elementData.data.brightness !== undefined ? elementData.data.brightness : 1.0;
+    const contrast = elementData.data.contrast !== undefined ? elementData.data.contrast : 1.0;
     ctx.filter = `brightness(${brightness}) contrast(${contrast})`;
     
-    // Draw colored rectangle
+    // 4. Draw the colored rectangle WITH all effects applied
     ctx.fillStyle = '#6366f1';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Reset filter for text
+    // 5. Reset filter and draw text on top (text should always be readable)
     ctx.filter = 'none';
+    ctx.globalAlpha = 1.0; // Text at full opacity regardless of element opacity
     ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 4;
     
-    // Dynamic font size
-    const fontSize = Math.min(canvas.width, canvas.height) * 0.25;
+    // Dynamic font size based on canvas dimensions
+    const fontSize = Math.min(canvas.width, canvas.height) * 0.2;
     ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     
     // Draw aspect ratio text
     const aspectText = elementData.data.aspectRatio === 'free' ? 'FREE' : elementData.data.aspectRatio.toUpperCase();
     ctx.fillText(aspectText, canvas.width / 2, canvas.height / 2);
+    
+    ctx.restore();
 }
-
         
 function setupElementInteractions(wrapper, data) {
     let isDragging = false, isResizing = false, isRotating = false;
@@ -1719,7 +1740,7 @@ window.addEventListener('load', async () => {
         const elementData = state.designElements.find(el => el.element === state.activeElement);
         if (elementData) {
             elementData.data.opacity = opacity;
-            generatePreviewDesign(elementData); // ✅ ADD THIS
+            generatePreviewDesign(elementData); // This will apply opacity to the canvas content
         }
     }
 });
