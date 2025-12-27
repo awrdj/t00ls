@@ -862,6 +862,9 @@ function applyAspectRatioToElement(elementData, ratio) {
         state.activeElement.style.height = newHeight + 'px';
         elementData.data.height = newHeight;
     }
+    
+    // ✅ ADD THIS LINE
+    generatePreviewDesign(elementData);
 }
 
 async function loadWatermarks() {
@@ -1309,13 +1312,18 @@ function selectMockup(id) {
     document.querySelector('.preview-placeholder').style.display = 'none';
     // clearDesignElements();
     if (state.savedMockupData[state.currentFolderId]?.[id]) {
-        const savedData = state.savedMockupData[state.currentFolderId][id];
-        mockupPreview.onload = () => {
-            savedData.elements.forEach(elementData => {
-                createDesignElement(elementData);
-            });
-        };
-    } else {
+    const savedData = state.savedMockupData[state.currentFolderId][id];
+    mockupPreview.onload = () => {
+        savedData.elements.forEach(elementData => {
+            createDesignElement(elementData);
+        });
+        
+        // ✅ ADD THIS: Regenerate previews after creating all elements
+        state.designElements.forEach(el => {
+            generatePreviewDesign(el);
+        });
+    };
+} else {
         // Clear the onload handler for fresh mockups
         mockupPreview.onload = null;
     }
@@ -1357,6 +1365,9 @@ function createDesignElement(data) {
     `;
     document.getElementById('previewContainer').appendChild(wrapper);
     state.designElements.push({ id: data.id, element: wrapper, data: data });
+
+    generatePreviewDesign(state.designElements[state.designElements.length - 1]);
+    
     setupElementInteractions(wrapper, data);
     wrapper.addEventListener('click', (e) => {
         if (!e.target.closest('.remove-handle')) { setActiveElement(wrapper); }
@@ -1387,6 +1398,53 @@ function setActiveElement(wrapper) {
     }
 }
 
+// ✅ ADD THIS COMPLETE FUNCTION
+function generatePreviewDesign(elementData) {
+    const wrapper = elementData.element;
+    
+    // Create or get canvas
+    let canvas = wrapper.querySelector('.design-preview-canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.className = 'design-preview-canvas';
+        canvas.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 1;';
+        wrapper.insertBefore(canvas, wrapper.firstChild);
+    }
+    
+    // Set canvas size to element dimensions
+    canvas.width = elementData.data.width;
+    canvas.height = elementData.data.height;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Apply filters and blend mode
+    ctx.globalAlpha = elementData.data.opacity || 1.0;
+    ctx.globalCompositeOperation = elementData.data.blendMode || 'source-over';
+    
+    const brightness = elementData.data.brightness || 1.0;
+    const contrast = elementData.data.contrast || 1.0;
+    ctx.filter = `brightness(${brightness}) contrast(${contrast})`;
+    
+    // Draw colored rectangle
+    ctx.fillStyle = '#6366f1';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Reset filter for text
+    ctx.filter = 'none';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Dynamic font size
+    const fontSize = Math.min(canvas.width, canvas.height) * 0.25;
+    ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    
+    // Draw aspect ratio text
+    const aspectText = elementData.data.aspectRatio === 'free' ? 'FREE' : elementData.data.aspectRatio.toUpperCase();
+    ctx.fillText(aspectText, canvas.width / 2, canvas.height / 2);
+}
+
+        
 function setupElementInteractions(wrapper, data) {
     let isDragging = false, isResizing = false, isRotating = false;
     let startX, startY, initialLeft, initialTop, startWidth, startHeight;
@@ -1655,14 +1713,16 @@ window.addEventListener('load', async () => {
         });
 
         document.getElementById('opacitySlider')?.addEventListener('input', (e) => {
-            const opacity = parseFloat(e.target.value);
-            document.getElementById('opacityValue').textContent = Math.round(opacity * 100) + '%';
-            if (state.activeElement) {
-                state.activeElement.style.opacity = opacity;
-                const elementData = state.designElements.find(el => el.element === state.activeElement);
-                if (elementData) elementData.data.opacity = opacity;
-            }
-        });
+    const opacity = parseFloat(e.target.value);
+    document.getElementById('opacityValue').textContent = `${Math.round(opacity * 100)}%`;
+    if (state.activeElement) {
+        const elementData = state.designElements.find(el => el.element === state.activeElement);
+        if (elementData) {
+            elementData.data.opacity = opacity;
+            generatePreviewDesign(elementData); // ✅ ADD THIS
+        }
+    }
+});
 
         // ✅ ADD BLEND MODE HANDLER
 document.getElementById('blendModeSelect')?.addEventListener('change', (e) => {
@@ -1671,6 +1731,7 @@ document.getElementById('blendModeSelect')?.addEventListener('change', (e) => {
         const elementData = state.designElements.find(el => el.element === state.activeElement);
         if (elementData) {
             elementData.data.blendMode = blendMode;
+            generatePreviewDesign(elementData); // ✅ ADD THIS
         }
     }
 });
@@ -1683,6 +1744,7 @@ document.getElementById('brightnessSlider')?.addEventListener('input', (e) => {
         const elementData = state.designElements.find(el => el.element === state.activeElement);
         if (elementData) {
             elementData.data.brightness = brightness;
+            generatePreviewDesign(elementData); // ✅ ADD THIS
         }
     }
 });
@@ -1695,6 +1757,7 @@ document.getElementById('contrastSlider')?.addEventListener('input', (e) => {
         const elementData = state.designElements.find(el => el.element === state.activeElement);
         if (elementData) {
             elementData.data.contrast = contrast;
+            generatePreviewDesign(elementData); // ✅ ADD THIS
         }
     }
 });
