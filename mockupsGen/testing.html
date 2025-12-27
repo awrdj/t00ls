@@ -1636,20 +1636,20 @@ function triggerAutoSave() {
     
     // Set new timeout
     autoSaveTimeout = setTimeout(() => {
-        if (state.currentMockup) {  // ✅ NEW - save even with 0 elements
+        if (state.currentMockup) {
             saveCurrentMockupElements();
-            renderMockupList();
+            savePositionsToStorage();     // ✅ ADD THIS - Persist to localStorage
+            renderMockupList();            // Updates badge
+            updateGenerateButton();        // ✅ ADD THIS - Enable Generate button
             
-            // Show "Saved ✓" indicator
+            // Show "Saved" indicator
             const indicator = document.getElementById('autoSaveIndicator');
             if (indicator) {
                 indicator.style.opacity = '1';
-                setTimeout(() => {
-                    indicator.style.opacity = '0';
-                }, 2000);
+                setTimeout(() => { indicator.style.opacity = '0'; }, 2000);
             }
         }
-    }, AUTO_SAVE_DELAY);
+    }, AUTOSAVEDELAY);
 }
 
 function saveCurrentMockupElements() {
