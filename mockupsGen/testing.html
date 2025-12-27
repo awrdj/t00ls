@@ -1952,8 +1952,14 @@ document.getElementById('contrastSlider')?.addEventListener('input', (e) => {
             progressModal.classList.add('active');
             const mockupsInCurrentFolder = getMockupsInFolder(state.currentFolderId);
             const mockupsWithData = mockupsInCurrentFolder
-                .filter(m => state.mockupEnabled[m.id] !== false && state.savedMockupData[state.currentFolderId]?.[m.id])
-                .map(m => m.id);
+            .filter(m => {
+                const mockupData = state.savedMockupData[state.currentFolderId]?.[m.id];
+                return state.mockupEnabled[m.id] !== false && 
+                       mockupData && 
+                       mockupData.elements && 
+                       mockupData.elements.length > 0;  // ✅ ADD THIS CHECK
+            })
+            .map(m => m.id);
             if (mockupsWithData.length === 0) {
                 progressModal.classList.remove('active');
                 alert('No templates ready!');
