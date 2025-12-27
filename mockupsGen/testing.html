@@ -1612,6 +1612,9 @@ function triggerAutoSave() {
         if (state.currentMockup && state.designElements.length > 0) {
             saveCurrentMockupElements();
             
+            // ✅ ADD THIS LINE - Update mockup list to show badge
+            renderMockupList();
+            
             // Show "Saved ✓" indicator
             const indicator = document.getElementById('autoSaveIndicator');
             if (indicator) {
