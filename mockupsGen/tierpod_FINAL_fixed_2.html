@@ -517,7 +517,7 @@ function initTemplatesPanel() {
     toggle.addEventListener('click', toggleTemplatesPanel);
 
     // FIX: Folder header click - toggle templates panel when clicking on text
-    const foldersHeader = document.getElementById('foldersToggle');
+    /* const foldersHeader = document.getElementById('foldersToggle');
     foldersHeader.addEventListener('click', function(e) {
         // If clicking the toggle icon, just collapse/expand
         if (e.target.classList.contains('toggle-icon') || e.target.closest('.toggle-icon')) {
@@ -528,7 +528,15 @@ function initTemplatesPanel() {
             // Clicking header text or anywhere else on header = toggle templates panel
             toggleTemplatesPanel();
         }
+    });*/
+
+    const foldersHeader = document.getElementById('foldersToggle');
+    foldersHeader.addEventListener('click', function(e) {
+        const content = document.getElementById('foldersContent');
+        this.classList.toggle('collapsed');
+        content.classList.toggle('collapsed');
     });
+    
 }
 
 // FIX: Double-click folder item to toggle templates panel
@@ -1265,6 +1273,9 @@ function selectMockup(id) {
                 createDesignElement(elementData);
             });
         };
+    } else {
+        // Clear the onload handler for fresh mockups
+        mockupPreview.onload = null;
     }
     document.getElementById('addPngBtn').disabled = false;
     document.getElementById('opacitySlider').disabled = false;
