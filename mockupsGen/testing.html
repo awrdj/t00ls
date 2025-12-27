@@ -944,26 +944,40 @@ function updateWatermarkPreview() {
     const overlay = document.getElementById('watermarkPreviewOverlay');
     const canvas = document.getElementById('watermarkPreviewCanvas');
     const mockupPreview = document.getElementById('mockupPreview');
+
     if (!state.selectedWatermark || !state.watermarkImages[state.selectedWatermark]) {
         overlay.classList.remove('active');
         return;
     }
+
     if (!state.currentMockup) {
         overlay.classList.remove('active');
         return;
     }
+
+    // ✅ FIXED: Get actual displayed size of mockup image
     const mockupRect = mockupPreview.getBoundingClientRect();
-    canvas.width = mockupRect.width * 2;
-    canvas.height = mockupRect.height * 2;
+    const containerRect = document.getElementById('previewContainer').getBoundingClientRect();
+    
+    // Set canvas to match mockup's DISPLAYED size
+    canvas.width = mockupRect.width;
+    canvas.height = mockupRect.height;
     canvas.style.width = mockupRect.width + 'px';
     canvas.style.height = mockupRect.height + 'px';
+    
+    // ✅ FIXED: Position canvas to match mockup position
+    canvas.style.position = 'absolute';
+    canvas.style.left = (mockupRect.left - containerRect.left) + 'px';
+    canvas.style.top = (mockupRect.top - containerRect.top) + 'px';
+
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     const watermarkImg = state.watermarkImages[state.selectedWatermark];
-    const scaleX = canvas.width / state.currentMockup.originalWidth;
-    const scaleY = canvas.height / state.currentMockup.originalHeight;
-    ctx.scale(scaleX, scaleY);
-    drawCoverWatermark(ctx, watermarkImg, state.currentMockup.originalWidth, state.currentMockup.originalHeight, state.watermarkOpacity);
+    
+    // Draw watermark at canvas size (already matches mockup display)
+    drawCoverWatermark(ctx, watermarkImg, canvas.width, canvas.height, state.watermarkOpacity);
+
     overlay.classList.add('active');
 }
 
@@ -1382,6 +1396,8 @@ function createDesignElement(data) {
     });
     setActiveElement(wrapper);
     updateSaveButton();
+
+    triggerAutoSave(); // ✅ ADD THIS LINE - Save when element added
 }
 
 function setActiveElement(wrapper) {
@@ -1524,6 +1540,7 @@ function setupElementInteractions(wrapper, data) {
             data.left = parseInt(wrapper.style.left);
             data.top = parseInt(wrapper.style.top);
             generatePreviewDesign({ element: wrapper, data: data });
+            triggerAutoSave(); // ✅ ADD THIS LINE
         }
         if (isResizing) {
             const dx = e.clientX - startX;
@@ -1542,12 +1559,14 @@ function setupElementInteractions(wrapper, data) {
             data.width = newWidth;
             data.height = newHeight;
             generatePreviewDesign({ element: wrapper, data: data });
+            triggerAutoSave(); // ✅ ADD THIS LINE
         }
         if (isRotating) {
             const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
             const rotation = currentRotation + (angle - startAngle) * (180 / Math.PI);
             wrapper.style.transform = `rotate(${rotation}deg)`;
             data.rotation = rotation;
+            triggerAutoSave(); // ✅ ADD THIS LINE
         }
     });
     document.addEventListener('mouseup', () => {
