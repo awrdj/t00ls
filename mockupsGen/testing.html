@@ -1583,12 +1583,19 @@ function setupElementInteractions(wrapper, data) {
     wrapper.querySelector('.remove-handle').addEventListener('click', () => {
         wrapper.remove();
         state.designElements = state.designElements.filter(e => e.id !== data.id);
-        triggerAutoSave(); // ✅ ADD THIS LINE
-
+    
+        // Save immediately
+        if (state.currentMockup) {
+            saveCurrentMockupElements();
+            savePositionsToStorage();  // ✅ Saves to localStorage
+        }
+        
+        // Update UI
+        renderMockupList();        // ✅ Updates badge visibility
+        updateGenerateButton();    // ✅ Updates "Generate X" count
         updateSaveButton();
-        /* if (state.designElements.length === 0) {
-            document.getElementById('savePositionBtn').disabled = true;
-        }*/
+        
+        // Clear active element if it was this one
         if (state.activeElement === wrapper) {
             state.activeElement = null;
         }
@@ -1648,13 +1655,10 @@ function saveCurrentMockupElements() {
 
 function updateGenerateButton() {
     const mockupsInCurrentFolder = getMockupsInFolder(state.currentFolderId);
-    const enabledInFolder = mockupsInCurrentFolder.filter(m => {
-        const mockupData = state.savedMockupData[state.currentFolderId]?.[m.id];
-        return state.mockupEnabled[m.id] !== false &&
-               mockupData &&
-               mockupData.elements &&
-               mockupData.elements.length > 0;  // ✅ Check if has ACTUAL elements
-    });
+    const enabledInFolder = mockupsInCurrentFolder.filter(m =>
+        state.mockupEnabled[m.id] !== false &&
+        state.savedMockupData[state.currentFolderId]?.[m.id]
+    );
     const hasData = enabledInFolder.length > 0;
     document.getElementById('loadExportBtn').disabled = !hasData;
     const btn = document.getElementById('loadExportBtn');
