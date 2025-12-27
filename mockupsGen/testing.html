@@ -1655,18 +1655,22 @@ function saveCurrentMockupElements() {
 
 function updateGenerateButton() {
     const mockupsInCurrentFolder = getMockupsInFolder(state.currentFolderId);
-    const enabledInFolder = mockupsInCurrentFolder.filter(m =>
-        state.mockupEnabled[m.id] !== false &&
-        state.savedMockupData[state.currentFolderId]?.[m.id]
-    );
+    const enabledInFolder = mockupsInCurrentFolder.filter(m => {
+        const mockupData = state.savedMockupData[state.currentFolderId]?.[m.id];
+        return state.mockupEnabled[m.id] !== false &&
+               mockupData &&
+               mockupData.elements &&
+               mockupData.elements.length > 0;  // ✅ Check elements array length
+    });
     const hasData = enabledInFolder.length > 0;
+    
     document.getElementById('loadExportBtn').disabled = !hasData;
     const btn = document.getElementById('loadExportBtn');
     if (hasData) {
         const count = enabledInFolder.length;
         btn.innerHTML = `<i class="fas fa-rocket"></i><span>Generate ${count}</span>`;
     } else {
-        btn.innerHTML = '<i class="fas fa-rocket"></i><span>Generate</span>';
+        btn.innerHTML = `<i class="fas fa-rocket"></i><span>Generate</span>`;
     }
 }
 
