@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TierPOD Pro - Mockup Generator</title>
+    <title>mckpsGen Pro - Mockup Generator</title>
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -189,7 +189,7 @@
     <div class="app-container">
         <div class="sidebar">
             <div class="sidebar-header">
-                <h1><i class="fas fa-magic"></i>TierPOD Pro</h1>
+                <h1><i class="fas fa-magic"></i>mckpsGen Pro</h1>
                 <p>Mockup Generator</p>
             </div>
             <div class="nav-menu">
@@ -383,7 +383,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
 const LIBRARY_CONFIG = {
-    baseUrl: 'https://raw.githubusercontent.com/awrdj/t00ls/main/mockupsGen/mckps',
+    baseUrl: 'https://raw.githubusercontent.com/awrdj/t00ls/main/mckpsGen/mckps',
     categories: {
         kids_mockups: { name: 'Kids', icon: 'fa-child', mockups: ['Kids1.jpg', 'Kids2.jpg'], thumbnailFolder: 'kids_thumbnails' },
         family_mockups: { name: 'Family', icon: 'fa-people-group', mockups: ['Family1.jpg', 'Family2.jpg', 'Family3.jpg'], thumbnailFolder: 'family_thumbnails' },
@@ -391,10 +391,10 @@ const LIBRARY_CONFIG = {
         men_mockups: { name: 'Men', icon: 'fa-person', mockups: ['Men1.jpg', 'Men2.jpg'], thumbnailFolder: 'men_thumbnails' },
         women_mockups: { name: 'Women', icon: 'fa-person-dress', mockups: ['Women1.jpg', 'Women2.jpg'], thumbnailFolder: 'women_thumbnails' }
     },
-    watermarks: { baseUrl: 'https://raw.githubusercontent.com/awrdj/t00ls/main/mockupsGen/mckps/wtrmrks', files: ['Watermark1.png', 'Watermark2.png', 'Watermark3.png'] }
+    watermarks: { baseUrl: 'https://raw.githubusercontent.com/awrdj/t00ls/main/mckpsGen/mckps/wtrmrks', files: ['Watermark1.png', 'Watermark2.png', 'Watermark3.png'] }
 };
 const DEFAULT_ASPECT_RATIOS = ['5:6', '2:3', '4:5', '3:4', '1:1', 'free'];
-const DB_NAME = 'TierPodDB', DB_VERSION = 1, STORE_NAME = 'mockups';
+const DB_NAME = 'mckpsGenDB', DB_VERSION = 1, STORE_NAME = 'mockups';
 let db;
 
 function initDB() {
@@ -478,13 +478,13 @@ let elementIdCounter = 0, selectedFolderIcon = 'fa-folder', selectedFolderColor 
 
 function loadCustomAspectRatios() {
     try {
-        const saved = localStorage.getItem('tierpod_custom_ratios');
+        const saved = localStorage.getItem('mckpsGen_custom_ratios');
         if (saved) state.customAspectRatios = JSON.parse(saved);
     } catch (e) { state.customAspectRatios = []; }
 }
 
 function saveCustomAspectRatios() {
-    try { localStorage.setItem('tierpod_custom_ratios', JSON.stringify(state.customAspectRatios)); } catch (e) {}
+    try { localStorage.setItem('mckpsGen_custom_ratios', JSON.stringify(state.customAspectRatios)); } catch (e) {}
 }
 
 function toggleTemplatesPanel() {
@@ -503,13 +503,13 @@ function toggleTemplatesPanel() {
 // FIX #1: Proper event listeners for folder header click and folder double-click
 function initTemplatesPanel() {
     const toggle = document.getElementById('templatesToggle');
-    const hasSeenTooltip = localStorage.getItem('tierpod_seen_tooltip');
+    const hasSeenTooltip = localStorage.getItem('mckpsGen_seen_tooltip');
     if (!hasSeenTooltip) {
         setTimeout(() => {
             toggle.classList.add('show-tooltip');
             setTimeout(() => {
                 toggle.classList.remove('show-tooltip');
-                localStorage.setItem('tierpod_seen_tooltip', 'true');
+                localStorage.setItem('mckpsGen_seen_tooltip', 'true');
             }, 3000);
         }, 1000);
     }
@@ -562,17 +562,17 @@ function autoHideTemplatesPanel() {
 
 function saveFoldersToDB() {
     try {
-        localStorage.setItem('tierpod_folders', JSON.stringify(state.folders));
-        localStorage.setItem('tierpod_mockup_folders', JSON.stringify(state.mockupToFolder));
-        localStorage.setItem('tierpod_current_folder', state.currentFolderId);
+        localStorage.setItem('mckpsGen_folders', JSON.stringify(state.folders));
+        localStorage.setItem('mckpsGen_mockup_folders', JSON.stringify(state.mockupToFolder));
+        localStorage.setItem('mckpsGen_current_folder', state.currentFolderId);
     } catch (e) {}
 }
 
 function loadFoldersFromDB() {
     try {
-        const savedFolders = localStorage.getItem('tierpod_folders');
-        const savedMockupFolders = localStorage.getItem('tierpod_mockup_folders');
-        const savedCurrentFolder = localStorage.getItem('tierpod_current_folder');
+        const savedFolders = localStorage.getItem('mckpsGen_folders');
+        const savedMockupFolders = localStorage.getItem('mckpsGen_mockup_folders');
+        const savedCurrentFolder = localStorage.getItem('mckpsGen_current_folder');
         if (savedFolders) state.folders = JSON.parse(savedFolders);
         else state.folders = [{ id: 'all', name: 'All Mockups', icon: 'fa-images', color: '#667eea' }];
         if (savedMockupFolders) state.mockupToFolder = JSON.parse(savedMockupFolders);
@@ -1041,9 +1041,9 @@ async function addMockupFromLibrary(url, filename) {
 async function loadMockupsFromDB() {
     try {
         state.mockups = await getAllMockupsFromDB();
-        const savedData = localStorage.getItem('tierpod_positions');
+        const savedData = localStorage.getItem('mckpsGen_positions');
         if (savedData) state.savedMockupData = JSON.parse(savedData);
-        const enabledData = localStorage.getItem('tierpod_enabled');
+        const enabledData = localStorage.getItem('mckpsGen_enabled');
         if (enabledData) state.mockupEnabled = JSON.parse(enabledData);
         else {
             state.mockups.forEach(m => {
@@ -1072,14 +1072,14 @@ function updateStats() {
 }
 
 function savePositionsToStorage() {
-    try { localStorage.setItem('tierpod_positions', JSON.stringify(state.savedMockupData)); } catch (e) {}
+    try { localStorage.setItem('mckpsGen_positions', JSON.stringify(state.savedMockupData)); } catch (e) {}
 }
 
 // GLOBAL - called from onclick
 window.toggleMockup = function(mockupId) {
     const currentState = state.mockupEnabled[mockupId];
     state.mockupEnabled[mockupId] = !currentState;
-    localStorage.setItem('tierpod_enabled', JSON.stringify(state.mockupEnabled));
+    localStorage.setItem('mckpsGen_enabled', JSON.stringify(state.mockupEnabled));
     renderMockupList();
     updateGenerateButton();
 };
