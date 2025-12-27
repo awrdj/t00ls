@@ -339,6 +339,11 @@
                             <button class="btn btn-success" id="savePositionBtn" disabled style="width: 100%;">
                                 <i class="fas fa-save"></i><span>Save Position</span>
                             </button>
+                            
+                            <!-- ✅ ADD THIS ENTIRE DIV -->
+                            <div id="autoSaveIndicator" style="text-align: center; margin-top: 8px; font-size: 11px; color: var(--success); opacity: 0; transition: opacity 0.3s;">
+                                <i class="fas fa-check-circle"></i> Saved
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -516,6 +521,10 @@ const state = {
     templatesPanelVisible: true, hasSeenTooltip: false
 };
 let elementIdCounter = 0, selectedFolderIcon = 'fa-folder', selectedFolderColor = '#667eea';
+
+        // ✅ ADD THESE LINES
+let autoSaveTimeout = null;
+const AUTO_SAVE_DELAY = 1500; // 1.5 seconds after user stops adjusting
 
 function loadCustomAspectRatios() {
     try {
@@ -862,9 +871,8 @@ function applyAspectRatioToElement(elementData, ratio) {
         state.activeElement.style.height = newHeight + 'px';
         elementData.data.height = newHeight;
     }
-    
-    // ✅ ADD THIS LINE
     generatePreviewDesign(elementData);
+    triggerAutoSave(); // ✅ ADD THIS
 }
 
 async function loadWatermarks() {
@@ -1543,8 +1551,16 @@ function setupElementInteractions(wrapper, data) {
         }
     });
     document.addEventListener('mouseup', () => {
-        isDragging = isResizing = isRotating = false;
-    });
+    // Check if any action was happening before releasing
+    const wasInteracting = isDragging || isResizing || isRotating;
+    
+    isDragging = isResizing = isRotating = false;
+    
+    // Trigger auto-save if user was manipulating an element
+    if (wasInteracting) {
+        triggerAutoSave();
+    }
+});
     wrapper.querySelector('.resize-handle').addEventListener('mousedown', (e) => {
         isResizing = true;
         startX = e.clientX;
@@ -1582,6 +1598,30 @@ function clearDesignElements() {
     document.querySelectorAll('.design-wrapper').forEach(el => el.remove());
     state.designElements = [];
     state.activeElement = null;
+}
+
+// ✅ ADD THIS ENTIRE FUNCTION
+function triggerAutoSave() {
+    // Clear existing timeout
+    if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+    }
+    
+    // Set new timeout
+    autoSaveTimeout = setTimeout(() => {
+        if (state.currentMockup && state.designElements.length > 0) {
+            saveCurrentMockupElements();
+            
+            // Show "Saved ✓" indicator
+            const indicator = document.getElementById('autoSaveIndicator');
+            if (indicator) {
+                indicator.style.opacity = '1';
+                setTimeout(() => {
+                    indicator.style.opacity = '0';
+                }, 2000); // Show for 2 seconds
+            }
+        }
+    }, AUTO_SAVE_DELAY);
 }
 
 function saveCurrentMockupElements() {
@@ -1767,24 +1807,24 @@ window.addEventListener('load', async () => {
         const elementData = state.designElements.find(el => el.element === state.activeElement);
         if (elementData) {
             elementData.data.opacity = opacity;
-            generatePreviewDesign(elementData); // This will apply opacity to the canvas content
+            generatePreviewDesign(elementData);
+            triggerAutoSave(); // ✅ ADD THIS
         }
     }
 });
 
-        // ✅ ADD BLEND MODE HANDLER
 document.getElementById('blendModeSelect')?.addEventListener('change', (e) => {
     const blendMode = e.target.value;
     if (state.activeElement) {
         const elementData = state.designElements.find(el => el.element === state.activeElement);
         if (elementData) {
             elementData.data.blendMode = blendMode;
-            generatePreviewDesign(elementData); // ✅ ADD THIS
+            generatePreviewDesign(elementData);
+            triggerAutoSave(); // ✅ ADD THIS
         }
     }
 });
 
-// ✅ ADD BRIGHTNESS HANDLER
 document.getElementById('brightnessSlider')?.addEventListener('input', (e) => {
     const brightness = parseFloat(e.target.value);
     document.getElementById('brightnessValue').textContent = `${Math.round(brightness * 100)}%`;
@@ -1792,12 +1832,12 @@ document.getElementById('brightnessSlider')?.addEventListener('input', (e) => {
         const elementData = state.designElements.find(el => el.element === state.activeElement);
         if (elementData) {
             elementData.data.brightness = brightness;
-            generatePreviewDesign(elementData); // ✅ ADD THIS
+            generatePreviewDesign(elementData);
+            triggerAutoSave(); // ✅ ADD THIS
         }
     }
 });
 
-// ✅ ADD CONTRAST HANDLER
 document.getElementById('contrastSlider')?.addEventListener('input', (e) => {
     const contrast = parseFloat(e.target.value);
     document.getElementById('contrastValue').textContent = `${Math.round(contrast * 100)}%`;
@@ -1805,7 +1845,8 @@ document.getElementById('contrastSlider')?.addEventListener('input', (e) => {
         const elementData = state.designElements.find(el => el.element === state.activeElement);
         if (elementData) {
             elementData.data.contrast = contrast;
-            generatePreviewDesign(elementData); // ✅ ADD THIS
+            generatePreviewDesign(elementData);
+            triggerAutoSave(); // ✅ ADD THIS
         }
     }
 });
