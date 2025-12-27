@@ -340,7 +340,7 @@
                                 <i class="fas fa-save"></i><span>Save Position</span>
                             </button>
                             
-                            <!-- ✅ ADD THIS ENTIRE DIV -->
+                            <!-- ADD THIS ENTIRE DIV -->
                             <div id="autoSaveIndicator" style="text-align: center; margin-top: 8px; font-size: 11px; color: var(--success); opacity: 0; transition: opacity 0.3s;">
                                 <i class="fas fa-check-circle"></i> Saved
                             </div>
@@ -522,7 +522,7 @@ const state = {
 };
 let elementIdCounter = 0, selectedFolderIcon = 'fa-folder', selectedFolderColor = '#667eea';
 
-        // ✅ ADD THESE LINES
+        // ADD THESE LINES
 let autoSaveTimeout = null;
 const AUTO_SAVE_DELAY = 1500; // 1.5 seconds after user stops adjusting
 
@@ -872,7 +872,7 @@ function applyAspectRatioToElement(elementData, ratio) {
         elementData.data.height = newHeight;
     }
     generatePreviewDesign(elementData);
-    triggerAutoSave(); // ✅ ADD THIS
+    triggerAutoSave(); // ADD THIS
 }
 
 async function loadWatermarks() {
@@ -955,7 +955,7 @@ function updateWatermarkPreview() {
         return;
     }
 
-    // ✅ FIXED: Get actual displayed size of mockup image
+    // FIXED: Get actual displayed size of mockup image
     const mockupRect = mockupPreview.getBoundingClientRect();
     const containerRect = document.getElementById('previewContainer').getBoundingClientRect();
     
@@ -965,7 +965,7 @@ function updateWatermarkPreview() {
     canvas.style.width = mockupRect.width + 'px';
     canvas.style.height = mockupRect.height + 'px';
     
-    // ✅ FIXED: Position canvas to match mockup position
+    // FIXED: Position canvas to match mockup position
     canvas.style.position = 'absolute';
     canvas.style.left = (mockupRect.left - containerRect.left) + 'px';
     canvas.style.top = (mockupRect.top - containerRect.top) + 'px';
@@ -1340,7 +1340,7 @@ function selectMockup(id) {
             createDesignElement(elementData);
         });
         
-        // ✅ ADD THIS: Regenerate previews after creating all elements
+        // ADD THIS: Regenerate previews after creating all elements
         state.designElements.forEach(el => {
             generatePreviewDesign(el);
         });
@@ -1397,7 +1397,7 @@ function createDesignElement(data) {
     setActiveElement(wrapper);
     updateSaveButton();
 
-    triggerAutoSave(); // ✅ ADD THIS LINE - Save when element added
+    triggerAutoSave(); // ADD THIS LINE - Save when element added
 }
 
 function setActiveElement(wrapper) {
@@ -1416,7 +1416,7 @@ function setActiveElement(wrapper) {
         document.getElementById('contrastSlider').value = elementData.data.contrast || 1.0;
         document.getElementById('contrastValue').textContent = `${Math.round((elementData.data.contrast || 1.0) * 100)}%`;
         
-        // ✅ MAKE SURE THESE ARE ENABLED
+        // MAKE SURE THESE ARE ENABLED
         document.getElementById('opacitySlider').disabled = false;
         document.getElementById('blendModeSelect').disabled = false;
         document.getElementById('brightnessSlider').disabled = false;
@@ -1454,8 +1454,8 @@ function generatePreviewDesign(elementData) {
     canvas.width = rect.width;
     canvas.height = rect.height;
     
-    const ctx = canvas.getContext('2d', { alpha: true }); // ✅ CHANGE TO TRUE - need alpha for proper blending
-ctx.clearRect(0, 0, canvas.width, canvas.height); // ✅ ADD THIS - clear before drawing
+    const ctx = canvas.getContext('2d', { alpha: true }); // CHANGE TO TRUE - need alpha for proper blending
+ctx.clearRect(0, 0, canvas.width, canvas.height); // ADD THIS - clear before drawing
     
     // Get mockup and container positions to calculate what portion to show
     const mockupRect = mockupImg.getBoundingClientRect();
@@ -1540,7 +1540,7 @@ function setupElementInteractions(wrapper, data) {
             data.left = parseInt(wrapper.style.left);
             data.top = parseInt(wrapper.style.top);
             generatePreviewDesign({ element: wrapper, data: data });
-            triggerAutoSave(); // ✅ ADD THIS LINE
+            triggerAutoSave(); // ADD THIS LINE
         }
         if (isResizing) {
             const dx = e.clientX - startX;
@@ -1559,14 +1559,14 @@ function setupElementInteractions(wrapper, data) {
             data.width = newWidth;
             data.height = newHeight;
             generatePreviewDesign({ element: wrapper, data: data });
-            triggerAutoSave(); // ✅ ADD THIS LINE
+            triggerAutoSave(); // ADD THIS LINE
         }
         if (isRotating) {
             const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
             const rotation = currentRotation + (angle - startAngle) * (180 / Math.PI);
             wrapper.style.transform = `rotate(${rotation}deg)`;
             data.rotation = rotation;
-            triggerAutoSave(); // ✅ ADD THIS LINE
+            triggerAutoSave(); //  ADD THIS LINE
         }
     });
     document.addEventListener('mouseup', () => {
@@ -1606,12 +1606,12 @@ function setupElementInteractions(wrapper, data) {
         // Save immediately
         if (state.currentMockup) {
             saveCurrentMockupElements();
-            savePositionsToStorage();  // ✅ Saves to localStorage
+            savePositionsToStorage();  // Saves to localStorage
         }
         
         // Update UI
-        renderMockupList();        // ✅ Updates badge visibility
-        updateGenerateButton();    // ✅ Updates "Generate X" count
+        renderMockupList();        // Updates badge visibility
+        updateGenerateButton();    // Updates "Generate X" count
         updateSaveButton();
         
         // Clear active element if it was this one
@@ -1627,7 +1627,7 @@ function clearDesignElements() {
     state.activeElement = null;
 }
 
-// ✅ ADD THIS ENTIRE FUNCTION
+// ADD THIS ENTIRE FUNCTION
 function triggerAutoSave() {
     // Clear existing timeout
     if (autoSaveTimeout) {
@@ -1638,9 +1638,9 @@ function triggerAutoSave() {
     autoSaveTimeout = setTimeout(() => {
         if (state.currentMockup) {
             saveCurrentMockupElements();
-            savePositionsToStorage();     // ✅ ADD THIS - Persist to localStorage
+            savePositionsToStorage();     // ADD THIS - Persist to localStorage
             renderMockupList();            // Updates badge
-            updateGenerateButton();        // ✅ ADD THIS - Enable Generate button
+            updateGenerateButton();        // ADD THIS - Enable Generate button
             
             // Show "Saved" indicator
             const indicator = document.getElementById('autoSaveIndicator');
@@ -1679,7 +1679,7 @@ function updateGenerateButton() {
         return state.mockupEnabled[m.id] !== false &&
                mockupData &&
                mockupData.elements &&
-               mockupData.elements.length > 0;  // ✅ Check elements array length
+               mockupData.elements.length > 0;  // Check elements array length
     });
     const hasData = enabledInFolder.length > 0;
     
@@ -1841,7 +1841,7 @@ window.addEventListener('load', async () => {
         if (elementData) {
             elementData.data.opacity = opacity;
             generatePreviewDesign(elementData);
-            triggerAutoSave(); // ✅ ADD THIS
+            triggerAutoSave(); // ADD THIS
         }
     }
 });
@@ -1853,7 +1853,7 @@ document.getElementById('blendModeSelect')?.addEventListener('change', (e) => {
         if (elementData) {
             elementData.data.blendMode = blendMode;
             generatePreviewDesign(elementData);
-            triggerAutoSave(); // ✅ ADD THIS
+            triggerAutoSave(); // ADD THIS
         }
     }
 });
@@ -1866,7 +1866,7 @@ document.getElementById('brightnessSlider')?.addEventListener('input', (e) => {
         if (elementData) {
             elementData.data.brightness = brightness;
             generatePreviewDesign(elementData);
-            triggerAutoSave(); // ✅ ADD THIS
+            triggerAutoSave(); // ADD THIS
         }
     }
 });
@@ -1879,7 +1879,7 @@ document.getElementById('contrastSlider')?.addEventListener('input', (e) => {
         if (elementData) {
             elementData.data.contrast = contrast;
             generatePreviewDesign(elementData);
-            triggerAutoSave(); // ✅ ADD THIS
+            triggerAutoSave(); // ADD THIS
         }
     }
 });
@@ -1957,7 +1957,7 @@ document.getElementById('contrastSlider')?.addEventListener('input', (e) => {
                 return state.mockupEnabled[m.id] !== false && 
                        mockupData && 
                        mockupData.elements && 
-                       mockupData.elements.length > 0;  // ✅ ADD THIS CHECK
+                       mockupData.elements.length > 0;  // ADD THIS CHECK
             })
             .map(m => m.id);
             if (mockupsWithData.length === 0) {
@@ -1991,13 +1991,13 @@ document.getElementById('contrastSlider')?.addEventListener('input', (e) => {
     const scaledHeight = element.height * scaleY;
     
     ctx.globalAlpha = element.opacity;
-    // ✅ MAKE SURE THIS LINE EXISTS
+    // MAKE SURE THIS LINE EXISTS
     ctx.globalCompositeOperation = element.blendMode || 'source-over';
     
     ctx.translate(scaledLeft + scaledWidth/2, scaledTop + scaledHeight/2);
     ctx.rotate(element.rotation * Math.PI / 180);
     
-    // ✅ MAKE SURE THESE LINES EXIST
+    // MAKE SURE THESE LINES EXIST
     const brightness = element.brightness || 1.0;
     const contrast = element.contrast || 1.0;
     ctx.filter = `brightness(${brightness}) contrast(${contrast})`;
@@ -2006,7 +2006,7 @@ document.getElementById('contrastSlider')?.addEventListener('input', (e) => {
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(pngImg, -scaledWidth/2, -scaledHeight/2, scaledWidth, scaledHeight);
     
-    // ✅ MAKE SURE THIS LINE EXISTS
+    // MAKE SURE THIS LINE EXISTS
     ctx.filter = 'none';
     ctx.restore();
 }
