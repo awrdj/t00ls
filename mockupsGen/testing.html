@@ -1380,18 +1380,20 @@ function setActiveElement(wrapper) {
     document.querySelectorAll('.design-wrapper').forEach(w => w.classList.remove('active'));
     wrapper.classList.add('active');
     state.activeElement = wrapper;
+    
     const elementData = state.designElements.find(el => el.element === wrapper);
     if (elementData) {
         document.getElementById('opacitySlider').value = elementData.data.opacity;
-        document.getElementById('opacityValue').textContent = Math.round(elementData.data.opacity * 100) + '%';
-
-    document.getElementById('blendModeSelect').value = elementData.data.blendMode || 'source-over';
+        document.getElementById('opacityValue').textContent = `${Math.round(elementData.data.opacity * 100)}%`;
+        
+        document.getElementById('blendModeSelect').value = elementData.data.blendMode || 'source-over';
         document.getElementById('brightnessSlider').value = elementData.data.brightness || 1.0;
         document.getElementById('brightnessValue').textContent = `${Math.round((elementData.data.brightness || 1.0) * 100)}%`;
         document.getElementById('contrastSlider').value = elementData.data.contrast || 1.0;
         document.getElementById('contrastValue').textContent = `${Math.round((elementData.data.contrast || 1.0) * 100)}%`;
         
-        // Enable controls
+        // ✅ MAKE SURE THESE ARE ENABLED
+        document.getElementById('opacitySlider').disabled = false;
         document.getElementById('blendModeSelect').disabled = false;
         document.getElementById('brightnessSlider').disabled = false;
         document.getElementById('contrastSlider').disabled = false;
@@ -1416,46 +1418,69 @@ function generatePreviewDesign(elementData) {
         placeholder.style.display = 'none';
     }
     
+    // Get mockup image
+    const mockupImg = document.getElementById('mockupPreview');
+    if (!mockupImg || !mockupImg.complete) {
+        // Fallback if mockup not loaded yet
+        return;
+    }
+    
     // Set canvas size to match wrapper dimensions
     const rect = wrapper.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
     
-    const ctx = canvas.getContext('2d', { alpha: true });
+    const ctx = canvas.getContext('2d', { alpha: true }); // ✅ CHANGE TO TRUE - need alpha for proper blending
+ctx.clearRect(0, 0, canvas.width, canvas.height); // ✅ ADD THIS - clear before drawing
     
-    // Clear canvas completely
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Get mockup and container positions to calculate what portion to show
+    const mockupRect = mockupImg.getBoundingClientRect();
+    const containerRect = document.getElementById('previewContainer').getBoundingClientRect();
     
-    // Apply ALL adjustments in the correct order
+    // Calculate source coordinates on the mockup image
+    const sourceX = ((rect.left - mockupRect.left) / mockupRect.width) * mockupImg.naturalWidth;
+    const sourceY = ((rect.top - mockupRect.top) / mockupRect.height) * mockupImg.naturalHeight;
+    const sourceWidth = (rect.width / mockupRect.width) * mockupImg.naturalWidth;
+    const sourceHeight = (rect.height / mockupRect.height) * mockupImg.naturalHeight;
+    
+    // 1. FIRST: Draw the portion of the mockup that's underneath this element
+    ctx.drawImage(
+        mockupImg,
+        sourceX, sourceY, sourceWidth, sourceHeight,  // Source rectangle from mockup
+        0, 0, canvas.width, canvas.height             // Destination (full canvas)
+    );
+    
+    // 2. SECOND: Draw the preview design ON TOP with all effects
     ctx.save();
     
-    // 1. Set opacity (this affects everything drawn after)
+    // Apply opacity
     const opacity = elementData.data.opacity !== undefined ? elementData.data.opacity : 1.0;
     ctx.globalAlpha = opacity;
     
-    // 2. Set blend mode (won't be visible much without background, but it's there)
+    // Apply blend mode (NOW it will blend with the mockup underneath!)
     const blendMode = elementData.data.blendMode || 'source-over';
     ctx.globalCompositeOperation = blendMode;
     
-    // 3. Apply brightness and contrast filters
+    // Apply brightness and contrast filters
     const brightness = elementData.data.brightness !== undefined ? elementData.data.brightness : 1.0;
     const contrast = elementData.data.contrast !== undefined ? elementData.data.contrast : 1.0;
     ctx.filter = `brightness(${brightness}) contrast(${contrast})`;
     
-    // 4. Draw the colored rectangle WITH all effects applied
+    // Draw the colored rectangle WITH all effects applied ON TOP of mockup
     ctx.fillStyle = '#6366f1';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // 5. Reset filter and draw text on top (text should always be readable)
+    // 3. THIRD: Draw text on top (always readable)
     ctx.filter = 'none';
-    ctx.globalAlpha = 1.0; // Text at full opacity regardless of element opacity
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1.0;
     ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    ctx.shadowBlur = 4;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+    ctx.shadowBlur = 8;
     
-    // Dynamic font size based on canvas dimensions
+    // Dynamic font size
     const fontSize = Math.min(canvas.width, canvas.height) * 0.2;
     ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     
@@ -1490,6 +1515,7 @@ function setupElementInteractions(wrapper, data) {
             wrapper.style.top = (initialTop + dy) + 'px';
             data.left = parseInt(wrapper.style.left);
             data.top = parseInt(wrapper.style.top);
+            generatePreviewDesign({ element: wrapper, data: data });
         }
         if (isResizing) {
             const dx = e.clientX - startX;
@@ -1507,6 +1533,7 @@ function setupElementInteractions(wrapper, data) {
             wrapper.style.height = newHeight + 'px';
             data.width = newWidth;
             data.height = newHeight;
+            generatePreviewDesign({ element: wrapper, data: data });
         }
         if (isRotating) {
             const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
@@ -1884,13 +1911,13 @@ document.getElementById('contrastSlider')?.addEventListener('input', (e) => {
     const scaledHeight = element.height * scaleY;
     
     ctx.globalAlpha = element.opacity;
-    // ✅ ADD BLEND MODE
+    // ✅ MAKE SURE THIS LINE EXISTS
     ctx.globalCompositeOperation = element.blendMode || 'source-over';
     
     ctx.translate(scaledLeft + scaledWidth/2, scaledTop + scaledHeight/2);
     ctx.rotate(element.rotation * Math.PI / 180);
     
-    // ✅ ADD LIGHTING ADJUSTMENTS
+    // ✅ MAKE SURE THESE LINES EXIST
     const brightness = element.brightness || 1.0;
     const contrast = element.contrast || 1.0;
     ctx.filter = `brightness(${brightness}) contrast(${contrast})`;
@@ -1899,7 +1926,7 @@ document.getElementById('contrastSlider')?.addEventListener('input', (e) => {
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(pngImg, -scaledWidth/2, -scaledHeight/2, scaledWidth, scaledHeight);
     
-    // ✅ RESET FILTER
+    // ✅ MAKE SURE THIS LINE EXISTS
     ctx.filter = 'none';
     ctx.restore();
 }
