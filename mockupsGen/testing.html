@@ -1583,6 +1583,7 @@ function setupElementInteractions(wrapper, data) {
     wrapper.querySelector('.remove-handle').addEventListener('click', () => {
         wrapper.remove();
         state.designElements = state.designElements.filter(e => e.id !== data.id);
+        triggerAutoSave(); // ✅ ADD THIS LINE
 
         updateSaveButton();
         /* if (state.designElements.length === 0) {
@@ -1609,10 +1610,8 @@ function triggerAutoSave() {
     
     // Set new timeout
     autoSaveTimeout = setTimeout(() => {
-        if (state.currentMockup && state.designElements.length > 0) {
+        if (state.currentMockup) {  // ✅ NEW - save even with 0 elements
             saveCurrentMockupElements();
-            
-            // ✅ ADD THIS LINE - Update mockup list to show badge
             renderMockupList();
             
             // Show "Saved ✓" indicator
@@ -1621,7 +1620,7 @@ function triggerAutoSave() {
                 indicator.style.opacity = '1';
                 setTimeout(() => {
                     indicator.style.opacity = '0';
-                }, 2000); // Show for 2 seconds
+                }, 2000);
             }
         }
     }, AUTO_SAVE_DELAY);
