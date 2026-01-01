@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Coloring Page Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.4;
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 260px 1fr 220px;
+            height: 100vh;
+        }
+
+        .sidebar, .layers-panel {
+            background: #fff;
+            overflow-y: auto;
+            padding: 15px;
+            font-size: 12px;
+        }
+
+        .sidebar {
+            border-right: 1px solid #ddd;
+        }
+
+        .layers-panel {
+            border-left: 1px solid #ddd;
+        }
+
+        h1 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #000;
+        }
+
+        .section {
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 8px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            margin-bottom: 3px;
+            color: #555;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 5px 7px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+            background: #fafafa;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #000;
+            background: #fff;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 7px 10px;
+            background: #fafafa;
+            border: 1px dashed #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .file-input-label:hover {
+            border-color: #000;
+            background: #f0f0f0;
+        }
+
+        .file-selected {
+            background: #e8f5e9 !important;
+            border-color: #4caf50 !important;
+            color: #2e7d32;
+        }
+
+        button {
+            width: 100%;
+            padding: 7px 10px;
+            border: none;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 5px;
+        }
+
+        .btn-black {
+            background: #000;
+            color: #fff;
+        }
+
+        .btn-black:hover {
+            background: #333;
+        }
+
+        .btn-outline {
+            background: #fff;
+            color: #000;
+            border: 1px solid #000;
+        }
+
+        .btn-outline:hover {
+            background: #000;
+            color: #fff;
+        }
+
+        .btn-light {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-light:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        button:disabled {
+            background: #e0e0e0;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .canvas-area {
+            background: #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        #canvas-wrapper {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: inline-block;
+            background-color: #fff;
+            background-image: 
+                linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+                linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .info {
+            font-size: 10px;
+            color: #666;
+            padding: 5px;
+            background: #f9f9f9;
+            border-radius: 3px;
+            margin-top: 6px;
+            line-height: 1.3;
+        }
+
+        .status {
+            font-size: 10px;
+            padding: 5px 7px;
+            border-radius: 3px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .color-picker input[type="color"] {
+            width: 35px;
+            height: 24px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .color-picker input[type="text"] {
+            flex: 1;
+        }
+
+        /* Layers Panel */
+        .layer-item {
+            padding: 8px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .layer-item:hover {
+            background: #f0f0f0;
+        }
+
+        .layer-item.active {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .layer-name {
+            font-size: 11px;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .layer-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .layer-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        .layer-icon:hover {
+            background: #ddd;
+        }
+
+        .tool-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tool-btn {
+            padding: 8px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: #e8e8e8;
+        }
+
+        .tool-btn.active {
+            background: #000;
+            color: #fff;
+            border-color: #000;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 6px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+        }
+
+        .checkbox-group label {
+            font-size: 11px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <h1>🎨 Controls</h1>
+
+            <div class="section">
+                <div class="section-title">Upload</div>
+                <div class="file-input-wrapper">
+                    <input type="file" id="svgUpload" accept=".svg,image/svg+xml">
+                    <label for="svgUpload" class="file-input-label" id="fileLabel">
+                        Choose SVG
+                    </label>
+                </div>
+                <button class="btn-black" onclick="processSVG()" id="processBtn" disabled>Process</button>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Canvas</div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Width</label>
+                        <input type="number" id="canvasWidth" value="2550" min="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Height</label>
+                        <input type="number" id="canvasHeight" value="3300" min="100">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>DPI</label>
+                    <input type="number" id="dpi" value="300" min="72" max="600">
+                </div>
+                <button class="btn-light" onclick="resizeCanvas()">Resize</button>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Tools</div>
+                <div class="tool-buttons">
+                    <div class="tool-btn active" onclick="selectTool('select')" id="selectTool">
+                        ✋ Select
+                    </div>
+                    <div class="tool-btn" onclick="selectTool('pen')" id="penTool">
+                        ✏️ Pen
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Stroke</div>
+                <div class="form-group">
+                    <label>Width (px)</label>
+                    <input type="number" id="strokeWidth" value="9" min="1" max="100">
+                </div>
+                <div class="form-group">
+                    <label>Fill</label>
+                    <div class="color-picker">
+                        <input type="color" id="fillColor" value="#ffffff">
+                        <input type="text" id="fillColorText" value="#ffffff" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Stroke</label>
+                    <div class="color-picker">
+                        <input type="color" id="strokeColor" value="#000000">
+                        <input type="text" id="strokeColorText" value="#000000" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Export</div>
+                <div class="form-group">
+                    <label>Format</label>
+                    <select id="exportFormat">
+                        <option value="png">PNG</option>
+                        <option value="jpeg">JPEG</option>
+                    </select>
+                </div>
+                <button class="btn-black" onclick="exportHighQuality()" id="exportBtn" disabled>Download</button>
+                <button class="btn-light" onclick="clearCanvas()">Clear</button>
+            </div>
+
+            <div id="statusBox" class="status"></div>
+        </div>
+
+        <!-- Canvas Area -->
+        <div class="canvas-area">
+            <div id="canvas-wrapper">
+                <canvas id="outputCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Right Layers Panel -->
+        <div class="layers-panel">
+            <h1>📑 Layers</h1>
+
+            <div class="section">
+                <button class="btn-outline btn-small" onclick="addNewLayer()">+ New Layer</button>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="clipMask" onchange="toggleClipMask()">
+                    <label for="clipMask">Use as Clipping Mask</label>
+                </div>
+            </div>
+
+            <div id="layersList"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <script>
+        let canvas;
+        let currentTool = 'select';
+        let layers = [];
+        let activeLayerIndex = -1;
+        let svgLayerIndex = -1;
+        let isDrawing = false;
+        let currentPath = null;
+        let pathPoints = [];
+
+        window.addEventListener('DOMContentLoaded', function() {
+            initCanvas();
+            setupEventListeners();
+            updateLayersPanel();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('svgUpload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    document.getElementById('fileLabel').textContent = file.name.substring(0, 15) + '...';
+                    document.getElementById('fileLabel').classList.add('file-selected');
+                    document.getElementById('processBtn').disabled = false;
+                }
+            });
+
+            document.getElementById('fillColor').addEventListener('input', function(e) {
+                document.getElementById('fillColorText').value = e.target.value;
+            });
+
+            document.getElementById('strokeColor').addEventListener('input', function(e) {
+                document.getElementById('strokeColorText').value = e.target.value;
+            });
+
+            // Canvas drawing events for pen tool
+            canvas.on('mouse:down', handleMouseDown);
+            canvas.on('mouse:move', handleMouseMove);
+            canvas.on('mouse:up', handleMouseUp);
+        }
+
+        function initCanvas() {
+            const width = parseInt(document.getElementById('canvasWidth').value);
+            const height = parseInt(document.getElementById('canvasHeight').value);
+
+            const maxDisplayWidth = window.innerWidth - 260 - 220 - 120;
+            const maxDisplayHeight = window.innerHeight - 80;
+
+            const scaleX = maxDisplayWidth / width;
+            const scaleY = maxDisplayHeight / height;
+            const displayScale = Math.min(scaleX, scaleY, 0.4);
+
+            const displayWidth = Math.floor(width * displayScale);
+            const displayHeight = Math.floor(height * displayScale);
+
+            if (canvas) {
+                canvas.dispose();
+            }
+
+            canvas = new fabric.Canvas('outputCanvas', {
+                width: displayWidth,
+                height: displayHeight,
+                backgroundColor: null,
+                selection: true
+            });
+
+            canvas.actualWidth = width;
+            canvas.actualHeight = height;
+            canvas.displayScale = displayScale;
+
+            console.log('Canvas:', width, 'x', height, '@ scale:', displayScale);
+        }
+
+        function selectTool(tool) {
+            currentTool = tool;
+
+            document.getElementById('selectTool').classList.remove('active');
+            document.getElementById('penTool').classList.remove('active');
+
+            if (tool === 'select') {
+                canvas.selection = true;
+                canvas.isDrawingMode = false;
+                document.getElementById('selectTool').classList.add('active');
+            } else if (tool === 'pen') {
+                canvas.selection = false;
+                canvas.isDrawingMode = false;
+                document.getElementById('penTool').classList.add('active');
+            }
+        }
+
+        function handleMouseDown(e) {
+            if (currentTool !== 'pen') return;
+
+            const pointer = canvas.getPointer(e.e);
+            isDrawing = true;
+            pathPoints = [pointer.x, pointer.y];
+        }
+
+        function handleMouseMove(e) {
+            if (!isDrawing || currentTool !== 'pen') return;
+
+            const pointer = canvas.getPointer(e.e);
+            pathPoints.push(pointer.x, pointer.y);
+
+            if (currentPath) {
+                canvas.remove(currentPath);
+            }
+
+            currentPath = createSmoothPath(pathPoints);
+            canvas.add(currentPath);
+            canvas.renderAll();
+        }
+
+        function handleMouseUp(e) {
+            if (!isDrawing || currentTool !== 'pen') return;
+
+            isDrawing = false;
+
+            if (currentPath && pathPoints.length > 2) {
+                // Add to current layer
+                if (activeLayerIndex >= 0) {
+                    layers[activeLayerIndex].objects.push(currentPath);
+                }
+                updateLayersPanel();
+            }
+
+            currentPath = null;
+            pathPoints = [];
+        }
+
+        function createSmoothPath(points) {
+            if (points.length < 4) return null;
+
+            // Create smooth bezier path
+            let pathData = `M ${points[0]} ${points[1]}`;
+
+            for (let i = 2; i < points.length - 2; i += 2) {
+                const xc = (points[i] + points[i + 2]) / 2;
+                const yc = (points[i + 1] + points[i + 3]) / 2;
+                pathData += ` Q ${points[i]} ${points[i + 1]} ${xc} ${yc}`;
+            }
+
+            const strokeWidth = parseInt(document.getElementById('strokeWidth').value);
+            const strokeColor = document.getElementById('strokeColor').value;
+
+            const path = new fabric.Path(pathData, {
+                fill: 'transparent',
+                stroke: strokeColor,
+                strokeWidth: strokeWidth * canvas.displayScale,
+                strokeLineJoin: 'round',
+                strokeLineCap: 'round',
+                selectable: true,
+                objectCaching: false
+            });
+
+            return path;
+        }
+
+        function resizeCanvas() {
+            layers = [];
+            activeLayerIndex = -1;
+            svgLayerIndex = -1;
+            initCanvas();
+            updateLayersPanel();
+            document.getElementById('exportBtn').disabled = true;
+            showStatus('Canvas resized', 'success');
+        }
+
+        function processSVG() {
+            const file = document.getElementById('svgUpload').files[0];
+            if (!file) return;
+
+            showStatus('Processing...', 'success');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const svgContent = e.target.result;
+
+                fabric.loadSVGFromString(svgContent, function(objects, options) {
+                    if (!objects || objects.length === 0) {
+                        showStatus('No objects in SVG', 'error');
+                        return;
+                    }
+
+                    const strokeWidth = parseInt(document.getElementById('strokeWidth').value);
+                    const fillColor = document.getElementById('fillColor').value;
+                    const strokeColor = document.getElementById('strokeColor').value;
+
+                    const group = new fabric.Group(objects);
+
+                    const scaleX = canvas.actualWidth / group.width;
+                    const scaleY = canvas.actualHeight / group.height;
+                    const avgScale = (scaleX + scaleY) / 2;
+                    const objectStrokeWidth = strokeWidth / avgScale;
+
+                    applyStyles(group, fillColor, strokeColor, objectStrokeWidth, true);
+
+                    group.scaleX = scaleX * canvas.displayScale;
+                    group.scaleY = scaleY * canvas.displayScale;
+                    group.set({ left: 0, top: 0, selectable: false });
+
+                    canvas.add(group);
+                    canvas.renderAll();
+
+                    // Add as layer
+                    svgLayerIndex = layers.length;
+                    layers.push({
+                        name: 'SVG Layer',
+                        objects: [group],
+                        visible: true
+                    });
+
+                    activeLayerIndex = svgLayerIndex;
+                    updateLayersPanel();
+                    document.getElementById('exportBtn').disabled = false;
+
+                    showStatus('SVG loaded!', 'success');
+                });
+            };
+            reader.readAsText(file);
+        }
+
+        function applyStyles(obj, fillColor, strokeColor, strokeWidth, insideStroke) {
+            if (obj.type === 'group' && obj._objects) {
+                obj._objects.forEach(child => applyStyles(child, fillColor, strokeColor, strokeWidth, insideStroke));
+                return;
+            }
+
+            if (['path', 'circle', 'rect', 'ellipse', 'polygon', 'polyline', 'line'].includes(obj.type)) {
+                obj.set({
+                    fill: fillColor,
+                    stroke: strokeColor,
+                    strokeWidth: strokeWidth,
+                    strokeLineJoin: 'round',
+                    strokeLineCap: 'round',
+                    paintFirst: insideStroke ? 'fill' : 'stroke',
+                    strokeUniform: true,
+                    objectCaching: false
+                });
+                obj.dirty = true;
+            }
+        }
+
+        function addNewLayer() {
+            const layerName = `Layer ${layers.length + 1}`;
+            layers.push({
+                name: layerName,
+                objects: [],
+                visible: true
+            });
+            activeLayerIndex = layers.length - 1;
+            updateLayersPanel();
+            showStatus('New layer added', 'success');
+        }
+
+        function updateLayersPanel() {
+            const list = document.getElementById('layersList');
+            list.innerHTML = '';
+
+            for (let i = layers.length - 1; i >= 0; i--) {
+                const layer = layers[i];
+                const div = document.createElement('div');
+                div.className = 'layer-item' + (i === activeLayerIndex ? ' active' : '');
+                div.onclick = () => selectLayer(i);
+
+                div.innerHTML = `
+                    <span class="layer-name">${layer.name}</span>
+                    <div class="layer-controls">
+                        <span class="layer-icon" onclick="toggleLayerVisibility(${i}, event)">
+                            ${layer.visible ? '👁️' : '🚫'}
+                        </span>
+                        <span class="layer-icon" onclick="deleteLayer(${i}, event)">🗑️</span>
+                    </div>
+                `;
+
+                list.appendChild(div);
+            }
+        }
+
+        function selectLayer(index) {
+            activeLayerIndex = index;
+            updateLayersPanel();
+        }
+
+        function toggleLayerVisibility(index, event) {
+            event.stopPropagation();
+            layers[index].visible = !layers[index].visible;
+
+            layers[index].objects.forEach(obj => {
+                obj.visible = layers[index].visible;
+            });
+
+            canvas.renderAll();
+            updateLayersPanel();
+        }
+
+        function deleteLayer(index, event) {
+            event.stopPropagation();
+
+            if (confirm('Delete this layer?')) {
+                layers[index].objects.forEach(obj => canvas.remove(obj));
+                layers.splice(index, 1);
+
+                if (activeLayerIndex >= layers.length) {
+                    activeLayerIndex = layers.length - 1;
+                }
+
+                updateLayersPanel();
+                canvas.renderAll();
+            }
+        }
+
+        function toggleClipMask() {
+            const useClip = document.getElementById('clipMask').checked;
+
+            if (useClip && svgLayerIndex >= 0 && layers[svgLayerIndex]) {
+                const svgGroup = layers[svgLayerIndex].objects[0];
+
+                layers.forEach((layer, idx) => {
+                    if (idx !== svgLayerIndex) {
+                        layer.objects.forEach(obj => {
+                            obj.clipPath = svgGroup;
+                        });
+                    }
+                });
+
+                showStatus('Clipping mask applied', 'success');
+            } else {
+                canvas.getObjects().forEach(obj => {
+                    obj.clipPath = null;
+                });
+                showStatus('Clipping mask removed', 'success');
+            }
+
+            canvas.renderAll();
+        }
+
+        function exportHighQuality() {
+            showStatus('Exporting...', 'success');
+
+            const format = document.getElementById('exportFormat').value;
+            const dpi = parseInt(document.getElementById('dpi').value);
+            const width = canvas.actualWidth;
+            const height = canvas.actualHeight;
+
+            // Create export canvas at FULL resolution
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = width;
+            exportCanvas.height = height;
+            const ctx = exportCanvas.getContext('2d', { alpha: true });
+
+            // High quality settings
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            // Background
+            if (format === 'jpeg') {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, width, height);
+            }
+
+            // Calculate scale up factor
+            const scaleFactor = 1 / canvas.displayScale;
+            ctx.scale(scaleFactor, scaleFactor);
+
+            // Render canvas content
+            const tempData = canvas.toDataURL('image/png', 1.0);
+            const img = new Image();
+
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0);
+
+                // Export
+                const finalData = exportCanvas.toDataURL(`image/${format}`, 1.0);
+
+                const link = document.createElement('a');
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                link.download = `coloring-${width}x${height}-${dpi}dpi-${timestamp}.${format}`;
+                link.href = finalData;
+                link.click();
+
+                showStatus(`Exported ${width}x${height}px @ ${dpi}DPI`, 'success');
+            };
+
+            img.src = tempData;
+        }
+
+        function clearCanvas() {
+            if (confirm('Clear all?')) {
+                canvas.clear();
+                layers = [];
+                activeLayerIndex = -1;
+                svgLayerIndex = -1;
+                updateLayersPanel();
+                canvas.backgroundColor = null;
+                canvas.renderAll();
+            }
+        }
+
+        function showStatus(message, type) {
+            const box = document.getElementById('statusBox');
+            box.textContent = message;
+            box.className = 'status show ' + type;
+            setTimeout(() => box.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>
