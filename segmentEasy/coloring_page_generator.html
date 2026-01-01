@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG to Coloring Page Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 0;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 2px solid #e0e0e0;
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .canvas-area {
+            padding: 30px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: auto;
+            height: calc(100vh - 200px);
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .control-group h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .form-group input[type="number"],
+        .form-group input[type="file"],
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input[type="number"]:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group input[type="file"] {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #canvas-wrapper {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: inline-block;
+        }
+
+        canvas {
+            border: 2px solid #333;
+            background: white;
+            display: block;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: #333;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .dimension-info {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.85em;
+            text-align: center;
+            color: #856404;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                height: auto;
+                border-right: none;
+                border-bottom: 2px solid #e0e0e0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Coloring Page Generator</h1>
+            <p>Transform SVG files into professional monochrome coloring pages</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="control-group">
+                    <h3>📁 Upload SVG</h3>
+                    <div class="form-group">
+                        <input type="file" id="svgUpload" accept=".svg,image/svg+xml">
+                    </div>
+                    <div class="info-box">
+                        Upload your SVG file to begin. The tool will automatically resize and style it.
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>📏 Canvas Settings</h3>
+                    <div class="form-group">
+                        <label>Width (px)</label>
+                        <input type="number" id="canvasWidth" value="2550" min="100" max="10000">
+                    </div>
+                    <div class="form-group">
+                        <label>Height (px)</label>
+                        <input type="number" id="canvasHeight" value="3300" min="100" max="10000">
+                    </div>
+                    <div class="form-group">
+                        <label>DPI</label>
+                        <input type="number" id="dpi" value="300" min="72" max="600">
+                    </div>
+                    <div class="dimension-info">
+                        Current: <span id="dimensionDisplay">2550×3300 @ 300 DPI</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>🎨 Stroke Settings</h3>
+                    <div class="form-group">
+                        <label>Stroke Width (px)</label>
+                        <input type="number" id="strokeWidth" value="9" min="1" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label>Stroke Position</label>
+                        <select id="strokePosition">
+                            <option value="inside">Inside</option>
+                            <option value="center">Center</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>⚙️ Actions</h3>
+                    <button class="btn-primary" onclick="processSVG()">Process SVG</button>
+                    <button class="btn-info" onclick="toggleDrawingMode()">Enable Drawing Mode</button>
+                    <button class="btn-danger" onclick="clearCanvas()">Clear Canvas</button>
+                </div>
+
+                <div class="control-group">
+                    <h3>💾 Export</h3>
+                    <div class="form-group">
+                        <label>Export Format</label>
+                        <select id="exportFormat">
+                            <option value="png">PNG</option>
+                            <option value="jpg">JPG</option>
+                        </select>
+                    </div>
+                    <button class="btn-secondary" onclick="downloadResult()">Download Image</button>
+                </div>
+
+                <div id="statusBox" class="hidden"></div>
+            </div>
+
+            <div class="canvas-area">
+                <div id="canvas-wrapper">
+                    <canvas id="outputCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <script>
+        let canvas;
+        let isDrawingMode = false;
+        let currentSVGGroup = null;
+
+        // Initialize canvas on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            initCanvas();
+            updateDimensionDisplay();
+
+            // Update dimension display on input change
+            ['canvasWidth', 'canvasHeight', 'dpi'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateDimensionDisplay);
+            });
+        });
+
+        function updateDimensionDisplay() {
+            const width = document.getElementById('canvasWidth').value;
+            const height = document.getElementById('canvasHeight').value;
+            const dpi = document.getElementById('dpi').value;
+            document.getElementById('dimensionDisplay').textContent = `${width}×${height} @ ${dpi} DPI`;
+        }
+
+        function initCanvas() {
+            const width = parseInt(document.getElementById('canvasWidth').value);
+            const height = parseInt(document.getElementById('canvasHeight').value);
+
+            // Scale down for display (show at 25% size for comfortable viewing)
+            const displayScale = 0.25;
+            const displayWidth = width * displayScale;
+            const displayHeight = height * displayScale;
+
+            if (canvas) {
+                canvas.dispose();
+            }
+
+            canvas = new fabric.Canvas('outputCanvas', {
+                width: displayWidth,
+                height: displayHeight,
+                backgroundColor: 'white',
+                selection: true
+            });
+
+            // Store actual dimensions for export
+            canvas.actualWidth = width;
+            canvas.actualHeight = height;
+            canvas.displayScale = displayScale;
+
+            // Setup drawing mode
+            canvas.isDrawingMode = false;
+            canvas.freeDrawingBrush.width = 9;
+            canvas.freeDrawingBrush.color = 'black';
+        }
+
+        function showStatus(message, type = 'success') {
+            const statusBox = document.getElementById('statusBox');
+            statusBox.textContent = message;
+            statusBox.className = 'status ' + type;
+            statusBox.classList.remove('hidden');
+
+            setTimeout(() => {
+                statusBox.classList.add('hidden');
+            }, 4000);
+        }
+
+        function processSVG() {
+            const file = document.getElementById('svgUpload').files[0];
+
+            if (!file) {
+                showStatus('Please select an SVG file first', 'error');
+                return;
+            }
+
+            showStatus('Processing SVG...', 'success');
+
+            // Reinitialize canvas with current settings
+            initCanvas();
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const svgString = e.target.result;
+
+                fabric.loadSVGFromString(svgString, function(objects, options) {
+                    if (!objects || objects.length === 0) {
+                        showStatus('Failed to load SVG. Please check the file.', 'error');
+                        return;
+                    }
+
+                    // Group all SVG elements
+                    const svgGroup = new fabric.Group(objects);
+
+                    // Get dimensions
+                    const objWidth = svgGroup.width;
+                    const objHeight = svgGroup.height;
+                    const targetWidth = canvas.actualWidth;
+                    const targetHeight = canvas.actualHeight;
+
+                    // Calculate scale to fit canvas (like Photopea script)
+                    const scaleX = targetWidth / objWidth;
+                    const scaleY = targetHeight / objHeight;
+                    const scale = Math.min(scaleX, scaleY);
+
+                    // Apply scale and position
+                    svgGroup.scale(scale);
+                    svgGroup.set({
+                        left: 0,
+                        top: 0,
+                        originX: 'left',
+                        originY: 'top'
+                    });
+
+                    // Apply styling based on settings
+                    const strokeWidth = parseInt(document.getElementById('strokeWidth').value);
+                    const strokePosition = document.getElementById('strokePosition').value;
+
+                    // Apply styling to all paths in the group
+                    applyStylesToGroup(svgGroup, strokeWidth, strokePosition);
+
+                    // Scale down for display
+                    const displayScale = canvas.displayScale;
+                    svgGroup.scale(scale * displayScale);
+
+                    // Remove old SVG if exists
+                    if (currentSVGGroup) {
+                        canvas.remove(currentSVGGroup);
+                    }
+
+                    currentSVGGroup = svgGroup;
+                    canvas.add(svgGroup);
+                    canvas.renderAll();
+
+                    showStatus('SVG processed successfully!', 'success');
+                });
+            };
+
+            reader.onerror = function() {
+                showStatus('Error reading file', 'error');
+            };
+
+            reader.readAsText(file);
+        }
+
+        function applyStylesToGroup(group, strokeWidth, strokePosition) {
+            // Recursively apply styles to all paths
+            function applyToObject(obj) {
+                if (obj.type === 'group') {
+                    obj.getObjects().forEach(applyToObject);
+                } else if (obj.type === 'path' || obj.type === 'circle' || obj.type === 'rect' || obj.type === 'polygon' || obj.type === 'polyline') {
+                    obj.set({
+                        fill: 'white',
+                        stroke: 'black',
+                        strokeWidth: strokeWidth,
+                        strokeLineJoin: 'round',
+                        strokeLineCap: 'round'
+                    });
+
+                    // For "inside" stroke, we need to use strokeUniform and adjust
+                    if (strokePosition === 'inside') {
+                        // Fabric.js doesn't natively support inside stroke,
+                        // so we use a workaround: set stroke and use clipping
+                        obj.set({
+                            strokeWidth: strokeWidth * 2, // Double width
+                            paintFirst: 'fill' // Paint fill first so stroke appears "inside"
+                        });
+                    }
+                }
+            }
+
+            applyToObject(group);
+        }
+
+        function toggleDrawingMode() {
+            isDrawingMode = !isDrawingMode;
+            canvas.isDrawingMode = isDrawingMode;
+
+            const strokeWidth = parseInt(document.getElementById('strokeWidth').value);
+            canvas.freeDrawingBrush.width = strokeWidth * canvas.displayScale;
+
+            const btn = event.target;
+            if (isDrawingMode) {
+                btn.textContent = 'Disable Drawing Mode';
+                btn.classList.remove('btn-info');
+                btn.classList.add('btn-danger');
+                showStatus('Drawing mode enabled. Draw on canvas!', 'success');
+            } else {
+                btn.textContent = 'Enable Drawing Mode';
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-info');
+                showStatus('Drawing mode disabled', 'success');
+            }
+        }
+
+        function clearCanvas() {
+            if (confirm('Are you sure you want to clear the canvas? This will remove all content.')) {
+                canvas.clear();
+                canvas.backgroundColor = 'white';
+                currentSVGGroup = null;
+                canvas.renderAll();
+                showStatus('Canvas cleared', 'success');
+            }
+        }
+
+        function downloadResult() {
+            if (!canvas) {
+                showStatus('Canvas not initialized', 'error');
+                return;
+            }
+
+            showStatus('Preparing download...', 'success');
+
+            const format = document.getElementById('exportFormat').value;
+            const dpi = parseInt(document.getElementById('dpi').value);
+
+            // Calculate multiplier for high-res export
+            const exportScale = 1 / canvas.displayScale;
+
+            // Create temporary canvas at full resolution
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.actualWidth;
+            tempCanvas.height = canvas.actualHeight;
+            const ctx = tempCanvas.getContext('2d');
+
+            // Fill white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+            // Scale and draw the fabric canvas content
+            ctx.scale(exportScale, exportScale);
+            const fabricCanvas = canvas.toCanvasElement();
+            ctx.drawImage(fabricCanvas, 0, 0);
+
+            // Convert to data URL
+            const dataURL = tempCanvas.toDataURL(`image/${format}`, 1.0);
+
+            // Create download link
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().slice(0, 10);
+            link.download = `coloring-page-${timestamp}.${format}`;
+            link.href = dataURL;
+            link.click();
+
+            showStatus(`Downloaded as ${format.toUpperCase()} at ${dpi} DPI`, 'success');
+        }
+
+        // Handle file upload trigger
+        document.getElementById('svgUpload').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                showStatus('SVG file selected. Click "Process SVG" to continue.', 'success');
+            }
+        });
+    </script>
+</body>
+</html>
