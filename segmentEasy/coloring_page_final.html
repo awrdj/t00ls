@@ -37,6 +37,7 @@
             flex-direction: column;
             padding: 10px;
             overflow-y: auto;
+            z-index: 10;
         }
 
         .sidebar-right {
@@ -49,15 +50,24 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: auto;
+            overflow: hidden; /* Changed from auto to hidden to rely on CSS scaling */
             position: relative;
             padding: 20px;
         }
 
         /* Canvas Wrapper & Checkerboard */
+        /* This container scales down to fit the screen */
+        .canvas-container-outer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* The actual wrapper Fabric uses */
         .canvas-wrapper {
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            /* Checkerboard pattern */
             background-image:
                 linear-gradient(45deg, #ccc 25%, transparent 25%),
                 linear-gradient(-45deg, #ccc 25%, transparent 25%),
@@ -65,7 +75,8 @@
                 linear-gradient(-45deg, transparent 75%, #ccc 75%);
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-            background-color: #fff; /* Base white for checkerboard contrast */
+            background-color: #fff;
+            transform-origin: center center; /* Scale from center */
         }
 
         /* UI Elements */
@@ -196,6 +207,7 @@
         <div class="control-group">
             <label>Stroke Width (px)</label>
             <input type="number" id="svgStrokeWidth" value="9">
+            <button onclick="updateSVGStyle()" style="margin-top:5px; font-size:11px;">Re-Apply Stroke</button>
         </div>
 
         <h3>Tools</h3>
@@ -228,8 +240,10 @@
 
     <!-- CENTER CANVAS -->
     <div class="main-area">
-        <div class="canvas-wrapper">
-            <canvas id="c"></canvas>
+        <div class="canvas-container-outer" id="canvasContainerOuter">
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <canvas id="c"></canvas>
+            </div>
         </div>
     </div>
 
@@ -253,17 +267,12 @@
         let activeLayerId = null;
         let isClipping = false;
         let currentMode = 'select'; // 'select' or 'pen'
-        let penState = {
-            active: false,
-            points: [], // Array of {x, y, c1x, c1y, c2x, c2y} (Fabric logic simplified)
-            tempLines: [],
-            tempPoints: []
-        };
-        let canvasConfig = {
-            width: 2550,
-            height: 3300,
-            dpi: 300
-        };
+        let penState = { points: [] };
+        let canvasConfig = { width: 2550, height: 3300, dpi: 300 };
+        let tempPath = null;
+        let points = []; 
+        let isDragging = false;
+        let activeAnchor = null;
 
         // --- INITIALIZATION ---
         window.onload = function() {
@@ -281,6 +290,9 @@
             // Inputs listeners
             document.getElementById('svgStrokeWidth').addEventListener('change', updateSVGStyle);
 
+            // Responsive Scaling Listener
+            window.addEventListener('resize', fitCanvasToScreen);
+            
             // Initial Layer
             initLayers();
             setTool('select');
@@ -291,9 +303,36 @@
             canvas.on('mouse:up', onMouseUp);
             // Keyboard events
             document.addEventListener('keydown', onKeyDown);
+
+            // Initial fit
+            fitCanvasToScreen();
         };
 
-        // --- CANVAS & SVG LOGIC ---
+        // --- DISPLAY SCALING (FIX FOR BIG CANVAS) ---
+        function fitCanvasToScreen() {
+            const outer = document.getElementById('canvasContainerOuter');
+            const wrapper = document.getElementById('canvasWrapper');
+            const margin = 40; // padding inside main area
+
+            const availableWidth = outer.clientWidth - margin;
+            const availableHeight = outer.clientHeight - margin;
+
+            const scaleW = availableWidth / canvasConfig.width;
+            const scaleH = availableHeight / canvasConfig.height;
+
+            // Pick the smaller scale to fit entirely
+            const scale = Math.min(scaleW, scaleH);
+
+            // Apply CSS transform to the wrapper
+            // We use transform so the internal coordinate system stays at 2550x3300
+            wrapper.style.transform = `scale(${scale})`;
+            wrapper.style.width = `${canvasConfig.width}px`;
+            wrapper.style.height = `${canvasConfig.height}px`;
+            
+            // Center it manually via margins if needed, or flex handles it
+            // Flex handles it mostly, but let's ensure size is explicit
+        }
+
         function updateCanvasSize() {
             const w = parseInt(document.getElementById('canvasWidth').value);
             const h = parseInt(document.getElementById('canvasHeight').value);
@@ -306,58 +345,74 @@
             if (svgObject) {
                 fitSvgToCanvas();
             }
+            // Re-calc screen fit
+            fitCanvasToScreen();
         }
 
+        // --- SVG HANDLING ---
         function handleFileUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            // Extract name prefix
             svgPrefix = file.name.replace(/\.svg$/i, '');
 
             const reader = new FileReader();
             reader.onload = function(f) {
                 const svgStr = f.target.result;
                 fabric.loadSVGFromString(svgStr, function(objects, options) {
-                    // Group all elements to treat as a single "page"
+                    
+                    // 1. Force styles on ALL sub-paths before grouping
+                    // Many SVGs have colors on individual paths, which override group colors.
+                    objects.forEach(obj => {
+                        forceStyleOnObject(obj);
+                    });
+
+                    // 2. Create the Group
                     const obj = fabric.util.groupSVGElements(objects, options);
                     
-                    // Remove old SVG if exists
                     if (svgObject) canvas.remove(svgObject);
-
                     svgObject = obj;
                     
-                    // Core Requirement: SVG IS THE MASK (Layer 0)
-                    // We need to apply styles: White fill, Inside Stroke
-                    
+                    // 3. Fit and Style
                     fitSvgToCanvas();
-                    updateSVGStyle(); // Applies the fill/stroke logic
+                    updateSVGStyle(); 
                     
-                    // Add to canvas (send to back)
                     canvas.add(svgObject);
                     svgObject.selectable = false;
-                    svgObject.evented = false; // Don't interfere with drawing
+                    svgObject.evented = false; 
+                    canvas.sendToBack(svgObject);
                     
-                    // Update Layers UI
                     initLayers(); 
                 });
             };
             reader.readAsText(file);
         }
 
+        // Recursive function to force White Fill / Black Stroke on everything
+        function forceStyleOnObject(obj) {
+            // Apply to self
+            obj.set({
+                fill: '#FFFFFF',
+                stroke: '#000000',
+                strokeWidth: 1 // Base width, updated later
+            });
+
+            // If it's a group, recurse
+            if (obj._objects && obj._objects.length) {
+                obj._objects.forEach(child => forceStyleOnObject(child));
+            } else if (obj.type === 'path') {
+                // Ensure paths don't have "null" fill if they were transparent
+                obj.set({ fill: '#FFFFFF' });
+            }
+        }
+
         function fitSvgToCanvas() {
             if (!svgObject) return;
             
-            // Core Req: Stretch X and Y independently
-            // NO Math.min. Must fill exact dimensions.
-            
-            // Reset scale to 1 to measure natural size
             svgObject.scaleX = 1;
             svgObject.scaleY = 1;
+            const bounds = svgObject.getBoundingRect();
             
-            const bounds = svgObject.getBoundingRect(); // intrinsic dimensions
-            
-            // Calculate independent scales
             const scaleX = canvasConfig.width / bounds.width;
             const scaleY = canvasConfig.height / bounds.height;
             
@@ -369,7 +424,6 @@
                 left: 0,
                 top: 0
             });
-            
             svgObject.setCoords();
             canvas.requestRenderAll();
         }
@@ -378,15 +432,13 @@
             if (!svgObject) return;
             const strokeWidth = parseInt(document.getElementById('svgStrokeWidth').value) || 9;
             
-            // Core Req: White fill, Black stroke, INSIDE positioning.
-            // Technique: "Clip to self".
-            // 1. We clone the object to be the clipPath.
-            // 2. We set strokeWidth = strokeWidth * 2.
-            // 3. ClipPath cuts off the outer half.
+            // FIX for "SVG doesn't have fill/stroke":
+            // We must apply the color to the Group, but also ensure sub-paths don't override it.
+            // Since we already normalized sub-paths in handleFileUpload, we apply master style here.
             
+            // 1. CLIPPING TECHNIQUE for "Inside Stroke"
+            // We clone the object to use as its own clip mask.
             svgObject.clone(function(clone) {
-                // Prepare the clone to be a clip path
-                // Clip paths in Fabric need to be absolutely positioned if the object is
                 clone.set({
                     left: svgObject.left,
                     top: svgObject.top,
@@ -395,68 +447,68 @@
                     absolutePositioned: true
                 });
 
-                // Apply styles to the main object
-                svgObject.set({
+                // Apply styles
+                // We must traverse again if the group ignores property inheritance
+                recursiveApplyStyle(svgObject, {
                     fill: '#FFFFFF',
                     stroke: '#000000',
-                    strokeWidth: strokeWidth * 2, // Double width
+                    strokeWidth: strokeWidth * 2, // Double width for inside effect
                     strokeLineCap: 'round',
-                    strokeLineJoin: 'round',
-                    clipPath: clone // Apply the clip
+                    strokeLineJoin: 'round'
                 });
 
+                // Apply clip to the main group
+                svgObject.clipPath = clone;
+                
                 canvas.requestRenderAll();
             });
             
-            // Re-apply clipping to other layers if active
             if(isClipping) applyClippingMask();
         }
 
-        // --- PEN TOOL (BEZIER) ---
-        // A simplified bezier tool that allows click-to-add and drag-to-curve
-        
-        let tempPath = null;
-        let points = []; 
-        let isDragging = false;
-        let activeAnchor = null;
+        function recursiveApplyStyle(obj, style) {
+            obj.set(style);
+            if (obj._objects && obj._objects.length) {
+                obj._objects.forEach(child => recursiveApplyStyle(child, style));
+            }
+        }
 
+        // --- PEN TOOL & LAYERS (Identical logic to previous, ensuring stability) ---
+        
         function setTool(tool) {
             currentMode = tool;
-            
             document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
             if(tool === 'pen') document.getElementById('toolPen').classList.add('active');
             else document.getElementById('toolSelect').classList.add('active');
 
             if (tool === 'select') {
                 canvas.selection = true;
-                canvas.forEachObject(o => o.selectable = (o !== svgObject)); // Restore selectability
-                finishPath(); // Close any pending path
+                canvas.forEachObject(o => o.selectable = (o !== svgObject));
+                finishPath(); 
             } else {
                 canvas.selection = false;
                 canvas.discardActiveObject();
-                canvas.forEachObject(o => o.selectable = false); // Disable selection while drawing
+                canvas.forEachObject(o => o.selectable = false);
                 canvas.requestRenderAll();
             }
         }
 
         function onMouseDown(opt) {
             if (currentMode !== 'pen') return;
-            
             const pointer = canvas.getPointer(opt.e);
             
-            // Logic:
-            // 1. Add Point
+            // Scale pointer adjustment not needed because Fabric handles CSS scaling automatically
+            // IF we used CSS zoom. We used transform scale. Fabric's getPointer usually handles this 
+            // BUT sometimes needs manual adjustment if transform is on wrapper. 
+            // Fabric calculates offset based on canvas element client rect.
+            
             const p = { x: pointer.x, y: pointer.y };
             
-            // If this is the first point
             if (points.length === 0) {
                 points.push({ type: 'M', x: p.x, y: p.y });
             } else {
-                // Add Line/Curve
-                // Initially line, updated to Curve if dragged
                 points.push({ type: 'L', x: p.x, y: p.y });
             }
-            
             activeAnchor = points.length - 1;
             isDragging = true;
             renderTempPath();
@@ -465,34 +517,11 @@
         function onMouseMove(opt) {
             if (currentMode !== 'pen') return;
             if (!isDragging || points.length === 0) return;
-
-            // If dragging mouse down, turn the LAST point (activeAnchor) into a curve
-            // We are dragging the Control Point for the incoming curve? 
-            // Standard Photoshop Pen: Dragging from a point pulls out handles for the *next* curve and *previous* curve.
             
             const pointer = canvas.getPointer(opt.e);
             const anchor = points[activeAnchor];
-
-            // Simplified Bezier logic:
-            // Convert 'L' to 'Q' (Quadratic) or 'C' (Cubic) based on drag.
-            // For simplicity in this single file, we'll assume Quadratic or just adjust handles.
-            // Let's implement a Cubic update. 
-            // Current point becomes C. Preceding point gets a control handle?
             
-            // To keep it robust without 1000 lines of code:
-            // We just treat the drag as defining the control point for a Quadratic curve ending here.
-            anchor.type = 'Q';
-            anchor.x1 = (anchor.x + pointer.x) / 2; // Control point roughly between
-            anchor.y1 = (anchor.y + pointer.y) / 2;
-            
-            // Better: Just draw a line for visual feedback now, process complicated curves is hard in simplified tool.
-            // Photoshop style is hard. Let's do: Click = Line. Drag = Drag Control Point.
-            
-            // Update the 'Q' control point to be the mouse position?
-            // Actually, let's just do standard Polyline for click, and if user drags, we set control points.
-            
-            // Implementation: Update the last point to be a quadratic curve with control point at mouse
-            // NOTE: This creates a curve *ending* at the current point, controlled by mouse.
+            // Convert last point to Curve (Quad)
             anchor.type = 'Q';
             anchor.x1 = pointer.x;
             anchor.y1 = pointer.y;
@@ -520,11 +549,6 @@
 
         function renderTempPath() {
             if (tempPath) canvas.remove(tempPath);
-            
-            // Construct path string
-            // M x y
-            // L x y
-            // Q c1x c1y x y
             let d = "";
             points.forEach(p => {
                 if (p.type === 'M') d += `M ${p.x} ${p.y} `;
@@ -534,7 +558,7 @@
 
             tempPath = new fabric.Path(d, {
                 stroke: 'black',
-                strokeWidth: 2, // Thin for preview
+                strokeWidth: 2,
                 fill: '',
                 selectable: false,
                 evented: false,
@@ -546,8 +570,6 @@
 
         function finishPath() {
             if (points.length < 2) return;
-            
-            // Construct Final Path
             let d = "";
             points.forEach(p => {
                 if (p.type === 'M') d += `M ${p.x} ${p.y} `;
@@ -555,53 +577,35 @@
                 if (p.type === 'Q') d += `Q ${p.x1} ${p.y1} ${p.x} ${p.y} `;
             });
 
-            // "Close path" capability - auto close if near start? 
-            // Or just leave open. Prompt says "Close path capability".
-            // We'll just leave it as an open path stroke unless user clicked start.
-            
-            // Create final Fabric object
             const pathObj = new fabric.Path(d, {
-                fill: '', // Transparent fill
+                fill: '', 
                 stroke: '#000000',
-                strokeWidth: 9, // Req: 9px stroke
+                strokeWidth: 9, 
                 strokeLineCap: 'round',
                 strokeLineJoin: 'round',
-                strokeUniform: true // ensure thickness is constant if scaled
+                strokeUniform: true 
             });
 
-            // Add to active drawing layer
             const activeLayer = layers.find(l => l.id === activeLayerId);
             if (activeLayer && activeLayer.type === 'drawing') {
-                // Add to the group or canvas.
-                // To keep layers simple, we just add to canvas and tag it with layerID.
                 pathObj.layerId = activeLayerId;
-                
-                if (isClipping) {
-                   applyClipToObj(pathObj);
-                }
-                
+                if (isClipping) applyClipToObj(pathObj);
                 canvas.add(pathObj);
                 canvas.setActiveObject(pathObj);
             } else {
                 alert("Please select a Drawing Layer first.");
             }
 
-            // Cleanup
             points = [];
             if (tempPath) canvas.remove(tempPath);
             tempPath = null;
             canvas.requestRenderAll();
         }
 
-        // --- LAYER MANAGEMENT ---
         function initLayers() {
             layers = [];
-            // SVG Layer
             layers.push({ id: 'svg', name: 'SVG Background (Mask)', type: 'svg', visible: true });
-            
-            // Default Draw Layer
             addDrawingLayer("Drawing Layer 1", false);
-            
             renderLayerList();
             setActiveLayer(layers[1].id);
         }
@@ -617,7 +621,6 @@
         }
 
         function deleteActiveLayerContent() {
-            // Delete selected objects on canvas
             const active = canvas.getActiveObjects();
             if (active.length) {
                 canvas.remove(...active);
@@ -627,26 +630,18 @@
         }
         
         function deleteLayer(id) {
-            if (id === 'svg') return; // Cannot delete SVG
-            
-            // Remove all objects belonging to this layer
+            if (id === 'svg') return; 
             const objects = canvas.getObjects().filter(o => o.layerId === id);
             canvas.remove(...objects);
-            
             layers = layers.filter(l => l.id !== id);
             renderLayerList();
-            
-            // Set new active
-            if (activeLayerId === id) {
-                setActiveLayer('svg'); // Fallback
-            }
+            if (activeLayerId === id) setActiveLayer('svg');
         }
 
         function toggleLayerVisibility(id) {
             const layer = layers.find(l => l.id === id);
             if (!layer) return;
             layer.visible = !layer.visible;
-            
             if (id === 'svg') {
                 if (svgObject) svgObject.visible = layer.visible;
             } else {
@@ -664,13 +659,10 @@
         function renderLayerList() {
             const list = document.getElementById('layerList');
             list.innerHTML = '';
-            
-            // Render in reverse order (top layer first in list)
             [...layers].reverse().forEach(layer => {
                 const li = document.createElement('li');
                 li.className = `layer-item ${layer.id === activeLayerId ? 'active' : ''}`;
                 li.onclick = () => setActiveLayer(layer.id);
-                
                 li.innerHTML = `
                     <button class="icon-btn" onclick="event.stopPropagation(); toggleLayerVisibility('${layer.id}')">
                         ${layer.visible ? '👁' : '○'}
@@ -684,7 +676,6 @@
             });
         }
 
-        // --- CLIPPING MASK LOGIC ---
         function toggleClipping() {
             isClipping = document.getElementById('clipCheck').checked;
             applyClippingMask();
@@ -692,23 +683,16 @@
 
         function applyClippingMask() {
             if (!svgObject) return;
-            
-            // Get all user drawing objects
             const userObjects = canvas.getObjects().filter(o => o.layerId && o.layerId.startsWith('layer_'));
-            
             userObjects.forEach(obj => {
-                if (isClipping) {
-                    applyClipToObj(obj);
-                } else {
-                    obj.clipPath = null;
-                }
+                if (isClipping) applyClipToObj(obj);
+                else obj.clipPath = null;
                 obj.dirty = true;
             });
             canvas.requestRenderAll();
         }
 
         function applyClipToObj(obj) {
-            // To clip correctly, we clone the SVG shape
             svgObject.clone(function(clone) {
                 clone.set({
                     left: svgObject.left,
@@ -716,17 +700,14 @@
                     scaleX: svgObject.scaleX,
                     scaleY: svgObject.scaleY,
                     absolutePositioned: true,
-                    stroke: null, // Clip path should not have stroke usually
-                    fill: 'black' // Opaque for clip
+                    stroke: null, 
+                    fill: 'black'
                 });
                 obj.clipPath = clone;
                 canvas.requestRenderAll();
             });
         }
 
-
-        // --- EXPORT LOGIC ---
-        
         function getTimestamp() {
             const d = new Date();
             const year = d.getFullYear();
@@ -736,27 +717,9 @@
         }
 
         function exportPNG() {
-            // Requirements:
-            // 1. Exact Dimensions 2550x3300
-            // 2. 300 DPI (Metadata)
-            // 3. Filename format
-            
-            // Temporarily unclip IF we want raw, but req says "Export Image", implying WYSIWYG.
-            // So we keep clipping.
-            
-            // Deselect everything to avoid selection handles in export
             canvas.discardActiveObject();
             canvas.requestRenderAll();
-
-            const scaleMulti = 1; // Since we are already working at 1:1 pixel coords
-            
-            // Export to DataURL
-            const dataURL = canvas.toDataURL({
-                format: 'png',
-                multiplier: scaleMulti,
-                enableRetinaScaling: false
-            });
-
+            const dataURL = canvas.toDataURL({ format: 'png', multiplier: 1, enableRetinaScaling: false });
             const link = document.createElement('a');
             const filename = `${svgPrefix}-${canvasConfig.width}x${canvasConfig.height}-${canvasConfig.dpi}dpi-${getTimestamp()}.png`;
             link.download = filename;
@@ -767,47 +730,25 @@
         }
 
         function exportSVGPaths() {
-            // Requirement: Export ONLY user-drawn paths.
-            // Separate SVG file.
-            
-            // 1. Filter objects
             const userObjects = canvas.getObjects().filter(o => o.layerId && o.layerId.startsWith('layer_'));
-            
             if (userObjects.length === 0) {
                 alert("No drawn paths to export.");
                 return;
             }
-
-            // 2. Create a temporary group or string builder
-            // We use Fabric's toSVG but only for specific objects.
-            
             let svgBody = '';
-            userObjects.forEach(obj => {
-                // Get SVG string for object, preserving styles
-                svgBody += obj.toSVG();
-            });
-
-            // 3. Wrap in SVG header matching canvas dimensions
+            userObjects.forEach(obj => svgBody += obj.toSVG());
             const svgHeader = `<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${canvasConfig.width}" height="${canvasConfig.height}" viewBox="0 0 ${canvasConfig.width} ${canvasConfig.height}">
-    <title>Exported Paths</title>
-`;
+<svg xmlns="http://www.w3.org/2000/svg" width="${canvasConfig.width}" height="${canvasConfig.height}" viewBox="0 0 ${canvasConfig.width} ${canvasConfig.height}">`;
             const svgFooter = `</svg>`;
-            
-            const fullContent = svgHeader + svgBody + svgFooter;
-            
-            // 4. Download
-            const blob = new Blob([fullContent], {type: "image/svg+xml;charset=utf-8"});
+            const blob = new Blob([svgHeader + svgBody + svgFooter], {type: "image/svg+xml;charset=utf-8"});
             const link = document.createElement('a');
             const filename = `${svgPrefix}-paths-${canvasConfig.width}x${canvasConfig.height}-${getTimestamp()}.svg`;
-            
             link.href = URL.createObjectURL(blob);
             link.download = filename;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
-
     </script>
 </body>
 </html>
