@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Coloring Page Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .sidebar {
+            background: #fff;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .sidebar h1 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #000;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 4px;
+            color: #555;
+        }
+
+        .form-group input[type="number"],
+        .form-group input[type="text"],
+        .form-group select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            background: #fafafa;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #000;
+            background: #fff;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 8px 12px;
+            background: #fafafa;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .file-input-label:hover {
+            border-color: #000;
+            background: #f0f0f0;
+        }
+
+        .file-selected {
+            background: #e8f5e9 !important;
+            border-color: #4caf50 !important;
+            color: #2e7d32;
+        }
+
+        button {
+            width: 100%;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 6px;
+        }
+
+        .btn-black {
+            background: #000;
+            color: #fff;
+        }
+
+        .btn-black:hover {
+            background: #333;
+        }
+
+        .btn-outline {
+            background: #fff;
+            color: #000;
+            border: 1px solid #000;
+        }
+
+        .btn-outline:hover {
+            background: #000;
+            color: #fff;
+        }
+
+        .btn-light {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-light:hover {
+            background: #e0e0e0;
+        }
+
+        button:disabled {
+            background: #e0e0e0;
+            color: #999;
+            cursor: not-allowed;
+            border: none;
+        }
+
+        .canvas-area {
+            background: #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        #canvas-wrapper {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: inline-block;
+            background-color: #fff;
+            background-image: 
+                linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+                linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .info {
+            font-size: 11px;
+            color: #666;
+            padding: 6px;
+            background: #f9f9f9;
+            border-radius: 3px;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        .status {
+            font-size: 11px;
+            padding: 6px 8px;
+            border-radius: 3px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .color-picker input[type="color"] {
+            width: 40px;
+            height: 28px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .color-picker input[type="text"] {
+            flex: 1;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>🎨 Coloring Page Tool</h1>
+
+            <div class="section">
+                <div class="section-title">Upload</div>
+                <div class="file-input-wrapper">
+                    <input type="file" id="svgUpload" accept=".svg,image/svg+xml">
+                    <label for="svgUpload" class="file-input-label" id="fileLabel">
+                        Choose SVG File
+                    </label>
+                </div>
+                <button class="btn-black" onclick="processSVG()" id="processBtn" disabled>Process SVG</button>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Canvas Size</div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Width (px)</label>
+                        <input type="number" id="canvasWidth" value="2550" min="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Height (px)</label>
+                        <input type="number" id="canvasHeight" value="3300" min="100">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>DPI</label>
+                    <input type="number" id="dpi" value="300" min="72" max="600">
+                </div>
+                <button class="btn-light" onclick="resizeCanvas()">Resize Canvas</button>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Stroke Settings</div>
+                <div class="form-group">
+                    <label>Stroke Width (px)</label>
+                    <input type="number" id="strokeWidth" value="9" min="1" max="100">
+                </div>
+                <div class="form-group">
+                    <label>Fill Color</label>
+                    <div class="color-picker">
+                        <input type="color" id="fillColor" value="#ffffff">
+                        <input type="text" id="fillColorText" value="#ffffff" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Stroke Color</label>
+                    <div class="color-picker">
+                        <input type="color" id="strokeColor" value="#000000">
+                        <input type="text" id="strokeColorText" value="#000000" readonly>
+                    </div>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="insideStroke" checked>
+                    <label for="insideStroke">Inside Stroke (double width)</label>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Drawing Mode</div>
+                <button class="btn-outline" onclick="toggleDrawingMode()" id="drawBtn">Enable Drawing</button>
+                <div class="info">Enable to draw freehand paths on canvas</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Export</div>
+                <div class="form-group">
+                    <label>Format</label>
+                    <select id="exportFormat">
+                        <option value="png">PNG (Transparent)</option>
+                        <option value="jpeg">JPEG (White BG)</option>
+                    </select>
+                </div>
+                <button class="btn-black" onclick="downloadResult()" id="exportBtn" disabled>Download</button>
+                <button class="btn-light" onclick="clearCanvas()">Clear Canvas</button>
+            </div>
+
+            <div id="statusBox" class="status"></div>
+        </div>
+
+        <div class="canvas-area">
+            <div id="canvas-wrapper">
+                <canvas id="outputCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <script>
+        let canvas;
+        let isDrawingMode = false;
+        let svgLoaded = false;
+        let fullResGroup = null; // Store the full-res version for export
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', function() {
+            initCanvas();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('svgUpload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    document.getElementById('fileLabel').textContent = file.name;
+                    document.getElementById('fileLabel').classList.add('file-selected');
+                    document.getElementById('processBtn').disabled = false;
+                    showStatus('File selected. Click "Process SVG" to continue.', 'success');
+                }
+            });
+
+            document.getElementById('fillColor').addEventListener('input', function(e) {
+                document.getElementById('fillColorText').value = e.target.value;
+            });
+
+            document.getElementById('strokeColor').addEventListener('input', function(e) {
+                document.getElementById('strokeColorText').value = e.target.value;
+            });
+        }
+
+        function initCanvas() {
+            const width = parseInt(document.getElementById('canvasWidth').value);
+            const height = parseInt(document.getElementById('canvasHeight').value);
+
+            const maxDisplayWidth = window.innerWidth - 320 - 80;
+            const maxDisplayHeight = window.innerHeight - 80;
+
+            const scaleX = maxDisplayWidth / width;
+            const scaleY = maxDisplayHeight / height;
+            const displayScale = Math.min(scaleX, scaleY, 0.5);
+
+            const displayWidth = Math.floor(width * displayScale);
+            const displayHeight = Math.floor(height * displayScale);
+
+            if (canvas) {
+                canvas.dispose();
+            }
+
+            canvas = new fabric.Canvas('outputCanvas', {
+                width: displayWidth,
+                height: displayHeight,
+                backgroundColor: null
+            });
+
+            canvas.actualWidth = width;
+            canvas.actualHeight = height;
+            canvas.displayScale = displayScale;
+
+            console.log('Canvas:', width, 'x', height, '@ display scale:', displayScale);
+        }
+
+        function resizeCanvas() {
+            svgLoaded = false;
+            document.getElementById('exportBtn').disabled = true;
+            initCanvas();
+            showStatus('Canvas resized. Please process SVG again.', 'success');
+        }
+
+        function processSVG() {
+            const file = document.getElementById('svgUpload').files[0];
+
+            if (!file) {
+                showStatus('Please select an SVG file', 'error');
+                return;
+            }
+
+            showStatus('Processing SVG...', 'success');
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const svgContent = e.target.result;
+                console.log('SVG loaded, length:', svgContent.length);
+
+                canvas.clear();
+                canvas.backgroundColor = null;
+                canvas.renderAll();
+
+                const strokeWidth = parseInt(document.getElementById('strokeWidth').value);
+                const fillColor = document.getElementById('fillColor').value;
+                const strokeColor = document.getElementById('strokeColor').value;
+                const insideStroke = document.getElementById('insideStroke').checked;
+
+                fabric.loadSVGFromString(svgContent, function(objects, options) {
+                    console.log('SVG parsed, objects found:', objects.length);
+
+                    if (!objects || objects.length === 0) {
+                        showStatus('No objects found in SVG. Please check the file.', 'error');
+                        return;
+                    }
+
+                    // Create the group
+                    const group = new fabric.Group(objects, {
+                        subTargetCheck: false
+                    });
+
+                    console.log('Group created, original dimensions:', group.width, 'x', group.height);
+
+                    // Calculate scale to FILL canvas completely
+                    const scaleX = canvas.actualWidth / group.width;
+                    const scaleY = canvas.actualHeight / group.height;
+
+                    console.log('Target scales - X:', scaleX, 'Y:', scaleY);
+
+                    // Calculate stroke width at FINAL canvas scale
+                    // The stroke needs to be scaled inversely to the object scale
+                    // so it appears as the desired pixel width at full resolution
+                    const avgScale = (scaleX + scaleY) / 2;
+                    const finalStrokeWidth = insideStroke ? strokeWidth * 2 : strokeWidth;
+                    const objectStrokeWidth = finalStrokeWidth / avgScale;
+
+                    console.log('Stroke width:', strokeWidth, 'px -> Object stroke:', objectStrokeWidth.toFixed(2));
+
+                    // Apply styles to all objects in the group
+                    forceApplyStyles(group, fillColor, strokeColor, objectStrokeWidth, insideStroke);
+
+                    // Apply scale for display
+                    group.scaleX = scaleX * canvas.displayScale;
+                    group.scaleY = scaleY * canvas.displayScale;
+
+                    group.set({
+                        left: 0,
+                        top: 0,
+                        selectable: false
+                    });
+
+                    canvas.add(group);
+                    canvas.renderAll();
+
+                    // Store full-res version for export
+                    fullResGroup = group;
+
+                    svgLoaded = true;
+                    document.getElementById('exportBtn').disabled = false;
+
+                    showStatus('SVG processed successfully!', 'success');
+                    console.log('✓ Canvas ready');
+                });
+            };
+
+            reader.onerror = function() {
+                showStatus('Error reading file', 'error');
+            };
+
+            reader.readAsText(file);
+        }
+
+        function forceApplyStyles(obj, fillColor, strokeColor, strokeWidth, insideStroke) {
+            if (obj.type === 'group' && obj._objects) {
+                obj._objects.forEach(function(child) {
+                    forceApplyStyles(child, fillColor, strokeColor, strokeWidth, insideStroke);
+                });
+                return;
+            }
+
+            if (obj.type === 'path' || obj.type === 'circle' || obj.type === 'rect' || 
+                obj.type === 'ellipse' || obj.type === 'polygon' || obj.type === 'polyline' ||
+                obj.type === 'line') {
+
+                obj.set({
+                    fill: fillColor,
+                    stroke: strokeColor,
+                    strokeWidth: strokeWidth,
+                    strokeLineJoin: 'round',
+                    strokeLineCap: 'round',
+                    paintFirst: insideStroke ? 'fill' : 'stroke',
+                    strokeUniform: true, // Keep stroke consistent when scaling
+                    objectCaching: false
+                });
+
+                obj.dirty = true;
+            }
+        }
+
+        function toggleDrawingMode() {
+            isDrawingMode = !isDrawingMode;
+            canvas.isDrawingMode = isDrawingMode;
+
+            const strokeWidth = parseInt(document.getElementById('strokeWidth').value);
+            const strokeColor = document.getElementById('strokeColor').value;
+
+            canvas.freeDrawingBrush.width = strokeWidth * canvas.displayScale;
+            canvas.freeDrawingBrush.color = strokeColor;
+
+            const btn = document.getElementById('drawBtn');
+            if (isDrawingMode) {
+                btn.textContent = 'Disable Drawing';
+                btn.style.background = '#000';
+                btn.style.color = '#fff';
+                showStatus('Drawing mode enabled', 'success');
+            } else {
+                btn.textContent = 'Enable Drawing';
+                btn.style.background = '#fff';
+                btn.style.color = '#000';
+                showStatus('Drawing mode disabled', 'success');
+            }
+
+            svgLoaded = true;
+            document.getElementById('exportBtn').disabled = false;
+        }
+
+        function clearCanvas() {
+            if (confirm('Clear canvas? This will remove all content.')) {
+                canvas.clear();
+                canvas.backgroundColor = null;
+                canvas.renderAll();
+                svgLoaded = false;
+                fullResGroup = null;
+                document.getElementById('exportBtn').disabled = true;
+                showStatus('Canvas cleared', 'success');
+            }
+        }
+
+        function downloadResult() {
+            if (!svgLoaded) {
+                showStatus('Please process an SVG first', 'error');
+                return;
+            }
+
+            showStatus('Generating high-resolution image...', 'success');
+
+            const format = document.getElementById('exportFormat').value;
+            const dpi = parseInt(document.getElementById('dpi').value);
+            const width = canvas.actualWidth;
+            const height = canvas.actualHeight;
+
+            // Create a temporary full-resolution canvas
+            const tempCanvas = new fabric.Canvas(document.createElement('canvas'), {
+                width: width,
+                height: height,
+                backgroundColor: format === 'jpeg' ? 'white' : null
+            });
+
+            // Clone and scale the group to full resolution
+            if (fullResGroup) {
+                const scaleX = width / (fullResGroup.width * fullResGroup.scaleX / canvas.displayScale);
+                const scaleY = height / (fullResGroup.height * fullResGroup.scaleY / canvas.displayScale);
+
+                // Get all objects from the display canvas
+                canvas.getObjects().forEach(function(obj) {
+                    const clone = fabric.util.object.clone(obj);
+
+                    // Scale up to full resolution
+                    clone.scaleX = clone.scaleX / canvas.displayScale;
+                    clone.scaleY = clone.scaleY / canvas.displayScale;
+
+                    tempCanvas.add(clone);
+                });
+
+                tempCanvas.renderAll();
+            }
+
+            // Export
+            const dataURL = tempCanvas.toDataURL({
+                format: format,
+                quality: 1
+            });
+
+            // Clean up
+            tempCanvas.dispose();
+
+            // Download
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            link.download = `coloring-page-${width}x${height}-${dpi}dpi-${timestamp}.${format}`;
+            link.href = dataURL;
+            link.click();
+
+            showStatus(`Downloaded ${width}x${height} @ ${dpi} DPI as ${format.toUpperCase()}`, 'success');
+            console.log('✓ Exported:', width, 'x', height, 'px');
+        }
+
+        function showStatus(message, type) {
+            const statusBox = document.getElementById('statusBox');
+            statusBox.textContent = message;
+            statusBox.className = 'status show ' + type;
+
+            setTimeout(function() {
+                statusBox.classList.remove('show');
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
