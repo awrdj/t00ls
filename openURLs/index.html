@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Bulk Opener</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #0f1419;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #8b92a8;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #b8bfcc;
+            font-weight: 500;
+        }
+
+        select, input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            background: #1a1f2e;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #e4e4e4;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            min-height: 200px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .custom-prefix-group, .page-number-group {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .custom-prefix-group.active, .page-number-group.active {
+            display: block;
+        }
+
+        .suffix-group {
+            margin-top: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 140px;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #2d3748;
+            color: #e4e4e4;
+        }
+
+        .btn-secondary:hover {
+            background: #3d4758;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 239, 125, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .preview-box {
+            display: none;
+            background: #1a1f2e;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .preview-box.active {
+            display: block;
+        }
+
+        .preview-box h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .url-list {
+            list-style: none;
+        }
+
+        .url-list li {
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: #0f1419;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #b8bfcc;
+            word-break: break-all;
+            border-left: 3px solid #667eea;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status-message.active {
+            display: block;
+        }
+
+        .status-message.success {
+            background: rgba(56, 239, 125, 0.1);
+            border: 1px solid rgba(56, 239, 125, 0.3);
+            color: #38ef7d;
+        }
+
+        .status-message.error {
+            background: rgba(239, 56, 56, 0.1);
+            border: 1px solid rgba(239, 56, 56, 0.3);
+            color: #ef3838;
+        }
+
+        .status-message.info {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1f2e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-group .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .cleanup-btn-container {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 URL Bulk Opener</h1>
+        <p class="subtitle">Open multiple URLs instantly with custom prefixes</p>
+
+        <div class="form-group">
+            <label for="prefixSelect">URL Prefix Template</label>
+            <select id="prefixSelect">
+                <option value="https://www.amazon.com/dp/">Amazon Product (DP)</option>
+                <option value="https://www.amazon.com/s?k=">Amazon Search</option>
+                <option value="https://www.ebay.com/itm/">eBay Item</option>
+                <option value="https://www.walmart.com/ip/">Walmart Product</option>
+                <option value="https://www.etsy.com/listing/">Etsy Listing</option>
+                <option value="https://www.aliexpress.com/item/">AliExpress Item</option>
+                <option value="custom">🔧 Custom Prefix</option>
+            </select>
+            
+            <div class="custom-prefix-group" id="customPrefixGroup">
+                <input type="text" id="customPrefix" placeholder="Enter custom prefix (e.g., https://example.com/product/)">
+            </div>
+
+            <div class="page-number-group" id="pageNumberGroup">
+                <label for="pageNumber">Page Number (leave 0 or 1 to skip)</label>
+                <input type="number" id="pageNumber" placeholder="Page number (e.g., 2, 3, 4...)" min="0" value="1">
+            </div>
+
+            <div class="suffix-group">
+                <label for="customSuffix">Custom Suffix (Optional)</label>
+                <input type="text" id="customSuffix" placeholder="Enter custom suffix (e.g., &ref=nb_sb_noss or &color=blue)">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="inputArea">Input (One ID/ASIN per line)</label>
+            <textarea id="inputArea" placeholder="B08N5WRWNW
+B09G9FPHY6
+B0BN2SXPQR
+
+Or override per line:
+https://custom.com/special-item"></textarea>
+            <p class="info-text">💡 Tip: Start any line with "http" to use a custom URL for that specific entry</p>
+            
+            <div class="cleanup-btn-container">
+                <button class="btn-warning" id="cleanupBtn" style="width: 100%;">🧹 Clean Up Input</button>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-secondary" id="previewBtn">👁️ Preview URLs</button>
+            <button class="btn-primary" id="openAllBtn">🔗 Open All URLs</button>
+            <button class="btn-success" id="copyBtn">📋 Copy URLs</button>
+        </div>
+
+        <div class="preview-box" id="previewBox">
+            <h3>Generated URLs (<span id="urlCount">0</span>)</h3>
+            <ul class="url-list" id="urlList"></ul>
+        </div>
+
+        <div class="status-message" id="statusMessage"></div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const prefixSelect = document.getElementById('prefixSelect');
+        const customPrefixGroup = document.getElementById('customPrefixGroup');
+        const customPrefix = document.getElementById('customPrefix');
+        const pageNumberGroup = document.getElementById('pageNumberGroup');
+        const pageNumber = document.getElementById('pageNumber');
+        const customSuffix = document.getElementById('customSuffix');
+        const inputArea = document.getElementById('inputArea');
+        const previewBtn = document.getElementById('previewBtn');
+        const openAllBtn = document.getElementById('openAllBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const cleanupBtn = document.getElementById('cleanupBtn');
+        const previewBox = document.getElementById('previewBox');
+        const urlList = document.getElementById('urlList');
+        const urlCount = document.getElementById('urlCount');
+        const statusMessage = document.getElementById('statusMessage');
+
+        let generatedURLs = [];
+
+        // Show/hide custom prefix input and page number input
+        prefixSelect.addEventListener('change', () => {
+            if (prefixSelect.value === 'custom') {
+                customPrefixGroup.classList.add('active');
+            } else {
+                customPrefixGroup.classList.remove('active');
+            }
+
+            if (prefixSelect.value === 'https://www.amazon.com/s?k=') {
+                pageNumberGroup.classList.add('active');
+            } else {
+                pageNumberGroup.classList.remove('active');
+            }
+        });
+
+        // Clean up input
+        cleanupBtn.addEventListener('click', () => {
+            const lines = inputArea.value.split('\n');
+            const cleanedLines = [];
+            const seenLines = new Set();
+
+            for (let line of lines) {
+                const trimmed = line.trim();
+                
+                // Skip empty lines
+                if (trimmed.length === 0) continue;
+                
+                // Skip if it's purely numeric with commas (e.g., 88,888)
+                if (/^[\d,]+$/.test(trimmed)) continue;
+                
+                // Skip if it's a percentage (e.g., 88%)
+                if (/^\d+%$/.test(trimmed)) continue;
+                
+                // Skip if it's a decimal number (e.g., 8.88)
+                if (/^\d+\.\d+$/.test(trimmed)) continue;
+                
+                // Skip duplicates
+                if (seenLines.has(trimmed)) continue;
+                
+                // Keep this line
+                seenLines.add(trimmed);
+                cleanedLines.push(trimmed);
+            }
+
+            inputArea.value = cleanedLines.join('\n');
+            showStatus(`🧹 Cleaned up! Removed ${lines.length - cleanedLines.length} lines (duplicates, numbers, percentages). Kept ${cleanedLines.length} unique entries.`, 'success');
+            saveToLocalStorage();
+        });
+
+        // Generate URLs from input
+        function generateURLs() {
+            const prefix = prefixSelect.value === 'custom' 
+                ? customPrefix.value.trim() 
+                : prefixSelect.value;
+
+            if (!prefix) {
+                showStatus('Please enter a custom prefix', 'error');
+                return [];
+            }
+
+            const suffix = customSuffix.value.trim();
+            const pageNum = parseInt(pageNumber.value) || 0;
+            
+            // Determine if we need to add page parameter
+            let pageParam = '';
+            if (prefixSelect.value === 'https://www.amazon.com/s?k=' && pageNum >= 2) {
+                pageParam = `&page=${pageNum}`;
+            }
+
+            const lines = inputArea.value
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+
+            if (lines.length === 0) {
+                showStatus('Please enter at least one ID or URL', 'error');
+                return [];
+            }
+
+            const urls = lines.map(line => {
+                // Check if line already starts with http/https (custom URL)
+                if (line.startsWith('http://') || line.startsWith('https://')) {
+                    return line;
+                }
+                // Otherwise, prepend the selected prefix and append suffix
+                return prefix + line + pageParam + suffix;
+            });
+
+            return urls;
+        }
+
+        // Preview URLs
+        previewBtn.addEventListener('click', () => {
+            generatedURLs = generateURLs();
+            
+            if (generatedURLs.length === 0) return;
+
+            urlList.innerHTML = '';
+            generatedURLs.forEach(url => {
+                const li = document.createElement('li');
+                li.textContent = url;
+                urlList.appendChild(li);
+            });
+
+            urlCount.textContent = generatedURLs.length;
+            previewBox.classList.add('active');
+            showStatus(`✅ Generated ${generatedURLs.length} URLs`, 'success');
+        });
+
+        // Open all URLs in batches
+        openAllBtn.addEventListener('click', () => {
+            generatedURLs = generateURLs();
+            
+            if (generatedURLs.length === 0) return;
+
+            const batchSize = 10;
+            const delay = 500; // 500ms delay between batches
+
+            showStatus(`🚀 Opening ${generatedURLs.length} URLs in batches of ${batchSize}...`, 'info');
+
+            // Open first batch immediately
+            for (let i = 0; i < Math.min(batchSize, generatedURLs.length); i++) {
+                window.open(generatedURLs[i], '_blank', 'noopener,noreferrer');
+            }
+
+            // Open remaining batches with delay
+            let currentIndex = batchSize;
+            const openNextBatch = () => {
+                if (currentIndex >= generatedURLs.length) {
+                    showStatus(`✅ Successfully opened ${generatedURLs.length} URLs`, 'success');
+                    return;
+                }
+
+                const endIndex = Math.min(currentIndex + batchSize, generatedURLs.length);
+                for (let i = currentIndex; i < endIndex; i++) {
+                    window.open(generatedURLs[i], '_blank', 'noopener,noreferrer');
+                }
+
+                currentIndex = endIndex;
+                
+                if (currentIndex < generatedURLs.length) {
+                    setTimeout(openNextBatch, delay);
+                } else {
+                    showStatus(`✅ Successfully opened ${generatedURLs.length} URLs`, 'success');
+                }
+            };
+
+            if (generatedURLs.length > batchSize) {
+                setTimeout(openNextBatch, delay);
+            } else {
+                showStatus(`✅ Successfully opened ${generatedURLs.length} URLs`, 'success');
+            }
+        });
+
+        // Copy URLs to clipboard
+        copyBtn.addEventListener('click', async () => {
+            generatedURLs = generateURLs();
+            
+            if (generatedURLs.length === 0) return;
+
+            const urlText = generatedURLs.join('\n');
+
+            try {
+                await navigator.clipboard.writeText(urlText);
+                showStatus(`📋 Copied ${generatedURLs.length} URLs to clipboard`, 'success');
+            } catch (err) {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = urlText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showStatus(`📋 Copied ${generatedURLs.length} URLs to clipboard`, 'success');
+            }
+        });
+
+        // Show status message
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message active ${type}`;
+            
+            setTimeout(() => {
+                statusMessage.classList.remove('active');
+            }, 5000);
+        }
+
+        // Load saved data from localStorage on page load
+        window.addEventListener('load', () => {
+            const savedPrefix = localStorage.getItem('urlOpenerPrefix');
+            const savedCustomPrefix = localStorage.getItem('urlOpenerCustomPrefix');
+            const savedCustomSuffix = localStorage.getItem('urlOpenerCustomSuffix');
+            const savedPageNumber = localStorage.getItem('urlOpenerPageNumber');
+            const savedInput = localStorage.getItem('urlOpenerInput');
+
+            if (savedPrefix) {
+                prefixSelect.value = savedPrefix;
+                if (savedPrefix === 'custom') {
+                    customPrefixGroup.classList.add('active');
+                }
+                if (savedPrefix === 'https://www.amazon.com/s?k=') {
+                    pageNumberGroup.classList.add('active');
+                }
+            }
+
+            if (savedCustomPrefix) {
+                customPrefix.value = savedCustomPrefix;
+            }
+
+            if (savedCustomSuffix) {
+                customSuffix.value = savedCustomSuffix;
+            }
+
+            if (savedPageNumber) {
+                pageNumber.value = savedPageNumber;
+            }
+
+            if (savedInput) {
+                inputArea.value = savedInput;
+            }
+        });
+
+        // Save data to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('urlOpenerPrefix', prefixSelect.value);
+            localStorage.setItem('urlOpenerCustomPrefix', customPrefix.value);
+            localStorage.setItem('urlOpenerCustomSuffix', customSuffix.value);
+            localStorage.setItem('urlOpenerPageNumber', pageNumber.value);
+            localStorage.setItem('urlOpenerInput', inputArea.value);
+        }
+
+        // Auto-save on input changes
+        prefixSelect.addEventListener('change', saveToLocalStorage);
+        customPrefix.addEventListener('input', saveToLocalStorage);
+        customSuffix.addEventListener('input', saveToLocalStorage);
+        pageNumber.addEventListener('input', saveToLocalStorage);
+        inputArea.addEventListener('input', saveToLocalStorage);
+    </script>
+</body>
+</html>
