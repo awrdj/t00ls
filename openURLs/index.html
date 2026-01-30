@@ -158,6 +158,16 @@
             box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
         }
 
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
         button:active {
             transform: translateY(0);
         }
@@ -272,6 +282,113 @@
 
         .cleanup-btn-container {
             margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .cleanup-btn-container button {
+            flex: 1;
+        }
+
+        /* Advanced Settings Section */
+        .advanced-settings {
+            background: #1a1f2e;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .advanced-settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .advanced-settings-header h2 {
+            font-size: 16px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s ease;
+            color: #667eea;
+            font-size: 20px;
+        }
+
+        .toggle-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .advanced-settings-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .advanced-settings-content.open {
+            max-height: 1000px;
+            margin-top: 20px;
+        }
+
+        .input-counter {
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .progress-bar {
+            display: none;
+            width: 100%;
+            height: 8px;
+            background: #1a1f2e;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-bar.active {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #8b92a8;
+            display: none;
+        }
+
+        .progress-text.active {
+            display: block;
+        }
+
+        .stop-btn-container {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .stop-btn-container.active {
+            display: block;
         }
     </style>
 </head>
@@ -286,11 +403,6 @@
                 <option value="https://www.amazon.com/s?k=">Amazon Search</option>
                 <option value="https://www.amazon.com/dp/">Amazon Product (DP)</option>
                 <option value="https://www.etsy.com/listing/">Etsy Listing</option>
-                <!-- 
-                <option value="https://www.ebay.com/itm/">eBay Item</option>
-                <option value="https://www.walmart.com/ip/">Walmart Product</option>
-                <option value="https://www.aliexpress.com/item/">AliExpress Item</option>
-                -->
                 <option value="custom">🔧 Custom Prefix</option>
             </select>
             
@@ -310,7 +422,10 @@
         </div>
 
         <div class="form-group">
-            <label for="inputArea">Input (One ID/ASIN per line)</label>
+            <label for="inputArea">
+                Input (One ID/ASIN per line)
+                <span class="input-counter" id="inputCounter">0 lines</span>
+            </label>
             <textarea id="inputArea" placeholder="B08N5WRWNW
 B09G9FPHY6
 B0BN2SXPQR
@@ -320,7 +435,8 @@ https://custom.com/special-item"></textarea>
             <p class="info-text">💡 Tip: Start any line with "http" to use a custom URL for that specific entry</p>
             
             <div class="cleanup-btn-container">
-                <button class="btn-warning" id="cleanupBtn" style="width: 100%;">🧹 Clean Up Input</button>
+                <button class="btn-warning" id="cleanupBtn">🧹 Clean Up Input</button>
+                <button class="btn-secondary" id="removeDuplicatesBtn">🔄 Remove Duplicates</button>
             </div>
         </div>
 
@@ -330,12 +446,81 @@ https://custom.com/special-item"></textarea>
             <button class="btn-success" id="copyBtn">📋 Copy URLs</button>
         </div>
 
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText"></div>
+
+        <div class="stop-btn-container" id="stopBtnContainer">
+            <button class="btn-danger" id="stopBtn" style="width: 100%;">⏹️ Stop Opening URLs</button>
+        </div>
+
         <div class="preview-box" id="previewBox">
             <h3>Generated URLs (<span id="urlCount">0</span>)</h3>
             <ul class="url-list" id="urlList"></ul>
         </div>
 
         <div class="status-message" id="statusMessage"></div>
+
+        <!-- Advanced Settings Section -->
+        <div class="advanced-settings">
+            <div class="advanced-settings-header" id="advancedSettingsHeader">
+                <h2>⚙️ Advanced Settings</h2>
+                <span class="toggle-icon" id="toggleIcon">▼</span>
+            </div>
+            <div class="advanced-settings-content" id="advancedSettingsContent">
+                
+                <!-- Batch Settings -->
+                <div class="form-group">
+                    <h3 style="color: #b8bfcc; font-size: 14px; margin-bottom: 15px;">Batch Opening Settings</h3>
+                    <div class="two-column">
+                        <div>
+                            <label for="batchSize">Batch Size</label>
+                            <input type="number" id="batchSize" placeholder="URLs per batch" min="1" max="50" value="10">
+                            <p class="info-text">How many URLs to open at once (1-50)</p>
+                        </div>
+                        <div>
+                            <label for="batchDelay">Delay Between Batches (ms)</label>
+                            <input type="number" id="batchDelay" placeholder="Delay in milliseconds" min="0" max="5000" value="500" step="100">
+                            <p class="info-text">Pause between batches (0-5000ms)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Cleanup -->
+                <div class="form-group">
+                    <h3 style="color: #b8bfcc; font-size: 14px; margin-bottom: 15px;">Advanced Cleanup Options</h3>
+                    
+                    <div class="form-group">
+                        <label for="removeContaining">Remove Lines Containing Text</label>
+                        <input type="text" id="removeContaining" placeholder="Enter text to remove (case-insensitive)">
+                        <p class="info-text">Remove all lines containing this text</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regexPattern">Remove Lines Matching Regex Pattern</label>
+                        <input type="text" id="regexPattern" placeholder="e.g., ^\d+$ to remove pure numbers">
+                        <p class="info-text">Advanced: Use regex patterns for custom filtering</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="extractMode">Extract Mode</label>
+                        <select id="extractMode">
+                            <option value="none">None (Keep All)</option>
+                            <option value="text">Extract Only Text Lines</option>
+                            <option value="numbers">Extract Only Numbers</option>
+                            <option value="urls">Extract Only URLs</option>
+                        </select>
+                        <p class="info-text">Keep only specific types of lines</p>
+                    </div>
+
+                    <button class="btn-warning" id="advancedCleanupBtn" style="width: 100%; margin-top: 10px;">
+                        🔧 Apply Advanced Cleanup
+                    </button>
+                </div>
+
+            </div>
+        </div>
     </div>
 
     <script>
@@ -347,16 +532,55 @@ https://custom.com/special-item"></textarea>
         const pageNumber = document.getElementById('pageNumber');
         const customSuffix = document.getElementById('customSuffix');
         const inputArea = document.getElementById('inputArea');
+        const inputCounter = document.getElementById('inputCounter');
         const previewBtn = document.getElementById('previewBtn');
         const openAllBtn = document.getElementById('openAllBtn');
         const copyBtn = document.getElementById('copyBtn');
         const cleanupBtn = document.getElementById('cleanupBtn');
+        const removeDuplicatesBtn = document.getElementById('removeDuplicatesBtn');
         const previewBox = document.getElementById('previewBox');
         const urlList = document.getElementById('urlList');
         const urlCount = document.getElementById('urlCount');
         const statusMessage = document.getElementById('statusMessage');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const stopBtn = document.getElementById('stopBtn');
+        const stopBtnContainer = document.getElementById('stopBtnContainer');
+
+        // Advanced Settings
+        const advancedSettingsHeader = document.getElementById('advancedSettingsHeader');
+        const advancedSettingsContent = document.getElementById('advancedSettingsContent');
+        const toggleIcon = document.getElementById('toggleIcon');
+        const batchSize = document.getElementById('batchSize');
+        const batchDelay = document.getElementById('batchDelay');
+        const removeContaining = document.getElementById('removeContaining');
+        const regexPattern = document.getElementById('regexPattern');
+        const extractMode = document.getElementById('extractMode');
+        const advancedCleanupBtn = document.getElementById('advancedCleanupBtn');
 
         let generatedURLs = [];
+        let batchTimeout = null;
+        let shouldStopBatch = false;
+
+        // Toggle Advanced Settings
+        advancedSettingsHeader.addEventListener('click', () => {
+            advancedSettingsContent.classList.toggle('open');
+            toggleIcon.classList.toggle('open');
+        });
+
+        // Live Input Counter
+        function updateInputCounter() {
+            const lines = inputArea.value
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+            
+            const count = lines.length;
+            inputCounter.textContent = `${count} line${count !== 1 ? 's' : ''}`;
+        }
+
+        inputArea.addEventListener('input', updateInputCounter);
 
         // Show/hide custom prefix input and page number input
         prefixSelect.addEventListener('change', () => {
@@ -373,7 +597,28 @@ https://custom.com/special-item"></textarea>
             }
         });
 
-        // Clean up input
+        // Remove Duplicates Button
+        removeDuplicatesBtn.addEventListener('click', () => {
+            const lines = inputArea.value.split('\n');
+            const uniqueLines = [];
+            const seen = new Set();
+
+            for (let line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.length > 0 && !seen.has(trimmed)) {
+                    seen.add(trimmed);
+                    uniqueLines.push(trimmed);
+                }
+            }
+
+            const removed = lines.length - uniqueLines.length;
+            inputArea.value = uniqueLines.join('\n');
+            updateInputCounter();
+            showStatus(`🔄 Removed ${removed} duplicate line${removed !== 1 ? 's' : ''}. Kept ${uniqueLines.length} unique entries.`, 'success');
+            saveToLocalStorage();
+        });
+
+        // Clean up input (original functionality)
         cleanupBtn.addEventListener('click', () => {
             const lines = inputArea.value.split('\n');
             const cleanedLines = [];
@@ -403,7 +648,54 @@ https://custom.com/special-item"></textarea>
             }
 
             inputArea.value = cleanedLines.join('\n');
+            updateInputCounter();
             showStatus(`🧹 Cleaned up! Removed ${lines.length - cleanedLines.length} lines (duplicates, numbers, percentages). Kept ${cleanedLines.length} unique entries.`, 'success');
+            saveToLocalStorage();
+        });
+
+        // Advanced Cleanup
+        advancedCleanupBtn.addEventListener('click', () => {
+            let lines = inputArea.value.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            const originalCount = lines.length;
+
+            // Remove lines containing specific text
+            if (removeContaining.value.trim()) {
+                const searchText = removeContaining.value.trim().toLowerCase();
+                lines = lines.filter(line => !line.toLowerCase().includes(searchText));
+            }
+
+            // Remove lines matching regex pattern
+            if (regexPattern.value.trim()) {
+                try {
+                    const regex = new RegExp(regexPattern.value.trim());
+                    lines = lines.filter(line => !regex.test(line));
+                } catch (e) {
+                    showStatus('❌ Invalid regex pattern', 'error');
+                    return;
+                }
+            }
+
+            // Extract mode
+            const mode = extractMode.value;
+            if (mode === 'text') {
+                // Keep only lines that are primarily text (not just numbers or URLs)
+                lines = lines.filter(line => {
+                    return !line.startsWith('http') && !/^[\d,.\s]+$/.test(line);
+                });
+            } else if (mode === 'numbers') {
+                // Keep only lines that are numbers
+                lines = lines.filter(line => /^[\d,.\s]+$/.test(line));
+            } else if (mode === 'urls') {
+                // Keep only URLs
+                lines = lines.filter(line => line.startsWith('http://') || line.startsWith('https://'));
+            }
+
+            // Remove duplicates
+            const uniqueLines = [...new Set(lines)];
+
+            inputArea.value = uniqueLines.join('\n');
+            updateInputCounter();
+            showStatus(`🔧 Advanced cleanup complete! Removed ${originalCount - uniqueLines.length} lines. Kept ${uniqueLines.length} entries.`, 'success');
             saveToLocalStorage();
         });
 
@@ -467,49 +759,79 @@ https://custom.com/special-item"></textarea>
             showStatus(`✅ Generated ${generatedURLs.length} URLs`, 'success');
         });
 
-        // Open all URLs in batches
+        // Stop batch opening
+        stopBtn.addEventListener('click', () => {
+            shouldStopBatch = true;
+            if (batchTimeout) {
+                clearTimeout(batchTimeout);
+            }
+            stopBtnContainer.classList.remove('active');
+            progressBar.classList.remove('active');
+            progressText.classList.remove('active');
+            openAllBtn.disabled = false;
+            showStatus('⏹️ Batch opening stopped by user', 'info');
+        });
+
+        // Open all URLs in batches with stop functionality
         openAllBtn.addEventListener('click', () => {
             generatedURLs = generateURLs();
             
             if (generatedURLs.length === 0) return;
 
-            const batchSize = 10;
-            const delay = 500; // 500ms delay between batches
+            shouldStopBatch = false;
+            const batchSizeValue = parseInt(batchSize.value) || 10;
+            const delayValue = parseInt(batchDelay.value) || 500;
 
-            showStatus(`🚀 Opening ${generatedURLs.length} URLs in batches of ${batchSize}...`, 'info');
+            // Show progress UI
+            progressBar.classList.add('active');
+            progressText.classList.add('active');
+            stopBtnContainer.classList.add('active');
+            openAllBtn.disabled = true;
 
-            // Open first batch immediately
-            for (let i = 0; i < Math.min(batchSize, generatedURLs.length); i++) {
-                window.open(generatedURLs[i], '_blank', 'noopener,noreferrer');
-            }
+            showStatus(`🚀 Opening ${generatedURLs.length} URLs in batches of ${batchSizeValue}...`, 'info');
 
-            // Open remaining batches with delay
-            let currentIndex = batchSize;
+            let currentIndex = 0;
+
             const openNextBatch = () => {
+                if (shouldStopBatch) {
+                    return;
+                }
+
                 if (currentIndex >= generatedURLs.length) {
+                    progressBar.classList.remove('active');
+                    progressText.classList.remove('active');
+                    stopBtnContainer.classList.remove('active');
+                    openAllBtn.disabled = false;
                     showStatus(`✅ Successfully opened ${generatedURLs.length} URLs`, 'success');
                     return;
                 }
 
-                const endIndex = Math.min(currentIndex + batchSize, generatedURLs.length);
+                const endIndex = Math.min(currentIndex + batchSizeValue, generatedURLs.length);
+                
                 for (let i = currentIndex; i < endIndex; i++) {
                     window.open(generatedURLs[i], '_blank', 'noopener,noreferrer');
                 }
 
                 currentIndex = endIndex;
                 
+                // Update progress
+                const progress = (currentIndex / generatedURLs.length) * 100;
+                progressFill.style.width = progress + '%';
+                progressText.textContent = `Opened ${currentIndex} of ${generatedURLs.length} URLs`;
+
                 if (currentIndex < generatedURLs.length) {
-                    setTimeout(openNextBatch, delay);
+                    batchTimeout = setTimeout(openNextBatch, delayValue);
                 } else {
+                    progressBar.classList.remove('active');
+                    progressText.classList.remove('active');
+                    stopBtnContainer.classList.remove('active');
+                    openAllBtn.disabled = false;
                     showStatus(`✅ Successfully opened ${generatedURLs.length} URLs`, 'success');
                 }
             };
 
-            if (generatedURLs.length > batchSize) {
-                setTimeout(openNextBatch, delay);
-            } else {
-                showStatus(`✅ Successfully opened ${generatedURLs.length} URLs`, 'success');
-            }
+            // Start opening
+            openNextBatch();
         });
 
         // Copy URLs to clipboard
@@ -552,6 +874,8 @@ https://custom.com/special-item"></textarea>
             const savedCustomSuffix = localStorage.getItem('urlOpenerCustomSuffix');
             const savedPageNumber = localStorage.getItem('urlOpenerPageNumber');
             const savedInput = localStorage.getItem('urlOpenerInput');
+            const savedBatchSize = localStorage.getItem('urlOpenerBatchSize');
+            const savedBatchDelay = localStorage.getItem('urlOpenerBatchDelay');
 
             if (savedPrefix) {
                 prefixSelect.value = savedPrefix;
@@ -577,6 +901,15 @@ https://custom.com/special-item"></textarea>
 
             if (savedInput) {
                 inputArea.value = savedInput;
+                updateInputCounter();
+            }
+
+            if (savedBatchSize) {
+                batchSize.value = savedBatchSize;
+            }
+
+            if (savedBatchDelay) {
+                batchDelay.value = savedBatchDelay;
             }
         });
 
@@ -587,6 +920,8 @@ https://custom.com/special-item"></textarea>
             localStorage.setItem('urlOpenerCustomSuffix', customSuffix.value);
             localStorage.setItem('urlOpenerPageNumber', pageNumber.value);
             localStorage.setItem('urlOpenerInput', inputArea.value);
+            localStorage.setItem('urlOpenerBatchSize', batchSize.value);
+            localStorage.setItem('urlOpenerBatchDelay', batchDelay.value);
         }
 
         // Auto-save on input changes
@@ -595,6 +930,8 @@ https://custom.com/special-item"></textarea>
         customSuffix.addEventListener('input', saveToLocalStorage);
         pageNumber.addEventListener('input', saveToLocalStorage);
         inputArea.addEventListener('input', saveToLocalStorage);
+        batchSize.addEventListener('input', saveToLocalStorage);
+        batchDelay.addEventListener('input', saveToLocalStorage);
     </script>
 </body>
 </html>
