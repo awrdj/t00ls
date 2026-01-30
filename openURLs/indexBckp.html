@@ -60,7 +60,7 @@
             font-weight: 500;
         }
 
-        select, input[type="text"], textarea {
+        select, input[type="text"], input[type="number"], textarea {
             width: 100%;
             background: #1a1f2e;
             border: 1px solid #2d3748;
@@ -72,7 +72,7 @@
             font-family: 'Courier New', monospace;
         }
 
-        select:focus, input[type="text"]:focus, textarea:focus {
+        select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -84,13 +84,17 @@
             line-height: 1.6;
         }
 
-        .custom-prefix-group {
+        .custom-prefix-group, .page-number-group {
             display: none;
             margin-top: 10px;
         }
 
-        .custom-prefix-group.active {
+        .custom-prefix-group.active, .page-number-group.active {
             display: block;
+        }
+
+        .suffix-group {
+            margin-top: 10px;
         }
 
         .button-group {
@@ -142,6 +146,16 @@
         .btn-success:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(56, 239, 125, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
         }
 
         button:active {
@@ -244,34 +258,70 @@
             margin-top: 6px;
             font-style: italic;
         }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-group .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .cleanup-btn-container {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🚀 URL Bulk Opener</h1>
-        <p class="subtitle">Open multiple URLs instantly with custom prefixes</p>
+        <center><h1>🚀 URL Bulk Opener</h1></center>
+        <center><p class="subtitle">Open multiple URLs instantly with custom prefixes</p></center>
 
         <div class="form-group">
             <label for="prefixSelect">URL Prefix Template</label>
             <select id="prefixSelect">
-                <option value="https://www.amazon.com/dp/">Amazon Product (DP)</option>
                 <option value="https://www.amazon.com/s?k=">Amazon Search</option>
+                <option value="https://www.amazon.com/dp/">Amazon Product (DP)</option>
+                <option value="https://www.etsy.com/listing/">Etsy Listing</option>
+                <!-- 
                 <option value="https://www.ebay.com/itm/">eBay Item</option>
                 <option value="https://www.walmart.com/ip/">Walmart Product</option>
-                <option value="https://www.etsy.com/listing/">Etsy Listing</option>
                 <option value="https://www.aliexpress.com/item/">AliExpress Item</option>
+                -->
                 <option value="custom">🔧 Custom Prefix</option>
             </select>
             
             <div class="custom-prefix-group" id="customPrefixGroup">
                 <input type="text" id="customPrefix" placeholder="Enter custom prefix (e.g., https://example.com/product/)">
             </div>
+
+            <div class="page-number-group" id="pageNumberGroup">
+                <label for="pageNumber">Page Number (leave 0 or 1 to skip)</label>
+                <input type="number" id="pageNumber" placeholder="Page number (e.g., 2, 3, 4...)" min="0" value="1">
+            </div>
+
+            <div class="suffix-group">
+                <label for="customSuffix">Custom Suffix (Optional)</label>
+                <input type="text" id="customSuffix" placeholder="Enter custom suffix (e.g., &ref=nb_sb_noss or &color=blue)">
+            </div>
         </div>
 
         <div class="form-group">
             <label for="inputArea">Input (One ID/ASIN per line)</label>
-            <textarea id="inputArea" placeholder="B08N5WRWNW&#10;B09G9FPHY6&#10;B0BN2SXPQR&#10;&#10;Or override per line:&#10;https://custom.com/special-item"></textarea>
+            <textarea id="inputArea" placeholder="B08N5WRWNW
+B09G9FPHY6
+B0BN2SXPQR
+
+Or override per line:
+https://custom.com/special-item"></textarea>
             <p class="info-text">💡 Tip: Start any line with "http" to use a custom URL for that specific entry</p>
+            
+            <div class="cleanup-btn-container">
+                <button class="btn-warning" id="cleanupBtn" style="width: 100%;">🧹 Clean Up Input</button>
+            </div>
         </div>
 
         <div class="button-group">
@@ -293,10 +343,14 @@
         const prefixSelect = document.getElementById('prefixSelect');
         const customPrefixGroup = document.getElementById('customPrefixGroup');
         const customPrefix = document.getElementById('customPrefix');
+        const pageNumberGroup = document.getElementById('pageNumberGroup');
+        const pageNumber = document.getElementById('pageNumber');
+        const customSuffix = document.getElementById('customSuffix');
         const inputArea = document.getElementById('inputArea');
         const previewBtn = document.getElementById('previewBtn');
         const openAllBtn = document.getElementById('openAllBtn');
         const copyBtn = document.getElementById('copyBtn');
+        const cleanupBtn = document.getElementById('cleanupBtn');
         const previewBox = document.getElementById('previewBox');
         const urlList = document.getElementById('urlList');
         const urlCount = document.getElementById('urlCount');
@@ -304,13 +358,53 @@
 
         let generatedURLs = [];
 
-        // Show/hide custom prefix input
+        // Show/hide custom prefix input and page number input
         prefixSelect.addEventListener('change', () => {
             if (prefixSelect.value === 'custom') {
                 customPrefixGroup.classList.add('active');
             } else {
                 customPrefixGroup.classList.remove('active');
             }
+
+            if (prefixSelect.value === 'https://www.amazon.com/s?k=') {
+                pageNumberGroup.classList.add('active');
+            } else {
+                pageNumberGroup.classList.remove('active');
+            }
+        });
+
+        // Clean up input
+        cleanupBtn.addEventListener('click', () => {
+            const lines = inputArea.value.split('\n');
+            const cleanedLines = [];
+            const seenLines = new Set();
+
+            for (let line of lines) {
+                const trimmed = line.trim();
+                
+                // Skip empty lines
+                if (trimmed.length === 0) continue;
+                
+                // Skip if it's purely numeric with commas (e.g., 88,888)
+                if (/^[\d,]+$/.test(trimmed)) continue;
+                
+                // Skip if it's a percentage (e.g., 88%)
+                if (/^\d+%$/.test(trimmed)) continue;
+                
+                // Skip if it's a decimal number (e.g., 8.88)
+                if (/^\d+\.\d+$/.test(trimmed)) continue;
+                
+                // Skip duplicates
+                if (seenLines.has(trimmed)) continue;
+                
+                // Keep this line
+                seenLines.add(trimmed);
+                cleanedLines.push(trimmed);
+            }
+
+            inputArea.value = cleanedLines.join('\n');
+            showStatus(`🧹 Cleaned up! Removed ${lines.length - cleanedLines.length} lines (duplicates, numbers, percentages). Kept ${cleanedLines.length} unique entries.`, 'success');
+            saveToLocalStorage();
         });
 
         // Generate URLs from input
@@ -322,6 +416,15 @@
             if (!prefix) {
                 showStatus('Please enter a custom prefix', 'error');
                 return [];
+            }
+
+            const suffix = customSuffix.value.trim();
+            const pageNum = parseInt(pageNumber.value) || 0;
+            
+            // Determine if we need to add page parameter
+            let pageParam = '';
+            if (prefixSelect.value === 'https://www.amazon.com/s?k=' && pageNum >= 2) {
+                pageParam = `&page=${pageNum}`;
             }
 
             const lines = inputArea.value
@@ -339,8 +442,8 @@
                 if (line.startsWith('http://') || line.startsWith('https://')) {
                     return line;
                 }
-                // Otherwise, prepend the selected prefix
-                return prefix + line;
+                // Otherwise, prepend the selected prefix and append suffix
+                return prefix + line + pageParam + suffix;
             });
 
             return urls;
@@ -446,6 +549,8 @@
         window.addEventListener('load', () => {
             const savedPrefix = localStorage.getItem('urlOpenerPrefix');
             const savedCustomPrefix = localStorage.getItem('urlOpenerCustomPrefix');
+            const savedCustomSuffix = localStorage.getItem('urlOpenerCustomSuffix');
+            const savedPageNumber = localStorage.getItem('urlOpenerPageNumber');
             const savedInput = localStorage.getItem('urlOpenerInput');
 
             if (savedPrefix) {
@@ -453,10 +558,21 @@
                 if (savedPrefix === 'custom') {
                     customPrefixGroup.classList.add('active');
                 }
+                if (savedPrefix === 'https://www.amazon.com/s?k=') {
+                    pageNumberGroup.classList.add('active');
+                }
             }
 
             if (savedCustomPrefix) {
                 customPrefix.value = savedCustomPrefix;
+            }
+
+            if (savedCustomSuffix) {
+                customSuffix.value = savedCustomSuffix;
+            }
+
+            if (savedPageNumber) {
+                pageNumber.value = savedPageNumber;
             }
 
             if (savedInput) {
@@ -468,12 +584,16 @@
         function saveToLocalStorage() {
             localStorage.setItem('urlOpenerPrefix', prefixSelect.value);
             localStorage.setItem('urlOpenerCustomPrefix', customPrefix.value);
+            localStorage.setItem('urlOpenerCustomSuffix', customSuffix.value);
+            localStorage.setItem('urlOpenerPageNumber', pageNumber.value);
             localStorage.setItem('urlOpenerInput', inputArea.value);
         }
 
         // Auto-save on input changes
         prefixSelect.addEventListener('change', saveToLocalStorage);
         customPrefix.addEventListener('input', saveToLocalStorage);
+        customSuffix.addEventListener('input', saveToLocalStorage);
+        pageNumber.addEventListener('input', saveToLocalStorage);
         inputArea.addEventListener('input', saveToLocalStorage);
     </script>
 </body>
