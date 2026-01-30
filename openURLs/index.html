@@ -13,8 +13,8 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
             color: #e4e4e4;
             min-height: 100vh;
             display: flex;
@@ -24,69 +24,88 @@
         }
 
         .container {
-            background: #0f1419;
-            border-radius: 16px;
-            padding: 40px;
-            max-width: 800px;
+            background: rgba(15, 20, 25, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 45px;
+            max-width: 850px;
             width: 100%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 32px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .subtitle {
-            color: #8b92a8;
-            font-size: 14px;
-            margin-bottom: 30px;
+            color: #9ca3af;
+            font-size: 15px;
+            margin-bottom: 35px;
+            font-weight: 400;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            color: #b8bfcc;
-            font-weight: 500;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #d1d5db;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         select, input[type="text"], input[type="number"], textarea {
             width: 100%;
-            background: #1a1f2e;
-            border: 1px solid #2d3748;
-            border-radius: 8px;
-            padding: 12px 16px;
+            background: rgba(26, 31, 46, 0.8);
+            border: 2px solid rgba(45, 55, 72, 0.6);
+            border-radius: 12px;
+            padding: 14px 18px;
             color: #e4e4e4;
             font-size: 14px;
             transition: all 0.3s ease;
-            font-family: 'Courier New', monospace;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
         }
 
         select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: rgba(26, 31, 46, 1);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
         }
 
         textarea {
-            min-height: 200px;
+            min-height: 220px;
             resize: vertical;
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
         .custom-prefix-group, .page-number-group {
             display: none;
-            margin-top: 10px;
+            margin-top: 12px;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .custom-prefix-group.active, .page-number-group.active {
@@ -94,78 +113,113 @@
         }
 
         .suffix-group {
-            margin-top: 10px;
+            margin-top: 12px;
         }
 
         .button-group {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 12px;
-            margin-top: 30px;
-            flex-wrap: wrap;
+            margin-top: 32px;
         }
 
         button {
-            flex: 1;
-            min-width: 140px;
-            padding: 14px 24px;
+            padding: 16px 28px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
         }
 
         .btn-secondary {
-            background: #2d3748;
+            background: linear-gradient(135deg, #2d3748 0%, #3d4758 100%);
             color: #e4e4e4;
+            box-shadow: 0 4px 15px rgba(45, 55, 72, 0.3);
         }
 
         .btn-secondary:hover {
-            background: #3d4758;
+            background: linear-gradient(135deg, #3d4758 0%, #4d5768 100%);
             transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(45, 55, 72, 0.4);
         }
 
         .btn-success {
             background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(56, 239, 125, 0.4);
         }
 
         .btn-success:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(56, 239, 125, 0.4);
+            box-shadow: 0 8px 25px rgba(56, 239, 125, 0.5);
         }
 
         .btn-warning {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
         }
 
         .btn-warning:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
         }
 
         .btn-danger {
             background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
         }
 
         .btn-danger:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
+        }
+
+        .btn-batch {
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 167, 38, 0.4);
+        }
+
+        .btn-batch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 167, 38, 0.5);
         }
 
         button:active {
@@ -180,13 +234,25 @@
 
         .preview-box {
             display: none;
-            background: #1a1f2e;
-            border: 1px solid #2d3748;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-            max-height: 300px;
+            background: rgba(26, 31, 46, 0.6);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 24px;
+            max-height: 350px;
             overflow-y: auto;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .preview-box.active {
@@ -195,8 +261,9 @@
 
         .preview-box h3 {
             color: #667eea;
-            margin-bottom: 12px;
-            font-size: 16px;
+            margin-bottom: 16px;
+            font-size: 17px;
+            font-weight: 700;
         }
 
         .url-list {
@@ -204,22 +271,41 @@
         }
 
         .url-list li {
-            padding: 8px 12px;
-            margin-bottom: 6px;
-            background: #0f1419;
-            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: rgba(15, 20, 25, 0.8);
+            border-radius: 10px;
             font-size: 13px;
             color: #b8bfcc;
             word-break: break-all;
-            border-left: 3px solid #667eea;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .url-list li:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-left-color: #764ba2;
         }
 
         .status-message {
             margin-top: 20px;
-            padding: 12px 16px;
-            border-radius: 8px;
+            padding: 16px 20px;
+            border-radius: 12px;
             font-size: 14px;
             display: none;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .status-message.active {
@@ -227,76 +313,68 @@
         }
 
         .status-message.success {
-            background: rgba(56, 239, 125, 0.1);
-            border: 1px solid rgba(56, 239, 125, 0.3);
+            background: rgba(56, 239, 125, 0.15);
+            border: 2px solid rgba(56, 239, 125, 0.4);
             color: #38ef7d;
         }
 
         .status-message.error {
-            background: rgba(239, 56, 56, 0.1);
-            border: 1px solid rgba(239, 56, 56, 0.3);
+            background: rgba(239, 56, 56, 0.15);
+            border: 2px solid rgba(239, 56, 56, 0.4);
             color: #ef3838;
         }
 
         .status-message.info {
-            background: rgba(102, 126, 234, 0.1);
-            border: 1px solid rgba(102, 126, 234, 0.3);
+            background: rgba(102, 126, 234, 0.15);
+            border: 2px solid rgba(102, 126, 234, 0.4);
             color: #667eea;
         }
 
         /* Scrollbar styling */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 10px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #1a1f2e;
+            background: rgba(26, 31, 46, 0.5);
+            border-radius: 10px;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #667eea;
-            border-radius: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #764ba2;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
         }
 
         .info-text {
             font-size: 12px;
             color: #6b7280;
-            margin-top: 6px;
+            margin-top: 8px;
             font-style: italic;
         }
 
-        .input-group {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-
-        .input-group .form-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
         .cleanup-btn-container {
-            margin-top: 10px;
-            display: flex;
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
-        }
-
-        .cleanup-btn-container button {
-            flex: 1;
         }
 
         /* Advanced Settings Section */
         .advanced-settings {
-            background: #1a1f2e;
-            border: 1px solid #2d3748;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 30px;
+            background: rgba(26, 31, 46, 0.5);
+            border: 2px solid rgba(45, 55, 72, 0.5);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .advanced-settings:hover {
+            border-color: rgba(102, 126, 234, 0.3);
         }
 
         .advanced-settings-header {
@@ -305,20 +383,29 @@
             align-items: center;
             cursor: pointer;
             user-select: none;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+
+        .advanced-settings-header:hover {
+            background: rgba(102, 126, 234, 0.1);
         }
 
         .advanced-settings-header h2 {
-            font-size: 16px;
+            font-size: 17px;
             color: #667eea;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            font-weight: 700;
         }
 
         .toggle-icon {
             transition: transform 0.3s ease;
             color: #667eea;
             font-size: 20px;
+            font-weight: bold;
         }
 
         .toggle-icon.open {
@@ -328,35 +415,40 @@
         .advanced-settings-content {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease;
+            transition: max-height 0.4s ease;
         }
 
         .advanced-settings-content.open {
-            max-height: 1000px;
-            margin-top: 20px;
+            max-height: 2000px;
+            margin-top: 24px;
         }
 
         .input-counter {
             font-size: 12px;
             color: #667eea;
-            font-weight: 600;
+            font-weight: 700;
             margin-left: 8px;
+            padding: 4px 12px;
+            background: rgba(102, 126, 234, 0.15);
+            border-radius: 20px;
+            display: inline-block;
         }
 
         .two-column {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 16px;
         }
 
         .progress-bar {
             display: none;
             width: 100%;
-            height: 8px;
-            background: #1a1f2e;
-            border-radius: 4px;
+            height: 10px;
+            background: rgba(26, 31, 46, 0.8);
+            border-radius: 20px;
             overflow: hidden;
-            margin-top: 15px;
+            margin-top: 20px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .progress-bar.active {
@@ -365,37 +457,158 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transition: width 0.3s ease;
-            border-radius: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s linear infinite;
+            transition: width 0.4s ease;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
         }
 
         .progress-text {
             text-align: center;
-            margin-top: 8px;
+            margin-top: 10px;
             font-size: 13px;
-            color: #8b92a8;
+            color: #9ca3af;
             display: none;
+            font-weight: 600;
         }
 
         .progress-text.active {
             display: block;
         }
 
-        .stop-btn-container {
+        .stop-btn-container, .batch-control-container {
             display: none;
-            margin-top: 15px;
+            margin-top: 16px;
         }
 
-        .stop-btn-container.active {
+        .stop-btn-container.active, .batch-control-container.active {
             display: block;
+        }
+
+        .section-title {
+            color: #d1d5db;
+            font-size: 14px;
+            margin-bottom: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #2d3748;
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(28px);
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            color: #d1d5db;
+            font-weight: 600;
+        }
+
+        .batch-info {
+            background: rgba(255, 167, 38, 0.15);
+            border: 2px solid rgba(255, 167, 38, 0.4);
+            color: #ffa726;
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-top: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+        }
+
+        .batch-info.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            .cleanup-btn-container {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <center><h1>🚀 URL Bulk Opener</h1></center>
-        <center><p class="subtitle">Open multiple URLs instantly with custom prefixes</p></center>
+        <center><p class="subtitle">Open multiple URLs instantly with custom prefixes and manual control</p></center>
 
         <div class="form-group">
             <label for="prefixSelect">URL Prefix Template</label>
@@ -435,7 +648,7 @@ https://custom.com/special-item"></textarea>
             <p class="info-text">💡 Tip: Start any line with "http" to use a custom URL for that specific entry</p>
             
             <div class="cleanup-btn-container">
-                <button class="btn-warning" id="cleanupBtn">🧹 Clean Up Input</button>
+                <button class="btn-warning" id="cleanupBtn">🧹 Clean Up</button>
                 <button class="btn-secondary" id="removeDuplicatesBtn">🔄 Remove Duplicates</button>
             </div>
         </div>
@@ -455,6 +668,12 @@ https://custom.com/special-item"></textarea>
             <button class="btn-danger" id="stopBtn" style="width: 100%;">⏹️ Stop Opening URLs</button>
         </div>
 
+        <div class="batch-control-container" id="batchControlContainer">
+            <button class="btn-batch" id="openBatchBtn" style="width: 100%;">📦 Open Batch 1</button>
+        </div>
+
+        <div class="batch-info" id="batchInfo"></div>
+
         <div class="preview-box" id="previewBox">
             <h3>Generated URLs (<span id="urlCount">0</span>)</h3>
             <ul class="url-list" id="urlList"></ul>
@@ -470,26 +689,39 @@ https://custom.com/special-item"></textarea>
             </div>
             <div class="advanced-settings-content" id="advancedSettingsContent">
                 
+                <!-- Batch Mode Toggle -->
+                <div class="form-group">
+                    <div class="section-title">Batch Opening Mode</div>
+                    <div class="toggle-switch">
+                        <label class="switch">
+                            <input type="checkbox" id="manualModeToggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="toggle-label">Manual Batch Mode (Click to open each batch)</span>
+                    </div>
+                    <p class="info-text">When enabled, you'll open batches one at a time by clicking. Progress resets if you edit the textarea.</p>
+                </div>
+
                 <!-- Batch Settings -->
                 <div class="form-group">
-                    <h3 style="color: #b8bfcc; font-size: 14px; margin-bottom: 15px;">Batch Opening Settings</h3>
+                    <div class="section-title">Batch Opening Settings</div>
                     <div class="two-column">
                         <div>
                             <label for="batchSize">Batch Size</label>
                             <input type="number" id="batchSize" placeholder="URLs per batch" min="1" max="50" value="10">
-                            <p class="info-text">How many URLs to open at once (1-50)</p>
+                            <p class="info-text">URLs to open at once (1-50)</p>
                         </div>
                         <div>
                             <label for="batchDelay">Delay Between Batches (ms)</label>
                             <input type="number" id="batchDelay" placeholder="Delay in milliseconds" min="0" max="5000" value="500" step="100">
-                            <p class="info-text">Pause between batches (0-5000ms)</p>
+                            <p class="info-text">Auto mode only (0-5000ms)</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Advanced Cleanup -->
                 <div class="form-group">
-                    <h3 style="color: #b8bfcc; font-size: 14px; margin-bottom: 15px;">Advanced Cleanup Options</h3>
+                    <div class="section-title">Advanced Cleanup Options</div>
                     
                     <div class="form-group">
                         <label for="removeContaining">Remove Lines Containing Text</label>
@@ -548,6 +780,12 @@ https://custom.com/special-item"></textarea>
         const stopBtn = document.getElementById('stopBtn');
         const stopBtnContainer = document.getElementById('stopBtnContainer');
 
+        // Manual batch mode elements
+        const manualModeToggle = document.getElementById('manualModeToggle');
+        const batchControlContainer = document.getElementById('batchControlContainer');
+        const openBatchBtn = document.getElementById('openBatchBtn');
+        const batchInfo = document.getElementById('batchInfo');
+
         // Advanced Settings
         const advancedSettingsHeader = document.getElementById('advancedSettingsHeader');
         const advancedSettingsContent = document.getElementById('advancedSettingsContent');
@@ -562,6 +800,10 @@ https://custom.com/special-item"></textarea>
         let generatedURLs = [];
         let batchTimeout = null;
         let shouldStopBatch = false;
+        let currentBatchIndex = 0;
+        let totalBatches = 0;
+        let isManualMode = false;
+        let lastTextareaContent = '';
 
         // Toggle Advanced Settings
         advancedSettingsHeader.addEventListener('click', () => {
@@ -580,7 +822,87 @@ https://custom.com/special-item"></textarea>
             inputCounter.textContent = `${count} line${count !== 1 ? 's' : ''}`;
         }
 
-        inputArea.addEventListener('input', updateInputCounter);
+        inputArea.addEventListener('input', () => {
+            updateInputCounter();
+            
+            // Reset batch progress if textarea content changes in manual mode
+            if (isManualMode && inputArea.value !== lastTextareaContent) {
+                resetBatchProgress();
+                lastTextareaContent = inputArea.value;
+            }
+        });
+
+        // Manual Mode Toggle
+        manualModeToggle.addEventListener('change', () => {
+            isManualMode = manualModeToggle.checked;
+            
+            if (isManualMode) {
+                openAllBtn.style.display = 'none';
+                batchControlContainer.classList.add('active');
+                resetBatchProgress();
+            } else {
+                openAllBtn.style.display = 'block';
+                batchControlContainer.classList.remove('active');
+                batchInfo.classList.remove('active');
+            }
+            
+            saveToLocalStorage();
+        });
+
+        // Reset batch progress
+        function resetBatchProgress() {
+            currentBatchIndex = 0;
+            updateBatchButton();
+            batchInfo.classList.remove('active');
+        }
+
+        // Update batch button text
+        function updateBatchButton() {
+            if (totalBatches > 0) {
+                if (currentBatchIndex < totalBatches) {
+                    openBatchBtn.textContent = `📦 Open Batch ${currentBatchIndex + 1} of ${totalBatches}`;
+                    openBatchBtn.disabled = false;
+                } else {
+                    openBatchBtn.textContent = `✅ All Batches Opened!`;
+                    openBatchBtn.disabled = true;
+                    batchInfo.textContent = `🎉 Completed! All ${totalBatches} batches have been opened.`;
+                    batchInfo.classList.add('active');
+                }
+            }
+        }
+
+        // Open single batch (manual mode)
+        openBatchBtn.addEventListener('click', () => {
+            generatedURLs = generateURLs();
+            
+            if (generatedURLs.length === 0) return;
+
+            const batchSizeValue = parseInt(batchSize.value) || 10;
+            totalBatches = Math.ceil(generatedURLs.length / batchSizeValue);
+
+            if (currentBatchIndex >= totalBatches) {
+                showStatus('All batches have been opened!', 'info');
+                return;
+            }
+
+            const startIndex = currentBatchIndex * batchSizeValue;
+            const endIndex = Math.min(startIndex + batchSizeValue, generatedURLs.length);
+
+            // Open URLs in current batch
+            for (let i = startIndex; i < endIndex; i++) {
+                window.open(generatedURLs[i], '_blank', 'noopener,noreferrer');
+            }
+
+            currentBatchIndex++;
+            
+            const openedCount = endIndex;
+            batchInfo.textContent = `📊 Progress: Opened ${openedCount} of ${generatedURLs.length} URLs`;
+            batchInfo.classList.add('active');
+            
+            showStatus(`✅ Opened batch ${currentBatchIndex} of ${totalBatches} (${endIndex - startIndex} URLs)`, 'success');
+            
+            updateBatchButton();
+        });
 
         // Show/hide custom prefix input and page number input
         prefixSelect.addEventListener('change', () => {
@@ -595,6 +917,8 @@ https://custom.com/special-item"></textarea>
             } else {
                 pageNumberGroup.classList.remove('active');
             }
+
+            resetBatchProgress();
         });
 
         // Remove Duplicates Button
@@ -627,29 +951,19 @@ https://custom.com/special-item"></textarea>
             for (let line of lines) {
                 const trimmed = line.trim();
                 
-                // Skip empty lines
                 if (trimmed.length === 0) continue;
-                
-                // Skip if it's purely numeric with commas (e.g., 88,888)
                 if (/^[\d,]+$/.test(trimmed)) continue;
-                
-                // Skip if it's a percentage (e.g., 88%)
                 if (/^\d+%$/.test(trimmed)) continue;
-                
-                // Skip if it's a decimal number (e.g., 8.88)
                 if (/^\d+\.\d+$/.test(trimmed)) continue;
-                
-                // Skip duplicates
                 if (seenLines.has(trimmed)) continue;
                 
-                // Keep this line
                 seenLines.add(trimmed);
                 cleanedLines.push(trimmed);
             }
 
             inputArea.value = cleanedLines.join('\n');
             updateInputCounter();
-            showStatus(`🧹 Cleaned up! Removed ${lines.length - cleanedLines.length} lines (duplicates, numbers, percentages). Kept ${cleanedLines.length} unique entries.`, 'success');
+            showStatus(`🧹 Cleaned up! Removed ${lines.length - cleanedLines.length} lines. Kept ${cleanedLines.length} unique entries.`, 'success');
             saveToLocalStorage();
         });
 
@@ -658,13 +972,11 @@ https://custom.com/special-item"></textarea>
             let lines = inputArea.value.split('\n').map(line => line.trim()).filter(line => line.length > 0);
             const originalCount = lines.length;
 
-            // Remove lines containing specific text
             if (removeContaining.value.trim()) {
                 const searchText = removeContaining.value.trim().toLowerCase();
                 lines = lines.filter(line => !line.toLowerCase().includes(searchText));
             }
 
-            // Remove lines matching regex pattern
             if (regexPattern.value.trim()) {
                 try {
                     const regex = new RegExp(regexPattern.value.trim());
@@ -675,22 +987,17 @@ https://custom.com/special-item"></textarea>
                 }
             }
 
-            // Extract mode
             const mode = extractMode.value;
             if (mode === 'text') {
-                // Keep only lines that are primarily text (not just numbers or URLs)
                 lines = lines.filter(line => {
                     return !line.startsWith('http') && !/^[\d,.\s]+$/.test(line);
                 });
             } else if (mode === 'numbers') {
-                // Keep only lines that are numbers
                 lines = lines.filter(line => /^[\d,.\s]+$/.test(line));
             } else if (mode === 'urls') {
-                // Keep only URLs
                 lines = lines.filter(line => line.startsWith('http://') || line.startsWith('https://'));
             }
 
-            // Remove duplicates
             const uniqueLines = [...new Set(lines)];
 
             inputArea.value = uniqueLines.join('\n');
@@ -713,7 +1020,6 @@ https://custom.com/special-item"></textarea>
             const suffix = customSuffix.value.trim();
             const pageNum = parseInt(pageNumber.value) || 0;
             
-            // Determine if we need to add page parameter
             let pageParam = '';
             if (prefixSelect.value === 'https://www.amazon.com/s?k=' && pageNum >= 2) {
                 pageParam = `&page=${pageNum}`;
@@ -730,11 +1036,9 @@ https://custom.com/special-item"></textarea>
             }
 
             const urls = lines.map(line => {
-                // Check if line already starts with http/https (custom URL)
                 if (line.startsWith('http://') || line.startsWith('https://')) {
                     return line;
                 }
-                // Otherwise, prepend the selected prefix and append suffix
                 return prefix + line + pageParam + suffix;
             });
 
@@ -756,6 +1060,14 @@ https://custom.com/special-item"></textarea>
 
             urlCount.textContent = generatedURLs.length;
             previewBox.classList.add('active');
+            
+            // Calculate batches for manual mode
+            if (isManualMode) {
+                const batchSizeValue = parseInt(batchSize.value) || 10;
+                totalBatches = Math.ceil(generatedURLs.length / batchSizeValue);
+                updateBatchButton();
+            }
+            
             showStatus(`✅ Generated ${generatedURLs.length} URLs`, 'success');
         });
 
@@ -772,7 +1084,7 @@ https://custom.com/special-item"></textarea>
             showStatus('⏹️ Batch opening stopped by user', 'info');
         });
 
-        // Open all URLs in batches with stop functionality
+        // Open all URLs in batches (auto mode)
         openAllBtn.addEventListener('click', () => {
             generatedURLs = generateURLs();
             
@@ -782,7 +1094,6 @@ https://custom.com/special-item"></textarea>
             const batchSizeValue = parseInt(batchSize.value) || 10;
             const delayValue = parseInt(batchDelay.value) || 500;
 
-            // Show progress UI
             progressBar.classList.add('active');
             progressText.classList.add('active');
             stopBtnContainer.classList.add('active');
@@ -814,7 +1125,6 @@ https://custom.com/special-item"></textarea>
 
                 currentIndex = endIndex;
                 
-                // Update progress
                 const progress = (currentIndex / generatedURLs.length) * 100;
                 progressFill.style.width = progress + '%';
                 progressText.textContent = `Opened ${currentIndex} of ${generatedURLs.length} URLs`;
@@ -830,7 +1140,6 @@ https://custom.com/special-item"></textarea>
                 }
             };
 
-            // Start opening
             openNextBatch();
         });
 
@@ -846,7 +1155,6 @@ https://custom.com/special-item"></textarea>
                 await navigator.clipboard.writeText(urlText);
                 showStatus(`📋 Copied ${generatedURLs.length} URLs to clipboard`, 'success');
             } catch (err) {
-                // Fallback for older browsers
                 const textarea = document.createElement('textarea');
                 textarea.value = urlText;
                 document.body.appendChild(textarea);
@@ -876,6 +1184,7 @@ https://custom.com/special-item"></textarea>
             const savedInput = localStorage.getItem('urlOpenerInput');
             const savedBatchSize = localStorage.getItem('urlOpenerBatchSize');
             const savedBatchDelay = localStorage.getItem('urlOpenerBatchDelay');
+            const savedManualMode = localStorage.getItem('urlOpenerManualMode');
 
             if (savedPrefix) {
                 prefixSelect.value = savedPrefix;
@@ -901,6 +1210,7 @@ https://custom.com/special-item"></textarea>
 
             if (savedInput) {
                 inputArea.value = savedInput;
+                lastTextareaContent = savedInput;
                 updateInputCounter();
             }
 
@@ -910,6 +1220,13 @@ https://custom.com/special-item"></textarea>
 
             if (savedBatchDelay) {
                 batchDelay.value = savedBatchDelay;
+            }
+
+            if (savedManualMode === 'true') {
+                manualModeToggle.checked = true;
+                isManualMode = true;
+                openAllBtn.style.display = 'none';
+                batchControlContainer.classList.add('active');
             }
         });
 
@@ -922,6 +1239,7 @@ https://custom.com/special-item"></textarea>
             localStorage.setItem('urlOpenerInput', inputArea.value);
             localStorage.setItem('urlOpenerBatchSize', batchSize.value);
             localStorage.setItem('urlOpenerBatchDelay', batchDelay.value);
+            localStorage.setItem('urlOpenerManualMode', isManualMode);
         }
 
         // Auto-save on input changes
