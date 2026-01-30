@@ -126,11 +126,11 @@
             gap: 12px;
         }
 
-        .button-group {
+        .button-group-four {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 10px;
         }
 
         button {
@@ -230,6 +230,11 @@
         .btn-batch:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255, 167, 38, 0.5);
+        }
+
+        .btn-full-width {
+            width: 100%;
+            margin-top: 16px;
         }
 
         button:active {
@@ -366,13 +371,6 @@
             font-style: italic;
         }
 
-        .cleanup-btn-container {
-            margin-top: 10px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
         /* Advanced Settings Section */
         .advanced-settings {
             background: rgba(26, 31, 46, 0.5);
@@ -497,12 +495,12 @@
             display: block;
         }
 
-        .stop-btn-container, .batch-control-container {
+        .stop-btn-container {
             display: none;
             margin-top: 12px;
         }
 
-        .stop-btn-container.active, .batch-control-container.active {
+        .stop-btn-container.active {
             display: block;
         }
 
@@ -601,15 +599,11 @@
                 font-size: 22px;
             }
 
-            .button-group {
-                grid-template-columns: 1fr;
+            .button-group-four {
+                grid-template-columns: 1fr 1fr;
             }
 
             .two-column, .two-column-form {
-                grid-template-columns: 1fr;
-            }
-
-            .cleanup-btn-container {
                 grid-template-columns: 1fr;
             }
         }
@@ -658,22 +652,18 @@ B0BN2SXPQR
 Or full URLs:
 https://custom.com/item"></textarea>
             <p class="info-text">💡 Tip: Lines starting with "http" are used as-is</p>
-            
-            <div class="cleanup-btn-container">
-                <button class="btn-warning" id="cleanupBtn">🧹 Clean Up</button>
-                <button class="btn-secondary" id="removeDuplicatesBtn">🔄 Remove Dupes</button>
-            </div>
         </div>
 
-        <div class="button-group">
+        <!-- 4 Buttons in One Row -->
+        <div class="button-group-four">
+            <button class="btn-warning" id="cleanupBtn">🧹 Clean</button>
+            <button class="btn-secondary" id="removeDuplicatesBtn">🔄 Dupes</button>
             <button class="btn-secondary" id="previewBtn">👁️ Preview</button>
-            <button class="btn-primary" id="openAllBtn" style="display: none;">🔗 Open All</button>
             <button class="btn-success" id="copyBtn">📋 Copy</button>
         </div>
 
-        <div class="batch-control-container active" id="batchControlContainer">
-            <button class="btn-batch" id="openBatchBtn" style="width: 100%;">📦 Open Batch 1</button>
-        </div>
+        <!-- Main Action Button (Full Width) -->
+        <button class="btn-batch btn-full-width" id="mainActionBtn">📦 Open Batch 1</button>
 
         <div class="batch-info" id="batchInfo"></div>
 
@@ -777,10 +767,10 @@ https://custom.com/item"></textarea>
         const inputArea = document.getElementById('inputArea');
         const inputCounter = document.getElementById('inputCounter');
         const previewBtn = document.getElementById('previewBtn');
-        const openAllBtn = document.getElementById('openAllBtn');
         const copyBtn = document.getElementById('copyBtn');
         const cleanupBtn = document.getElementById('cleanupBtn');
         const removeDuplicatesBtn = document.getElementById('removeDuplicatesBtn');
+        const mainActionBtn = document.getElementById('mainActionBtn');
         const previewBox = document.getElementById('previewBox');
         const urlList = document.getElementById('urlList');
         const urlCount = document.getElementById('urlCount');
@@ -790,17 +780,13 @@ https://custom.com/item"></textarea>
         const progressText = document.getElementById('progressText');
         const stopBtn = document.getElementById('stopBtn');
         const stopBtnContainer = document.getElementById('stopBtnContainer');
-
-        // Manual batch mode elements
-        const manualModeToggle = document.getElementById('manualModeToggle');
-        const batchControlContainer = document.getElementById('batchControlContainer');
-        const openBatchBtn = document.getElementById('openBatchBtn');
         const batchInfo = document.getElementById('batchInfo');
 
         // Advanced Settings
         const advancedSettingsHeader = document.getElementById('advancedSettingsHeader');
         const advancedSettingsContent = document.getElementById('advancedSettingsContent');
         const toggleIcon = document.getElementById('toggleIcon');
+        const manualModeToggle = document.getElementById('manualModeToggle');
         const batchSize = document.getElementById('batchSize');
         const batchDelay = document.getElementById('batchDelay');
         const removeContaining = document.getElementById('removeContaining');
@@ -843,47 +829,59 @@ https://custom.com/item"></textarea>
             }
         });
 
+        // Update main action button based on mode
+        function updateMainActionButton() {
+            if (isManualMode) {
+                mainActionBtn.className = 'btn-batch btn-full-width';
+                if (totalBatches > 0 && currentBatchIndex < totalBatches) {
+                    mainActionBtn.textContent = `📦 Open Batch ${currentBatchIndex + 1} of ${totalBatches}`;
+                    mainActionBtn.disabled = false;
+                } else if (currentBatchIndex >= totalBatches && totalBatches > 0) {
+                    mainActionBtn.textContent = `✅ All Batches Opened!`;
+                    mainActionBtn.disabled = true;
+                } else {
+                    mainActionBtn.textContent = `📦 Open Batch 1`;
+                    mainActionBtn.disabled = false;
+                }
+            } else {
+                mainActionBtn.className = 'btn-primary btn-full-width';
+                mainActionBtn.textContent = `🔗 Open All URLs`;
+                mainActionBtn.disabled = false;
+            }
+        }
+
         // Manual Mode Toggle
         manualModeToggle.addEventListener('change', () => {
             isManualMode = manualModeToggle.checked;
             
             if (isManualMode) {
-                openAllBtn.style.display = 'none';
-                batchControlContainer.classList.add('active');
                 resetBatchProgress();
             } else {
-                openAllBtn.style.display = 'block';
-                batchControlContainer.classList.remove('active');
                 batchInfo.classList.remove('active');
             }
             
+            updateMainActionButton();
             saveToLocalStorage();
         });
 
         // Reset batch progress
         function resetBatchProgress() {
             currentBatchIndex = 0;
-            updateBatchButton();
+            updateMainActionButton();
             batchInfo.classList.remove('active');
         }
 
-        // Update batch button text
-        function updateBatchButton() {
-            if (totalBatches > 0) {
-                if (currentBatchIndex < totalBatches) {
-                    openBatchBtn.textContent = `📦 Open Batch ${currentBatchIndex + 1} of ${totalBatches}`;
-                    openBatchBtn.disabled = false;
-                } else {
-                    openBatchBtn.textContent = `✅ All Batches Opened!`;
-                    openBatchBtn.disabled = true;
-                    batchInfo.textContent = `🎉 Completed! All ${totalBatches} batches opened.`;
-                    batchInfo.classList.add('active');
-                }
+        // Main Action Button Click Handler
+        mainActionBtn.addEventListener('click', () => {
+            if (isManualMode) {
+                openSingleBatch();
+            } else {
+                openAllURLsAuto();
             }
-        }
+        });
 
         // Open single batch (manual mode)
-        openBatchBtn.addEventListener('click', () => {
+        function openSingleBatch() {
             generatedURLs = generateURLs();
             
             if (generatedURLs.length === 0) return;
@@ -912,8 +910,67 @@ https://custom.com/item"></textarea>
             
             showStatus(`✅ Opened batch ${currentBatchIndex} of ${totalBatches} (${endIndex - startIndex} URLs)`, 'success');
             
-            updateBatchButton();
-        });
+            updateMainActionButton();
+        }
+
+        // Open all URLs in batches (auto mode)
+        function openAllURLsAuto() {
+            generatedURLs = generateURLs();
+            
+            if (generatedURLs.length === 0) return;
+
+            shouldStopBatch = false;
+            const batchSizeValue = parseInt(batchSize.value) || 10;
+            const delayValue = parseInt(batchDelay.value) || 500;
+
+            progressBar.classList.add('active');
+            progressText.classList.add('active');
+            stopBtnContainer.classList.add('active');
+            mainActionBtn.disabled = true;
+
+            showStatus(`🚀 Opening ${generatedURLs.length} URLs...`, 'info');
+
+            let currentIndex = 0;
+
+            const openNextBatch = () => {
+                if (shouldStopBatch) {
+                    return;
+                }
+
+                if (currentIndex >= generatedURLs.length) {
+                    progressBar.classList.remove('active');
+                    progressText.classList.remove('active');
+                    stopBtnContainer.classList.remove('active');
+                    mainActionBtn.disabled = false;
+                    showStatus(`✅ Opened ${generatedURLs.length} URLs`, 'success');
+                    return;
+                }
+
+                const endIndex = Math.min(currentIndex + batchSizeValue, generatedURLs.length);
+                
+                for (let i = currentIndex; i < endIndex; i++) {
+                    window.open(generatedURLs[i], '_blank', 'noopener,noreferrer');
+                }
+
+                currentIndex = endIndex;
+                
+                const progress = (currentIndex / generatedURLs.length) * 100;
+                progressFill.style.width = progress + '%';
+                progressText.textContent = `Opened ${currentIndex} of ${generatedURLs.length}`;
+
+                if (currentIndex < generatedURLs.length) {
+                    batchTimeout = setTimeout(openNextBatch, delayValue);
+                } else {
+                    progressBar.classList.remove('active');
+                    progressText.classList.remove('active');
+                    stopBtnContainer.classList.remove('active');
+                    mainActionBtn.disabled = false;
+                    showStatus(`✅ Opened ${generatedURLs.length} URLs`, 'success');
+                }
+            };
+
+            openNextBatch();
+        }
 
         // Show/hide custom prefix input and page number input
         prefixSelect.addEventListener('change', () => {
@@ -949,7 +1006,7 @@ https://custom.com/item"></textarea>
             const removed = lines.length - uniqueLines.length;
             inputArea.value = uniqueLines.join('\n');
             updateInputCounter();
-            showStatus(`🔄 Removed ${removed} duplicate${removed !== 1 ? 's' : ''}. Kept ${uniqueLines.length}.`, 'success');
+            showStatus(`🔄 Removed ${removed} duplicate${removed !== 1 ? 's' : ''}`, 'success');
             saveToLocalStorage();
         });
 
@@ -974,7 +1031,7 @@ https://custom.com/item"></textarea>
 
             inputArea.value = cleanedLines.join('\n');
             updateInputCounter();
-            showStatus(`🧹 Cleaned! Removed ${lines.length - cleanedLines.length} lines.`, 'success');
+            showStatus(`🧹 Cleaned! Kept ${cleanedLines.length} entries`, 'success');
             saveToLocalStorage();
         });
 
@@ -1013,7 +1070,7 @@ https://custom.com/item"></textarea>
 
             inputArea.value = uniqueLines.join('\n');
             updateInputCounter();
-            showStatus(`🔧 Advanced cleanup done! Kept ${uniqueLines.length} entries.`, 'success');
+            showStatus(`🔧 Advanced cleanup done! Kept ${uniqueLines.length}`, 'success');
             saveToLocalStorage();
         });
 
@@ -1076,7 +1133,7 @@ https://custom.com/item"></textarea>
             if (isManualMode) {
                 const batchSizeValue = parseInt(batchSize.value) || 10;
                 totalBatches = Math.ceil(generatedURLs.length / batchSizeValue);
-                updateBatchButton();
+                updateMainActionButton();
             }
             
             showStatus(`✅ Generated ${generatedURLs.length} URLs`, 'success');
@@ -1091,67 +1148,8 @@ https://custom.com/item"></textarea>
             stopBtnContainer.classList.remove('active');
             progressBar.classList.remove('active');
             progressText.classList.remove('active');
-            openAllBtn.disabled = false;
+            mainActionBtn.disabled = false;
             showStatus('⏹️ Stopped', 'info');
-        });
-
-        // Open all URLs in batches (auto mode)
-        openAllBtn.addEventListener('click', () => {
-            generatedURLs = generateURLs();
-            
-            if (generatedURLs.length === 0) return;
-
-            shouldStopBatch = false;
-            const batchSizeValue = parseInt(batchSize.value) || 10;
-            const delayValue = parseInt(batchDelay.value) || 500;
-
-            progressBar.classList.add('active');
-            progressText.classList.add('active');
-            stopBtnContainer.classList.add('active');
-            openAllBtn.disabled = true;
-
-            showStatus(`🚀 Opening ${generatedURLs.length} URLs...`, 'info');
-
-            let currentIndex = 0;
-
-            const openNextBatch = () => {
-                if (shouldStopBatch) {
-                    return;
-                }
-
-                if (currentIndex >= generatedURLs.length) {
-                    progressBar.classList.remove('active');
-                    progressText.classList.remove('active');
-                    stopBtnContainer.classList.remove('active');
-                    openAllBtn.disabled = false;
-                    showStatus(`✅ Opened ${generatedURLs.length} URLs`, 'success');
-                    return;
-                }
-
-                const endIndex = Math.min(currentIndex + batchSizeValue, generatedURLs.length);
-                
-                for (let i = currentIndex; i < endIndex; i++) {
-                    window.open(generatedURLs[i], '_blank', 'noopener,noreferrer');
-                }
-
-                currentIndex = endIndex;
-                
-                const progress = (currentIndex / generatedURLs.length) * 100;
-                progressFill.style.width = progress + '%';
-                progressText.textContent = `Opened ${currentIndex} of ${generatedURLs.length}`;
-
-                if (currentIndex < generatedURLs.length) {
-                    batchTimeout = setTimeout(openNextBatch, delayValue);
-                } else {
-                    progressBar.classList.remove('active');
-                    progressText.classList.remove('active');
-                    stopBtnContainer.classList.remove('active');
-                    openAllBtn.disabled = false;
-                    showStatus(`✅ Opened ${generatedURLs.length} URLs`, 'success');
-                }
-            };
-
-            openNextBatch();
         });
 
         // Copy URLs to clipboard
@@ -1237,9 +1235,9 @@ https://custom.com/item"></textarea>
             if (savedManualMode === 'false') {
                 manualModeToggle.checked = false;
                 isManualMode = false;
-                openAllBtn.style.display = 'block';
-                batchControlContainer.classList.remove('active');
             }
+
+            updateMainActionButton();
         });
 
         // Save data to localStorage
