@@ -99,7 +99,8 @@
         .textarea-container {
             display: flex;
             width: 100%;
-            min-height: 140px;
+            height: 300px;     /* CHANGE THIS from min-height to fixed height */
+    max-height: 300px; /* ADD THIS */
             border-radius: 10px;
             border: 2px solid rgba(45, 55, 72, 0.6);
             overflow: hidden;
@@ -160,6 +161,8 @@
             line-height: 1.625;
             resize: none;
             outline: none;
+            max-height: 300px;  /* ADD THIS */
+    overflow-y: auto;   /* ADD THIS *
         }
 
         .custom-prefix-group, .page-number-group {
