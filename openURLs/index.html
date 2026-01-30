@@ -936,10 +936,9 @@ function markLinesAsOpened(startLine, endLine) {
     }
 }
 
-        // Sync scroll between textareas (both directions)
+        // Sync scroll between textareas and div
 inputArea.addEventListener('scroll', () => {
     lineNumbers.scrollTop = inputArea.scrollTop;
-    lineNumbers.scrollLeft = inputArea.scrollLeft;
 });
 
         // Toggle Advanced Settings
