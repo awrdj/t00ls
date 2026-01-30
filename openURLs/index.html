@@ -114,7 +114,7 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
         }
 
-        #lineNumbers {
+    #lineNumbers {
     width: 50px;
     padding: 10px 8px 10px 8px;
     text-align: right;
@@ -122,15 +122,23 @@
     color: #6b7280;
     user-select: none;
     border: none;
-            border-radius:0;
+    border-radius:0;
     outline: none;
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
     font-size: 13px;
     line-height: 1.625;
-    overflow-y: auto;
+    overflow-y: scroll;     /* CHANGE THIS */
     overflow-x: hidden;
     cursor: default;
+    scrollbar-width: none;  /* ADD THIS - Firefox */
+    -ms-overflow-style: none; 
 }
+
+/* ADD THIS - Chrome/Safari */
+#lineNumbers::-webkit-scrollbar {
+    display: none;
+}
+
 
 #lineNumbers .line-number {
     display: block;
