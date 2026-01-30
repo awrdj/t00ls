@@ -133,6 +133,26 @@
             margin-top: 10px;
         }
 
+        /* Inline button layout for advanced cleanup */
+        .input-with-button {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            align-items: start;
+        }
+
+        .input-with-button input,
+        .input-with-button select {
+            margin: 0;
+        }
+
+        .input-with-button button {
+            height: 42px;
+            min-width: 80px;
+            padding: 10px 16px;
+            white-space: nowrap;
+        }
+
         button {
             padding: 12px 20px;
             border: none;
@@ -606,6 +626,14 @@
             .two-column, .two-column-form {
                 grid-template-columns: 1fr;
             }
+
+            .input-with-button {
+                grid-template-columns: 1fr;
+            }
+
+            .input-with-button button {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -656,8 +684,8 @@ https://custom.com/item"></textarea>
 
         <!-- 4 Buttons in One Row -->
         <div class="button-group-four">
-            <button class="btn-warning" id="cleanupBtn">🧹 Clean Up</button>
-            <button class="btn-secondary" id="removeDuplicatesBtn">🔄 Remove Dupes</button>
+            <button class="btn-warning" id="cleanupBtn">🧹 Clean</button>
+            <button class="btn-secondary" id="removeDuplicatesBtn">🔄 Dupes</button>
             <button class="btn-secondary" id="previewBtn">👁️ Preview</button>
             <button class="btn-success" id="copyBtn">📋 Copy</button>
         </div>
@@ -721,35 +749,41 @@ https://custom.com/item"></textarea>
                     </div>
                 </div>
 
-                <!-- Advanced Cleanup -->
+                <!-- Advanced Cleanup with Individual Buttons -->
                 <div class="form-group-compact">
                     <div class="section-title">Advanced Cleanup</div>
                     
                     <div class="form-group-compact">
                         <label for="removeContaining">Remove Lines Containing</label>
-                        <input type="text" id="removeContaining" placeholder="Text to remove">
-                        <p class="info-text">Remove lines with this text</p>
+                        <div class="input-with-button">
+                            <input type="text" id="removeContaining" placeholder="Text to remove">
+                            <button class="btn-danger" id="applyRemoveContaining">🗑️ Apply</button>
+                        </div>
+                        <p class="info-text">Remove all lines containing this text (case-insensitive)</p>
                     </div>
 
                     <div class="form-group-compact">
                         <label for="regexPattern">Regex Pattern</label>
-                        <input type="text" id="regexPattern" placeholder="e.g., ^\d+$">
-                        <p class="info-text">Remove lines matching pattern</p>
+                        <div class="input-with-button">
+                            <input type="text" id="regexPattern" placeholder="e.g., ^\d+$">
+                            <button class="btn-danger" id="applyRegexPattern">🗑️ Apply</button>
+                        </div>
+                        <p class="info-text">Remove lines matching this regex pattern</p>
                     </div>
 
                     <div class="form-group-compact">
                         <label for="extractMode">Extract Mode</label>
-                        <select id="extractMode">
-                            <option value="none">None (Keep All)</option>
-                            <option value="text">Extract Only Text</option>
-                            <option value="numbers">Extract Only Numbers</option>
-                            <option value="urls">Extract Only URLs</option>
-                        </select>
+                        <div class="input-with-button">
+                            <select id="extractMode">
+                                <option value="none">None (Keep All)</option>
+                                <option value="text">Extract Only Text</option>
+                                <option value="numbers">Extract Only Numbers</option>
+                                <option value="urls">Extract Only URLs</option>
+                            </select>
+                            <button class="btn-success" id="applyExtractMode">✂️ Apply</button>
+                        </div>
+                        <p class="info-text">Keep only specific types of lines</p>
                     </div>
-
-                    <button class="btn-warning" id="advancedCleanupBtn" style="width: 100%; margin-top: 8px;">
-                        🔧 Apply Advanced Cleanup
-                    </button>
                 </div>
 
             </div>
@@ -792,7 +826,11 @@ https://custom.com/item"></textarea>
         const removeContaining = document.getElementById('removeContaining');
         const regexPattern = document.getElementById('regexPattern');
         const extractMode = document.getElementById('extractMode');
-        const advancedCleanupBtn = document.getElementById('advancedCleanupBtn');
+        
+        // Individual Apply Buttons
+        const applyRemoveContaining = document.getElementById('applyRemoveContaining');
+        const applyRegexPattern = document.getElementById('applyRegexPattern');
+        const applyExtractMode = document.getElementById('applyExtractMode');
 
         let generatedURLs = [];
         let batchTimeout = null;
@@ -1035,27 +1073,61 @@ https://custom.com/item"></textarea>
             saveToLocalStorage();
         });
 
-        // Advanced Cleanup
-        advancedCleanupBtn.addEventListener('click', () => {
+        // Individual Advanced Cleanup: Remove Lines Containing
+        applyRemoveContaining.addEventListener('click', () => {
+            if (!removeContaining.value.trim()) {
+                showStatus('⚠️ Please enter text to remove', 'error');
+                return;
+            }
+
+            let lines = inputArea.value.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            const originalCount = lines.length;
+            
+            const searchText = removeContaining.value.trim().toLowerCase();
+            lines = lines.filter(line => !line.toLowerCase().includes(searchText));
+            
+            inputArea.value = lines.join('\n');
+            updateInputCounter();
+            showStatus(`🗑️ Removed ${originalCount - lines.length} lines containing "${removeContaining.value.trim()}"`, 'success');
+            saveToLocalStorage();
+        });
+
+        // Individual Advanced Cleanup: Regex Pattern
+        applyRegexPattern.addEventListener('click', () => {
+            if (!regexPattern.value.trim()) {
+                showStatus('⚠️ Please enter a regex pattern', 'error');
+                return;
+            }
+
             let lines = inputArea.value.split('\n').map(line => line.trim()).filter(line => line.length > 0);
             const originalCount = lines.length;
 
-            if (removeContaining.value.trim()) {
-                const searchText = removeContaining.value.trim().toLowerCase();
-                lines = lines.filter(line => !line.toLowerCase().includes(searchText));
+            try {
+                const regex = new RegExp(regexPattern.value.trim());
+                lines = lines.filter(line => !regex.test(line));
+            } catch (e) {
+                showStatus('❌ Invalid regex pattern', 'error');
+                return;
             }
 
-            if (regexPattern.value.trim()) {
-                try {
-                    const regex = new RegExp(regexPattern.value.trim());
-                    lines = lines.filter(line => !regex.test(line));
-                } catch (e) {
-                    showStatus('❌ Invalid regex pattern', 'error');
-                    return;
-                }
-            }
+            inputArea.value = lines.join('\n');
+            updateInputCounter();
+            showStatus(`🗑️ Removed ${originalCount - lines.length} lines matching pattern`, 'success');
+            saveToLocalStorage();
+        });
 
+        // Individual Advanced Cleanup: Extract Mode
+        applyExtractMode.addEventListener('click', () => {
             const mode = extractMode.value;
+            
+            if (mode === 'none') {
+                showStatus('⚠️ Please select an extract mode', 'info');
+                return;
+            }
+
+            let lines = inputArea.value.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            const originalCount = lines.length;
+
             if (mode === 'text') {
                 lines = lines.filter(line => {
                     return !line.startsWith('http') && !/^[\d,.\s]+$/.test(line);
@@ -1066,11 +1138,9 @@ https://custom.com/item"></textarea>
                 lines = lines.filter(line => line.startsWith('http://') || line.startsWith('https://'));
             }
 
-            const uniqueLines = [...new Set(lines)];
-
-            inputArea.value = uniqueLines.join('\n');
+            inputArea.value = lines.join('\n');
             updateInputCounter();
-            showStatus(`🔧 Advanced cleanup done! Kept ${uniqueLines.length}`, 'success');
+            showStatus(`✂️ Extracted ${lines.length} ${mode} lines (removed ${originalCount - lines.length})`, 'success');
             saveToLocalStorage();
         });
 
