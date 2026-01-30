@@ -114,22 +114,40 @@
         }
 
         #lineNumbers {
-            width: 50px;
-            padding: 10px 8px 10px 8px;
-            text-align: right;
-            background: rgba(45, 55, 72, 0.4);
-            color: #6b7280;
-            user-select: none;
-            resize: none;
-            border: none;
-            border-radius: 0;
-            outline: none;
-            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.625;
-            overflow: hidden;
-            cursor: default;
-        }
+    width: 50px;
+    padding: 10px 8px 10px 8px;
+    text-align: right;
+    background: rgba(45, 55, 72, 0.4);
+    color: #6b7280;
+    user-select: none;
+    border: none;
+            border-radius:0;
+    outline: none;
+    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.625;
+    overflow-y: auto;
+    overflow-x: hidden;
+    cursor: default;
+}
+
+#lineNumbers .line-number {
+    display: block;
+    padding-right: 4px;
+}
+
+#lineNumbers .line-number.opened {
+    color: #38ef7d;
+    font-weight: 600;
+}
+
+#lineNumbers .line-number.opened::after {
+    content: ' ✓';
+    color: #38ef7d;
+    font-size: 11px;
+    margin-left: 2px;
+}
+
 
         #inputArea {
             flex: 1;
@@ -723,6 +741,7 @@
                 <span class="input-counter" id="inputCounter">0 lines</span>
             </label>
             <div class="textarea-container">
+                <!--<textarea id="lineNumbers" readonly></textarea>-->
                 <textarea id="lineNumbers" readonly></textarea>
                 <textarea id="inputArea" placeholder="B08N5WRWNW
 B09G9FPHY6
@@ -894,11 +913,28 @@ https://custom.com/item"></textarea>
         let lastTextareaContent = '';
 
         // Update line numbers
-        function updateLineNumbers() {
-            const lines = inputArea.value.split('\n');
-            const lineNumberText = lines.map((_, index) => index + 1).join('\n');
-            lineNumbers.value = lineNumberText;
+function updateLineNumbers() {
+    const lines = inputArea.value.split('\n');
+    lineNumbers.innerHTML = '';
+    
+    lines.forEach((_, index) => {
+        const lineDiv = document.createElement('div');
+        lineDiv.className = 'line-number';
+        lineDiv.textContent = index + 1;
+        lineDiv.setAttribute('data-line', index + 1);
+        lineNumbers.appendChild(lineDiv);
+    });
+}
+
+        // Mark lines as opened
+function markLinesAsOpened(startLine, endLine) {
+    for (let i = startLine; i <= endLine; i++) {
+        const lineElement = document.querySelector(`.line-number[data-line="${i}"]`);
+        if (lineElement) {
+            lineElement.classList.add('opened');
         }
+    }
+}
 
         // Sync scroll between textareas (both directions)
 inputArea.addEventListener('scroll', () => {
@@ -973,11 +1009,16 @@ inputArea.addEventListener('scroll', () => {
         });
 
         // Reset batch progress
-        function resetBatchProgress() {
-            currentBatchIndex = 0;
-            updateMainActionButton();
-            batchInfo.classList.remove('active');
-        }
+function resetBatchProgress() {
+    currentBatchIndex = 0;
+    updateMainActionButton();
+    batchInfo.classList.remove('active');
+    
+    // Clear all opened checkmarks
+    document.querySelectorAll('.line-number').forEach(el => {
+        el.classList.remove('opened');
+    });
+}
 
         // Main Action Button Click Handler
         mainActionBtn.addEventListener('click', () => {
@@ -1006,11 +1047,14 @@ inputArea.addEventListener('scroll', () => {
             const endIndex = Math.min(startIndex + batchSizeValue, generatedURLs.length);
 
             // Open URLs in current batch
-            for (let i = startIndex; i < endIndex; i++) {
-                window.open(generatedURLs[i], '_blank', 'noopener,noreferrer');
-            }
+for (let i = startIndex; i < endIndex; i++) {
+    window.open(generatedURLs[i], '_blank', 'noopener,noreferrer');
+}
 
-            currentBatchIndex++;
+// Mark these lines as opened
+markLinesAsOpened(startIndex + 1, endIndex);
+
+currentBatchIndex++;
             
             const openedCount = endIndex;
             batchInfo.textContent = `📊 Progress: Opened ${openedCount} of ${generatedURLs.length} URLs`;
