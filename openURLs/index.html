@@ -20,23 +20,23 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 15px;
         }
 
         .container {
             background: rgba(15, 20, 25, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 24px;
-            padding: 45px;
-            max-width: 850px;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 900px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         h1 {
-            font-size: 32px;
-            margin-bottom: 8px;
+            font-size: 26px;
+            margin-bottom: 6px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -47,19 +47,23 @@
 
         .subtitle {
             color: #9ca3af;
-            font-size: 15px;
-            margin-bottom: 35px;
+            font-size: 13px;
+            margin-bottom: 25px;
             font-weight: 400;
         }
 
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 16px;
+        }
+
+        .form-group-compact {
+            margin-bottom: 12px;
         }
 
         label {
             display: block;
-            margin-bottom: 10px;
-            font-size: 13px;
+            margin-bottom: 6px;
+            font-size: 11px;
             color: #d1d5db;
             font-weight: 600;
             text-transform: uppercase;
@@ -70,10 +74,10 @@
             width: 100%;
             background: rgba(26, 31, 46, 0.8);
             border: 2px solid rgba(45, 55, 72, 0.6);
-            border-radius: 12px;
-            padding: 14px 18px;
+            border-radius: 10px;
+            padding: 10px 14px;
             color: #e4e4e4;
-            font-size: 14px;
+            font-size: 13px;
             transition: all 0.3s ease;
             font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
         }
@@ -82,18 +86,18 @@
             outline: none;
             border-color: #667eea;
             background: rgba(26, 31, 46, 1);
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
         }
 
         textarea {
-            min-height: 220px;
+            min-height: 140px;
             resize: vertical;
-            line-height: 1.7;
+            line-height: 1.6;
         }
 
         .custom-prefix-group, .page-number-group {
             display: none;
-            margin-top: 12px;
+            margin-top: 10px;
             animation: slideDown 0.3s ease;
         }
 
@@ -113,21 +117,27 @@
         }
 
         .suffix-group {
-            margin-top: 12px;
+            margin-top: 10px;
+        }
+
+        .two-column-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
         }
 
         .button-group {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 12px;
-            margin-top: 32px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
         }
 
         button {
-            padding: 16px 28px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 12px;
-            font-size: 14px;
+            border-radius: 10px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -163,7 +173,7 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
         }
 
         .btn-secondary {
@@ -175,7 +185,7 @@
         .btn-secondary:hover {
             background: linear-gradient(135deg, #3d4758 0%, #4d5768 100%);
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(45, 55, 72, 0.4);
+            box-shadow: 0 6px 20px rgba(45, 55, 72, 0.4);
         }
 
         .btn-success {
@@ -186,7 +196,7 @@
 
         .btn-success:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(56, 239, 125, 0.5);
+            box-shadow: 0 6px 20px rgba(56, 239, 125, 0.5);
         }
 
         .btn-warning {
@@ -197,7 +207,7 @@
 
         .btn-warning:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5);
         }
 
         .btn-danger {
@@ -208,7 +218,7 @@
 
         .btn-danger:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
         }
 
         .btn-batch {
@@ -219,7 +229,7 @@
 
         .btn-batch:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 167, 38, 0.5);
+            box-shadow: 0 6px 20px rgba(255, 167, 38, 0.5);
         }
 
         button:active {
@@ -236,10 +246,10 @@
             display: none;
             background: rgba(26, 31, 46, 0.6);
             border: 2px solid rgba(102, 126, 234, 0.3);
-            border-radius: 16px;
-            padding: 24px;
-            margin-top: 24px;
-            max-height: 350px;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            max-height: 250px;
             overflow-y: auto;
             animation: fadeIn 0.4s ease;
         }
@@ -261,8 +271,8 @@
 
         .preview-box h3 {
             color: #667eea;
-            margin-bottom: 16px;
-            font-size: 17px;
+            margin-bottom: 12px;
+            font-size: 14px;
             font-weight: 700;
         }
 
@@ -271,14 +281,14 @@
         }
 
         .url-list li {
-            padding: 12px 16px;
-            margin-bottom: 8px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
             background: rgba(15, 20, 25, 0.8);
-            border-radius: 10px;
-            font-size: 13px;
+            border-radius: 8px;
+            font-size: 11px;
             color: #b8bfcc;
             word-break: break-all;
-            border-left: 4px solid #667eea;
+            border-left: 3px solid #667eea;
             transition: all 0.3s ease;
         }
 
@@ -288,10 +298,10 @@
         }
 
         .status-message {
-            margin-top: 20px;
-            padding: 16px 20px;
-            border-radius: 12px;
-            font-size: 14px;
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 12px;
             display: none;
             font-weight: 500;
             animation: slideIn 0.3s ease;
@@ -332,7 +342,7 @@
 
         /* Scrollbar styling */
         ::-webkit-scrollbar {
-            width: 10px;
+            width: 8px;
         }
 
         ::-webkit-scrollbar-track {
@@ -350,26 +360,26 @@
         }
 
         .info-text {
-            font-size: 12px;
+            font-size: 10px;
             color: #6b7280;
-            margin-top: 8px;
+            margin-top: 4px;
             font-style: italic;
         }
 
         .cleanup-btn-container {
-            margin-top: 12px;
+            margin-top: 10px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 8px;
         }
 
         /* Advanced Settings Section */
         .advanced-settings {
             background: rgba(26, 31, 46, 0.5);
             border: 2px solid rgba(45, 55, 72, 0.5);
-            border-radius: 16px;
-            padding: 24px;
-            margin-top: 32px;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
             transition: all 0.3s ease;
         }
 
@@ -383,7 +393,7 @@
             align-items: center;
             cursor: pointer;
             user-select: none;
-            padding: 8px;
+            padding: 6px;
             border-radius: 8px;
             transition: background 0.3s ease;
         }
@@ -393,18 +403,18 @@
         }
 
         .advanced-settings-header h2 {
-            font-size: 17px;
+            font-size: 14px;
             color: #667eea;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             font-weight: 700;
         }
 
         .toggle-icon {
             transition: transform 0.3s ease;
             color: #667eea;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
         }
 
@@ -420,15 +430,15 @@
 
         .advanced-settings-content.open {
             max-height: 2000px;
-            margin-top: 24px;
+            margin-top: 16px;
         }
 
         .input-counter {
-            font-size: 12px;
+            font-size: 10px;
             color: #667eea;
             font-weight: 700;
             margin-left: 8px;
-            padding: 4px 12px;
+            padding: 3px 10px;
             background: rgba(102, 126, 234, 0.15);
             border-radius: 20px;
             display: inline-block;
@@ -437,17 +447,17 @@
         .two-column {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
         }
 
         .progress-bar {
             display: none;
             width: 100%;
-            height: 10px;
+            height: 8px;
             background: rgba(26, 31, 46, 0.8);
             border-radius: 20px;
             overflow: hidden;
-            margin-top: 20px;
+            margin-top: 16px;
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
@@ -476,8 +486,8 @@
 
         .progress-text {
             text-align: center;
-            margin-top: 10px;
-            font-size: 13px;
+            margin-top: 8px;
+            font-size: 11px;
             color: #9ca3af;
             display: none;
             font-weight: 600;
@@ -489,7 +499,7 @@
 
         .stop-btn-container, .batch-control-container {
             display: none;
-            margin-top: 16px;
+            margin-top: 12px;
         }
 
         .stop-btn-container.active, .batch-control-container.active {
@@ -498,27 +508,27 @@
 
         .section-title {
             color: #d1d5db;
-            font-size: 14px;
-            margin-bottom: 18px;
+            font-size: 12px;
+            margin-bottom: 12px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
             border-bottom: 2px solid rgba(102, 126, 234, 0.3);
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
 
         .toggle-switch {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 14px;
         }
 
         .switch {
             position: relative;
             display: inline-block;
-            width: 56px;
-            height: 28px;
+            width: 50px;
+            height: 24px;
         }
 
         .switch input {
@@ -542,10 +552,10 @@
         .slider:before {
             position: absolute;
             content: "";
-            height: 20px;
-            width: 20px;
-            left: 4px;
-            bottom: 4px;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
             background-color: white;
             transition: 0.4s;
             border-radius: 50%;
@@ -556,11 +566,11 @@
         }
 
         input:checked + .slider:before {
-            transform: translateX(28px);
+            transform: translateX(26px);
         }
 
         .toggle-label {
-            font-size: 14px;
+            font-size: 12px;
             color: #d1d5db;
             font-weight: 600;
         }
@@ -569,10 +579,10 @@
             background: rgba(255, 167, 38, 0.15);
             border: 2px solid rgba(255, 167, 38, 0.4);
             color: #ffa726;
-            padding: 16px 20px;
-            border-radius: 12px;
-            margin-top: 16px;
-            font-size: 14px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-top: 12px;
+            font-size: 12px;
             font-weight: 600;
             text-align: center;
             display: none;
@@ -584,18 +594,18 @@
 
         @media (max-width: 768px) {
             .container {
-                padding: 30px 20px;
+                padding: 20px 16px;
             }
 
             h1 {
-                font-size: 26px;
+                font-size: 22px;
             }
 
             .button-group {
                 grid-template-columns: 1fr;
             }
 
-            .two-column {
+            .two-column, .two-column-form {
                 grid-template-columns: 1fr;
             }
 
@@ -608,33 +618,35 @@
 <body>
     <div class="container">
         <center><h1>🚀 URL Bulk Opener</h1></center>
-        <center><p class="subtitle">Open multiple URLs instantly with custom prefixes and manual control</p></center>
+        <center><p class="subtitle">Open multiple URLs with manual batch control</p></center>
 
-        <div class="form-group">
-            <label for="prefixSelect">URL Prefix Template</label>
-            <select id="prefixSelect">
-                <option value="https://www.amazon.com/s?k=">Amazon Search</option>
-                <option value="https://www.amazon.com/dp/">Amazon Product (DP)</option>
-                <option value="https://www.etsy.com/listing/">Etsy Listing</option>
-                <option value="custom">🔧 Custom Prefix</option>
-            </select>
-            
-            <div class="custom-prefix-group" id="customPrefixGroup">
-                <input type="text" id="customPrefix" placeholder="Enter custom prefix (e.g., https://example.com/product/)">
+        <div class="two-column-form">
+            <div class="form-group-compact">
+                <label for="prefixSelect">URL Prefix Template</label>
+                <select id="prefixSelect">
+                    <option value="https://www.amazon.com/s?k=">Amazon Search</option>
+                    <option value="https://www.amazon.com/dp/">Amazon Product (DP)</option>
+                    <option value="https://www.etsy.com/listing/">Etsy Listing</option>
+                    <option value="custom">🔧 Custom Prefix</option>
+                </select>
             </div>
 
-            <div class="page-number-group" id="pageNumberGroup">
-                <label for="pageNumber">Page Number (leave 0 or 1 to skip)</label>
-                <input type="number" id="pageNumber" placeholder="Page number (e.g., 2, 3, 4...)" min="0" value="1">
-            </div>
-
-            <div class="suffix-group">
+            <div class="form-group-compact">
                 <label for="customSuffix">Custom Suffix (Optional)</label>
-                <input type="text" id="customSuffix" placeholder="Enter custom suffix (e.g., &ref=nb_sb_noss or &color=blue)">
+                <input type="text" id="customSuffix" placeholder="e.g., &ref=nb_sb_noss">
             </div>
         </div>
 
-        <div class="form-group">
+        <div class="custom-prefix-group" id="customPrefixGroup">
+            <input type="text" id="customPrefix" placeholder="Enter custom prefix (e.g., https://example.com/product/)">
+        </div>
+
+        <div class="page-number-group" id="pageNumberGroup">
+            <label for="pageNumber">Page Number (leave 0 or 1 to skip)</label>
+            <input type="number" id="pageNumber" placeholder="Page number" min="0" value="1">
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
             <label for="inputArea">
                 Input (One ID/ASIN per line)
                 <span class="input-counter" id="inputCounter">0 lines</span>
@@ -643,21 +655,27 @@
 B09G9FPHY6
 B0BN2SXPQR
 
-Or override per line:
-https://custom.com/special-item"></textarea>
-            <p class="info-text">💡 Tip: Start any line with "http" to use a custom URL for that specific entry</p>
+Or full URLs:
+https://custom.com/item"></textarea>
+            <p class="info-text">💡 Tip: Lines starting with "http" are used as-is</p>
             
             <div class="cleanup-btn-container">
                 <button class="btn-warning" id="cleanupBtn">🧹 Clean Up</button>
-                <button class="btn-secondary" id="removeDuplicatesBtn">🔄 Remove Duplicates</button>
+                <button class="btn-secondary" id="removeDuplicatesBtn">🔄 Remove Dupes</button>
             </div>
         </div>
 
         <div class="button-group">
-            <button class="btn-secondary" id="previewBtn">👁️ Preview URLs</button>
-            <button class="btn-primary" id="openAllBtn">🔗 Open All URLs</button>
-            <button class="btn-success" id="copyBtn">📋 Copy URLs</button>
+            <button class="btn-secondary" id="previewBtn">👁️ Preview</button>
+            <button class="btn-primary" id="openAllBtn" style="display: none;">🔗 Open All</button>
+            <button class="btn-success" id="copyBtn">📋 Copy</button>
         </div>
+
+        <div class="batch-control-container active" id="batchControlContainer">
+            <button class="btn-batch" id="openBatchBtn" style="width: 100%;">📦 Open Batch 1</button>
+        </div>
+
+        <div class="batch-info" id="batchInfo"></div>
 
         <div class="progress-bar" id="progressBar">
             <div class="progress-fill" id="progressFill"></div>
@@ -665,14 +683,8 @@ https://custom.com/special-item"></textarea>
         <div class="progress-text" id="progressText"></div>
 
         <div class="stop-btn-container" id="stopBtnContainer">
-            <button class="btn-danger" id="stopBtn" style="width: 100%;">⏹️ Stop Opening URLs</button>
+            <button class="btn-danger" id="stopBtn" style="width: 100%;">⏹️ Stop Opening</button>
         </div>
-
-        <div class="batch-control-container" id="batchControlContainer">
-            <button class="btn-batch" id="openBatchBtn" style="width: 100%;">📦 Open Batch 1</button>
-        </div>
-
-        <div class="batch-info" id="batchInfo"></div>
 
         <div class="preview-box" id="previewBox">
             <h3>Generated URLs (<span id="urlCount">0</span>)</h3>
@@ -690,63 +702,62 @@ https://custom.com/special-item"></textarea>
             <div class="advanced-settings-content" id="advancedSettingsContent">
                 
                 <!-- Batch Mode Toggle -->
-                <div class="form-group">
+                <div class="form-group-compact">
                     <div class="section-title">Batch Opening Mode</div>
                     <div class="toggle-switch">
                         <label class="switch">
-                            <input type="checkbox" id="manualModeToggle">
+                            <input type="checkbox" id="manualModeToggle" checked>
                             <span class="slider"></span>
                         </label>
-                        <span class="toggle-label">Manual Batch Mode (Click to open each batch)</span>
+                        <span class="toggle-label">Manual Mode (click per batch)</span>
                     </div>
-                    <p class="info-text">When enabled, you'll open batches one at a time by clicking. Progress resets if you edit the textarea.</p>
+                    <p class="info-text">Manual mode lets you control when each batch opens. Auto mode opens all at once with delays.</p>
                 </div>
 
                 <!-- Batch Settings -->
-                <div class="form-group">
-                    <div class="section-title">Batch Opening Settings</div>
+                <div class="form-group-compact">
+                    <div class="section-title">Batch Settings</div>
                     <div class="two-column">
                         <div>
                             <label for="batchSize">Batch Size</label>
                             <input type="number" id="batchSize" placeholder="URLs per batch" min="1" max="50" value="10">
-                            <p class="info-text">URLs to open at once (1-50)</p>
+                            <p class="info-text">URLs per batch (1-50)</p>
                         </div>
                         <div>
-                            <label for="batchDelay">Delay Between Batches (ms)</label>
-                            <input type="number" id="batchDelay" placeholder="Delay in milliseconds" min="0" max="5000" value="500" step="100">
+                            <label for="batchDelay">Auto Delay (ms)</label>
+                            <input type="number" id="batchDelay" placeholder="Delay" min="0" max="5000" value="500" step="100">
                             <p class="info-text">Auto mode only (0-5000ms)</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Advanced Cleanup -->
-                <div class="form-group">
-                    <div class="section-title">Advanced Cleanup Options</div>
+                <div class="form-group-compact">
+                    <div class="section-title">Advanced Cleanup</div>
                     
-                    <div class="form-group">
-                        <label for="removeContaining">Remove Lines Containing Text</label>
-                        <input type="text" id="removeContaining" placeholder="Enter text to remove (case-insensitive)">
-                        <p class="info-text">Remove all lines containing this text</p>
+                    <div class="form-group-compact">
+                        <label for="removeContaining">Remove Lines Containing</label>
+                        <input type="text" id="removeContaining" placeholder="Text to remove">
+                        <p class="info-text">Remove lines with this text</p>
                     </div>
 
-                    <div class="form-group">
-                        <label for="regexPattern">Remove Lines Matching Regex Pattern</label>
-                        <input type="text" id="regexPattern" placeholder="e.g., ^\d+$ to remove pure numbers">
-                        <p class="info-text">Advanced: Use regex patterns for custom filtering</p>
+                    <div class="form-group-compact">
+                        <label for="regexPattern">Regex Pattern</label>
+                        <input type="text" id="regexPattern" placeholder="e.g., ^\d+$">
+                        <p class="info-text">Remove lines matching pattern</p>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group-compact">
                         <label for="extractMode">Extract Mode</label>
                         <select id="extractMode">
                             <option value="none">None (Keep All)</option>
-                            <option value="text">Extract Only Text Lines</option>
+                            <option value="text">Extract Only Text</option>
                             <option value="numbers">Extract Only Numbers</option>
                             <option value="urls">Extract Only URLs</option>
                         </select>
-                        <p class="info-text">Keep only specific types of lines</p>
                     </div>
 
-                    <button class="btn-warning" id="advancedCleanupBtn" style="width: 100%; margin-top: 10px;">
+                    <button class="btn-warning" id="advancedCleanupBtn" style="width: 100%; margin-top: 8px;">
                         🔧 Apply Advanced Cleanup
                     </button>
                 </div>
@@ -802,7 +813,7 @@ https://custom.com/special-item"></textarea>
         let shouldStopBatch = false;
         let currentBatchIndex = 0;
         let totalBatches = 0;
-        let isManualMode = false;
+        let isManualMode = true; // Default to manual mode
         let lastTextareaContent = '';
 
         // Toggle Advanced Settings
@@ -865,7 +876,7 @@ https://custom.com/special-item"></textarea>
                 } else {
                     openBatchBtn.textContent = `✅ All Batches Opened!`;
                     openBatchBtn.disabled = true;
-                    batchInfo.textContent = `🎉 Completed! All ${totalBatches} batches have been opened.`;
+                    batchInfo.textContent = `🎉 Completed! All ${totalBatches} batches opened.`;
                     batchInfo.classList.add('active');
                 }
             }
@@ -938,7 +949,7 @@ https://custom.com/special-item"></textarea>
             const removed = lines.length - uniqueLines.length;
             inputArea.value = uniqueLines.join('\n');
             updateInputCounter();
-            showStatus(`🔄 Removed ${removed} duplicate line${removed !== 1 ? 's' : ''}. Kept ${uniqueLines.length} unique entries.`, 'success');
+            showStatus(`🔄 Removed ${removed} duplicate${removed !== 1 ? 's' : ''}. Kept ${uniqueLines.length}.`, 'success');
             saveToLocalStorage();
         });
 
@@ -963,7 +974,7 @@ https://custom.com/special-item"></textarea>
 
             inputArea.value = cleanedLines.join('\n');
             updateInputCounter();
-            showStatus(`🧹 Cleaned up! Removed ${lines.length - cleanedLines.length} lines. Kept ${cleanedLines.length} unique entries.`, 'success');
+            showStatus(`🧹 Cleaned! Removed ${lines.length - cleanedLines.length} lines.`, 'success');
             saveToLocalStorage();
         });
 
@@ -1002,7 +1013,7 @@ https://custom.com/special-item"></textarea>
 
             inputArea.value = uniqueLines.join('\n');
             updateInputCounter();
-            showStatus(`🔧 Advanced cleanup complete! Removed ${originalCount - uniqueLines.length} lines. Kept ${uniqueLines.length} entries.`, 'success');
+            showStatus(`🔧 Advanced cleanup done! Kept ${uniqueLines.length} entries.`, 'success');
             saveToLocalStorage();
         });
 
@@ -1081,7 +1092,7 @@ https://custom.com/special-item"></textarea>
             progressBar.classList.remove('active');
             progressText.classList.remove('active');
             openAllBtn.disabled = false;
-            showStatus('⏹️ Batch opening stopped by user', 'info');
+            showStatus('⏹️ Stopped', 'info');
         });
 
         // Open all URLs in batches (auto mode)
@@ -1099,7 +1110,7 @@ https://custom.com/special-item"></textarea>
             stopBtnContainer.classList.add('active');
             openAllBtn.disabled = true;
 
-            showStatus(`🚀 Opening ${generatedURLs.length} URLs in batches of ${batchSizeValue}...`, 'info');
+            showStatus(`🚀 Opening ${generatedURLs.length} URLs...`, 'info');
 
             let currentIndex = 0;
 
@@ -1113,7 +1124,7 @@ https://custom.com/special-item"></textarea>
                     progressText.classList.remove('active');
                     stopBtnContainer.classList.remove('active');
                     openAllBtn.disabled = false;
-                    showStatus(`✅ Successfully opened ${generatedURLs.length} URLs`, 'success');
+                    showStatus(`✅ Opened ${generatedURLs.length} URLs`, 'success');
                     return;
                 }
 
@@ -1127,7 +1138,7 @@ https://custom.com/special-item"></textarea>
                 
                 const progress = (currentIndex / generatedURLs.length) * 100;
                 progressFill.style.width = progress + '%';
-                progressText.textContent = `Opened ${currentIndex} of ${generatedURLs.length} URLs`;
+                progressText.textContent = `Opened ${currentIndex} of ${generatedURLs.length}`;
 
                 if (currentIndex < generatedURLs.length) {
                     batchTimeout = setTimeout(openNextBatch, delayValue);
@@ -1136,7 +1147,7 @@ https://custom.com/special-item"></textarea>
                     progressText.classList.remove('active');
                     stopBtnContainer.classList.remove('active');
                     openAllBtn.disabled = false;
-                    showStatus(`✅ Successfully opened ${generatedURLs.length} URLs`, 'success');
+                    showStatus(`✅ Opened ${generatedURLs.length} URLs`, 'success');
                 }
             };
 
@@ -1153,7 +1164,7 @@ https://custom.com/special-item"></textarea>
 
             try {
                 await navigator.clipboard.writeText(urlText);
-                showStatus(`📋 Copied ${generatedURLs.length} URLs to clipboard`, 'success');
+                showStatus(`📋 Copied ${generatedURLs.length} URLs`, 'success');
             } catch (err) {
                 const textarea = document.createElement('textarea');
                 textarea.value = urlText;
@@ -1161,7 +1172,7 @@ https://custom.com/special-item"></textarea>
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                showStatus(`📋 Copied ${generatedURLs.length} URLs to clipboard`, 'success');
+                showStatus(`📋 Copied ${generatedURLs.length} URLs`, 'success');
             }
         });
 
@@ -1222,11 +1233,12 @@ https://custom.com/special-item"></textarea>
                 batchDelay.value = savedBatchDelay;
             }
 
-            if (savedManualMode === 'true') {
-                manualModeToggle.checked = true;
-                isManualMode = true;
-                openAllBtn.style.display = 'none';
-                batchControlContainer.classList.add('active');
+            // Manual mode is default, but respect saved preference
+            if (savedManualMode === 'false') {
+                manualModeToggle.checked = false;
+                isManualMode = false;
+                openAllBtn.style.display = 'block';
+                batchControlContainer.classList.remove('active');
             }
         });
 
