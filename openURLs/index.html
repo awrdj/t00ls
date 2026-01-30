@@ -742,7 +742,7 @@
             </label>
             <div class="textarea-container">
                 <!--<textarea id="lineNumbers" readonly></textarea>-->
-                <textarea id="lineNumbers" readonly></textarea>
+                <div id="lineNumbers"></div>
                 <textarea id="inputArea" placeholder="B08N5WRWNW
 B09G9FPHY6
 B0BN2SXPQR
@@ -936,10 +936,12 @@ function markLinesAsOpened(startLine, endLine) {
     }
 }
 
-        // Sync scroll between textareas and div
+        // Sync scroll between textareas (both directions)
 inputArea.addEventListener('scroll', () => {
     lineNumbers.scrollTop = inputArea.scrollTop;
+    lineNumbers.scrollLeft = inputArea.scrollLeft;
 });
+
 
         // Toggle Advanced Settings
         advancedSettingsHeader.addEventListener('click', () => {
