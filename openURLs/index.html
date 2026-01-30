@@ -92,7 +92,55 @@
         textarea {
             min-height: 140px;
             resize: vertical;
-            line-height: 1.6;
+            line-height: 1.625;
+        }
+
+        /* Textarea with line numbers */
+        .textarea-container {
+            display: flex;
+            width: 100%;
+            min-height: 140px;
+            border-radius: 10px;
+            border: 2px solid rgba(45, 55, 72, 0.6);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: rgba(26, 31, 46, 0.8);
+        }
+
+        .textarea-container:focus-within {
+            border-color: #667eea;
+            background: rgba(26, 31, 46, 1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        #lineNumbers {
+            width: 45px;
+            padding: 10px 8px;
+            text-align: right;
+            background: rgba(45, 55, 72, 0.4);
+            color: #6b7280;
+            user-select: none;
+            resize: none;
+            border: none;
+            outline: none;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.625;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        #inputArea {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            background: transparent;
+            color: #e4e4e4;
+            font-size: 13px;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            line-height: 1.625;
+            resize: none;
+            outline: none;
         }
 
         .custom-prefix-group, .page-number-group {
@@ -673,12 +721,15 @@
                 Input (One ID/ASIN per line)
                 <span class="input-counter" id="inputCounter">0 lines</span>
             </label>
-            <textarea id="inputArea" placeholder="B08N5WRWNW
+            <div class="textarea-container">
+                <textarea id="lineNumbers" readonly></textarea>
+                <textarea id="inputArea" placeholder="B08N5WRWNW
 B09G9FPHY6
 B0BN2SXPQR
 
 Or full URLs:
 https://custom.com/item"></textarea>
+            </div>
             <p class="info-text">💡 Tip: Lines starting with "http" are used as-is</p>
         </div>
 
@@ -799,6 +850,7 @@ https://custom.com/item"></textarea>
         const pageNumber = document.getElementById('pageNumber');
         const customSuffix = document.getElementById('customSuffix');
         const inputArea = document.getElementById('inputArea');
+        const lineNumbers = document.getElementById('lineNumbers');
         const inputCounter = document.getElementById('inputCounter');
         const previewBtn = document.getElementById('previewBtn');
         const copyBtn = document.getElementById('copyBtn');
@@ -840,6 +892,18 @@ https://custom.com/item"></textarea>
         let isManualMode = true; // Default to manual mode
         let lastTextareaContent = '';
 
+        // Update line numbers
+        function updateLineNumbers() {
+            const lines = inputArea.value.split('\n');
+            const lineNumberText = lines.map((_, index) => index + 1).join('\n');
+            lineNumbers.value = lineNumberText;
+        }
+
+        // Sync scroll between textareas
+        inputArea.addEventListener('scroll', () => {
+            lineNumbers.scrollTop = inputArea.scrollTop;
+        });
+
         // Toggle Advanced Settings
         advancedSettingsHeader.addEventListener('click', () => {
             advancedSettingsContent.classList.toggle('open');
@@ -859,6 +923,7 @@ https://custom.com/item"></textarea>
 
         inputArea.addEventListener('input', () => {
             updateInputCounter();
+            updateLineNumbers();
             
             // Reset batch progress if textarea content changes in manual mode
             if (isManualMode && inputArea.value !== lastTextareaContent) {
@@ -866,6 +931,9 @@ https://custom.com/item"></textarea>
                 lastTextareaContent = inputArea.value;
             }
         });
+
+        // Initialize line numbers on load
+        updateLineNumbers();
 
         // Update main action button based on mode
         function updateMainActionButton() {
@@ -1044,6 +1112,7 @@ https://custom.com/item"></textarea>
             const removed = lines.length - uniqueLines.length;
             inputArea.value = uniqueLines.join('\n');
             updateInputCounter();
+            updateLineNumbers();
             showStatus(`🔄 Removed ${removed} duplicate${removed !== 1 ? 's' : ''}`, 'success');
             saveToLocalStorage();
         });
@@ -1069,6 +1138,7 @@ https://custom.com/item"></textarea>
 
             inputArea.value = cleanedLines.join('\n');
             updateInputCounter();
+            updateLineNumbers();
             showStatus(`🧹 Cleaned! Kept ${cleanedLines.length} entries`, 'success');
             saveToLocalStorage();
         });
@@ -1088,6 +1158,7 @@ https://custom.com/item"></textarea>
             
             inputArea.value = lines.join('\n');
             updateInputCounter();
+            updateLineNumbers();
             showStatus(`🗑️ Removed ${originalCount - lines.length} lines containing "${removeContaining.value.trim()}"`, 'success');
             saveToLocalStorage();
         });
@@ -1112,6 +1183,7 @@ https://custom.com/item"></textarea>
 
             inputArea.value = lines.join('\n');
             updateInputCounter();
+            updateLineNumbers();
             showStatus(`🗑️ Removed ${originalCount - lines.length} lines matching pattern`, 'success');
             saveToLocalStorage();
         });
@@ -1140,6 +1212,7 @@ https://custom.com/item"></textarea>
 
             inputArea.value = lines.join('\n');
             updateInputCounter();
+            updateLineNumbers();
             showStatus(`✂️ Extracted ${lines.length} ${mode} lines (removed ${originalCount - lines.length})`, 'success');
             saveToLocalStorage();
         });
@@ -1291,6 +1364,7 @@ https://custom.com/item"></textarea>
                 inputArea.value = savedInput;
                 lastTextareaContent = savedInput;
                 updateInputCounter();
+                updateLineNumbers();
             }
 
             if (savedBatchSize) {
