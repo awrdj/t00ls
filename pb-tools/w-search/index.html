@@ -1,0 +1,3334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Word Search Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Libraries for PDF and PNG export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Google Fonts Preload -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link id="google-fonts-link" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&family=Lora:wght@400;700&family=Playfair+Display:wght@400;700&family=Lobster&family=Pacifico&family=Creepster&family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <style id="dynamic-styles"></style>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for printing and export */
+        @media print {
+            body, .no-print { visibility: hidden; }
+            #print-section, #print-section * { visibility: visible; }
+            #print-section { position: absolute; left: 0; top: 0; width: 100%; padding: 1rem; }
+        }
+        #print-section {
+            background-color: white; /* Ensure a white background for exports */
+        }
+        /* Custom styles for the puzzle grid */
+        #puzzle-container, #solution-container-wrapper {
+            overflow-x: auto; /* Allow horizontal scrolling for large grids */
+            padding-bottom: 1rem; /* Add some space for scrollbar */
+        }
+        .puzzle-grid {
+            display: grid;
+            user-select: none;
+            grid-template-columns: repeat(var(--grid-cols, 15), 1fr);
+            margin-top: 0.3rem;
+            position: relative; /* Needed for overlay positioning */
+        }
+        .grid-cell {
+            border: 1px solid #d1d5db; /* gray-300 */
+            text-align: center;
+            text-transform: uppercase;
+            transition: background-color 0.2s;
+            position: relative;
+            box-sizing: border-box;    
+            overflow: visible;    
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .grid-cell span {
+            position: relative;
+            z-index: 2; /* Ensure text is above highlights */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        .grid-cell.selected {
+            background-color: #60a5fa; /* blue-400 */
+            color: white;
+        }
+        .word-list-item.found {
+            text-decoration: line-through;
+            color: #9ca3af; /* gray-400 */
+        }
+        /* Styles for the grid editor */
+        .grid-editor-table {
+            border-collapse: collapse;
+            user-select: none; /* Prevent text selection while dragging */
+        }
+        .grid-editor-cell {
+            width: 2.25em;
+            height: 2.25em;
+            border: 1px solid #9ca3af; /* gray-400 */
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+         .grid-editor-cell:hover {
+            outline: 2px solid #6366f1; /* indigo-500 */
+        }
+        .grid-editor-cell.active {
+            background-color: #a5b4fc; /* indigo-300 */
+        }
+        .grid-editor-cell.inactive {
+            background-color: #e5e7eb; /* gray-200 */
+        }
+        /* Styles for the direction selector */
+        .direction-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .direction-btn.active {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+            transform: scale(1.05);
+        }
+        .direction-btn.active svg {
+            stroke: white;
+        }
+        /* Loader for image processing */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #4f46e5;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Accordion Styles */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        #solution-container {
+            position: relative;
+        }
+        /* SVG Overlay Styles */
+        #highlight-overlay-bg, #highlight-overlay-fg {
+            position: absolute;
+            top: 0.15rem;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        #highlight-overlay-bg {
+             z-index: 1; /* Behind text */
+        }
+        #highlight-overlay-fg {
+            z-index: 3; /* In front of text */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- AI Topic Input Modal -->
+    <div id="topic-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Generate Words from a Topic</h3>
+            <p class="text-gray-600 mb-4">Enter a topic and the number of words you'd like to generate.</p>
+            <div class="flex gap-4">
+                <div class="flex-1">
+                    <label for="topic-input" class="block text-sm font-medium text-gray-700">Topic</label>
+                    <input type="text" id="topic-input" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Winter">
+                </div>
+                <div>
+                    <label for="word-count" class="block text-sm font-medium text-gray-700">Count</label>
+                    <input type="number" id="word-count" value="15" min="5" max="50" class="mt-1 block w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-4">
+                <button id="modal-cancel-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+                <button id="modal-generate-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Generate Words</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unified Export Modal -->
+    <div id="export-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Export Options</h3>
+                <button id="export-close-btn" class="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left column for options -->
+                <div id="export-options-container" class="space-y-6">
+                    <!-- NEW: Fully Restructured Content Section -->
+                    <div class="space-y-2">
+                        <h4 class="font-semibold text-gray-800">Content to Include</h4>
+                        <div>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="export-include-puzzle" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                                <span>Puzzle Grid</span>
+                            </label>
+                            <div id="export-puzzle-grid-options" class="pl-6 mt-2 space-y-2">
+                                 <label class="flex items-center space-x-2 text-sm text-gray-600">
+                                     <input type="checkbox" id="export-preserve-backgrounds-puzzle" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                                     <span>Preserve Cell Backgrounds</span>
+                                 </label>
+                                 <label class="flex items-center space-x-2 text-sm text-gray-600">
+                                     <input type="checkbox" id="export-preserve-lines-puzzle" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                                     <span>Preserve All Cell Lines</span>
+                                 </label>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="export-include-solution" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                <span>Answer Key Grid</span>
+                            </label>
+                             <div id="export-solution-grid-options" class="pl-6 mt-2 space-y-2 hidden">
+                                 <label class="flex items-center space-x-2 text-sm text-gray-600">
+                                     <input type="checkbox" id="export-preserve-backgrounds-solution" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                                     <span>Preserve Cell Backgrounds</span>
+                                 </label>
+                                 <label class="flex items-center space-x-2 text-sm text-gray-600">
+                                     <input type="checkbox" id="export-preserve-lines-solution" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                                     <span>Preserve All Cell Lines</span>
+                                 </label>
+                                 <label class="flex items-center space-x-2 text-sm text-gray-600 mt-2">
+                                    <input type="checkbox" id="export-show-highlights" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                    <span>Answer Highlights/Lines</span>
+                                 </label>
+                                 <label class="flex items-center space-x-2 text-sm text-gray-600">
+                                     <input type="checkbox" id="export-hide-filler" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                     <span>Show only answer letters</span>
+                                 </label>
+                                 <label class="flex items-center space-x-2 font-medium text-indigo-600 text-sm mt-2">
+                                     <input type="checkbox" id="export-highlights-only" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                     <span>Export Highlights Only</span>
+                                 </label>
+                             </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 border-t pt-4" id="export-pdf-options">
+                        <h4 class="font-semibold text-gray-800">PDF Options</h4>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="export-solution-newpage" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                            <span>Place Answer Key on a separate page</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="export-pdf-include-bg" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                            <span>Include Background Color</span>
+                        </label>
+                    </div>
+                    
+                    <div class="space-y-2 border-t pt-4" id="export-image-options">
+                         <h4 class="font-semibold text-gray-800">Image & SVG Options</h4>
+                         <label class="flex items-center space-x-2">
+                             <input type="checkbox" id="export-transparent-bg" class="rounded text-indigo-600 focus:ring-indigo-500">
+                             <span>Transparent Background (PNG only)</span>
+                         </label>
+                    </div>
+                </div>
+                <!-- Right column for preview -->
+                <div class="bg-gray-100 p-2 rounded-lg flex items-center justify-center">
+                    <canvas id="export-preview-canvas" class="max-w-full max-h-full"></canvas>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-4">
+                <button id="export-cancel-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+                <button id="export-proceed-btn" class="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 flex items-center gap-2">
+                    <span id="export-proceed-text">Export</span>
+                    <div id="export-loader" class="loader hidden"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container mx-auto p-4 md:p-8">
+        <h1 class="text-4xl font-bold text-center text-gray-900 mb-2">Word Search Generator</h1>
+        <p class="text-center text-gray-600 mb-8">Create, customize, and solve your own professional word search puzzles.</p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Controls Column -->
+            <div class="lg:col-span-1 bg-white rounded-xl shadow-lg overflow-hidden no-print">
+                
+                <!-- Accordion Section 0: Save & Load -->
+                <div class="accordion-section border-b">
+                    <h2 class="accordion-header flex justify-between items-center w-full p-4 text-xl font-bold text-gray-800 cursor-pointer hover:bg-gray-50 transition-colors">
+                        <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 -mt-1"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>Save & Load</span>
+                        <svg class="accordion-icon w-6 h-6 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </h2>
+                    <div class="accordion-content">
+                        <div class="p-6 pt-2 space-y-6">
+                            <!-- Save Section -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">Save Current Configuration</label>
+                                <button id="save-config-btn" class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-colors duration-200">Generate & Copy Code</button>
+                                <textarea id="config-output" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder="Your configuration code will appear here..." readonly></textarea>
+                            </div>
+                            <!-- Load Section -->
+                            <div class="space-y-2 border-t pt-4">
+                                <label for="config-input" class="block text-sm font-medium text-gray-700">Load Configuration from Code</label>
+                                <textarea id="config-input" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Paste your saved configuration code here..."></textarea>
+                                <button id="load-config-btn" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-200">Load Configuration</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion Section 1: Puzzle Details -->
+                <div class="accordion-section border-b">
+                    <h2 class="accordion-header flex justify-between items-center w-full p-4 text-xl font-bold text-gray-800 cursor-pointer hover:bg-gray-50 transition-colors">
+                        <span>1. Puzzle Details</span>
+                        <svg class="accordion-icon w-6 h-6 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </h2>
+                    <div class="accordion-content">
+                        <div class="p-6 pt-2 space-y-4">
+                            <div>
+                                <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                                <input type="text" id="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Programming Languages">
+                            </div>
+                            <div>
+                                <label for="hidden-message" class="block text-sm font-medium text-gray-700">Optional Hidden Message</label>
+                                <input type="text" id="hidden-message" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="A secret phrase...">
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label for="words" class="block text-sm font-medium text-gray-700">Words (one per line)</label>
+                                    <div id="ai-word-generator-container" class="hidden items-center gap-2">
+                                        <button id="get-words-btn" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Words from Topic</button>
+                                        <div id="ai-loader" class="loader hidden"></div>
+                                    </div>
+                                </div>
+                                <div class="flex w-full h-48 rounded-md border border-gray-300 shadow-sm focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 overflow-hidden">
+                                    <textarea id="line-numbers" readonly class="w-12 p-2 text-right bg-gray-100 text-gray-400 select-none resize-none border-0 focus:ring-0" style="font-family: monospace; line-height: 1.625;"></textarea>
+                                    <textarea id="words" class="flex-1 p-2 border-0 focus:ring-0 resize-none" placeholder="HTML&#10;CSS&#10;JAVASCRIPT" style="font-family: monospace; line-height: 1.625;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion Section 2: Grid Options -->
+                <div class="accordion-section border-b">
+                    <h2 class="accordion-header flex justify-between items-center w-full p-4 text-xl font-bold text-gray-800 cursor-pointer hover:bg-gray-50 transition-colors">
+                        <span>2. Grid Options</span>
+                        <svg class="accordion-icon w-6 h-6 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </h2>
+                    <div class="accordion-content">
+                        <div class="p-6 pt-2 space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="grid-rows" class="block text-sm font-medium text-gray-700">Rows</label>
+                                    <input type="number" id="grid-rows" value="15" min="5" max="60" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                </div>
+                                <div>
+                                    <label for="grid-cols" class="block text-sm font-medium text-gray-700">Columns</label>
+                                    <input type="number" id="grid-cols" value="15" min="5" max="60" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="filler-letters" class="block text-sm font-medium text-gray-700">Custom Filler Letters</label>
+                                <input type="text" id="filler-letters" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Leave empty for random A-Z">
+                            </div>
+                            <div>
+                                <label for="shape-select" class="block text-sm font-medium text-gray-700">Shape</label>
+                                <select id="shape-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    <!-- Shapes will be populated by JS -->
+                                </select>
+                            </div>
+                            <div id="custom-grid-editor-container" class="hidden space-y-4 mt-4 border-t pt-4">
+                                <div>
+                                    <label for="brush-mode" class="block text-sm font-medium text-gray-700">Brush Mode</label>
+                                    <select id="brush-mode" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                        <option value="auto">Auto (Toggle)</option>
+                                        <option value="add">Add Cells</option>
+                                        <option value="remove">Remove Cells</option>
+                                    </select>
+                                </div>
+                                <p class="text-sm text-gray-600">Click and drag to design your puzzle shape.</p>
+                                <div id="grid-editor" class="overflow-x-auto p-2 bg-gray-50 rounded-lg"></div>
+                            </div>
+                            <div id="image-upload-container" class="hidden space-y-4 mt-4 border-t pt-4">
+                                <label for="image-uploader" class="block text-sm font-medium text-gray-700">Upload Silhouette Image</label>
+                                <input type="file" id="image-uploader" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+                                <div id="image-process-options" class="hidden space-y-2">
+                                    <p class="text-sm text-gray-600">Image loaded. Choose how to create the grid:</p>
+                                    <div class="flex items-center gap-2">
+                                        <button id="fit-to-grid-btn" class="flex-1 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-200">Fit to Grid</button>
+                                        <button id="auto-size-btn" class="flex-1 bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-colors duration-200">Auto-Size</button>
+                                        <div id="image-loader" class="loader hidden"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="grid-code-container" class="hidden space-y-4 mt-4 border-t pt-4">
+                                <label for="grid-code-input" class="block text-sm font-medium text-gray-700">Paste Grid Code</label>
+                                <textarea id="grid-code-input" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Paste your saved grid code here..."></textarea>
+                                <button id="apply-code-btn" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-200">Apply Code</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion Section 3: Word Directions -->
+                <div class="accordion-section border-b">
+                    <h2 class="accordion-header flex justify-between items-center w-full p-4 text-xl font-bold text-gray-800 cursor-pointer hover:bg-gray-50 transition-colors">
+                        <span>3. Word Directions</span>
+                        <svg class="accordion-icon w-6 h-6 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </h2>
+                    <div class="accordion-content">
+                        <div class="p-6 pt-2">
+                            <div id="direction-checkboxes" class="hidden">
+                                <!-- Left to right --> <input type="checkbox" id="dir-h" checked>
+                                <!-- Top to bottom --> <input type="checkbox" id="dir-v" checked>
+                                <!-- Bottom to top --> <input type="checkbox" id="dir-vr" checked>
+                                <!-- Top-left to bottom-right --> <input type="checkbox" id="dir-d" checked>
+                                <!-- Bottom-left to top-right --> <input type="checkbox" id="dir-du">
+                                <!-- Right to left --> <input type="checkbox" id="dir-hr">
+                                <!-- Top-right to bottom-left --> <input type="checkbox" id="dir-dur">
+                                <!-- Bottom-right to top-left --> <input type="checkbox" id="dir-dr">
+                            </div>
+                            <div id="direction-selector" class="grid grid-cols-3 gap-2">
+                                <!-- Direction controls will be generated here by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Accordion Section 4: Styling Options -->
+                <div class="accordion-section">
+                    <h2 class="accordion-header flex justify-between items-center w-full p-4 text-xl font-bold text-gray-800 cursor-pointer hover:bg-gray-50 transition-colors">
+                        <span>4. Styling Options</span>
+                        <svg class="accordion-icon w-6 h-6 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </h2>
+                    <div class="accordion-content">
+                        <div class="p-6 pt-2 space-y-4">
+                            <div class="space-y-4 bg-gray-50 p-4 rounded-lg">
+                                <!-- Font Selection -->
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <p class="font-semibold text-gray-700 mb-3">Font</p>
+                                    <div>
+                                        <label for="font-method-select" class="block text-sm font-medium text-gray-700">Method</label>
+                                        <!-- NEW: Added Font from URL option -->
+                                        <select id="font-method-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                            <option value="google">Add Google Font</option>
+                                            <option value="url">Add Font from URL</option>
+                                            <option value="upload">Upload Font</option>
+                                        </select>
+                                    </div>
+                                    <div id="google-font-container" class="mt-3 space-y-3">
+                                         <div>
+                                            <label for="google-font-input" class="block text-sm font-medium text-gray-700">Google Font Link</label>
+                                            <div class="flex gap-2 mt-1">
+                                                <input type="text" id="google-font-input" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Paste <link> tag here'>
+                                                <button id="add-google-font-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
+                                            </div>
+                                         </div>
+                                    </div>
+                                    <!-- NEW: Container for Font from URL -->
+                                    <div id="url-font-container" class="mt-3 space-y-3 hidden">
+                                         <div>
+                                            <label for="url-font-css-input" class="block text-sm font-medium text-gray-700">CSS URL</label>
+                                            <input type="url" id="url-font-css-input" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='https://.../font.css'>
+                                         </div>
+                                         <div>
+                                            <label for="url-font-family-input" class="block text-sm font-medium text-gray-700">Font Family Name</label>
+                                            <div class="flex gap-2 mt-1">
+                                                <input type="text" id="url-font-family-input" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='e.g., "Comic Sans MS"'>
+                                                <button id="add-url-font-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
+                                            </div>
+                                         </div>
+                                    </div>
+                                     <div id="upload-font-container" class="mt-3 space-y-2 hidden">
+                                          <label for="custom-font-uploader" class="block text-sm font-medium text-gray-700">Upload Font File</label>
+                                          <!-- NEW: Allow any font file type -->
+                                          <input type="file" id="custom-font-uploader" accept="*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+                                     </div>
+                                     <div class="mt-3">
+                                        <label for="font-weight-select" class="block text-sm font-medium text-gray-700">Weight</label>
+                                        <select id="font-weight-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
+                                     </div>
+                                </div>
+
+                                <!-- Grid Cell Styling -->
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <p class="font-semibold text-gray-700 mb-3">Grid & Cells</p>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label for="font-size-slider" class="block text-sm font-medium text-gray-700">Font Size: <span id="font-size-value">24</span>px</label>
+                                            <input type="range" id="font-size-slider" min="10" max="60" value="24" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                        </div>
+                                        <div>
+                                            <label for="h-spacing-slider" class="block text-sm font-medium text-gray-700">Horizontal Spacing: <span id="h-spacing-value">10</span>px</label>
+                                            <input type="range" id="h-spacing-slider" min="-10" max="40" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                        </div>
+                                        <div>
+                                            <label for="v-spacing-slider" class="block text-sm font-medium text-gray-700">Vertical Spacing: <span id="v-spacing-value">10</span>px</label>
+                                            <input type="range" id="v-spacing-slider" min="-10" max="40" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                        </div>
+                                        <div>
+                                            <label for="font-effect-select" class="block text-sm font-medium text-gray-700">Font Effect</label>
+                                            <select id="font-effect-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                                <option value="none">None</option>
+                                                <option value="center-stroke">Center Stroke</option>
+                                                <option value="hollow">Hollow</option>
+                                            </select>
+                                        </div>
+                                        <div id="effect-options" class="hidden space-y-3">
+                                            <div>
+                                                <label for="outline-width-slider" class="block text-sm font-medium text-gray-700">Effect Width: <span id="outline-width-value">1</span></label>
+                                                <input type="range" id="outline-width-slider" min="0.5" max="5" value="1" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                            </div>
+                                            <div>
+                                                <label for="outline-color-input" class="block text-sm font-medium text-gray-700">Effect Color</label>
+                                                <input type="color" id="outline-color-input" value="#000000" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Color Styling -->
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                      <p class="font-semibold text-gray-700 mb-3">Colors & Lines</p>
+                                      <div class="grid grid-cols-2 gap-4">
+                                          <div>
+                                              <label for="puzzle-bg-color" class="block text-sm font-medium text-gray-700">Puzzle BG</label>
+                                              <input type="color" id="puzzle-bg-color" value="#FFFFFF" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                          </div>
+                                          <div>
+                                              <label for="grid-text-color" class="block text-sm font-medium text-gray-700">Grid Text</label>
+                                              <input type="color" id="grid-text-color" value="#1F2937" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                          </div>
+                                          <div>
+                                              <label for="grid-line-color" class="block text-sm font-medium text-gray-700">Grid Lines</label>
+                                              <input type="color" id="grid-line-color" value="#D1D5DB" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                                          </div>
+                                          <div class="flex items-center pt-6">
+                                              <input type="checkbox" id="hide-lines-checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                              <label for="hide-lines-checkbox" class="ml-2 block text-sm text-gray-900">Hide Lines</label>
+                                          </div>
+                                      </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <div class="p-6">
+                    <button id="generate-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-md">
+                        Generate Puzzle
+                    </button>
+                </div>
+            </div>
+
+            <!-- Output Column -->
+            <div id="output-section" class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+                 <div id="top-action-buttons" class="mb-4 flex flex-wrap justify-center gap-4 no-print hidden">
+                      <button id="copy-rows-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">Copy Rows</button>
+                      <button id="copy-cols-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">Copy Columns</button>
+                      <button id="copy-code-btn" class="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors duration-200 hidden">Copy Grid Code</button>
+                      <div class="inline-flex rounded-md shadow-sm" role="group">
+                          <button data-export-format="jpg" class="export-btn px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-l-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700">JPG</button>
+                          <button data-export-format="png" class="export-btn px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700">PNG</button>
+                          <button data-export-format="svg" class="export-btn px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-r border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700">SVG</button>
+                          <button id="copy-svg-btn" type="button" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700">Copy SVG</button>
+                          <button data-export-format="pdf" class="export-btn px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-r-md hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700">PDF</button>
+                      </div>
+                 </div>
+                <div id="print-section">
+                    <div id="puzzle-header" class="text-center mb-6"></div>
+                    <div id="puzzle-container" class="flex justify-center items-center mb-6">
+                        <div id="placeholder" class="text-center text-gray-500 py-20">
+                            <p class="text-lg">Your puzzle will appear here.</p>
+                            <p class="text-sm">Fill out the options on the left and click "Generate Puzzle".</p>
+                        </div>
+                    </div>
+                    <div id="word-list-container" class="mb-6"></div>
+                </div>
+                <div id="solution-styling-container" class="hidden no-print mt-4 border-t pt-4 space-y-4">
+                     <h3 class="text-lg font-bold text-center text-gray-800">Answer Styling</h3>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                         <div>
+                             <label for="found-color" class="block text-sm font-medium text-gray-700">Answer Cells</label>
+                             <input type="color" id="found-color" value="#4ADE80" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                         </div>
+                         <div>
+                             <label for="solution-empty-color" class="block text-sm font-medium text-gray-700">Empty Cells</label>
+                             <input type="color" id="solution-empty-color" value="#FFFFFF" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                         </div>
+                         <div>
+                             <label for="solution-text-color" class="block text-sm font-medium text-gray-700">Text Color</label>
+                             <input type="color" id="solution-text-color" value="#1F2937" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                         </div>
+                         <div>
+                             <label for="solution-line-color" class="block text-sm font-medium text-gray-700">Line Color</label>
+                             <input type="color" id="solution-line-color" value="#D1D5DB" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                         </div>
+                         <div class="flex items-center pt-6 col-span-1 md:col-span-2">
+                              <input type="checkbox" id="solution-hide-lines-checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                              <label for="solution-hide-lines-checkbox" class="ml-2 block text-sm text-gray-900">Hide Lines</label>
+                         </div>
+                 </div>
+                </div>
+                <!-- Highlight Styling Container -->
+                <div id="highlight-styling-container" class="hidden no-print mt-4 border-t pt-4 space-y-4">
+                    <h3 class="text-lg font-bold text-center text-gray-800">Highlight Styling</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-center">
+                        <div>
+                            <label for="highlight-style-select" class="block text-sm font-medium text-gray-700">Style</label>
+                            <select id="highlight-style-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="none">None</option>
+                                <option value="highlighter">Highlighter</option>
+                                <option value="line">Line</option>
+                                <option value="hollow-oval">Hollow Oval</option>
+                                <option value="oval-stroke">Oval with Stroke</option>
+                                <option value="colorful-letters">Colorful Letters</option>
+                                <option value="colorful-hollow-stroke">Colorful Hollow Stroke</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="highlight-color-mode-select" class="block text-sm font-medium text-gray-700">Color Mode</label>
+                            <select id="highlight-color-mode-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="single">Single Color</option>
+                                <option value="palette">Colorful Palette</option>
+                            </select>
+                        </div>
+                        <div id="single-color-container">
+                            <label for="highlight-color-input" class="block text-sm font-medium text-gray-700">Highlight Color</label>
+                            <input type="color" id="highlight-color-input" value="#A3A3A3" class="mt-1 h-10 w-full rounded-md border-gray-300">
+                        </div>
+                        <div class="md:col-span-2 lg:grid-cols-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                             <div>
+                                <label for="highlight-thickness-slider" class="block text-sm font-medium text-gray-700">Thickness: <span id="highlight-thickness-value">100</span>%</label>
+                                <input type="range" id="highlight-thickness-slider" min="10" max="100" value="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                             </div>
+                            <div>
+                                <label for="highlight-transparency-slider" class="block text-sm font-medium text-gray-700">Transparency: <span id="highlight-transparency-value">50</span>%</label>
+                                <input type="range" id="highlight-transparency-slider" min="0" max="100" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                             </div>
+                             <div>
+                                <label for="highlight-length-slider" class="block text-sm font-medium text-gray-700">Length: <span id="highlight-length-value">20</span>%</label>
+                                <input type="range" id="highlight-length-slider" min="0" max="120" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="solution-container-wrapper" class="hidden flex justify-center items-center mb-6">
+                    <div id="solution-container" style="position: relative;"></div>
+                </div>
+                
+                <div id="puzzle-stats-container" class="hidden text-center mt-4 p-4 border-t border-gray-200 no-print">
+                    <p id="difficulty-meter" class="text-lg font-medium text-gray-700"></p>
+                    <p id="solve-time-estimation" class="text-md text-gray-600"></p>
+                </div>
+
+                <div id="bottom-action-buttons" class="mt-6 flex flex-wrap justify-center gap-4 no-print hidden">
+                    <button id="solve-btn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors duration-200">Show Answers</button>
+                </div>
+                
+                <div id="message-box" class="mt-4 text-center font-medium"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const generateBtn = document.getElementById('generate-btn');
+            const solveBtn = document.getElementById('solve-btn');
+            const copyRowsBtn = document.getElementById('copy-rows-btn');
+            const copyColsBtn = document.getElementById('copy-cols-btn');
+            const copyCodeBtn = document.getElementById('copy-code-btn');
+            const copySvgBtn = document.getElementById('copy-svg-btn');
+            const topActionButtons = document.getElementById('top-action-buttons');
+            const bottomActionButtons = document.getElementById('bottom-action-buttons');
+            const messageBox = document.getElementById('message-box');
+            const puzzleContainer = document.getElementById('puzzle-container');
+            const placeholder = document.getElementById('placeholder');
+            const puzzleHeader = document.getElementById('puzzle-header');
+            const wordListContainer = document.getElementById('word-list-container');
+            const solutionContainer = document.getElementById('solution-container');
+            const solutionContainerWrapper = document.getElementById('solution-container-wrapper');
+            const rowsInput = document.getElementById('grid-rows');
+            const colsInput = document.getElementById('grid-cols');
+            const wordsTextarea = document.getElementById('words');
+            const lineNumbersTextarea = document.getElementById('line-numbers');
+            const getWordsBtn = document.getElementById('get-words-btn');
+            const aiWordGeneratorContainer = document.getElementById('ai-word-generator-container');
+            const aiLoader = document.getElementById('ai-loader');
+            const wordCountInput = document.getElementById('word-count');
+            const topicModal = document.getElementById('topic-modal');
+            const topicInput = document.getElementById('topic-input');
+            const modalGenerateBtn = document.getElementById('modal-generate-btn');
+            const modalCancelBtn = document.getElementById('modal-cancel-btn');
+            const hiddenMessageInput = document.getElementById('hidden-message');
+            
+            // --- Save/Load Elements ---
+            const saveConfigBtn = document.getElementById('save-config-btn');
+            const loadConfigBtn = document.getElementById('load-config-btn');
+            const configOutput = document.getElementById('config-output');
+            const configInput = document.getElementById('config-input');
+
+            // --- Export Modal Elements ---
+            const exportModal = document.getElementById('export-modal');
+            const exportCloseBtn = document.getElementById('export-close-btn');
+            const exportCancelBtn = document.getElementById('export-cancel-btn');
+            const exportProceedBtn = document.getElementById('export-proceed-btn');
+            const exportProceedText = document.getElementById('export-proceed-text');
+            const exportLoader = document.getElementById('export-loader');
+            const exportIncludePuzzle = document.getElementById('export-include-puzzle');
+            const exportIncludeSolution = document.getElementById('export-include-solution');
+            const exportShowHighlights = document.getElementById('export-show-highlights');
+            const exportHideFiller = document.getElementById('export-hide-filler');
+            const exportPdfOptions = document.getElementById('export-pdf-options');
+            const exportSolutionNewpage = document.getElementById('export-solution-newpage');
+            const exportPdfIncludeBg = document.getElementById('export-pdf-include-bg');
+            const exportImageOptions = document.getElementById('export-image-options');
+            const exportTransparentBg = document.getElementById('export-transparent-bg');
+            const exportPreviewCanvas = document.getElementById('export-preview-canvas');
+            const exportHighlightsOnly = document.getElementById('export-highlights-only');
+            const exportPuzzleGridOptions = document.getElementById('export-puzzle-grid-options');
+            const exportSolutionGridOptions = document.getElementById('export-solution-grid-options');
+            const exportPreserveBackgroundsPuzzle = document.getElementById('export-preserve-backgrounds-puzzle');
+            const exportPreserveLinesPuzzle = document.getElementById('export-preserve-lines-puzzle');
+            const exportPreserveBackgroundsSolution = document.getElementById('export-preserve-backgrounds-solution');
+            const exportPreserveLinesSolution = document.getElementById('export-preserve-lines-solution');
+            let currentExportFormat = '';
+
+            // --- Highlight Controls ---
+            const highlightStylingContainer = document.getElementById('highlight-styling-container');
+            const highlightStyleSelect = document.getElementById('highlight-style-select');
+            const highlightColorModeSelect = document.getElementById('highlight-color-mode-select');
+            const singleColorContainer = document.getElementById('single-color-container');
+            const highlightColorInput = document.getElementById('highlight-color-input');
+            const highlightThicknessSlider = document.getElementById('highlight-thickness-slider');
+            const highlightThicknessValue = document.getElementById('highlight-thickness-value');
+            const highlightTransparencySlider = document.getElementById('highlight-transparency-slider');
+            const highlightTransparencyValue = document.getElementById('highlight-transparency-value');
+            const highlightLengthSlider = document.getElementById('highlight-length-slider');
+            const highlightLengthValue = document.getElementById('highlight-length-value');
+            
+            // Shape and Editor Elements
+            const shapeSelect = document.getElementById('shape-select');
+            const customGridEditorContainer = document.getElementById('custom-grid-editor-container');
+            const gridEditor = document.getElementById('grid-editor');
+            const brushModeSelect = document.getElementById('brush-mode');
+            const imageUploadContainer = document.getElementById('image-upload-container');
+            const imageUploader = document.getElementById('image-uploader');
+            const imageProcessOptions = document.getElementById('image-process-options');
+            const fitToGridBtn = document.getElementById('fit-to-grid-btn');
+            const autoSizeBtn = document.getElementById('auto-size-btn');
+            const imageLoader = document.getElementById('image-loader');
+            const gridCodeContainer = document.getElementById('grid-code-container');
+            const gridCodeInput = document.getElementById('grid-code-input');
+            const applyCodeBtn = document.getElementById('apply-code-btn');
+
+            // Styling Elements
+            const fontMethodSelect = document.getElementById('font-method-select');
+            const googleFontContainer = document.getElementById('google-font-container');
+            const uploadFontContainer = document.getElementById('upload-font-container');
+            const urlFontContainer = document.getElementById('url-font-container'); // New
+            const googleFontInput = document.getElementById('google-font-input'); // Renamed
+            const addGoogleFontBtn = document.getElementById('add-google-font-btn'); // Renamed
+            const urlFontCssInput = document.getElementById('url-font-css-input'); // New
+            const urlFontFamilyInput = document.getElementById('url-font-family-input'); // New
+            const addUrlFontBtn = document.getElementById('add-url-font-btn'); // New
+            const customFontUploader = document.getElementById('custom-font-uploader');
+            const fontWeightSelect = document.getElementById('font-weight-select');
+            const fontSizeSlider = document.getElementById('font-size-slider');
+            const fontSizeValue = document.getElementById('font-size-value');
+            const hSpacingSlider = document.getElementById('h-spacing-slider');
+            const hSpacingValue = document.getElementById('h-spacing-value');
+            const vSpacingSlider = document.getElementById('v-spacing-slider');
+            const vSpacingValue = document.getElementById('v-spacing-value');
+            const fontEffectSelect = document.getElementById('font-effect-select');
+            const effectOptions = document.getElementById('effect-options');
+            const outlineWidthSlider = document.getElementById('outline-width-slider');
+            const outlineWidthValue = document.getElementById('outline-width-value');
+            const outlineColorInput = document.getElementById('outline-color-input');
+            const puzzleBgColorInput = document.getElementById('puzzle-bg-color');
+            const gridTextColorInput = document.getElementById('grid-text-color');
+            const gridLineColorInput = document.getElementById('grid-line-color');
+            const hideLinesCheckbox = document.getElementById('hide-lines-checkbox');
+            const solutionStylingContainer = document.getElementById('solution-styling-container');
+            const foundColorInput = document.getElementById('found-color');
+            const solutionEmptyColorInput = document.getElementById('solution-empty-color');
+            const solutionTextColorInput = document.getElementById('solution-text-color');
+            const solutionLineColorInput = document.getElementById('solution-line-color');
+            const solutionHideLinesCheckbox = document.getElementById('solution-hide-lines-checkbox');
+
+            let originalWords = [];
+            let placedWords = [];    
+            let placedWordsCoords = [];
+            let solutionGrid = [];
+            let currentGrid = [];
+            let isDragging = false;
+            let uploadedImage = null;
+            let lastUsedShape = 'rectangle';
+            let activeFont = 'Inter';
+            let activeFontWeight = '400';
+            let activeFontUrl = null; // Store font URL for embedding
+            let activeFontDataUrl = null; // Store uploaded font data URL
+            let difficultyRating = '';
+            let estimatedTime = '';
+            const colorPalette = ['#fdba74', '#6ee7b7', '#93c5fd', '#f9a8d4', '#c4b5fd', '#fde047', '#a7f3d0', '#fecaca', '#bae6fd'];
+            
+            // --- Accordion Logic ---
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+            function updateAccordionHeight(element) {
+                const content = element.closest('.accordion-section').querySelector('.accordion-content');
+                if (content && content.style.maxHeight !== '0px' && content.style.maxHeight !== null) {
+                    setTimeout(() => {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    }, 50);
+                }
+            }
+            
+            function openAccordion(header) {
+                const content = header.nextElementSibling;
+                const parent = header.parentElement;
+                const icon = header.querySelector('.accordion-icon');
+                parent.classList.add('open');
+                content.style.maxHeight = content.scrollHeight + "px";
+                if(icon) icon.classList.add('rotate-180');
+            }
+
+            function closeAllAccordions() {
+                accordionHeaders.forEach(header => {
+                    const content = header.nextElementSibling;
+                    const icon = header.querySelector('.accordion-icon');
+                    header.parentElement.classList.remove('open');
+                    content.style.maxHeight = null;
+                    if(icon) icon.classList.remove('rotate-180');
+                });
+            }
+
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const parent = header.parentElement;
+                    const isOpen = parent.classList.contains('open');
+
+                    closeAllAccordions();
+
+                    if (!isOpen) {
+                       openAccordion(header);
+                    }
+                });
+            });
+
+            // --- Data Structures ---
+            const directions = {
+                h:     { r: 0,  c: 1  }, v:     { r: 1,  c: 0  }, vr:  { r: -1, c: 0  },
+                d:     { r: 1,  c: 1  }, du:    { r: -1, c: 1  }, hr:  { r: 0,  c: -1 },
+                dur:   { r: 1,  c: -1 }, dr:    { r: -1, c: -1 },
+            };
+            
+            const preMadeShapes = {
+                'Basic Shapes': {
+                    'Circle': `.......xxx.......\n......xxxxx......\n....xxxxxxxxx....\n...xxxxxxxxxxx...\n..xxxxxxxxxxxxx..\n.xxxxxxxxxxxxxxx.\n.xxxxxxxxxxxxxxx.\nxxxxxxxxxxxxxxxxx\nxxxxxxxxxxxxxxxxx\nxxxxxxxxxxxxxxxxx\n.xxxxxxxxxxxxxxx.\n.xxxxxxxxxxxxxxx.\n..xxxxxxxxxxxxx..\n...xxxxxxxxxxx...\n....xxxxxxxxx....\n......xxxxx......\n.......xxx.......`,
+                    'Diamond': `....x....\n...xxx...\n..xxxxx..\n.xxxxxxx.\nxxxxxxxxx\n.xxxxxxx.\n..xxxxx..\n...xxx...\n....x....`,
+                    'Star': `..x..\nxxxxx\n.xxx.\nxxxxx\n..x..`,
+                    'Triangle': `....x....\n...xxx...\n..xxxxx..\n.xxxxxxx.\nxxxxxxxxx`,
+                    'Heart': `..xxx...xxx..\n.xxxxx.xxxxx.\n.xxxxxxxxxxx.\n.xxxxxxxxxxx.\n..xxxxxxxxx..\n...xxxxxxx...\n....xxxxx....\n.....xxx.....\n......x......`,
+                    'X Shape': `x...x\n.x.x.\n..x..\n.x.x.\nx...x`,
+                },
+                'Letters': { 'A': `..x..\n.x.x.\n.x.x.\nxxxxx\nx...x\nx...x`, 'B': `xxxx.\nx...x\nxxxx.\nx...x\nxxxx.`, 'C': `.xxxx\nx....\nx....\nx....\n.xxxx`, 'D': `xxxx.\nx...x\nx...x\nx...x\nxxxx.`, 'E': `xxxxx\nx....\nxxxxx\nx....\nxxxxx`, 'F': `xxxxx\nx....\nxxxxx\nx....\nx....`, 'G': `.xxxx\nx....\nx..xx\nx...x\n.xxxx`, 'H': `x...x\nx...x\nxxxxx\nx...x\nx...x`, 'I': `xxxxx\n..x..\n..x..\n..x..\nxxxxx`, 'J': `xxxxx\n...x.\n...x.\nx..x.\n.xx..`, 'K': `x...x\nx..x.\nxxx..\nx..x.\nx...x`, 'L': `x....\nx....\nx....\nx....\nxxxxx`, 'M': `x...x\nxx.xx\nx.x.x\nx...x\nx...x`, 'N': `x...x\nxx..x\nx.x.x\nx..xx\nx...x`, 'O': `.xxx.\nx...x\nx...x\nx...x\n.xxx.`, 'P': `xxxx.\nx...x\nxxxx.\nx....\nx....`, 'Q': `.xxx.\nx...x\nx.x.x\nx..xx\n.xxx.\n...x.`, 'R': `xxxx.\nx...x\nxxxx.\nx..x.\nx...x`, 'S': `.xxxx\nx....\n.xxx.\n....x\nxxxx.`, 'T': `xxxxx\n..x..\n..x..\n..x..\n..x..`, 'U': `x...x\nx...x\nx...x\nx...x\n.xxx.`, 'V': `x...x\nx...x\n.x.x.\n.x.x.\n..x..`, 'W': `x...x\nx...x\nx.x.x\nxx.xx\nx...x`, 'X': `x...x\n.x.x.\n..x..\n.x.x.\nx...x`, 'Y': `x...x\n.x.x.\n..x..\n..x..\n..x..`, 'Z': `xxxxx\n...x.\n..x..\n.x...\nxxxxx`, },
+                'Numbers': { '0': `.xxx.\nx...x\nx.x.x\nx...x\n.xxx.`, '1': `..x..\n.xx..\n..x..\n..x..\nxxxxx`, '2': `xxxxx\n....x\nxxxxx\nx....\nxxxxx`, '3': `xxxxx\n....x\nxxxxx\n....x\nxxxxx`, '4': `x...x\nx...x\nxxxxx\n....x\n....x`, '5': `xxxxx\nx....\nxxxx.\n....x\nxxxx.`, '6': `.xxxx\nx....\nxxxx.\nx...x\n.xxxx`, '7': `xxxxx\n....x\n...x.\n..x..\n..x..`, '8': `.xxx.\nx...x\n.xxx.\nx...x\n.xxx.`, '9': `.xxxx\nx...x\n.xxxx\n....x\n.xxxx`, }
+            };
+
+            // --- Core Logic ---
+
+            function parseShape(shapeString) {
+                const lines = shapeString.trim().split('\n');
+                const rows = lines.length;
+                const cols = lines.reduce((max, line) => Math.max(max, line.length), 0);
+                const grid = lines.map(line => line.padEnd(cols, ' ').split('').map(char => (char === 'x' ? null : ' ')));
+                return { grid, rows, cols };
+            }
+
+            function scaleShape(sourceGrid, targetRows, targetCols) {
+                const sourceRows = sourceGrid.length;
+                const sourceCols = sourceGrid[0].length;
+                const scaledGrid = Array.from({ length: targetRows }, () => Array(targetCols).fill(' '));
+                for (let r = 0; r < targetRows; r++) {
+                    for (let c = 0; c < targetCols; c++) {
+                        const sourceR = Math.floor(r * sourceRows / targetRows);
+                        const sourceC = Math.floor(c * sourceCols / targetCols);
+                        scaledGrid[r][c] = sourceGrid[sourceR][sourceC];
+                    }
+                }
+                return scaledGrid;
+            }
+            
+            function parseCustomGridFromEditor() {
+                const rows = gridEditor.getElementsByTagName('tr');
+                if (rows.length === 0) return null;
+                const grid = [];
+                for (const row of rows) {
+                    const cells = row.getElementsByTagName('td');
+                    const gridRow = [];
+                    for (const cell of cells) {
+                        gridRow.push(cell.dataset.active === 'true' ? null : ' ');
+                    }
+                    grid.push(gridRow);
+                }
+                return grid;
+            }
+
+            function getInitialGrid() {
+                const shapeValue = shapeSelect.value;
+                let rows = parseInt(rowsInput.value, 10);
+                let cols = parseInt(colsInput.value, 10);
+                let grid;
+
+                if (shapeValue === 'custom') {
+                    grid = parseCustomGridFromEditor();
+                    if (!grid || grid.length === 0) {
+                        messageBox.textContent = "Custom grid is empty. Please design a shape.";
+                        return null;
+                    }
+                } else if (shapeValue !== 'rectangle' && shapeValue !== 'image-upload' && shapeValue !== 'grid-code') {
+                    const [category, shapeName] = shapeValue.split('/');
+                    const shapeData = parseShape(preMadeShapes[category][shapeName]);
+                    grid = scaleShape(shapeData.grid, rows, cols);
+                } else { // rectangle
+                    grid = Array.from({ length: rows }, () => Array(cols).fill(null));
+                }
+                
+                return { grid, rows: grid.length, cols: grid[0].length };
+            }
+
+            function generatePuzzle() {
+                // 1. Get User Inputs
+                messageBox.textContent = '';
+                const title = document.getElementById('title').value.trim();
+                const wordsInput = document.getElementById('words').value.trim().toUpperCase();
+                const fillerLetters = document.getElementById('filler-letters').value.trim().toUpperCase();
+                const hiddenMessage = hiddenMessageInput.value.trim().toUpperCase();
+
+                if (!wordsInput) {
+                    messageBox.textContent = "Please enter some words.";
+                    return;
+                }
+                
+                originalWords = wordsInput.split('\n').filter(w => w.length > 0).map(w => w.replace(/[^A-Z]/g, ''));
+                const selectedDirections = Object.keys(directions).filter(dir => document.getElementById(`dir-${dir}`).checked);
+                if (selectedDirections.length === 0) {
+                    messageBox.textContent = "Please select at least one word direction.";
+                    return;
+                }
+
+                let wordsWithIndices = originalWords.map((word, index) => ({ word, index }));
+                wordsWithIndices.sort((a, b) => b.word.length - a.word.length);
+
+                // 2. Initialize Grid
+                const gridData = getInitialGrid();
+                if (!gridData) return;
+
+                let { grid, rows, cols } = gridData;
+                lastUsedShape = shapeSelect.value;
+
+                solutionGrid = Array.from({ length: rows }, () => Array(cols).fill(null));
+                const placedWordsData = [];
+                const unplacedWordsData = [];
+                placedWordsCoords = []; // Reset coordinates
+
+                // 3. Placement Algorithm
+                for (const wordData of wordsWithIndices) {
+                    const word = wordData.word;
+                    let placed = false;
+                    const attempts = 200;    
+                    for (let i = 0; i < attempts; i++) {
+                        const dirKey = selectedDirections[Math.floor(Math.random() * selectedDirections.length)];
+                        const dir = directions[dirKey];
+                        const startRow = Math.floor(Math.random() * rows);
+                        const startCol = Math.floor(Math.random() * cols);
+
+                        if (canPlaceWord(word, grid, startRow, startCol, dir)) {
+                            placeWord(word, grid, solutionGrid, startRow, startCol, dir);
+                            placed = true;
+                            placedWordsData.push(wordData);
+                            placedWordsCoords.push({ word, r: startRow, c: startCol, dirKey });
+                            break;
+                        }
+                    }
+                    if (!placed) {
+                        unplacedWordsData.push(wordData);
+                    }
+                }
+
+                placedWordsData.sort((a, b) => a.index - b.index);
+                
+                placedWords = placedWordsData.map(data => data.word);
+                const unplacedWords = unplacedWordsData.map(data => data.word);
+
+                // 4. Calculate Stats
+                const stats = calculatePuzzleStats(grid, placedWords, selectedDirections);
+                difficultyRating = stats.difficulty;
+                estimatedTime = stats.time;
+
+                // 5. Fill remaining empty cells
+                const fillSuccess = fillEmptyCells(grid, fillerLetters, hiddenMessage);
+                if (!fillSuccess) {
+                    return;
+                }
+                currentGrid = grid;
+                
+                // 6. Render Output
+                render(title, grid, placedWords, unplacedWords);
+            }
+            
+            function canPlaceWord(word, grid, r, c, dir) {
+                const rows = grid.length;
+                const cols = grid[0].length;
+                let placedInEmptyCell = false;
+
+                for (let i = 0; i < word.length; i++) {
+                    const newRow = r + i * dir.r;
+                    const newCol = c + i * dir.c;
+
+                    if (newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols) {
+                        return false;
+                    }
+                    
+                    const cellChar = grid[newRow][newCol];
+                    
+                    if (cellChar === ' ') { // Trying to place on an inactive (shaped-out) cell
+                        return false;
+                    }
+                    
+                    if (cellChar !== null && cellChar !== word[i]) {
+                        return false;
+                    }
+
+                    if (cellChar === null) {
+                        placedInEmptyCell = true;
+                    }
+                }
+                
+                return placedInEmptyCell; // Must place at least one letter in a new spot
+            }
+
+            function placeWord(word, grid, solGrid, r, c, dir) {
+                for (let i = 0; i < word.length; i++) {
+                    const newRow = r + i * dir.r;
+                    const newCol = c + i * dir.c;
+                    grid[newRow][newCol] = word[i];
+                    solGrid[newRow][newCol] = word[i];
+                }
+            }
+
+            function fillEmptyCells(grid, fillerLetters, hiddenMessage = '') {
+                const sanitizedMessage = hiddenMessage.replace(/[^A-Z]/g, '');
+                const sourceChars = (fillerLetters.replace(/[^A-Z]/g, '') || "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+                const emptyCells = [];
+
+                for (let r = 0; r < grid.length; r++) {
+                    for (let c = 0; c < grid[0].length; c++) {
+                        if (grid[r][c] === null) {
+                            emptyCells.push({ r, c });
+                        }
+                    }
+                }
+
+                if (sanitizedMessage) {
+                    if (sanitizedMessage.length > emptyCells.length) {
+                        messageBox.textContent = "The hidden message is too long to fit in the remaining empty cells.";
+                        messageBox.style.color = '#dc2626';
+                        return false;
+                    }
+
+                    // Shuffle empty cells to place message randomly
+                    for (let i = emptyCells.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [emptyCells[i], emptyCells[j]] = [emptyCells[j], emptyCells[i]];
+                    }
+
+                    for (let i = 0; i < sanitizedMessage.length; i++) {
+                        const cellPos = emptyCells.pop();
+                        grid[cellPos.r][cellPos.c] = sanitizedMessage[i];
+                    }
+                }
+
+                for (const cellPos of emptyCells) {
+                    grid[cellPos.r][cellPos.c] = sourceChars[Math.floor(Math.random() * sourceChars.length)];
+                }
+                
+                return true;
+            }
+            
+            function calculatePuzzleStats(grid, words, directions) {
+                const rows = grid.length;
+                const cols = grid[0].length;
+                const wordCount = words.length;
+
+                if (wordCount === 0) {
+                    return { difficulty: 'N/A', time: 'N/A' };
+                }
+
+                // Difficulty Score Calculation
+                let score = 0;
+                // Grid size component (max 25)
+                const gridSize = rows * cols;
+                score += Math.min(25, gridSize / 40); 
+                // Word count component (max 25)
+                score += Math.min(25, wordCount * 0.5);
+                // Direction complexity component (max 40)
+                const directionWeights = { h: 1, v: 1, d: 2, hr: 3, vr: 3, du: 4, dur: 4, dr: 4 };
+                let directionScore = 0;
+                directions.forEach(dir => {
+                    directionScore += directionWeights[dir] || 0;
+                });
+                score += Math.min(40, directionScore * 1.5);
+                // Word length component (max 10)
+                const avgLength = words.reduce((acc, w) => acc + w.length, 0) / wordCount;
+                if (avgLength < 5) score += 10;
+                else if (avgLength < 7) score += 5;
+
+                let difficulty = 'Easy ★';
+                if (score > 65) difficulty = 'Hard ★★★';
+                else if (score > 35) difficulty = 'Medium ★★';
+
+                // Time Estimation
+                const baseTimePerWord = 15; // seconds
+                const timeMultiplier = 1 + (score / 100);
+                const totalSeconds = wordCount * baseTimePerWord * timeMultiplier;
+                const lowEndMinutes = Math.floor(totalSeconds / 60);
+                const highEndMinutes = Math.ceil((totalSeconds * 1.3) / 60);
+                let time = `${lowEndMinutes}-${highEndMinutes} minutes`;
+                if (lowEndMinutes < 1) time = "Under a minute";
+                else if (lowEndMinutes === highEndMinutes) time = `Around ${lowEndMinutes} minutes`;
+
+                return { difficulty, time };
+            }
+
+            // --- Rendering and UI Logic ---
+
+            function render(title, grid, wordsToDisplay, unplacedWords) {
+                placeholder.style.display = 'none';
+                
+                if (unplacedWords.length > 0) {
+                    messageBox.style.color = '#dc2626';
+                    const unplacedCounts = unplacedWords.reduce((acc, word) => {
+                        acc[word] = (acc[word] || 0) + 1;
+                        return acc;
+                    }, {});
+                    const unplacedMessage = Object.entries(unplacedCounts)
+                        .map(([word, count]) => count > 1 ? `${word} (${count} times)` : word)
+                        .join(', ');
+                    messageBox.textContent = `Couldn't place ${unplacedWords.length} word(s). Words: ${unplacedMessage}`;
+                } else {
+                    messageBox.style.color = '#16a34a';
+                    messageBox.textContent = 'Successfully placed all words!';
+                    setTimeout(() => { messageBox.textContent = ''; messageBox.style.color = ''; }, 4000);
+                }
+
+                puzzleHeader.innerHTML = `<h2 class="text-3xl font-bold">${title || 'Word Search'}</h2>`;
+                renderGrid(puzzleContainer, grid);
+                addSolvingInteraction();
+                renderWordList(wordListContainer, wordsToDisplay);
+                renderGrid(solutionContainer, solutionGrid, true);
+                solutionContainerWrapper.classList.add('hidden');
+                document.getElementById('puzzle-stats-container').classList.add('hidden');
+                solveBtn.textContent = 'Show Answers';
+                topActionButtons.classList.remove('hidden');
+                bottomActionButtons.classList.remove('hidden');
+                solutionStylingContainer.classList.add('hidden');
+                highlightStylingContainer.classList.add('hidden');
+
+                if (lastUsedShape === 'custom' || lastUsedShape === 'image-upload' || lastUsedShape === 'grid-code') {
+                    copyCodeBtn.classList.remove('hidden');
+                } else {
+                    copyCodeBtn.classList.add('hidden');
+                }
+                setTimeout(applyStyling, 0);
+            }
+
+            function renderGrid(container, gridData, isSolution = false) {
+                const gridEl = document.createElement('div');
+                gridEl.className = 'puzzle-grid';
+                if (isSolution) {
+                    gridEl.id = 'solution-grid';
+                } else {
+                    gridEl.id = 'puzzle-grid';
+                }
+                container.innerHTML = '';
+                
+                gridEl.style.setProperty('--grid-cols', gridData[0].length);
+
+                for (let r = 0; r < gridData.length; r++) {
+                    for (let c = 0; c < gridData[0].length; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        const char = gridData[r][c] || '';
+                        
+                        const span = document.createElement('span');
+                        span.textContent = char === ' ' ? '' : char;
+                        cell.appendChild(span);
+
+                        cell.dataset.row = r;
+                        cell.dataset.col = c;
+                        
+                        if (char === ' ') {
+                            // Make inactive cells invisible
+                            cell.style.backgroundColor = 'transparent';
+                            cell.style.border = '1px solid transparent';
+                        }
+                        gridEl.appendChild(cell);
+                    }
+                }
+                container.appendChild(gridEl);
+                 // *** REQUIREMENT MET: Add dual SVG overlays for solution grid ***
+                if (isSolution) {
+                    const svgNS = "http://www.w3.org/2000/svg";
+                    const overlayBg = document.createElementNS(svgNS, 'svg');
+                    overlayBg.id = 'highlight-overlay-bg';
+                    const overlayFg = document.createElementNS(svgNS, 'svg');
+                    overlayFg.id = 'highlight-overlay-fg';
+                    container.appendChild(overlayBg);
+                    container.appendChild(overlayFg);
+                }
+            }
+            
+            function renderGridEditor(gridCode = null) {
+                let rows, cols;
+                let activeCells = null;
+
+                if (gridCode) {
+                    const decoded = decodeGridCode(gridCode);
+                    if (!decoded) {
+                        messageBox.textContent = "Invalid grid code.";
+                        setTimeout(() => messageBox.textContent = '', 3000);
+                        return;
+                    }
+                    rows = decoded.rows;
+                    cols = decoded.cols;
+                    activeCells = decoded.activeCells;
+                    rowsInput.value = rows;
+                    colsInput.value = cols;
+                } else {
+                    rows = parseInt(rowsInput.value, 10);
+                    cols = parseInt(colsInput.value, 10);
+                }
+
+                const table = document.createElement('table');
+                table.className = 'grid-editor-table mx-auto';
+                table.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    isDragging = true;
+                    if (e.target.classList.contains('grid-editor-cell')) {
+                        applyBrush(e.target);
+                    }
+                });
+                table.addEventListener('mouseover', (e) => {
+                    if (isDragging && e.target.classList.contains('grid-editor-cell')) {
+                        applyBrush(e.target);
+                    }
+                });
+                window.addEventListener('mouseup', () => { isDragging = false; });
+                
+                for(let r = 0; r < rows; r++) {
+                    const tr = table.insertRow();
+                    for(let c = 0; c < cols; c++) {
+                        const td = tr.insertCell();
+                        const isActive = activeCells ? activeCells.has(`${r},${c}`) : true;
+                        td.className = `grid-editor-cell ${isActive ? 'active' : 'inactive'}`;
+                        td.dataset.active = isActive;
+                    }
+                }
+                gridEditor.innerHTML = '';
+                gridEditor.appendChild(table);
+            }
+            
+            function applyBrush(cell) {
+                const mode = brushModeSelect.value;
+                const isActive = cell.dataset.active === 'true';
+
+                const activate = () => {
+                    if (!isActive) {
+                        cell.dataset.active = 'true';
+                        cell.classList.remove('inactive');
+                        cell.classList.add('active');
+                    }
+                };
+                const deactivate = () => {
+                     if (isActive) {
+                        cell.dataset.active = 'false';
+                        cell.classList.remove('active');
+                        cell.classList.add('inactive');
+                    }
+                };
+                
+                if (mode === 'add') activate();
+                else if (mode === 'remove') deactivate();
+                else { // auto
+                    if (isActive) deactivate();
+                    else activate();
+                }
+            }
+
+            function renderWordList(container, words) {
+                container.innerHTML = '<h3 class="text-2xl font-bold text-center mb-4">Find these words:</h3>';
+                const list = document.createElement('div');
+                list.id = 'word-list';
+                list.className = 'flex flex-wrap justify-center gap-x-6 gap-y-2';
+                words.forEach(word => {
+                    const item = document.createElement('p');
+                    item.textContent = word;
+                    item.dataset.word = word;    
+                    item.className = 'word-list-item text-lg';
+                    list.appendChild(item);
+                });
+                container.appendChild(list);
+            }
+
+            function renderDirectionSelector() {
+                const container = document.getElementById('direction-selector');
+                container.innerHTML = '';
+                
+                const arrowSVGs = {
+                    h:   '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
+                    v:   '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>',
+                    vr:  '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>',
+                    d:   '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="6" x2="18" y2="18"></line><polyline points="11 18 18 18 18 11"></polyline></svg>',
+                    du:  '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="18" x2="18" y2="6"></line><polyline points="18 13 18 6 11 6"></polyline></svg>',
+                    hr:  '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>',
+                    dur: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><polyline points="13 18 6 18 6 11"></polyline></svg>',
+                    dr:  '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="18" x2="6" y2="6"></line><polyline points="11 6 6 6 6 13"></polyline></svg>',
+                };
+
+                const newDirectionOrder = ['dr', 'vr', 'du', 'hr', null, 'h', 'dur', 'v', 'd'];
+
+                newDirectionOrder.forEach(key => {
+                    if (!key) {
+                        container.appendChild(document.createElement('div'));
+                        return;
+                    }
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.id = `btn-${key}`;
+                    btn.className = 'direction-btn flex items-center justify-center p-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700';
+                    btn.innerHTML = arrowSVGs[key];
+                    
+                    const checkbox = document.getElementById(`dir-${key}`);
+                    if (checkbox && checkbox.checked) {
+                        btn.classList.add('active');
+                    }
+
+                    btn.addEventListener('click', () => {
+                        if(checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                            btn.classList.toggle('active');
+                        }
+                    });
+                    container.appendChild(btn);
+                });
+            }
+
+            function populateShapes() {
+                shapeSelect.innerHTML = '';
+                
+                const mainOptions = {
+                    'rectangle': 'Rectangle',
+                    'custom': 'Custom (Shape Editor)',
+                    'image-upload': 'Upload Silhouette...',
+                    'grid-code': 'Paste Grid Code...'
+                };
+
+                for (const val in mainOptions) {
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = mainOptions[val];
+                    shapeSelect.appendChild(opt);
+                }
+
+                for (const category in preMadeShapes) {
+                    const group = document.createElement('optgroup');
+                    group.label = category;
+                    for (const shapeName in preMadeShapes[category]) {
+                        const option = document.createElement('option');
+                        option.value = `${category}/${shapeName}`;
+                        option.textContent = shapeName;
+                        group.appendChild(option);
+                    }
+                    shapeSelect.appendChild(group);
+                }
+            }
+
+            // --- Image Processing ---
+            function processImage(processingMode) {
+                if (!uploadedImage) {
+                    messageBox.textContent = 'Please upload an image first.';
+                    return;
+                }
+                
+                imageLoader.classList.remove('hidden');
+                messageBox.textContent = 'Processing image...';
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        
+                        let targetWidth, targetHeight;
+                        if (processingMode === 'auto') {
+                            const MAX_DIM = 40;
+                            const ratio = img.width / img.height;
+                            if (ratio > 1) {
+                                targetWidth = MAX_DIM;
+                                targetHeight = Math.round(MAX_DIM / ratio);
+                            } else {
+                                targetHeight = MAX_DIM;
+                                targetWidth = Math.round(MAX_DIM * ratio);
+                            }
+                        } else { // 'fit'
+                            targetWidth = parseInt(colsInput.value, 10);
+                            targetHeight = parseInt(rowsInput.value, 10);
+                        }
+
+                        canvas.width = targetWidth;
+                        canvas.height = targetHeight;
+                        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                        const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+                        const data = imageData.data;
+                        const shapeGrid = [];
+
+                        for (let y = 0; y < targetHeight; y++) {
+                            const row = [];
+                            for (let x = 0; x < targetWidth; x++) {
+                                const index = (y * targetWidth + x) * 4;
+                                const r = data[index];
+                                const g = data[index + 1];
+                                const b = data[index + 2];
+                                const a = data[index + 3];
+                                
+                                // Consider a pixel part of the shape if it's not mostly white and is opaque
+                                const isShape = a > 128 && (r < 240 || g < 240 || b < 240);
+                                row.push(isShape ? null : ' ');
+                            }
+                            shapeGrid.push(row);
+                        }
+                        
+                        rowsInput.value = targetHeight;
+                        colsInput.value = targetWidth;
+                        
+                        const tempGrid = JSON.parse(JSON.stringify(shapeGrid));
+                        generatePuzzleFromCustomGrid(tempGrid);
+                        
+                        imageLoader.classList.add('hidden');
+                        messageBox.textContent = 'Grid created from image!';
+                        setTimeout(() => { messageBox.textContent = ''; }, 3000);
+                    }
+                    img.src = event.target.result;
+                }
+                reader.readAsDataURL(uploadedImage);
+            }
+            
+            function generatePuzzleFromCustomGrid(grid) {
+                const title = document.getElementById('title').value.trim();
+                const wordsInput = document.getElementById('words').value.trim().toUpperCase();
+                const fillerLetters = document.getElementById('filler-letters').value.trim().toUpperCase();
+                if (!wordsInput) {
+                    messageBox.textContent = "Please enter some words to generate the puzzle.";
+                    return;
+                }
+                originalWords = wordsInput.split('\n').filter(w => w.length > 0).map(w => w.replace(/[^A-Z]/g, ''));
+                
+                let wordsWithIndices = originalWords.map((word, index) => ({ word, index }));
+                wordsWithIndices.sort((a, b) => b.word.length - a.word.length);
+
+                const selectedDirections = Object.keys(directions).filter(dir => document.getElementById(`dir-${dir}`).checked);
+                if (selectedDirections.length === 0) {
+                    messageBox.textContent = "Please select at least one word direction.";
+                    return;
+                }
+                
+                let rows = grid.length;
+                let cols = grid[0].length;
+                solutionGrid = Array.from({ length: rows }, () => Array(cols).fill(null));
+                const placedWordsData = [];
+                const unplacedWordsData = [];
+                placedWordsCoords = [];
+
+                for (const wordData of wordsWithIndices) {
+                    const word = wordData.word;
+                    let placed = false;
+                    const attempts = 200;
+                    for (let i = 0; i < attempts; i++) {
+                        const dirKey = selectedDirections[Math.floor(Math.random() * selectedDirections.length)];
+                        const dir = directions[dirKey];
+                        const startRow = Math.floor(Math.random() * rows);
+                        const startCol = Math.floor(Math.random() * cols);
+                        if (canPlaceWord(word, grid, startRow, startCol, dir)) {
+                            placeWord(word, grid, solutionGrid, startRow, startCol, dir);
+                            placed = true;
+                            placedWordsData.push(wordData);
+                            placedWordsCoords.push({ word, r: startRow, c: startCol, dirKey });
+                            break;
+                        }
+                    }
+                    if (!placed) unplacedWordsData.push(wordData);
+                }
+
+                placedWordsData.sort((a, b) => a.index - b.index);
+                placedWords = placedWordsData.map(data => data.word);
+                const unplacedWords = unplacedWordsData.map(data => data.word);
+
+                const stats = calculatePuzzleStats(grid, placedWords, selectedDirections);
+                difficultyRating = stats.difficulty;
+                estimatedTime = stats.time;
+
+                fillEmptyCells(grid, fillerLetters);
+                currentGrid = grid;
+                render(title, grid, placedWords, unplacedWords);
+            }
+
+
+            // --- Export, Interactivity, and Grid Code ---
+
+            function encodeGridCode() {
+                const gridSource = !customGridEditorContainer.classList.contains('hidden') && shapeSelect.value === 'custom'
+                    ? parseCustomGridFromEditor()
+                    : currentGrid;
+
+                if (!gridSource || gridSource.length === 0) return '';
+
+                const rows = gridSource.length;
+                const cols = gridSource[0].length;
+                const binaryString = gridSource.map(row => row.map(cell => (cell === ' ' ? '0' : '1')).join('')).join('');
+                const base64 = btoa(binaryString);
+                return `${rows}x${cols}:${base64}`;
+            }
+
+            function decodeGridCode(code) {
+                try {
+                    const [dims, base64] = code.split(':');
+                    const [rows, cols] = dims.split('x').map(Number);
+                    if (!rows || !cols || !base64) return null;
+
+                    const binaryString = atob(base64);
+                    if (binaryString.length !== rows * cols) return null;
+
+                    const activeCells = new Set();
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            if (binaryString[r * cols + c] === '1') {
+                                activeCells.add(`${r},${c}`);
+                            }
+                        }
+                    }
+                    return { rows, cols, activeCells };
+                } catch (e) {
+                    console.error("Failed to decode grid code:", e);
+                    return null;
+                }
+            }
+
+            function copyTextToClipboard(text, btn, originalText) {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.top = "-9999px";
+                textArea.style.left = "-9999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    btn.textContent = 'Copied!';
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                    btn.textContent = 'Failed!';
+                }
+                document.body.removeChild(textArea);
+                setTimeout(() => { btn.textContent = originalText; }, 2000);
+            }
+
+            function addSolvingInteraction() {
+                const grid = document.getElementById('puzzle-grid');
+                if (!grid) return;
+                let isDraggingSolve = false;
+                let selection = [];
+                grid.addEventListener('mousedown', (e) => {
+                    const cell = e.target.closest('.grid-cell');
+                    if (cell && cell.textContent.trim() !== '') {
+                        isDraggingSolve = true;
+                        selection = [cell];
+                        cell.classList.add('selected');
+                    }
+                });
+                grid.addEventListener('mouseover', (e) => {
+                    const cell = e.target.closest('.grid-cell');
+                    if (isDraggingSolve && cell && !selection.includes(cell) && cell.textContent.trim() !== '') {
+                        selection.push(cell);
+                        cell.classList.add('selected');
+                    }
+                });
+                window.addEventListener('mouseup', () => {
+                    if (isDraggingSolve) {
+                        isDraggingSolve = false;
+                        checkSelection(selection);
+                        document.querySelectorAll('.puzzle-grid .grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
+                        selection = [];
+                    }
+                });
+            }
+
+            function checkSelection(selectedCells) {
+                const selectedString = selectedCells.map(cell => cell.textContent).join('');
+                const selectedStringReversed = selectedString.split('').reverse().join('');
+
+                const foundWord = placedWords.find(word => word === selectedString || word === selectedStringReversed);
+
+                if (foundWord) {
+                    const wordListItem = document.querySelector(`.word-list-item[data-word="${foundWord}"]:not(.found)`);
+
+                    if (wordListItem) {
+                        wordListItem.classList.add('found');
+                        
+                        selectedCells.forEach(cell => {
+                            cell.classList.add('found');
+                        });
+
+                        if (document.querySelectorAll('.word-list-item:not(.found)').length === 0) {
+                            messageBox.textContent = 'Congratulations! You found all the words!';
+                            messageBox.style.color = '#16a34a';
+                            setTimeout(() => {
+                                messageBox.textContent = '';
+                                messageBox.style.color = '';
+                            }, 5000);
+                        }
+                    }
+                }
+            }
+            
+            function updateLineNumbers() {
+                const lineCount = wordsTextarea.value.split('\n').length;
+                const numbers = Array.from({ length: lineCount }, (_, i) => i + 1).join('\n');
+                lineNumbersTextarea.value = numbers;
+                lineNumbersTextarea.scrollTop = wordsTextarea.scrollTop;
+            }
+            
+            function applyStyling() {
+                const font = activeFont;
+                activeFontWeight = fontWeightSelect.value;
+                const fontWeight = activeFontWeight;
+                const bgColor = puzzleBgColorInput.value;
+                const textColor = gridTextColorInput.value;
+                const lineColor = gridLineColorInput.value;
+                const hideLines = hideLinesCheckbox.checked;
+                const foundColor = foundColorInput.value;
+                const fontSize = parseFloat(fontSizeSlider.value);
+                const hSpacing = parseFloat(hSpacingSlider.value);
+                const vSpacing = parseFloat(vSpacingSlider.value);
+                
+                const cellWidth = Math.max(1, fontSize + hSpacing);
+                const cellHeight = Math.max(1, fontSize + vSpacing);
+
+                const printSection = document.getElementById('print-section');
+                if (printSection) {
+                    printSection.style.fontFamily = `'${font}', sans-serif`;
+                    printSection.style.fontWeight = fontWeight;
+                }
+                
+                document.querySelectorAll('#puzzle-grid .grid-cell').forEach(cell => {
+                    cell.style.width = `${cellWidth}px`;
+                    cell.style.height = `${cellHeight}px`;
+                    
+                    if (cell.querySelector('span').textContent.trim() !== '') {
+                        cell.style.backgroundColor = bgColor;
+                    }
+                    
+                    if (hideLines) {
+                        cell.style.border = 'none';
+                    } else {
+                        cell.style.border = `1px solid ${lineColor}`;
+                    }
+                    
+                    const span = cell.querySelector('span');
+                    if(span) {
+                        applyTextAndFontStyles(span, textColor);
+                    }
+                });
+                
+                const styleSheet = document.getElementById('dynamic-styles');
+                styleSheet.innerHTML = `.puzzle-grid .grid-cell.found { background-color: ${foundColor} !important; } .puzzle-grid .grid-cell.found span { color: white !important; -webkit-text-stroke: 0 !important; text-stroke: 0 !important; text-shadow: none !important; filter: none !important; }`;
+                
+                if (!solutionContainerWrapper.classList.contains('hidden')) {
+                    applySolutionStyling();
+                }
+            }
+
+            function applySolutionStyling() {
+                const foundColor = foundColorInput.value;
+                const emptyColor = solutionEmptyColorInput.value;
+                const textColor = solutionTextColorInput.value;
+                const lineColor = solutionLineColorInput.value;
+                const hideLines = solutionHideLinesCheckbox.checked;
+                const font = activeFont;
+                activeFontWeight = fontWeightSelect.value;
+                const fontWeight = activeFontWeight;
+                const fontSize = parseFloat(fontSizeSlider.value);
+                const hSpacing = parseFloat(hSpacingSlider.value);
+                const vSpacing = parseFloat(vSpacingSlider.value);
+
+                const cellWidth = Math.max(1, fontSize + hSpacing);
+                const cellHeight = Math.max(1, fontSize + vSpacing);
+
+                const solutionGridEl = document.getElementById('solution-grid');
+                if (solutionGridEl) {
+                    solutionGridEl.style.fontFamily = `'${font}', sans-serif`;
+                    solutionGridEl.style.fontWeight = fontWeight;
+                }
+
+                document.querySelectorAll('#solution-grid .grid-cell').forEach(cell => {
+                    cell.style.width = `${cellWidth}px`;
+                    cell.style.height = `${cellHeight}px`;
+
+                    if (hideLines) {
+                        cell.style.border = 'none';
+                    } else {
+                        cell.style.border = `1px solid ${lineColor}`;
+                    }
+
+                    const span = cell.querySelector('span');
+                    if (span) {
+                        applyTextAndFontStyles(span, textColor);
+                        if (span.textContent.trim() !== '') {
+                            cell.style.backgroundColor = foundColor;
+                        } else {
+                            cell.style.backgroundColor = emptyColor;
+                        }
+                    }
+                });
+                
+                const highlightStyle = highlightStyleSelect.value;
+                const fontEffect = fontEffectSelect.value;
+                if (highlightStyle === 'colorful-letters' || highlightStyle === 'colorful-hollow-stroke') {
+                    const outlineWidth = parseFloat(outlineWidthSlider.value);
+                    const outlineColor = outlineColorInput.value;
+                    
+                    placedWordsCoords.forEach((wordData, index) => {
+                        const { word, r, c, dirKey } = wordData;
+                        const dir = directions[dirKey];
+                        const color = colorPalette[index % colorPalette.length];
+
+                        for (let i = 0; i < word.length; i++) {
+                            const newRow = r + i * dir.r;
+                            const newCol = c + i * dir.c;
+                            const cell = solutionGridEl.querySelector(`.grid-cell[data-row="${newRow}"][data-col="${newCol}"]`);
+                            if (cell) {
+                                const span = cell.querySelector('span');
+                                if (span) {
+                                    if (highlightStyle === 'colorful-letters') {
+                                        span.style.color = color;
+                                        if (fontEffect === 'center-stroke') {
+                                            span.style.webkitTextStroke = `${outlineWidth}px ${outlineColor}`;
+                                            span.style.textStroke = `${outlineWidth}px ${outlineColor}`;
+                                        } else {
+                                            span.style.webkitTextStroke = '0';
+                                            span.style.textStroke = '0';
+                                        }
+                                    } else { // colorful-hollow-stroke
+                                        span.style.color = 'transparent';
+                                        span.style.webkitTextStroke = `${outlineWidth}px ${color}`;
+                                        span.style.textStroke = `${outlineWidth}px ${color}`;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                drawHighlights();
+            }
+
+            function applyTextAndFontStyles(element, textColor) {
+                const fontSize = fontSizeSlider.value;
+                const effect = fontEffectSelect.value;
+                const outlineWidth = parseFloat(outlineWidthSlider.value);
+                const outlineColor = outlineColorInput.value;
+                
+                element.style.fontSize = `${fontSize}px`;
+
+                // Reset all effects first
+                element.style.webkitTextStroke = '0';
+                element.style.textStroke = '0';
+                element.style.textShadow = 'none';
+                element.style.filter = 'none';
+                element.style.color = textColor;
+                element.style.padding = '0';
+                element.style.margin = '0';
+                element.style.letterSpacing = 'normal';
+
+                switch (effect) {
+                    case 'hollow':
+                        element.style.color = 'transparent';
+                        element.style.webkitTextStroke = `${outlineWidth}px ${outlineColor}`;
+                        element.style.textStroke = `${outlineWidth}px ${outlineColor}`;
+                        break;
+                    case 'center-stroke':
+                        element.style.webkitTextStroke = `${outlineWidth}px ${outlineColor}`;
+                        element.style.textStroke = `${outlineWidth}px ${outlineColor}`;
+                        break;
+                    default:
+                        // No effect
+                        break;
+                }
+            }
+
+            function populateFontWeights(weights) {
+                fontWeightSelect.innerHTML = '';
+                weights.forEach(w => {
+                    const option = document.createElement('option');
+                    option.value = w;
+                    option.textContent = w;
+                    fontWeightSelect.appendChild(option);
+                });
+                if (weights.includes('400')) {
+                    fontWeightSelect.value = '400';
+                    activeFontWeight = '400';
+                } else {
+                    activeFontWeight = weights[0];
+                }
+            }
+
+            // --- AI Word Generation ---
+            async function generateWordsFromTopic() {
+                const topic = topicInput.value.trim();
+                if (!topic) {
+                    return;
+                }
+
+                topicModal.classList.add('hidden');
+                aiLoader.classList.remove('hidden');
+                getWordsBtn.disabled = true;
+                messageBox.textContent = `Generating words for "${topic}"...`;
+                messageBox.style.color = '#374151'; // gray-700
+
+                const wordCount = wordCountInput.value;
+                const promptText = `Generate a list of ${wordCount} words related to the topic "${topic}". The words should be suitable for a word search puzzle. Provide only the words, separated by newlines. Do not include any other text or numbering.`;
+
+                try {
+                    let chatHistory = [{ role: "user", parts: [{ text: promptText }] }];
+                    const payload = { contents: chatHistory };
+                    const apiKey = ""; // This will be handled by the environment
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API request failed with status ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        wordsTextarea.value = text.trim();
+                        updateLineNumbers();
+                        messageBox.textContent = `Successfully generated words for "${topic}"!`;
+                        messageBox.style.color = '#16a34a'; // green-600
+                    } else {
+                        throw new Error("Invalid response structure from API.");
+                    }
+                } catch (error) {
+                    console.error("Error generating words:", error);
+                    messageBox.textContent = "Sorry, there was an error generating the words. Please try again.";
+                    messageBox.style.color = '#dc2626'; // red-600
+                } finally {
+                    aiLoader.classList.add('hidden');
+                    getWordsBtn.disabled = false;
+                    topicInput.value = ''; // Clear input for next time
+                    setTimeout(() => {
+                        if (messageBox.textContent.includes("Successfully")) {
+                            messageBox.textContent = '';
+                        }
+                    }, 4000);
+                }
+            }
+            
+            // --- Enhanced Highlighting Logic ---
+            function hexToRgb(hex) {
+                let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : null;
+            }
+
+            function getDarkerColor(hex, percent) {
+                const rgb = hexToRgb(hex);
+                if (!rgb) return hex;
+                const p = percent / 100;
+                const newR = Math.max(0, Math.floor(rgb.r * (1 - p)));
+                const newG = Math.max(0, Math.floor(rgb.g * (1 - p)));
+                const newB = Math.max(0, Math.floor(rgb.b * (1 - p)));
+                return `rgb(${newR}, ${newG}, ${newB})`;
+            }
+
+            function drawHighlights() {
+                const overlayBg = document.getElementById('highlight-overlay-bg');
+                const overlayFg = document.getElementById('highlight-overlay-fg');
+                
+                if (!overlayBg || !overlayFg) return;
+                overlayBg.innerHTML = '';
+                overlayFg.innerHTML = '';
+
+                const style = highlightStyleSelect.value;
+                if (style === 'none' || style === 'colorful-letters' || style === 'colorful-hollow-stroke') return;
+
+                const solutionGridEl = document.getElementById('solution-grid');
+                if (!solutionGridEl || placedWordsCoords.length === 0) return;
+
+                const svgNS = "http://www.w3.org/2000/svg";
+                const gridRect = solutionGridEl.getBoundingClientRect();
+
+                [overlayBg, overlayFg].forEach(svg => {
+                    svg.setAttribute('viewBox', `0 0 ${gridRect.width} ${gridRect.height}`);
+                    svg.setAttribute('width', gridRect.width);
+                    svg.setAttribute('height', gridRect.height);
+                });
+                
+                const firstCell = solutionGridEl.querySelector('.grid-cell');
+                if (!firstCell) return;
+                const cellWidth = firstCell.offsetWidth;
+                const cellHeight = firstCell.offsetHeight;
+                
+                const colorMode = highlightColorModeSelect.value;
+                const singleColor = highlightColorInput.value;
+                const thicknessPercent = highlightThicknessSlider.value / 100;
+                const transparency = (100 - highlightTransparencySlider.value) / 100;
+                const lengthMultiplier = highlightLengthSlider.value / 100;
+
+                placedWordsCoords.forEach((wordData, index) => {
+                    const { word, r, c, dirKey } = wordData;
+                    const dir = directions[dirKey];
+                    const len = word.length;
+                    
+                    const color = colorMode === 'palette' ? colorPalette[index % colorPalette.length] : singleColor;
+                    
+                    const startX = c * cellWidth + cellWidth / 2;
+                    const startY = r * cellHeight + cellHeight / 2;
+                    const endX = (c + (len - 1) * dir.c) * cellWidth + cellWidth / 2;
+                    const endY = (r + (len - 1) * dir.r) * cellHeight + cellHeight / 2;
+
+                    const extensionX = (dir.c * cellWidth) / 2 * lengthMultiplier;
+                    const extensionY = (dir.r * cellHeight) / 2 * lengthMultiplier;
+
+                    const fullStartX = startX - extensionX;
+                    const fullStartY = startY - extensionY;
+                    const fullEndX = endX + extensionX;
+                    const fullEndY = endY + extensionY;
+
+
+                    if (style === 'highlighter' || style === 'line') {
+                        const line = document.createElementNS(svgNS, 'line');
+                        line.setAttribute('x1', fullStartX);
+                        line.setAttribute('y1', fullStartY);
+                        line.setAttribute('x2', fullEndX);
+                        line.setAttribute('y2', fullEndY);
+                        line.setAttribute('stroke', color);
+                        line.setAttribute('stroke-linecap', 'round');
+                        
+                        if (style === 'highlighter') {
+                            const strokeWidth = (Math.min(cellWidth, cellHeight) * 0.9 * thicknessPercent);
+                            line.setAttribute('stroke-width', strokeWidth);
+                            line.setAttribute('stroke-opacity', transparency);
+                            overlayBg.appendChild(line);
+                        } else { // 'line'
+                            line.setAttribute('stroke-width', 2 * thicknessPercent + 1);
+                            line.setAttribute('stroke-opacity', transparency > 0.5 ? transparency : transparency + 0.5);
+                            overlayFg.appendChild(line);
+                        }
+                    } else if (style === 'hollow-oval' || style === 'oval-stroke') {
+                        const path = document.createElementNS(svgNS, 'path');
+                        
+                        let pStartX = fullStartX;
+                        let pStartY = fullStartY;
+                        let pEndX = fullEndX;
+                        let pEndY = fullEndY;
+
+                        const dx = pEndX - pStartX;
+                        const dy = pEndY - pStartY;
+
+                        if (dx < 0 || (Math.abs(dx) < 1e-9 && dy < 0)) {
+                            [pStartX, pEndX] = [pEndX, pStartX];
+                            [pStartY, pEndY] = [pEndY, pStartY];
+                        }
+
+                        const angle = Math.atan2(pEndY - pStartY, pEndX - pStartX);
+                        
+                        const capsuleHeight = Math.min(cellWidth, cellHeight) * 0.9 * thicknessPercent;
+                        const capsuleRadius = capsuleHeight / 2;
+
+                        const p1x = pStartX - capsuleRadius * Math.sin(angle);
+                        const p1y = pStartY + capsuleRadius * Math.cos(angle);
+                        const p2x = pEndX - capsuleRadius * Math.sin(angle);
+                        const p2y = pEndY + capsuleRadius * Math.cos(angle);
+                        const p3x = pEndX + capsuleRadius * Math.sin(angle);
+                        const p3y = pEndY - capsuleRadius * Math.cos(angle);
+                        const p4x = pStartX + capsuleRadius * Math.sin(angle);
+                        const p4y = pStartY - capsuleRadius * Math.cos(angle);
+                        
+                        const d = `M ${p1x} ${p1y} L ${p2x} ${p2y} A ${capsuleRadius} ${capsuleRadius} 0 0 0 ${p3x} ${p3y} L ${p4x} ${p4y} A ${capsuleRadius} ${capsuleRadius} 0 0 0 ${p1x} ${p1y} Z`;
+                        
+                        path.setAttribute('d', d);
+
+                        if (style === 'hollow-oval') {
+                            path.setAttribute('stroke', color);
+                            path.setAttribute('stroke-width', 2 * thicknessPercent + 1);
+                            path.setAttribute('fill', 'none');
+                            path.setAttribute('opacity', transparency);
+                        } else { // 'oval-stroke'
+                            const strokeColor = getDarkerColor(color, 30);
+                            path.setAttribute('stroke', strokeColor);
+                            path.setAttribute('stroke-width', 1.5 * thicknessPercent + 0.5);
+                            path.setAttribute('fill', color);
+                            path.setAttribute('fill-opacity', transparency);
+                        }
+                        overlayBg.appendChild(path);
+                    }
+                });
+            }
+
+            // --- Save/Load Configuration Logic ---
+            function saveConfiguration() {
+                const config = {
+                    version: 1,
+                    title: title.value,
+                    words: wordsTextarea.value,
+                    hiddenMessage: hiddenMessageInput.value,
+                    rows: rowsInput.value,
+                    cols: colsInput.value,
+                    fillerLetters: document.getElementById('filler-letters').value,
+                    shape: shapeSelect.value,
+                    gridCode: (shapeSelect.value === 'custom' || lastUsedShape === 'image-upload' || lastUsedShape === 'grid-code') ? encodeGridCode() : null,
+                    directions: {},
+                    font: {
+                        method: fontMethodSelect.value,
+                        googleLink: googleFontInput.value,
+                        urlCss: urlFontCssInput.value, // New
+                        urlFamily: urlFontFamilyInput.value, // New
+                        activeFont: activeFont,
+                        weight: fontWeightSelect.value,
+                    },
+                    gridStyling: {
+                        fontSize: fontSizeSlider.value,
+                        hSpacing: hSpacingSlider.value,
+                        vSpacing: vSpacingSlider.value,
+                        effect: fontEffectSelect.value,
+                        effectWidth: outlineWidthSlider.value,
+                        effectColor: outlineColorInput.value,
+                        bgColor: puzzleBgColorInput.value,
+                        textColor: gridTextColorInput.value,
+                        lineColor: gridLineColorInput.value,
+                        hideLines: hideLinesCheckbox.checked,
+                    },
+                    solutionStyling: {
+                        foundColor: foundColorInput.value,
+                        emptyColor: solutionEmptyColorInput.value,
+                        textColor: solutionTextColorInput.value,
+                        lineColor: solutionLineColorInput.value,
+                        hideLines: solutionHideLinesCheckbox.checked,
+                    },
+                    highlightStyling: {
+                        style: highlightStyleSelect.value,
+                        colorMode: highlightColorModeSelect.value,
+                        color: highlightColorInput.value,
+                        thickness: highlightThicknessSlider.value,
+                        transparency: highlightTransparencySlider.value,
+                        length: highlightLengthSlider.value,
+                    }
+                };
+
+                document.querySelectorAll('#direction-checkboxes input').forEach(cb => {
+                    config.directions[cb.id.replace('dir-', '')] = cb.checked;
+                });
+
+                try {
+                    const jsonString = JSON.stringify(config);
+                    const encodedConfig = btoa(jsonString);
+                    configOutput.value = encodedConfig;
+                    copyTextToClipboard(encodedConfig, saveConfigBtn, 'Generate & Copy Code');
+                } catch (e) {
+                    console.error("Error saving configuration:", e);
+                    messageBox.textContent = "Could not generate configuration code.";
+                    messageBox.style.color = '#dc2626';
+                }
+            }
+
+            function loadConfiguration() {
+                const encodedConfig = configInput.value.trim();
+                if (!encodedConfig) {
+                    messageBox.textContent = "Please paste a configuration code to load.";
+                    return;
+                }
+
+                try {
+                    const jsonString = atob(encodedConfig);
+                    const config = JSON.parse(jsonString);
+
+                    // FIX: Wrap UI updates to prevent accordion bug
+                    const currentlyOpen = document.querySelector('.accordion-section.open .accordion-header');
+                    
+                    title.value = config.title || '';
+                    wordsTextarea.value = config.words || '';
+                    hiddenMessageInput.value = config.hiddenMessage || '';
+                    updateLineNumbers();
+
+                    rowsInput.value = config.rows || 15;
+                    colsInput.value = config.cols || 15;
+                    document.getElementById('filler-letters').value = config.fillerLetters || '';
+                    shapeSelect.value = config.shape || 'rectangle';
+
+                    shapeSelect.dispatchEvent(new Event('change')); 
+
+                    if (config.shape === 'custom' && config.gridCode) {
+                        renderGridEditor(config.gridCode);
+                    } else if (config.shape === 'grid-code' && config.gridCode) {
+                        gridCodeInput.value = config.gridCode;
+                        applyCodeBtn.click();
+                    }
+
+                    if (config.directions) {
+                        Object.keys(config.directions).forEach(key => {
+                            const checkbox = document.getElementById(`dir-${key}`);
+                            const btn = document.getElementById(`btn-${key}`);
+                            if (checkbox) {
+                                checkbox.checked = config.directions[key];
+                                if (btn) {
+                                    btn.classList.toggle('active', checkbox.checked);
+                                }
+                            }
+                        });
+                    }
+
+                    if (config.font) {
+                        fontMethodSelect.value = config.font.method || 'google';
+                        fontMethodSelect.dispatchEvent(new Event('change'));
+                        googleFontInput.value = config.font.googleLink || '';
+                        urlFontCssInput.value = config.font.urlCss || '';
+                        urlFontFamilyInput.value = config.font.urlFamily || '';
+
+                        if (config.font.method === 'google' && config.font.googleLink) {
+                            addGoogleFontBtn.click();
+                        } else if (config.font.method === 'url' && config.font.urlCss && config.font.urlFamily) {
+                            addUrlFontBtn.click();
+                        } else if (config.font.method === 'upload') {
+                           messageBox.textContent = `Config loaded. Please re-upload the custom font "${config.font.activeFont}" to apply it.`;
+                        }
+
+                        setTimeout(() => {
+                           fontWeightSelect.value = config.font.weight || '400';
+                           activeFontWeight = fontWeightSelect.value;
+                        }, 100);
+                    }
+                    
+                    if (config.gridStyling) {
+                        const gs = config.gridStyling;
+                        fontSizeSlider.value = gs.fontSize || 24;
+                        hSpacingSlider.value = gs.hSpacing || 10;
+                        vSpacingSlider.value = gs.vSpacing || 10;
+                        fontEffectSelect.value = gs.effect || 'none';
+                        outlineWidthSlider.value = gs.effectWidth || 1;
+                        outlineColorInput.value = gs.effectColor || '#000000';
+                        puzzleBgColorInput.value = gs.bgColor || '#FFFFFF';
+                        gridTextColorInput.value = gs.textColor || '#1F2937';
+                        gridLineColorInput.value = gs.lineColor || '#D1D5DB';
+                        hideLinesCheckbox.checked = gs.hideLines || false;
+                    }
+
+                    if (config.solutionStyling) {
+                        const ss = config.solutionStyling;
+                        foundColorInput.value = ss.foundColor || '#4ADE80';
+                        solutionEmptyColorInput.value = ss.emptyColor || '#FFFFFF';
+                        solutionTextColorInput.value = ss.textColor || '#1F2937';
+                        solutionLineColorInput.value = ss.lineColor || '#D1D5DB';
+                        solutionHideLinesCheckbox.checked = ss.hideLines || false;
+                    }
+
+                    if (config.highlightStyling) {
+                        const hs = config.highlightStyling;
+                        highlightStyleSelect.value = hs.style || 'none';
+                        highlightColorModeSelect.value = hs.colorMode || 'single';
+                        highlightColorInput.value = hs.color || '#A3A3A3';
+                        highlightThicknessSlider.value = hs.thickness || 100;
+                        highlightTransparencySlider.value = hs.transparency || 50;
+                        highlightLengthSlider.value = hs.length || 20;
+                    }
+                    
+                    document.querySelectorAll('input[type="range"]').forEach(slider => {
+                        slider.dispatchEvent(new Event('input'));
+                    });
+                     fontEffectSelect.dispatchEvent(new Event('change'));
+                     highlightColorModeSelect.dispatchEvent(new Event('change'));
+                    
+                    // FIX: Restore previously open accordion
+                    setTimeout(() => {
+                        closeAllAccordions();
+                        if (currentlyOpen) {
+                            openAccordion(currentlyOpen);
+                        } else {
+                            openAccordion(accordionHeaders[0]); // Default to Save/Load
+                        }
+                    }, 100);
+
+                    messageBox.textContent = 'Configuration loaded successfully!';
+                    messageBox.style.color = '#16a34a';
+                    configInput.value = '';
+                    setTimeout(() => { messageBox.textContent = ''; }, 4000);
+
+                } catch (e) {
+                    console.error("Error loading configuration:", e);
+                    messageBox.textContent = "Invalid or corrupted configuration code.";
+                    messageBox.style.color = '#dc2626';
+                }
+            }
+
+
+            // --- Initial Setup ---
+            populateShapes();
+            renderDirectionSelector();
+            updateLineNumbers();
+            populateFontWeights(['400', '700']);
+            
+            const detailsHeader = accordionHeaders[1]; 
+            if (detailsHeader) {
+                openAccordion(detailsHeader);
+            }
+            
+            aiWordGeneratorContainer.classList.remove('hidden');
+            aiWordGeneratorContainer.classList.add('flex');
+            
+            // --- Event Listeners ---
+            generateBtn.addEventListener('click', generatePuzzle);
+
+            document.querySelectorAll('.export-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const format = e.currentTarget.dataset.exportFormat;
+                    openExportModal(format);
+                });
+            });
+            
+            copySvgBtn.addEventListener('click', async () => {
+                const svgContent = await generateSimplePuzzleSVG();
+                if (svgContent) {
+                    copyTextToClipboard(svgContent, copySvgBtn, 'Copy SVG');
+                }
+            });
+
+            // Save/Load Listeners
+            saveConfigBtn.addEventListener('click', saveConfiguration);
+            loadConfigBtn.addEventListener('click', loadConfiguration);
+
+            solveBtn.addEventListener('click', () => {
+                const isHidden = solutionContainerWrapper.classList.toggle('hidden');
+                solutionStylingContainer.classList.toggle('hidden', isHidden);
+                highlightStylingContainer.classList.toggle('hidden', isHidden);
+                
+                const statsContainer = document.getElementById('puzzle-stats-container');
+                statsContainer.classList.toggle('hidden', isHidden);
+
+                if (!isHidden) {
+                    document.getElementById('difficulty-meter').textContent = `Difficulty: ${difficultyRating}`;
+                    document.getElementById('solve-time-estimation').textContent = `Estimated Solve Time: ${estimatedTime}`;
+                    applyStyling();    
+                }
+                
+                solveBtn.textContent = isHidden ? 'Show Answers' : 'Hide Answers';
+            });
+            copyRowsBtn.addEventListener('click', () => {
+                const gridEl = document.getElementById('puzzle-grid');
+                if(!gridEl) return;
+                const text = Array.from(gridEl.querySelectorAll('.grid-cell')).reduce((acc, cell, i) => {
+                    const colCount = parseInt(gridEl.style.getPropertyValue('--grid-cols'));
+                    acc += cell.textContent || ' ';
+                    if ((i + 1) % colCount === 0) acc += '\n';
+                    return acc;
+                }, '');
+                copyTextToClipboard(text.trim(), copyRowsBtn, 'Copy Rows')
+            });
+            copyColsBtn.addEventListener('click', () => {
+                const gridEl = document.getElementById('puzzle-grid');
+                if(!gridEl) return;
+                const cells = Array.from(gridEl.querySelectorAll('.grid-cell'));
+                const rowCount = currentGrid.length;
+                const colCount = currentGrid[0].length;
+                let transposedText = '';
+                for (let c = 0; c < colCount; c++) {
+                    for (let r = 0; r < rowCount; r++) {
+                        transposedText += cells[r * colCount + c].textContent || ' ';
+                    }
+                    transposedText += (c === colCount - 1 ? '' : '\n');
+                }
+                copyTextToClipboard(transposedText, copyColsBtn, 'Copy Columns');
+            });
+            copyCodeBtn.addEventListener('click', () => {
+                const code = encodeGridCode();
+                if (code) {
+                    copyTextToClipboard(code, copyCodeBtn, 'Copy Grid Code');
+                }
+            });
+            
+            shapeSelect.addEventListener('change', () => {
+                const value = shapeSelect.value;
+                customGridEditorContainer.classList.add('hidden');
+                imageUploadContainer.classList.add('hidden');
+                imageProcessOptions.classList.add('hidden');
+                gridCodeContainer.classList.add('hidden');
+
+                if (value === 'custom') {
+                    customGridEditorContainer.classList.remove('hidden');
+                    renderGridEditor();
+                } else if (value === 'image-upload') {
+                    imageUploadContainer.classList.remove('hidden');
+                } else if (value === 'grid-code') {
+                    gridCodeContainer.classList.remove('hidden');
+                }
+                updateAccordionHeight(shapeSelect);
+            });
+            
+            applyCodeBtn.addEventListener('click', () => {
+                const code = gridCodeInput.value.trim();
+                if (code) {
+                    shapeSelect.value = 'custom';
+                    customGridEditorContainer.classList.remove('hidden');
+                    imageUploadContainer.classList.add('hidden');
+                    gridCodeContainer.classList.add('hidden');
+                    renderGridEditor(code);
+                    updateAccordionHeight(applyCodeBtn);
+                }
+            });
+
+            imageUploader.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    uploadedImage = e.target.files[0];
+                    imageProcessOptions.classList.remove('hidden');
+                    updateAccordionHeight(imageUploader);
+                }
+            });
+            
+            fitToGridBtn.addEventListener('click', () => processImage('fit'));
+            autoSizeBtn.addEventListener('click', () => processImage('auto'));
+
+            rowsInput.addEventListener('input', () => { if(shapeSelect.value === 'custom') renderGridEditor(); });
+            colsInput.addEventListener('input', () => { if(shapeSelect.value === 'custom') renderGridEditor(); });
+            
+            wordsTextarea.addEventListener('input', updateLineNumbers);
+            wordsTextarea.addEventListener('scroll', () => {
+                lineNumbersTextarea.scrollTop = wordsTextarea.scrollTop;
+            });
+            
+            const allStylingControls = [
+                puzzleBgColorInput, gridTextColorInput, gridLineColorInput, outlineColorInput,
+                hideLinesCheckbox, fontEffectSelect, fontWeightSelect,
+                fontSizeSlider, hSpacingSlider, vSpacingSlider, outlineWidthSlider
+            ];
+            allStylingControls.forEach(el => {
+                const eventType = (el.type === 'range' || el.type === 'text') ? 'input' : 'change';
+                el.addEventListener(eventType, applyStyling);
+            });
+
+            [foundColorInput, solutionEmptyColorInput, solutionTextColorInput, solutionLineColorInput, solutionHideLinesCheckbox].forEach(el => {
+                 el.addEventListener('input', applySolutionStyling)
+            });
+            
+            addGoogleFontBtn.addEventListener('click', () => {
+                const linkTag = googleFontInput.value;
+                const hrefMatch = linkTag.match(/href="([^"]+)"/);
+                if (!hrefMatch) return;
+                const href = hrefMatch[1];
+                activeFontUrl = href; // Store for SVG export
+
+                const familyMatch = href.match(/family=([^&:]+)/);
+                if (!familyMatch) return;
+                const fontFamily = familyMatch[1].replace(/\+/g, ' ');
+                
+                const weights = [];
+                const wghtMatch = href.match(/wght@([\d;..]+)/);
+                if (wghtMatch) {
+                    const wghtString = wghtMatch[1];
+                    if (wghtString.includes('..')) {
+                        const [start, end] = wghtString.split('..').map(Number);
+                        for (let i = start; i <= end; i += 100) {
+                            weights.push(i.toString());
+                        }
+                    } else {
+                        weights.push(...wghtString.split(';'));
+                    }
+                }
+                if(weights.length === 0) weights.push('400', '700');
+                populateFontWeights(weights);
+
+                const newLink = document.createElement('link');
+                newLink.rel = 'stylesheet';
+                newLink.href = href;
+                document.head.appendChild(newLink);
+                
+                activeFont = fontFamily;
+                activeFontWeight = fontWeightSelect.value;
+                activeFontDataUrl = null; // Clear uploaded font
+                applyStyling();
+            });
+
+            // NEW: Event listener for adding font from URL
+            addUrlFontBtn.addEventListener('click', () => {
+                const cssUrl = urlFontCssInput.value.trim();
+                const fontFamily = urlFontFamilyInput.value.trim();
+
+                if (!cssUrl || !fontFamily) {
+                    messageBox.textContent = "Please provide both a CSS URL and a Font Family name.";
+                    messageBox.style.color = '#dc2626';
+                    return;
+                }
+
+                const newLink = document.createElement('link');
+                newLink.rel = 'stylesheet';
+                newLink.href = cssUrl;
+                document.head.appendChild(newLink);
+
+                activeFont = fontFamily;
+                activeFontUrl = cssUrl; // Store for SVG/PDF export
+                activeFontDataUrl = null;
+                populateFontWeights(['100', '200', '300', '400', '500', '600', '700', '800', '900', 'normal', 'bold']);
+                fontWeightSelect.value = '400';
+                activeFontWeight = '400';
+                applyStyling();
+                messageBox.textContent = `Font "${fontFamily}" applied!`;
+                messageBox.style.color = '#16a34a';
+                setTimeout(() => { messageBox.textContent = ''; }, 3000);
+            });
+            
+            customFontUploader.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const fontName = file.name.split('.').slice(0, -1).join('.'); // Handle names with dots
+                        const fontDataUrl = event.target.result;
+                        activeFontDataUrl = fontDataUrl; // Store for export
+                        
+                        const newStyle = `@font-face { font-family: '${fontName}'; src: url(${fontDataUrl}); }`;
+                        const styleSheet = document.getElementById('dynamic-styles');
+                        styleSheet.innerHTML += newStyle;
+
+                        activeFont = fontName;
+                        populateFontWeights(['normal', 'bold']);
+                        activeFontWeight = 'normal';    
+                        activeFontUrl = null; // Clear Google font
+                        applyStyling();
+                    } catch (err) {
+                        console.error("Failed to load uploaded font:", err);
+                        messageBox.textContent = `Error: Could not load font ${file.name}. The file may be invalid.`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // NEW: Updated font method selection logic
+            fontMethodSelect.addEventListener('change', () => {
+                const selectedMethod = fontMethodSelect.value;
+                googleFontContainer.classList.toggle('hidden', selectedMethod !== 'google');
+                urlFontContainer.classList.toggle('hidden', selectedMethod !== 'url');
+                uploadFontContainer.classList.toggle('hidden', selectedMethod !== 'upload');
+                updateAccordionHeight(fontMethodSelect);
+            });
+
+            fontSizeSlider.addEventListener('input', (e) => {
+                fontSizeValue.textContent = e.target.value;
+            });
+
+            hSpacingSlider.addEventListener('input', (e) => {
+                hSpacingValue.textContent = e.target.value;
+            });
+
+            vSpacingSlider.addEventListener('input', (e) => {
+                vSpacingValue.textContent = e.target.value;
+            });
+
+            fontEffectSelect.addEventListener('change', (e) => {
+                effectOptions.classList.toggle('hidden', e.target.value === 'none');
+                applySolutionStyling(); // Re-apply styles when font effect changes
+                updateAccordionHeight(fontEffectSelect);
+            });
+
+            outlineWidthSlider.addEventListener('input', (e) => {
+                outlineWidthValue.textContent = e.target.value;
+            });
+            
+            getWordsBtn.addEventListener('click', () => {
+                topicModal.classList.remove('hidden');
+                topicInput.focus();
+            });
+            modalCancelBtn.addEventListener('click', () => {
+                topicModal.classList.add('hidden');
+            });
+            modalGenerateBtn.addEventListener('click', generateWordsFromTopic);
+            topicInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    generateWordsFromTopic();
+                }
+            });
+
+            // --- Highlight Control Event Listeners ---
+            highlightStyleSelect.addEventListener('change', applySolutionStyling);
+            highlightColorInput.addEventListener('input', applySolutionStyling);
+            highlightColorModeSelect.addEventListener('change', (e) => {
+                singleColorContainer.classList.toggle('hidden', e.target.value === 'palette');
+                applySolutionStyling();
+            });
+            highlightThicknessSlider.addEventListener('input', (e) => {
+                highlightThicknessValue.textContent = e.target.value;
+                applySolutionStyling();
+            });
+            highlightTransparencySlider.addEventListener('input', (e) => {
+                highlightTransparencyValue.textContent = e.target.value;
+                applySolutionStyling();
+            });
+            highlightLengthSlider.addEventListener('input', (e) => {
+                highlightLengthValue.textContent = e.target.value;
+                applySolutionStyling();
+            });
+
+            // --- Export Modal Logic ---
+            function openExportModal(format) {
+                currentExportFormat = format;
+                exportModal.classList.remove('hidden');
+                exportPdfOptions.style.display = format === 'pdf' ? 'block' : 'none';
+                exportImageOptions.style.display = (format === 'png' || format === 'jpg' || format === 'svg') ? 'block' : 'none';
+
+                const isSvg = format === 'svg';
+                exportTransparentBg.parentElement.style.display = isSvg ? 'none' : 'flex';
+                
+                // Set initial visibility of nested options
+                exportPuzzleGridOptions.style.display = exportIncludePuzzle.checked ? 'block' : 'none';
+                exportSolutionGridOptions.style.display = exportIncludeSolution.checked ? 'block' : 'none';
+
+                updateExportPreview();
+            }
+
+            function closeExportModal() {
+                exportModal.classList.add('hidden');
+            }
+
+            exportCloseBtn.addEventListener('click', closeExportModal);
+            exportCancelBtn.addEventListener('click', closeExportModal);
+            exportProceedBtn.addEventListener('click', startExportProcess);
+
+            const exportControls = [
+                exportIncludePuzzle, exportIncludeSolution, exportShowHighlights, exportTransparentBg,
+                exportPdfIncludeBg, exportHideFiller, exportHighlightsOnly,
+                exportPreserveBackgroundsPuzzle, exportPreserveLinesPuzzle,
+                exportPreserveBackgroundsSolution, exportPreserveLinesSolution
+            ];
+            exportControls.forEach(el => {
+                el.addEventListener('change', updateExportPreview);
+            });
+            
+            // NEW: Listeners for toggling nested options
+            exportIncludePuzzle.addEventListener('change', () => {
+                exportPuzzleGridOptions.style.display = exportIncludePuzzle.checked ? 'block' : 'none';
+            });
+             exportIncludeSolution.addEventListener('change', () => {
+                exportSolutionGridOptions.style.display = exportIncludeSolution.checked ? 'block' : 'none';
+            });
+
+            exportHighlightsOnly.addEventListener('change', () => {
+                const isChecked = exportHighlightsOnly.checked;
+                // When "Highlights Only" is checked, it implies we are dealing with the answer key.
+                // So, we should check and disable the "Answer Key Grid" checkbox.
+                if (isChecked) {
+                    exportIncludeSolution.checked = true;
+                    exportIncludeSolution.disabled = true;
+                    exportSolutionGridOptions.style.display = 'block'; // Ensure its children are visible
+                } else {
+                    exportIncludeSolution.disabled = false;
+                }
+
+                // The other options are disabled regardless.
+                exportIncludePuzzle.disabled = isChecked;
+                exportShowHighlights.disabled = isChecked;
+                exportHideFiller.disabled = isChecked;
+
+                if (isChecked) {
+                    exportIncludePuzzle.checked = false;
+                    exportShowHighlights.checked = true;
+                }
+            });
+
+            async function updateExportPreview() {
+                if (currentExportFormat === 'svg') {
+                    const ctx = exportPreviewCanvas.getContext('2d');
+                    exportPreviewCanvas.width = 300;
+                    exportPreviewCanvas.height = 150;
+                    ctx.clearRect(0,0,300,150);
+                    ctx.fillStyle = '#4B5563';
+                    ctx.textAlign = 'center';
+                    ctx.font = '16px sans-serif';
+                    ctx.fillText('SVG Preview Not Available', 150, 75);
+                    return;
+                }
+
+                const options = {
+                    format: 'png', // Always use png for preview canvas
+                    includePuzzle: exportIncludePuzzle.checked,
+                    includeSolution: exportIncludeSolution.checked,
+                    showHighlights: exportShowHighlights.checked,
+                    transparentBg: exportTransparentBg.checked,
+                    hideFillerLetters: exportHideFiller.checked,
+                    includePdfBg: true,
+                    highlightsOnly: exportHighlightsOnly.checked,
+                    preserveBackgroundsPuzzle: exportPreserveBackgroundsPuzzle.checked,
+                    preserveLinesPuzzle: exportPreserveLinesPuzzle.checked,
+                    preserveBackgroundsSolution: exportPreserveBackgroundsSolution.checked,
+                    preserveLinesSolution: exportPreserveLinesSolution.checked,
+                };
+
+                const canvas = await createExportCanvas(options);
+                if (!canvas) return;
+                const ctx = exportPreviewCanvas.getContext('2d');
+                const parent = exportPreviewCanvas.parentElement;
+                const parentWidth = parent.clientWidth - 16; // account for padding
+                const parentHeight = parent.clientHeight - 16;
+                const ratio = Math.min(parentWidth / canvas.width, parentHeight / canvas.height);
+                
+                exportPreviewCanvas.width = canvas.width * ratio;
+                exportPreviewCanvas.height = canvas.height * ratio;
+                ctx.drawImage(canvas, 0, 0, exportPreviewCanvas.width, exportPreviewCanvas.height);
+            }
+
+            async function startExportProcess() {
+                exportProceedText.textContent = 'Processing...';
+                exportLoader.classList.remove('hidden');
+                exportProceedBtn.disabled = true;
+
+                await new Promise(resolve => setTimeout(resolve, 50));
+
+                const options = {
+                    format: currentExportFormat,
+                    includePuzzle: exportIncludePuzzle.checked,
+                    includeSolution: exportIncludeSolution.checked,
+                    showHighlights: exportShowHighlights.checked,
+                    solutionOnNewPage: exportSolutionNewpage.checked,
+                    transparentBg: exportTransparentBg.checked,
+                    includePdfBg: exportPdfIncludeBg.checked,
+                    hideFillerLetters: exportHideFiller.checked,
+                    highlightsOnly: exportHighlightsOnly.checked,
+                    preserveBackgroundsPuzzle: exportPreserveBackgroundsPuzzle.checked,
+                    preserveLinesPuzzle: exportPreserveLinesPuzzle.checked,
+                    preserveBackgroundsSolution: exportPreserveBackgroundsSolution.checked,
+                    preserveLinesSolution: exportPreserveLinesSolution.checked,
+                };
+
+                if (!options.includePuzzle && !options.includeSolution && !options.highlightsOnly) {
+                    messageBox.textContent = "Please select at least one item to export.";
+                    messageBox.style.color = '#dc2626';
+                    resetExportButton();
+                    return;
+                }
+
+                try {
+                    const fontSpec = `${fontWeightSelect.value} ${fontSizeSlider.value}px "${activeFont}"`;
+                    await document.fonts.load(fontSpec);
+
+                    if (options.format === 'svg') {
+                        const svgContent = await generateExportSVG(options);
+                        if(svgContent) downloadSVG(svgContent);
+                    } else if (options.format === 'pdf') {
+                        await downloadPDFWithCanvas(options);
+                    } else {
+                        await downloadAsImageWithCanvas(options);
+                    }
+                } catch (e) {
+                    console.error("Export failed:", e);
+                    messageBox.textContent = "An error occurred during export. The selected font might not be available for download.";
+                    messageBox.style.color = '#dc2626';
+                } finally {
+                    resetExportButton();
+                    closeExportModal();
+                }
+            }
+            
+            function resetExportButton() {
+                exportProceedText.textContent = 'Export';
+                exportLoader.classList.add('hidden');
+                exportProceedBtn.disabled = false;
+            }
+
+            async function downloadAsImageWithCanvas(options) {
+                const canvas = await createExportCanvas(options);
+                if (!canvas) return;
+                const mimeType = `image/${options.format}`;
+                const link = document.createElement('a');
+                link.download = `word-search-grid.${options.format}`;
+                link.href = canvas.toDataURL(mimeType, 1.0);
+                link.click();
+            }
+            
+            async function downloadPDFWithCanvas(options) {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                const A4_WIDTH = 210;
+                const MARGIN = 15;
+                const CONTENT_WIDTH = A4_WIDTH - MARGIN * 2;
+
+                const addCanvasToPdf = async (canvas, isFirstPage, yPos = MARGIN) => {
+                    if (!isFirstPage) {
+                        pdf.addPage();
+                        yPos = MARGIN;
+                    }
+                    const imgData = canvas.toDataURL('image/png', 1.0);
+                    const imgProps = pdf.getImageProperties(imgData);
+                    const pdfWidth = CONTENT_WIDTH;
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    pdf.addImage(imgData, 'PNG', MARGIN, yPos, pdfWidth, pdfHeight);
+                    return yPos + pdfHeight;
+                };
+                
+                if (options.highlightsOnly) {
+                    const highlightsCanvas = await drawGridToCanvas(true, { ...options, isHighlightsOnlyRender: true });
+                    if (highlightsCanvas) await addCanvasToPdf(highlightsCanvas, true);
+                } else {
+                    let currentPageY = MARGIN;
+                    let isFirstElement = true;
+
+                    if (options.includePuzzle) {
+                        const puzzleCanvas = await drawGridToCanvas(false, options);
+                        if (puzzleCanvas) {
+                            currentPageY = await addCanvasToPdf(puzzleCanvas, isFirstElement, currentPageY);
+                            isFirstElement = false;
+                        }
+                    }
+
+                    if (options.includeSolution || options.showHighlights) {
+                        const solutionCanvas = await drawGridToCanvas(true, options);
+                        if (solutionCanvas) {
+                            const onNewPage = !isFirstElement && options.solutionOnNewPage;
+                            await addCanvasToPdf(solutionCanvas, onNewPage, onNewPage ? MARGIN : currentPageY + 5);
+                        }
+                    }
+                }
+
+                pdf.save('word-search.pdf');
+            }
+
+            async function createExportCanvas(options) {
+                if (options.highlightsOnly) {
+                    return await drawGridToCanvas(true, { ...options, isHighlightsOnlyRender: true });
+                }
+
+                const { includePuzzle, includeSolution, showHighlights } = options;
+                
+                let totalHeight = 0;
+                let puzzleCanvas, solutionCanvas;
+                let finalWidth = 0;
+                const gap = 40; // Increased gap for better separation
+
+                if (includePuzzle) {
+                    puzzleCanvas = await drawGridToCanvas(false, options);
+                    if (puzzleCanvas) {
+                        totalHeight += puzzleCanvas.height;
+                        finalWidth = puzzleCanvas.width;
+                    }
+                }
+                
+                if (includeSolution || showHighlights) {
+                    solutionCanvas = await drawGridToCanvas(true, options);
+                     if (solutionCanvas) {
+                        totalHeight += (puzzleCanvas ? gap : 0) + solutionCanvas.height;
+                        finalWidth = Math.max(finalWidth, solutionCanvas.width);
+                    }
+                }
+                
+                if (finalWidth === 0 || totalHeight === 0) return null;
+
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = finalWidth;
+                finalCanvas.height = totalHeight;
+                const ctx = finalCanvas.getContext('2d');
+
+                const bgColor = options.format === 'pdf' && !options.includePdfBg ? '#FFFFFF' : puzzleBgColorInput.value;
+                if (options.format === 'jpg' || (options.format === 'png' && !options.transparentBg)) {
+                    ctx.fillStyle = bgColor;
+                    ctx.fillRect(0, 0, finalWidth, totalHeight);
+                }
+
+                let currentY = 0;
+                if(puzzleCanvas) {
+                    ctx.drawImage(puzzleCanvas, (finalWidth - puzzleCanvas.width) / 2, currentY);
+                    currentY += puzzleCanvas.height + gap;
+                }
+                if(solutionCanvas) {
+                    ctx.drawImage(solutionCanvas, (finalWidth - solutionCanvas.width) / 2, currentY);
+                }
+
+                return finalCanvas;
+            }
+
+            async function drawGridToCanvas(isSolution, options) {
+                const grid = currentGrid;
+                if (!grid || grid.length === 0) return null;
+
+                const rows = grid.length;
+                const cols = grid[0].length;
+                const scale = 6;
+
+                const font = activeFont;
+                const fontWeight = fontWeightSelect.value;
+                const fontSize = parseFloat(fontSizeSlider.value) * scale;
+                const hSpacing = parseFloat(hSpacingSlider.value) * scale;
+                const vSpacing = parseFloat(vSpacingSlider.value) * scale;
+                const cellWidth = Math.max(1, fontSize + hSpacing);
+                const cellHeight = Math.max(1, fontSize + vSpacing);
+                
+                let minX = cols, minY = rows, maxX = -1, maxY = -1;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (grid[r][c] !== ' ') {
+                            if (c < minX) minX = c;
+                            if (r < minY) minY = r;
+                            if (c > maxX) maxX = c;
+                            if (r > maxY) maxY = r;
+                        }
+                    }
+                }
+                if (maxX === -1) return null; // Empty grid
+
+                const trimmedWidth = (maxX - minX + 1) * cellWidth;
+                const trimmedHeight = (maxY - minY + 1) * cellHeight;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = trimmedWidth;
+                canvas.height = trimmedHeight;
+                const ctx = canvas.getContext('2d');
+
+                const isHighlightsOnly = options.isHighlightsOnlyRender;
+
+                if (!isHighlightsOnly) {
+                    let puzzleBG = isSolution ? solutionEmptyColorInput.value : puzzleBgColorInput.value;
+                    if (options.format === 'pdf' && !options.includePdfBg) {
+                        puzzleBG = '#ffffff';
+                    }
+                    
+                    if (!(options.transparentBg && options.format === 'png')) {
+                        ctx.fillStyle = puzzleBG;
+                        ctx.fillRect(0, 0, trimmedWidth, trimmedHeight);
+                    }
+                }
+
+                const gridStartX = -minX * cellWidth;
+                const gridStartY = -minY * cellHeight;
+
+                const preserveBackgrounds = isSolution ? options.preserveBackgroundsSolution : options.preserveBackgroundsPuzzle;
+                if (!isHighlightsOnly && preserveBackgrounds) {
+                    for (let r = minY; r <= maxY; r++) {
+                        for (let c = minX; c <= maxX; c++) {
+                            if (grid[r][c] !== ' ') {
+                                const x = gridStartX + c * cellWidth;
+                                const y = gridStartY + r * cellHeight;
+                                let cellBG = isSolution ? solutionEmptyColorInput.value : puzzleBgColorInput.value;
+                                if (isSolution && solutionGrid[r][c] !== null) {
+                                    cellBG = foundColorInput.value;
+                                }
+                                ctx.fillStyle = cellBG;
+                                ctx.fillRect(x, y, cellWidth, cellHeight);
+                            }
+                        }
+                    }
+                }
+                
+                const hideLines = isSolution ? solutionHideLinesCheckbox.checked : hideLinesCheckbox.checked;
+                const preserveLines = isSolution ? options.preserveLinesSolution : options.preserveLinesPuzzle;
+                if (!isHighlightsOnly && (!hideLines || preserveLines)) {
+                    ctx.strokeStyle = isSolution ? solutionLineColorInput.value : gridLineColorInput.value;
+                    ctx.lineWidth = 1 * scale;
+                    ctx.beginPath();
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            if (preserveLines || grid[r][c] !== ' ') {
+                                const x = gridStartX + c * cellWidth;
+                                const y = gridStartY + r * cellHeight;
+                                if (x >= -cellWidth && x <= trimmedWidth && y >= -cellHeight && y <= trimmedHeight) {
+                                    ctx.rect(x, y, cellWidth, cellHeight);
+                                }
+                            }
+                        }
+                    }
+                    ctx.stroke();
+                }
+
+                if (isSolution && (options.showHighlights || isHighlightsOnly)) {
+                    drawHighlightsOnCanvas(ctx, gridStartX, gridStartY, cellWidth, cellHeight, scale, 'bg');
+                }
+                
+                if (!isHighlightsOnly) {
+                    const colorMap = new Map();
+                    const highlightStyle = highlightStyleSelect.value;
+                    if (isSolution && (highlightStyle === 'colorful-letters' || highlightStyle === 'colorful-hollow-stroke')) {
+                            placedWordsCoords.forEach((wordData, index) => {
+                            const color = colorPalette[index % colorPalette.length];
+                            const { word, r, c, dirKey } = wordData;
+                            const dir = directions[dirKey];
+                            for (let i = 0; i < word.length; i++) {
+                                const newRow = r + i * dir.r;
+                                const newCol = c + i * dir.c;
+                                colorMap.set(`${newRow},${newCol}`, color);
+                            }
+                        });
+                    }
+
+                    const defaultTextColor = isSolution ? solutionTextColorInput.value : gridTextColorInput.value;
+                    const fontEffect = fontEffectSelect.value;
+                    const outlineEffectColor = outlineColorInput.value;
+                    const outlineEffectWidth = parseFloat(outlineWidthSlider.value) * scale;
+                    
+                    ctx.font = `${fontWeight} ${fontSize}px "${font}"`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    for (let r = minY; r <= maxY; r++) {
+                        for (let c = minX; c <= maxX; c++) {
+                            if (grid[r][c] !== ' ') {
+                                const x = gridStartX + c * cellWidth + cellWidth / 2;
+                                const y = gridStartY + r * cellHeight + cellHeight / 2;
+                                
+                                let char = grid[r][c];
+                                if (isSolution && options.hideFillerLetters) {
+                                    char = solutionGrid[r][c] || '';
+                                }
+                                
+                                if (!char) continue;
+
+                                let fillStyle = defaultTextColor;
+                                let strokeStyle = outlineEffectColor;
+                                let hasStroke = (fontEffect === 'center-stroke' || fontEffect === 'hollow');
+                                let hasFill = (fontEffect !== 'hollow');
+
+                                if (isSolution && colorMap.has(`${r},${c}`)) {
+                                    const wordColor = colorMap.get(`${r},${c}`);
+                                    if (highlightStyle === 'colorful-letters') {
+                                        fillStyle = wordColor;
+                                    } else if (highlightStyle === 'colorful-hollow-stroke') {
+                                        hasFill = false;
+                                        hasStroke = true;
+                                        strokeStyle = wordColor;
+                                    }
+                                }
+                                
+                                if (hasStroke) {
+                                    ctx.strokeStyle = strokeStyle;
+                                    ctx.lineWidth = outlineEffectWidth;
+                                    ctx.strokeText(char, x, y);
+                                }
+                                if (hasFill) {
+                                    ctx.fillStyle = fillStyle;
+                                    ctx.fillText(char, x, y);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (isSolution && (options.showHighlights || isHighlightsOnly)) {
+                    drawHighlightsOnCanvas(ctx, gridStartX, gridStartY, cellWidth, cellHeight, scale, 'fg');
+                }
+
+                return canvas;
+            }
+
+            function drawHighlightsOnCanvas(ctx, gridStartX, gridStartY, cellWidth, cellHeight, scale, layer) {
+                const style = highlightStyleSelect.value;
+                
+                const colorMode = highlightColorModeSelect.value;
+                const singleColor = highlightColorInput.value;
+                const thicknessPercent = highlightThicknessSlider.value / 100;
+                const transparency = (100 - highlightTransparencySlider.value) / 100;
+                const lengthMultiplier = highlightLengthSlider.value / 100;
+
+                placedWordsCoords.forEach((wordData, index) => {
+                    if (style === 'line' && layer === 'bg') return;
+                    if (style !== 'line' && layer === 'fg') return;
+                    if (style === 'none' || style.includes('colorful')) return;
+
+                    const { word, r, c, dirKey } = wordData;
+                    const dir = directions[dirKey];
+                    const len = word.length;
+                    
+                    const color = colorMode === 'palette' ? colorPalette[index % colorPalette.length] : singleColor;
+                    
+                    const startX = gridStartX + c * cellWidth + cellWidth / 2;
+                    const startY = gridStartY + r * cellHeight + cellHeight / 2;
+                    const endX = gridStartX + (c + (len - 1) * dir.c) * cellWidth + cellWidth / 2;
+                    const endY = gridStartY + (r + (len - 1) * dir.r) * cellHeight + cellHeight / 2;
+
+                    const extensionX = (dir.c * cellWidth) / 2 * lengthMultiplier;
+                    const extensionY = (dir.r * cellHeight) / 2 * lengthMultiplier;
+
+                    const fullStartX = startX - extensionX;
+                    const fullStartY = startY - extensionY;
+                    const fullEndX = endX + extensionX;
+                    const fullEndY = endY + extensionY;
+                    
+                    ctx.save();
+                    ctx.globalAlpha = transparency;
+
+                    if (style === 'highlighter' || style === 'line') {
+                        ctx.beginPath();
+                        ctx.moveTo(fullStartX, fullStartY);
+                        ctx.lineTo(fullEndX, fullEndY);
+                        ctx.strokeStyle = color;
+                        ctx.lineCap = 'round';
+                        if (style === 'highlighter') {
+                            ctx.lineWidth = (Math.min(cellWidth, cellHeight) * 0.9 * thicknessPercent);
+                        } else { // 'line'
+                            ctx.lineWidth = 2 * scale * thicknessPercent + 1;
+                        }
+                        ctx.stroke();
+                    } else if (style === 'hollow-oval' || style === 'oval-stroke') {
+                        const dx = fullEndX - fullStartX;
+                        const dy = fullEndY - fullStartY;
+                        const angle = Math.atan2(dy, dx);
+                        const capsuleHeight = Math.min(cellWidth, cellHeight) * 0.9 * thicknessPercent;
+                        const radius = capsuleHeight / 2;
+
+                        ctx.beginPath();
+                        ctx.arc(fullStartX, fullStartY, radius, angle + Math.PI / 2, angle - Math.PI / 2, false);
+                        ctx.arc(fullEndX, fullEndY, radius, angle - Math.PI / 2, angle + Math.PI / 2, false);
+                        ctx.closePath();
+
+                        if (style === 'hollow-oval') {
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = 2 * scale * thicknessPercent + 1;
+                            ctx.stroke();
+                        } else { // 'oval-stroke'
+                            const strokeColor = getDarkerColor(color, 30);
+                            ctx.fillStyle = color;
+                            ctx.fill();
+                            ctx.strokeStyle = strokeColor;
+                            ctx.lineWidth = 1.5 * scale * thicknessPercent + 0.5;
+                            ctx.stroke();
+                        }
+                    }
+                    ctx.restore();
+                });
+            }
+
+            // SVG FONT FIX: Using a more reliable CORS proxy
+            async function getFontDataURL(url) {
+                try {
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error(`CORS proxy request failed: ${response.statusText}`);
+                    const css = await response.text();
+                    const fontUrlMatch = css.match(/url\((https:\/\/[^)]+)\)/);
+                    if (!fontUrlMatch) return null;
+
+                    const fontUrl = fontUrlMatch[1];
+                    const fontResponse = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(fontUrl)}`);
+                    if (!fontResponse.ok) throw new Error(`CORS proxy request for font file failed: ${fontResponse.statusText}`);
+                    const blob = await fontResponse.blob();
+                    
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                } catch (e) {
+                    console.error("Failed to fetch and encode font via proxy:", e);
+                    messageBox.textContent = "Could not fetch web font for SVG export. It may be blocked by CORS.";
+                    messageBox.style.color = '#dc2626';
+                    return null;
+                }
+            }
+            
+            async function generateSimplePuzzleSVG() {
+                const options = {
+                    includePuzzle: true,
+                    includeSolution: false,
+                    showHighlights: false,
+                    hideFillerLetters: false,
+                    preserveLinesPuzzle: !hideLinesCheckbox.checked,
+                    preserveBackgroundsPuzzle: true, // Default to true for simple copy
+                };
+                return generateExportSVG(options);
+            }
+
+            async function generateExportSVG(options) {
+                 if (!currentGrid || currentGrid.length === 0) return null;
+                
+                let fontDataUrl = activeFontDataUrl;
+                if (activeFontUrl && !fontDataUrl) {
+                    fontDataUrl = await getFontDataURL(activeFontUrl);
+                }
+
+                const rows = currentGrid.length;
+                const cols = currentGrid[0].length;
+                
+                const fontSize = parseFloat(fontSizeSlider.value);
+                const hSpacing = parseFloat(hSpacingSlider.value);
+                const vSpacing = parseFloat(vSpacingSlider.value);
+                const cellWidth = Math.max(1, fontSize + hSpacing);
+                const cellHeight = Math.max(1, fontSize + vSpacing);
+
+                let minX = cols, minY = rows, maxX = -1, maxY = -1;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (currentGrid[r][c] !== ' ') {
+                            if (c < minX) minX = c;
+                            if (r < minY) minY = r;
+                            if (c > maxX) maxX = c;
+                            if (r > maxY) maxY = r;
+                        }
+                    }
+                }
+                if (maxX === -1) return null;
+
+                const trimmedWidth = (maxX - minX + 1) * cellWidth;
+                const trimmedHeight = (maxY - minY + 1) * cellHeight;
+                let totalWidth = trimmedWidth;
+                let totalHeight = 0;
+                const gap = 20;
+
+                if (options.highlightsOnly) {
+                    totalHeight = trimmedHeight;
+                } else {
+                    if (options.includePuzzle) {
+                        totalHeight += trimmedHeight;
+                    }
+                    if (options.includeSolution || options.showHighlights) {
+                        if(options.includePuzzle) totalHeight += gap;
+                        totalHeight += trimmedHeight;
+                    }
+                }
+
+                let svgContent = `<svg width="${totalWidth}" height="${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
+
+                svgContent += `<defs><style>`;
+                if (fontDataUrl) {
+                    svgContent += `@font-face { font-family: '${activeFont}'; src: url(${fontDataUrl}); }`;
+                }
+                svgContent += `
+                    .grid-text { font-family: '${activeFont}', sans-serif; font-weight: ${fontWeightSelect.value}; font-size: ${fontSize}px; text-anchor: middle; dominant-baseline: central; }
+                </style></defs>`;
+
+                if (!options.highlightsOnly) {
+                    svgContent += `<rect width="100%" height="100%" fill="${puzzleBgColorInput.value}"/>`;
+                }
+
+                let yOffset = 0;
+
+                const generateGridPart = (isSolution) => {
+                    let partSvg = '';
+                    const gridStartX = -minX * cellWidth;
+                    const gridStartY = yOffset - minY * cellHeight;
+
+                    const preserveBgs = isSolution ? options.preserveBackgroundsSolution : options.preserveBackgroundsPuzzle;
+                    const hideLines = isSolution ? solutionHideLinesCheckbox.checked : hideLinesCheckbox.checked;
+                    const preserveLines = isSolution ? options.preserveLinesSolution : options.preserveLinesPuzzle;
+                    
+                    if (!options.highlightsOnly) {
+                        for (let r = 0; r < rows; r++) {
+                            for (let c = 0; c < cols; c++) {
+                                if(currentGrid[r][c] === ' ' && !preserveLines) continue;
+                                const x = gridStartX + c * cellWidth;
+                                const y = gridStartY + r * cellHeight;
+                                let cellBG = puzzleBgColorInput.value;
+                                if (preserveBgs) {
+                                    if (isSolution) {
+                                        cellBG = solutionGrid[r][c] !== null ? foundColorInput.value : solutionEmptyColorInput.value;
+                                    }
+                                }
+                                partSvg += `<rect x="${x}" y="${y}" width="${cellWidth}" height="${cellHeight}" fill="${cellBG}" />`;
+                                
+                                if (!hideLines || preserveLines) {
+                                    const lineColor = isSolution ? solutionLineColorInput.value : gridLineColorInput.value;
+                                    partSvg += `<rect x="${x}" y="${y}" width="${cellWidth}" height="${cellHeight}" fill="none" stroke="${lineColor}" stroke-width="1" />`;
+                                }
+                            }
+                        }
+                    }
+
+                    if (isSolution && options.showHighlights) {
+                        partSvg += getHighlightsSVG('bg', gridStartX, gridStartY, cellWidth, cellHeight);
+                    }
+
+                    if (!options.highlightsOnly) {
+                        const colorMap = new Map();
+                        const highlightStyle = highlightStyleSelect.value;
+                        if (isSolution && (highlightStyle === 'colorful-letters' || highlightStyle === 'colorful-hollow-stroke')) {
+                               placedWordsCoords.forEach((wordData, index) => {
+                                const color = colorPalette[index % colorPalette.length];
+                                const { word, r, c, dirKey } = wordData;
+                                const dir = directions[dirKey];
+                                for (let i = 0; i < word.length; i++) {
+                                    colorMap.set(`${r + i * dir.r},${c + i * dir.c}`, color);
+                                }
+                            });
+                        }
+
+                        for (let r = 0; r < rows; r++) {
+                            for (let c = 0; c < cols; c++) {
+                                 if(currentGrid[r][c] === ' ') continue;
+                                 const x = gridStartX + c * cellWidth + cellWidth/2;
+                                 const y = gridStartY + r * cellHeight + cellHeight/2;
+                                 
+                                 let char = currentGrid[r][c];
+                                 if (isSolution && options.hideFillerLetters) {
+                                     char = solutionGrid[r][c] || '';
+                                 }
+                                 if(!char) continue;
+
+                                 const defaultTextColor = isSolution ? solutionTextColorInput.value : gridTextColorInput.value;
+                                 const fontEffect = fontEffectSelect.value;
+                                 const outlineEffectColor = outlineColorInput.value;
+                                 const outlineEffectWidth = parseFloat(outlineWidthSlider.value);
+
+                                 let fill = defaultTextColor;
+                                 let stroke = 'none';
+                                 let strokeWidth = 0;
+
+                                 if(fontEffect === 'hollow') {
+                                     fill = 'transparent';
+                                     stroke = outlineEffectColor;
+                                     strokeWidth = outlineEffectWidth;
+                                 } else if (fontEffect === 'center-stroke') {
+                                     stroke = outlineEffectColor;
+                                     strokeWidth = outlineEffectWidth;
+                                 }
+
+                                 if (isSolution && colorMap.has(`${r},${c}`)) {
+                                     const wordColor = colorMap.get(`${r},${c}`);
+                                     if (highlightStyle === 'colorful-letters') {
+                                         fill = wordColor;
+                                     } else if (highlightStyle === 'colorful-hollow-stroke') {
+                                         fill = 'transparent';
+                                         stroke = wordColor;
+                                         strokeWidth = outlineEffectWidth;
+                                     }
+                                 }
+                                partSvg += `<text x="${x}" y="${y}" class="grid-text" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}">${char}</text>`;
+                            }
+                        }
+                    }
+                    
+                    if (isSolution && options.showHighlights) {
+                        partSvg += getHighlightsSVG('fg', gridStartX, gridStartY, cellWidth, cellHeight);
+                    }
+                    
+                    yOffset += trimmedHeight;
+                    return partSvg;
+                };
+
+                if (options.highlightsOnly) {
+                    svgContent += generateGridPart(true);
+                } else {
+                    if (options.includePuzzle) {
+                        svgContent += generateGridPart(false);
+                    }
+                    if (options.includeSolution || options.showHighlights) {
+                        if(options.includePuzzle) yOffset += gap;
+                        svgContent += generateGridPart(true);
+                    }
+                }
+
+                svgContent += `</svg>`;
+                return svgContent;
+            }
+
+            function getHighlightsSVG(layer, gridStartX, gridStartY, cellWidth, cellHeight) {
+                let svgString = '';
+                const style = highlightStyleSelect.value;
+                const colorMode = highlightColorModeSelect.value;
+                const singleColor = highlightColorInput.value;
+                const thicknessPercent = highlightThicknessSlider.value / 100;
+                const transparency = (100 - highlightTransparencySlider.value) / 100;
+                const lengthMultiplier = highlightLengthSlider.value / 100;
+
+                placedWordsCoords.forEach((wordData, index) => {
+                    if (style === 'line' && layer === 'bg') return;
+                    if (style !== 'line' && layer === 'fg') return;
+                    if (style === 'none' || style.includes('colorful')) return;
+
+                    const { word, r, c, dirKey } = wordData;
+                    const dir = directions[dirKey];
+                    const len = word.length;
+                    const color = colorMode === 'palette' ? colorPalette[index % colorPalette.length] : singleColor;
+                    
+                    const startX = gridStartX + c * cellWidth + cellWidth / 2;
+                    const startY = gridStartY + r * cellHeight + cellHeight / 2;
+                    const endX = gridStartX + (c + (len - 1) * dir.c) * cellWidth + cellWidth / 2;
+                    const endY = gridStartY + (r + (len - 1) * dir.r) * cellHeight + cellHeight / 2;
+                    const extensionX = (dir.c * cellWidth) / 2 * lengthMultiplier;
+                    const extensionY = (dir.r * cellHeight) / 2 * lengthMultiplier;
+                    const fullStartX = startX - extensionX;
+                    const fullStartY = startY - extensionY;
+                    const fullEndX = endX + extensionX;
+                    const fullEndY = endY + extensionY;
+
+                    if (style === 'highlighter' || style === 'line') {
+                        const strokeW = style === 'highlighter' ? (Math.min(cellWidth, cellHeight) * 0.9 * thicknessPercent) : (2 * thicknessPercent + 1);
+                        svgString += `<line x1="${fullStartX}" y1="${fullStartY}" x2="${fullEndX}" y2="${fullEndY}" stroke="${color}" stroke-width="${strokeW}" stroke-linecap="round" opacity="${transparency}" />`;
+                    } else if (style === 'hollow-oval' || style === 'oval-stroke') {
+                          const angle = Math.atan2(fullEndY - fullStartY, fullEndX - fullStartX);
+                          const capsuleHeight = Math.min(cellWidth, cellHeight) * 0.9 * thicknessPercent;
+                          const r = capsuleHeight / 2;
+                          const d = `M ${fullStartX - r*Math.sin(angle)},${fullStartY + r*Math.cos(angle)} A ${r},${r} 0 0 1 ${fullStartX + r*Math.sin(angle)},${fullStartY - r*Math.cos(angle)} L ${fullEndX + r*Math.sin(angle)},${fullEndY - r*Math.cos(angle)} A ${r},${r} 0 0 1 ${fullEndX - r*Math.sin(angle)},${fullEndY + r*Math.cos(angle)} Z`;
+
+                          if (style === 'hollow-oval') {
+                              svgString += `<path d="${d}" stroke="${color}" stroke-width="${2 * thicknessPercent + 1}" fill="none" opacity="${transparency}" />`;
+                          } else {
+                              const strokeColor = getDarkerColor(color, 30);
+                              svgString += `<path d="${d}" fill="${color}" stroke="${strokeColor}" stroke-width="${1.5 * thicknessPercent + 0.5}" opacity="${transparency}" />`;
+                          }
+                    }
+                });
+                return svgString;
+            }
+
+
+            async function downloadSVG(svgContent) {
+                if (!svgContent) return;
+                const svgBlob = new Blob([svgContent], {type:"image/svg+xml;charset=utf-8"});
+                const svgUrl = URL.createObjectURL(svgBlob);
+                const downloadLink = document.createElement("a");
+                downloadLink.href = svgUrl;
+                downloadLink.download = "word-search-grid.svg";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            }
+        });
+    </script>
+</body>
+</html>
