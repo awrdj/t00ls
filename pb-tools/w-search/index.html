@@ -464,9 +464,49 @@
                     <div class="accordion-content">
                         <div class="p-6 pt-2 space-y-4">
                             <div class="space-y-4 bg-gray-50 p-4 rounded-lg">
+                                <!-- Font A — Heading Font -->
+<div class="bg-white p-4 rounded-lg shadow-sm">
+  <p class="font-semibold text-gray-700 mb-3">Font A — Title &amp; Word Bank Label</p>
+  <div>
+    <label for="font-a-method-select" class="block text-sm font-medium text-gray-700">Method</label>
+    <select id="font-a-method-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+      <option value="google">Add Google Font</option>
+      <option value="url">Add Font from URL</option>
+      <option value="upload">Upload Font</option>
+    </select>
+  </div>
+  <div id="font-a-google-container" class="mt-3">
+    <label for="font-a-google-input" class="block text-sm font-medium text-gray-700">Google Font Link</label>
+    <div class="flex gap-2 mt-1">
+      <input type="text" id="font-a-google-input" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Paste &lt;link&gt; tag here'>
+      <button id="add-font-a-google-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
+    </div>
+  </div>
+  <div id="font-a-url-container" class="mt-3 space-y-2 hidden">
+    <label for="font-a-url-css" class="block text-sm font-medium text-gray-700">CSS URL</label>
+    <input type="url" id="font-a-url-css" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="https://.../font.css">
+    <label for="font-a-url-family" class="block text-sm font-medium text-gray-700">Font Family Name</label>
+    <div class="flex gap-2">
+      <input type="text" id="font-a-url-family" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='e.g., "Playfair Display"'>
+      <button id="add-font-a-url-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Apply</button>
+    </div>
+  </div>
+  <div id="font-a-upload-container" class="mt-3 hidden">
+    <label for="font-a-uploader" class="block text-sm font-medium text-gray-700">Upload Font File</label>
+    <input type="file" id="font-a-uploader" accept="*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+  </div>
+  <div class="mt-3">
+    <label for="font-a-weight-select" class="block text-sm font-medium text-gray-700">Weight</label>
+    <select id="font-a-weight-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+      <option value="400">400 – Regular</option>
+      <option value="700" selected>700 – Bold</option>
+    </select>
+  </div>
+</div>
+
                                 <!-- Font Selection -->
                                 <div class="bg-white p-4 rounded-lg shadow-sm">
-                                    <p class="font-semibold text-gray-700 mb-3">Font</p>
+                                    <p class="font-semibold text-gray-700 mb-1">Font B — Grid Letters & Word List</p>
                                     <div>
                                         <label for="font-method-select" class="block text-sm font-medium text-gray-700">Method</label>
                                         <!-- NEW: Added Font from URL option -->
@@ -569,10 +609,130 @@
                                           </div>
                                       </div>
                                 </div>
+                                <!-- Word Bank Settings -->
+<div class="bg-white p-4 rounded-lg shadow-sm">
+  <p class="font-semibold text-gray-700 mb-3">Word Bank</p>
+  <div class="space-y-3">
+    <div>
+      <label for="wb-label-text" class="block text-sm font-medium text-gray-700">Label Text</label>
+      <input type="text" id="wb-label-text" value="Word Bank:"
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label for="wb-label-size" class="block text-sm font-medium text-gray-700">Label Size (px)</label>
+        <input type="number" id="wb-label-size" value="18" min="8" max="72"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+      </div>
+      <div>
+        <label for="wb-label-color" class="block text-sm font-medium text-gray-700">Label Color</label>
+        <input type="color" id="wb-label-color" value="#1F2937" class="mt-1 h-10 w-full rounded-md border-gray-300">
+      </div>
+      <div>
+        <label for="wb-word-size" class="block text-sm font-medium text-gray-700">Word Size (px)</label>
+        <input type="number" id="wb-word-size" value="14" min="8" max="72"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+      </div>
+      <div>
+        <label for="wb-word-color" class="block text-sm font-medium text-gray-700">Word Color</label>
+        <input type="color" id="wb-word-color" value="#374151" class="mt-1 h-10 w-full rounded-md border-gray-300">
+      </div>
+    </div>
+    <div>
+      <label for="wb-position" class="block text-sm font-medium text-gray-700">Position</label>
+      <select id="wb-position"
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        <option value="below">Below Grid</option>
+        <option value="above">Above Grid</option>
+        <option value="left">Left of Grid</option>
+        <option value="right">Right of Grid</option>
+      </select>
+    </div>
+    <div>
+      <label for="wb-sort" class="block text-sm font-medium text-gray-700">Sort Order</label>
+      <select id="wb-sort"
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        <option value="original">As Entered</option>
+        <option value="az">A → Z</option>
+        <option value="za">Z → A</option>
+      </select>
+    </div>
+    <div>
+      <label for="wb-columns" class="block text-sm font-medium text-gray-700">Columns (0 = Auto)</label>
+      <input type="number" id="wb-columns" value="0" min="0" max="10"
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+    </div>
+  </div>
+</div>
+
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Accordion Section 5: Page Settings -->
+<div class="accordion-section border-b">
+  <h2 class="accordion-header flex justify-between items-center w-full p-4 text-xl font-bold text-gray-800 cursor-pointer hover:bg-gray-50 transition-colors">
+    <span>5. Page Settings</span>
+    <svg class="accordion-icon w-6 h-6 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </h2>
+  <div class="accordion-content">
+    <div class="p-6 pt-2 space-y-4">
+      <div>
+        <label for="page-size-select" class="block text-sm font-medium text-gray-700">Page Size</label>
+        <select id="page-size-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+          <option value="letter">US Letter (8.5 × 11 in)</option>
+          <option value="a4">A4 (8.27 × 11.69 in)</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div id="custom-page-size" class="hidden grid grid-cols-2 gap-3">
+        <div>
+          <label for="page-custom-w" class="block text-sm font-medium text-gray-700">Width</label>
+          <input type="number" id="page-custom-w" value="8.5" step="0.01" min="1"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
+        <div>
+          <label for="page-custom-h" class="block text-sm font-medium text-gray-700">Height</label>
+          <input type="number" id="page-custom-h" value="11" step="0.01" min="1"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
+        <div class="col-span-2">
+          <label for="page-custom-unit" class="block text-sm font-medium text-gray-700">Unit</label>
+          <select id="page-custom-unit" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            <option value="in">Inches</option>
+            <option value="px">Pixels</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="page-margin-top" class="block text-sm font-medium text-gray-700">Top Margin (in)</label>
+          <input type="number" id="page-margin-top" value="0.75" step="0.05" min="0"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
+        <div>
+          <label for="page-margin-bottom" class="block text-sm font-medium text-gray-700">Bottom (in)</label>
+          <input type="number" id="page-margin-bottom" value="0.75" step="0.05" min="0"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
+        <div>
+          <label for="page-margin-inside" class="block text-sm font-medium text-gray-700">Inside (in)</label>
+          <input type="number" id="page-margin-inside" value="0.875" step="0.05" min="0"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
+        <div>
+          <label for="page-margin-outside" class="block text-sm font-medium text-gray-700">Outside (in)</label>
+          <input type="number" id="page-margin-outside" value="0.5" step="0.05" min="0"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
+      </div>
+      <p class="text-xs text-gray-400">Defaults follow KDP interior margin guidelines.</p>
+    </div>
+  </div>
+</div>
 
                 <!-- Generate Button -->
                 <div class="p-6">
@@ -596,16 +756,29 @@
                           <button data-export-format="pdf" class="export-btn px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-r-md hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700">PDF</button>
                       </div>
                  </div>
-                <div id="print-section">
-                    <div id="puzzle-header" class="text-center mb-6"></div>
-                    <div id="puzzle-container" class="flex justify-center items-center mb-6">
-                        <div id="placeholder" class="text-center text-gray-500 py-20">
-                            <p class="text-lg">Your puzzle will appear here.</p>
-                            <p class="text-sm">Fill out the options on the left and click "Generate Puzzle".</p>
-                        </div>
-                    </div>
-                    <div id="word-list-container" class="mb-6"></div>
-                </div>
+                <!-- WYSIWYG Page Preview Area -->
+<div id="page-preview-area" class="w-full bg-gray-300 rounded-lg flex flex-col items-center py-6 min-h-96 overflow-auto">
+  <!-- Page navigation (shown when answer key page exists) -->
+  <div id="page-nav" class="hidden flex items-center gap-4 mb-4 no-print">
+    <button id="page-prev-btn" class="px-3 py-1 text-sm bg-white rounded shadow hover:bg-gray-100 disabled:opacity-40">◀ Prev</button>
+    <span id="page-nav-label" class="text-sm text-gray-600 font-medium">Page 1 of 1</span>
+    <button id="page-next-btn" class="px-3 py-1 text-sm bg-white rounded shadow hover:bg-gray-100 disabled:opacity-40">Next ▶</button>
+  </div>
+  <!-- The actual page sheet -->
+  <div id="page-sheet" class="bg-white shadow-2xl relative origin-top"
+       style="width:816px; min-height:1056px;">
+    <div id="print-section" class="absolute inset-0" style="padding: 72px 48px 72px 84px;">
+      <div id="puzzle-header" class="text-center mb-6"></div>
+      <div id="puzzle-container" class="flex justify-center items-center mb-6">
+        <div id="placeholder" class="text-center text-gray-500 py-20">
+          <p class="text-lg">Your puzzle will appear here.</p>
+          <p class="text-sm">Fill out the options on the left and click "Generate Puzzle".</p>
+        </div>
+      </div>
+      <div id="word-list-container" class="mb-6"></div>
+    </div>
+  </div>
+</div>
                 <div id="solution-styling-container" class="hidden no-print mt-4 border-t pt-4 space-y-4">
                      <h3 class="text-lg font-bold text-center text-gray-800">Answer Styling</h3>
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
@@ -694,6 +867,75 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const PAGE_SIZES = {
+    letter: { wIn: 8.5,  hIn: 11 },
+    a4:     { wIn: 8.27, hIn: 11.69 },
+};
+const PPI = 96; // pixels per inch at screen resolution
+
+function getPageDimensions() {
+    const sel = document.getElementById('page-size-select');
+    if (!sel) return { wPx: 816, hPx: 1056 };
+    if (sel.value === 'custom') {
+        const unit  = document.getElementById('page-custom-unit').value;
+        let w = parseFloat(document.getElementById('page-custom-w').value) || 8.5;
+        let h = parseFloat(document.getElementById('page-custom-h').value) || 11;
+        if (unit === 'in') { w *= PPI; h *= PPI; }
+        return { wPx: Math.round(w), hPx: Math.round(h) };
+    }
+    const d = PAGE_SIZES[sel.value] || PAGE_SIZES.letter;
+    return { wPx: Math.round(d.wIn * PPI), hPx: Math.round(d.hIn * PPI) };
+}
+
+function getMarginsPx() {
+    const top     = parseFloat(document.getElementById('page-margin-top')?.value    || 0.75)  * PPI;
+    const bottom  = parseFloat(document.getElementById('page-margin-bottom')?.value || 0.75)  * PPI;
+    const inside  = parseFloat(document.getElementById('page-margin-inside')?.value || 0.875) * PPI;
+    const outside = parseFloat(document.getElementById('page-margin-outside')?.value || 0.5)  * PPI;
+    return { top, bottom, inside, outside };
+}
+
+function updatePageView() {
+    const sheet = document.getElementById('page-sheet');
+    const printSec = document.getElementById('print-section');
+    const previewArea = document.getElementById('page-preview-area');
+    if (!sheet || !printSec) return;
+
+    const { wPx, hPx } = getPageDimensions();
+    const m = getMarginsPx();
+
+    sheet.style.width    = wPx + 'px';
+    sheet.style.minHeight= hPx + 'px';
+    printSec.style.paddingTop    = m.top    + 'px';
+    printSec.style.paddingBottom = m.bottom + 'px';
+    printSec.style.paddingLeft   = m.inside + 'px';
+    printSec.style.paddingRight  = m.outside+ 'px';
+
+    // Scale the sheet to fit the preview area
+    requestAnimationFrame(() => {
+        const availW = previewArea.clientWidth - 40; // 20px side padding
+        const scale  = Math.min(1, availW / wPx);
+        sheet.style.transform      = `scale(${scale})`;
+        sheet.style.transformOrigin= 'top center';
+        sheet.style.marginBottom   = `-${hPx * (1 - scale)}px`; // collapse empty space
+    });
+}
+
+// Hook page settings controls
+['page-size-select','page-custom-w','page-custom-h','page-custom-unit',
+ 'page-margin-top','page-margin-bottom','page-margin-inside','page-margin-outside'
+].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', updatePageView);
+    document.getElementById(id)?.addEventListener('input',  updatePageView);
+});
+
+document.getElementById('page-size-select')?.addEventListener('change', function() {
+    document.getElementById('custom-page-size')?.classList.toggle('hidden', this.value !== 'custom');
+    updatePageView();
+});
+
+window.addEventListener('resize', updatePageView);
+            
             // --- DOM Elements ---
             const generateBtn = document.getElementById('generate-btn');
             const solveBtn = document.getElementById('solve-btn');
@@ -860,10 +1102,18 @@ function getGeminiApiKey() {
             let isDragging = false;
             let uploadedImage = null;
             let lastUsedShape = 'rectangle';
-            let activeFont = 'Inter';
-            let activeFontWeight = '400';
-            let activeFontUrl = null; // Store font URL for embedding
-            let activeFontDataUrl = null; // Store uploaded font data URL
+// Font B — Grid letters & Word Bank word list
+let activeFont        = 'Inter';
+let activeFontWeight  = '400';
+let activeFontUrl     = null;
+let activeFontDataUrl = null;
+
+// Font A — Puzzle title & Word Bank label heading
+let activeFontA       = 'Inter';
+let activeFontWeightA = '700';
+let activeFontUrlA    = null;
+let activeFontDataUrlA= null;
+
             let difficultyRating = '';
             let estimatedTime = '';
             const colorPalette = ['#fdba74', '#6ee7b7', '#93c5fd', '#f9a8d4', '#c4b5fd', '#fde047', '#a7f3d0', '#fecaca', '#bae6fd'];
@@ -1238,6 +1488,7 @@ function getGeminiApiKey() {
                     copyCodeBtn.classList.add('hidden');
                 }
                 setTimeout(applyStyling, 0);
+                setTimeout(updatePageView, 100); // re-scale after content renders
             }
 
             function renderGrid(container, gridData, isSolution = false) {
@@ -1363,20 +1614,53 @@ function getGeminiApiKey() {
                 }
             }
 
-            function renderWordList(container, words) {
-                container.innerHTML = '<h3 class="text-2xl font-bold text-center mb-4">Find these words:</h3>';
-                const list = document.createElement('div');
-                list.id = 'word-list';
-                list.className = 'flex flex-wrap justify-center gap-x-6 gap-y-2';
-                words.forEach(word => {
-                    const item = document.createElement('p');
-                    item.textContent = word;
-                    item.dataset.word = word;    
-                    item.className = 'word-list-item text-lg';
-                    list.appendChild(item);
-                });
-                container.appendChild(list);
-            }
+            function getWbSortedWords(words) {
+    const sort = document.getElementById('wb-sort').value;
+    const out = [...words];
+    if (sort === 'az') out.sort((a, b) => a.localeCompare(b));
+    else if (sort === 'za') out.sort((a, b) => b.localeCompare(a));
+    return out;
+}
+
+function renderWordList(container, words) {
+    const labelText  = (document.getElementById('wb-label-text').value || 'Word Bank:');
+    const labelSize  = document.getElementById('wb-label-size').value + 'px';
+    const labelColor = document.getElementById('wb-label-color').value;
+    const wordSize   = document.getElementById('wb-word-size').value + 'px';
+    const wordColor  = document.getElementById('wb-word-color').value;
+    const cols       = parseInt(document.getElementById('wb-columns').value, 10) || 0;
+    const sorted     = getWbSortedWords(words);
+
+    container.innerHTML = '';
+
+    const header = document.createElement('h3');
+    header.textContent = labelText;
+    header.className = 'word-bank-label font-bold mb-2';
+    header.style.cssText = `font-size:${labelSize}; color:${labelColor};
+        font-family:"${activeFontA}",sans-serif; font-weight:${activeFontWeightA};`;
+    container.appendChild(header);
+
+    const list = document.createElement('div');
+    list.id = 'word-list';
+    if (cols > 0) {
+        list.style.cssText = `display:grid; grid-template-columns:repeat(${cols},1fr);
+            gap:0.2rem 1.5rem;`;
+    } else {
+        list.className = 'flex flex-wrap gap-x-6 gap-y-1';
+    }
+
+    sorted.forEach(word => {
+        const item = document.createElement('p');
+        item.textContent = word;
+        item.dataset.word = word;
+        item.className = 'word-list-item';
+        item.style.cssText = `font-size:${wordSize}; color:${wordColor};
+            font-family:"${activeFont}",sans-serif; font-weight:${activeFontWeight};`;
+        list.appendChild(item);
+    });
+    container.appendChild(list);
+}
+
 
             function renderDirectionSelector() {
                 const container = document.getElementById('direction-selector');
@@ -1756,6 +2040,23 @@ function getGeminiApiKey() {
                 if (!solutionContainerWrapper.classList.contains('hidden')) {
                     applySolutionStyling();
                 }
+
+// Apply Font A to title and word bank label
+const titleEl = document.querySelector('#puzzle-header h2');
+if (titleEl) {
+    titleEl.style.fontFamily = `"${activeFontA}", sans-serif`;
+    titleEl.style.fontWeight = activeFontWeightA;
+}
+document.querySelectorAll('.word-bank-label').forEach(el => {
+    el.style.fontFamily = `"${activeFontA}", sans-serif`;
+    el.style.fontWeight = activeFontWeightA;
+});
+// Apply Font B weight to word list items
+document.querySelectorAll('.word-list-item').forEach(el => {
+    el.style.fontFamily = `"${activeFont}", sans-serif`;
+    el.style.fontWeight = activeFontWeight;
+});
+
             }
 
             function applySolutionStyling() {
@@ -1891,6 +2192,27 @@ function getGeminiApiKey() {
                     activeFontWeight = weights[0];
                 }
             }
+
+            function populateFontWeightsForSelect(selectEl, href) {
+    const weights = [];
+    const wghtMatch = href ? href.match(/wght@([\d;..]+)/) : null;
+    if (wghtMatch) {
+        const s = wghtMatch[1];
+        if (s.includes('..')) {
+            const [start, end] = s.split('..').map(Number);
+            for (let i = start; i <= end; i += 100) weights.push(i.toString());
+        } else {
+            weights.push(...s.split(';'));
+        }
+    }
+    if (weights.length === 0) weights.push('400', '700');
+    selectEl.innerHTML = '';
+    weights.forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w; opt.textContent = w;
+        selectEl.appendChild(opt);
+    });
+}
 
             // --- AI Word Generation ---
             async function generateWordsFromTopic() {
@@ -2446,6 +2768,20 @@ const apiUrl = apiKey
                 el.addEventListener(eventType, applyStyling);
             });
 
+            // Word Bank live re-render
+['wb-label-text','wb-label-size','wb-label-color','wb-word-size','wb-word-color',
+ 'wb-position','wb-sort','wb-columns'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+        if (placedWords.length > 0) renderWordList(wordListContainer, placedWords);
+    });
+    el.addEventListener('change', () => {
+        if (placedWords.length > 0) renderWordList(wordListContainer, placedWords);
+    });
+});
+
+
             [foundColorInput, solutionEmptyColorInput, solutionTextColorInput, solutionLineColorInput, solutionHideLinesCheckbox].forEach(el => {
                  el.addEventListener('input', applySolutionStyling)
             });
@@ -2487,6 +2823,81 @@ const apiUrl = apiKey
                 activeFontDataUrl = null; // Clear uploaded font
                 applyStyling();
             });
+
+            // --- Font A Event Listeners ---
+const fontAMethodSelect   = document.getElementById('font-a-method-select');
+const fontAGoogleContainer= document.getElementById('font-a-google-container');
+const fontAUrlContainer   = document.getElementById('font-a-url-container');
+const fontAUploadContainer= document.getElementById('font-a-upload-container');
+const fontAGoogleInput    = document.getElementById('font-a-google-input');
+const addFontAGoogleBtn   = document.getElementById('add-font-a-google-btn');
+const fontAUrlCss         = document.getElementById('font-a-url-css');
+const fontAUrlFamily      = document.getElementById('font-a-url-family');
+const addFontAUrlBtn      = document.getElementById('add-font-a-url-btn');
+const fontAUploader       = document.getElementById('font-a-uploader');
+const fontAWeightSelect   = document.getElementById('font-a-weight-select');
+
+fontAMethodSelect.addEventListener('change', () => {
+    const v = fontAMethodSelect.value;
+    fontAGoogleContainer.classList.toggle('hidden', v !== 'google');
+    fontAUrlContainer.classList.toggle('hidden', v !== 'url');
+    fontAUploadContainer.classList.toggle('hidden', v !== 'upload');
+    updateAccordionHeight(fontAMethodSelect);
+});
+
+addFontAGoogleBtn.addEventListener('click', () => {
+    const linkTag = fontAGoogleInput.value;
+    const hrefMatch = linkTag.match(/href="([^"]+)"/);
+    if (!hrefMatch) return;
+    const href = hrefMatch[1];
+    activeFontUrlA = href;
+    const familyMatch = href.match(/family=([^&:]+)/);
+    if (!familyMatch) return;
+    activeFontA = familyMatch[1].replace(/\+/g, ' ');
+    const newLink = document.createElement('link');
+    newLink.rel = 'stylesheet'; newLink.href = href;
+    document.head.appendChild(newLink);
+    populateFontWeightsForSelect(fontAWeightSelect, href);
+    activeFontWeightA = fontAWeightSelect.value;
+    activeFontDataUrlA = null;
+    applyStyling();
+});
+
+addFontAUrlBtn.addEventListener('click', () => {
+    const cssUrl = fontAUrlCss.value.trim();
+    const family = fontAUrlFamily.value.trim();
+    if (!cssUrl || !family) return;
+    const newLink = document.createElement('link');
+    newLink.rel = 'stylesheet'; newLink.href = cssUrl;
+    document.head.appendChild(newLink);
+    activeFontA = family;
+    activeFontUrlA = cssUrl;
+    activeFontDataUrlA = null;
+    activeFontWeightA = fontAWeightSelect.value;
+    applyStyling();
+});
+
+fontAUploader.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const fontName = file.name.split('.').slice(0, -1).join('.');
+        activeFontDataUrlA = ev.target.result;
+        const style = `@font-face { font-family: '${fontName}'; src: url(${ev.target.result}); }`;
+        document.getElementById('dynamic-styles').innerHTML += style;
+        activeFontA = fontName;
+        activeFontWeightA = 'normal';
+        activeFontUrlA = null;
+        applyStyling();
+    };
+    reader.readAsDataURL(file);
+});
+
+fontAWeightSelect.addEventListener('change', () => {
+    activeFontWeightA = fontAWeightSelect.value;
+    applyStyling();
+});
 
             // NEW: Event listener for adding font from URL
             addUrlFontBtn.addEventListener('click', () => {
@@ -2919,7 +3330,7 @@ const apiUrl = apiKey
                 const canvas = document.createElement('canvas');
                 canvas.width = trimmedWidth;
                 canvas.height = trimmedHeight;
-                const ctx = canvas.getContext('2d');
+                let ctx = canvas.getContext('2d');
 
                 const isHighlightsOnly = options.isHighlightsOnlyRender;
 
@@ -3051,6 +3462,120 @@ const apiUrl = apiKey
                 if (isSolution && (options.showHighlights || isHighlightsOnly)) {
                     drawHighlightsOnCanvas(ctx, gridStartX, gridStartY, cellWidth, cellHeight, scale, 'fg');
                 }
+
+                // --- Draw Word Bank ---
+if (placedWords.length > 0) {
+    const wbLabelText  = document.getElementById('wb-label-text').value || 'Word Bank:';
+    const wbLabelSize  = parseInt(document.getElementById('wb-label-size').value, 10) || 18;
+    const wbLabelColor = document.getElementById('wb-label-color').value;
+    const wbWordSize   = parseInt(document.getElementById('wb-word-size').value, 10) || 14;
+    const wbWordColor  = document.getElementById('wb-word-color').value;
+    const wbCols       = parseInt(document.getElementById('wb-columns').value, 10) || 0;
+    const wbPosition   = document.getElementById('wb-position').value;
+    const wbWords      = getWbSortedWords(placedWords);
+
+    const PAD = 16; // padding around word bank block
+
+    // Measure word bank block dimensions
+    ctx.font = `${activeFontWeightA} ${wbLabelSize}px "${activeFontA}", sans-serif`;
+    const labelW = ctx.measureText(wbLabelText).width;
+
+    ctx.font = `${activeFontWeight} ${wbWordSize}px "${activeFont}", sans-serif`;
+    const maxWordW = Math.max(...wbWords.map(w => ctx.measureText(w).width));
+    const lineH = wbWordSize * 1.6;
+
+    let numCols, numRows;
+    if (wbCols > 0) {
+        numCols = wbCols;
+    } else {
+        // Auto: fit columns within canvas width minus padding
+        const availW = canvas.width - PAD * 2;
+        numCols = Math.max(1, Math.floor(availW / (maxWordW + 24)));
+    }
+    numRows = Math.ceil(wbWords.length / numCols);
+    const colW = (canvas.width - PAD * 2) / numCols;
+
+    const wbBlockH = PAD + wbLabelSize * 1.4 + 8 + numRows * lineH + PAD;
+    const wbBlockW = canvas.width; // full width for above/below; recalculated for left/right
+
+    // Expand canvas and redraw depending on position
+    if (wbPosition === 'below' || wbPosition === 'above') {
+        const oldCanvas = document.createElement('canvas');
+        oldCanvas.width  = canvas.width;
+        oldCanvas.height = canvas.height;
+        oldCanvas.getContext('2d').drawImage(canvas, 0, 0);
+
+        canvas.height += wbBlockH;
+        ctx = canvas.getContext('2d'); // re-get context after resize
+
+        // Restore background
+        ctx.fillStyle = puzzleBgColorInput.value;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let gridY = 0, wbY = 0;
+        if (wbPosition === 'below') {
+            ctx.drawImage(oldCanvas, 0, 0);
+            wbY = oldCanvas.height;
+        } else { // above
+            wbY = 0;
+            gridY = wbBlockH;
+            ctx.drawImage(oldCanvas, 0, gridY);
+        }
+
+        // Draw word bank block
+        ctx.font = `${activeFontWeightA} ${wbLabelSize}px "${activeFontA}", sans-serif`;
+        ctx.fillStyle = wbLabelColor;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(wbLabelText, PAD, wbY + PAD);
+
+        ctx.font = `${activeFontWeight} ${wbWordSize}px "${activeFont}", sans-serif`;
+        ctx.fillStyle = wbWordColor;
+        const startY = wbY + PAD + wbLabelSize * 1.4 + 8;
+        wbWords.forEach((word, i) => {
+            const col = i % numCols;
+            const row = Math.floor(i / numCols);
+            ctx.fillText(word, PAD + col * colW, startY + row * lineH);
+        });
+
+    } else { // left or right
+        const wbPanelW = Math.max(labelW, maxWordW * Math.min(numCols, wbWords.length)) + PAD * 2;
+        const oldCanvas = document.createElement('canvas');
+        oldCanvas.width  = canvas.width;
+        oldCanvas.height = canvas.height;
+        oldCanvas.getContext('2d').drawImage(canvas, 0, 0);
+
+        canvas.width += wbPanelW;
+        ctx = canvas.getContext('2d');
+        ctx.fillStyle = puzzleBgColorInput.value;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let gridX = 0, wbX = 0;
+        if (wbPosition === 'right') {
+            ctx.drawImage(oldCanvas, 0, 0);
+            wbX = oldCanvas.width;
+        } else { // left
+            wbX = 0;
+            gridX = wbPanelW;
+            ctx.drawImage(oldCanvas, gridX, 0);
+        }
+
+        ctx.font = `${activeFontWeightA} ${wbLabelSize}px "${activeFontA}", sans-serif`;
+        ctx.fillStyle = wbLabelColor;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(wbLabelText, wbX + PAD, PAD);
+
+        ctx.font = `${activeFontWeight} ${wbWordSize}px "${activeFont}", sans-serif`;
+        ctx.fillStyle = wbWordColor;
+        const startY = PAD + wbLabelSize * 1.4 + 8;
+        wbWords.forEach((word, i) => {
+            ctx.fillText(word, wbX + PAD, startY + i * lineH);
+        });
+    }
+}
+// End of word bank addition — return canvas follows
+
 
                 return canvas;
             }
