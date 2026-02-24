@@ -258,10 +258,55 @@
         </div>
     </div>
 
+    <!-- Settings / API Key Modal -->
+<div id="settings-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-bold">Settings</h3>
+      <button id="settings-close-btn" class="text-gray-500 hover:text-gray-800 text-2xl leading-none">&times;</button>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label for="api-key-input" class="block text-sm font-medium text-gray-700">Gemini API Key</label>
+        <p class="text-xs text-gray-500 mt-1 mb-2">
+          Used for the "Words from Topic" AI feature when running outside of Google AI Studio.
+          Your key is saved only in your browser's local storage.
+        </p>
+        <input type="password" id="api-key-input"
+          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          placeholder="AIza...">
+      </div>
+    </div>
+    <div class="mt-6 flex justify-end gap-4">
+      <button id="settings-cancel-btn"
+        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+      <button id="settings-save-btn"
+        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Save Key</button>
+    </div>
+  </div>
+</div>
+
+
 
     <div class="container mx-auto p-4 md:p-8">
         <h1 class="text-4xl font-bold text-center text-gray-900 mb-2">Word Search Generator</h1>
         <p class="text-center text-gray-600 mb-8">Create, customize, and solve your own professional word search puzzles.</p>
+
+        <button id="settings-btn" title="API Settings"
+  class="fixed top-4 right-4 z-40 bg-white text-gray-400 hover:text-indigo-600 p-2 rounded-full shadow-md transition-colors no-print">
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"></circle>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
+      1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06
+      a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+      A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9
+      4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06
+      a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
+      a1.65 1.65 0 0 0-1.51 1z"></path>
+  </svg>
+</button>
+
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Controls Column -->
@@ -678,6 +723,40 @@
             const modalGenerateBtn = document.getElementById('modal-generate-btn');
             const modalCancelBtn = document.getElementById('modal-cancel-btn');
             const hiddenMessageInput = document.getElementById('hidden-message');
+            // --- Settings / API Key ---
+const settingsModal    = document.getElementById('settings-modal');
+const settingsBtn      = document.getElementById('settings-btn');
+const settingsCloseBtn = document.getElementById('settings-close-btn');
+const settingsCancelBtn= document.getElementById('settings-cancel-btn');
+const settingsSaveBtn  = document.getElementById('settings-save-btn');
+const apiKeyInput      = document.getElementById('api-key-input');
+
+// Restore saved key
+apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+
+settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+settingsCloseBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+settingsCancelBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+settingsSaveBtn.addEventListener('click', () => {
+    localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
+    settingsModal.classList.add('hidden');
+    messageBox.textContent = 'API key saved!';
+    messageBox.style.color = '#16a34a';
+    setTimeout(() => { messageBox.textContent = ''; messageBox.style.color = ''; }, 3000);
+});
+
+/**
+ * Returns the API key to use.
+ * If the code is running inside Google AI Studio (Canvas), no key is needed — return null.
+ * Otherwise, return the key stored in localStorage.
+ */
+function getGeminiApiKey() {
+    // Google AI Studio Canvas injects `window.ai` or sets a specific env flag
+    const isCanvas = (typeof window.ai !== 'undefined') || (typeof AI_STUDIO_ENV !== 'undefined');
+    if (isCanvas) return null; // Canvas handles auth automatically
+    return localStorage.getItem('gemini_api_key') || '';
+}
+
             
             // --- Save/Load Elements ---
             const saveConfigBtn = document.getElementById('save-config-btn');
@@ -1832,8 +1911,18 @@
                 try {
                     let chatHistory = [{ role: "user", parts: [{ text: promptText }] }];
                     const payload = { contents: chatHistory };
-                    const apiKey = ""; // This will be handled by the environment
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const apiKey = getGeminiApiKey();
+if (apiKey === '') {
+    messageBox.textContent = 'No API key set. Click the ⚙ gear icon to add your Gemini API key.';
+    messageBox.style.color = '#dc2626';
+    aiLoader.classList.add('hidden');
+    topicModal.classList.add('hidden');
+    return;
+}
+const apiUrl = apiKey
+    ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`
+    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent`;
+
                     
                     const response = await fetch(apiUrl, {
                         method: 'POST',
