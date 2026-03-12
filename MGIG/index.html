@@ -2289,20 +2289,12 @@
         // FIREBASE SETUP & APP STATE
         // ================================================================
 
-        // Initialize Firebase safely (checks if running in Canvas environment)
-        let app, auth, db, appId;
-        const isCanvasEnv = typeof __firebase_config !== 'undefined';
-
-        if (isCanvasEnv) {
-            const firebaseConfig = JSON.parse(__firebase_config);
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        } else {
-            console.warn("Running in Standalone Mode. Firebase Cloud features disabled. Using Local Storage.");
-            appId = 'local-app-id';
-        }
+        // Initialize Firebase with environment configuration
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         // STEP 5: UPDATE JAVASCRIPT - CONSTANTS (Original Prompts)
         const DEFAULT_PROMPTS = {
@@ -2971,8 +2963,9 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
                 } catch(e) { console.error('Local save failed', e); }
 
                 // 2. Try Cloud
-                if (!isCanvasEnv || !appState.user) {
-                    return; // Already saved locally
+                if (!appState.user) {
+                    console.warn('No cloud user yet, relying on local storage');
+                    return;
                 }
                 
                 try {
@@ -3042,21 +3035,6 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
 
             // Save Design to User's Private Collection with COMPRESSION
             saveDesign: async (design) => {
-                // Local Storage Fallback for Standalone Mode
-                if (!isCanvasEnv) {
-                    try {
-                        const designs = JSON.parse(localStorage.getItem('local_designs') || '[]');
-                        const existingIndex = designs.findIndex(d => d.id === design.id);
-                        if (existingIndex >= 0) designs[existingIndex] = design;
-                        else designs.push(design);
-                        localStorage.setItem('local_designs', JSON.stringify(designs));
-                        return true;
-                    } catch (e) {
-                        console.error('Local storage save failed (quota exceeded?):', e);
-                        return false;
-                    }
-                }
-
                 if (!appState.user) {
                     console.error('Cannot save design: Not authenticated');
                     return false;
@@ -3087,16 +3065,6 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
 
             // Load All Designs
             loadAllDesigns: async () => {
-                // Local Storage Fallback for Standalone Mode
-                if (!isCanvasEnv) {
-                    try {
-                        const designs = JSON.parse(localStorage.getItem('local_designs') || '[]');
-                        return designs.sort((a, b) => b.createdAt - a.createdAt);
-                    } catch (e) {
-                        return [];
-                    }
-                }
-
                 if (!appState.user) return [];
                 try {
                     const designsRef = collection(db, 'artifacts', appId, 'users', appState.user.uid, 'designs');
@@ -3112,16 +3080,6 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             },
             
             deleteDesign: async (id) => {
-                // Local Storage Fallback for Standalone Mode
-                if (!isCanvasEnv) {
-                    try {
-                        let designs = JSON.parse(localStorage.getItem('local_designs') || '[]');
-                        designs = designs.filter(d => d.id !== id);
-                        localStorage.setItem('local_designs', JSON.stringify(designs));
-                    } catch (e) {}
-                    return;
-                }
-
                 if (!appState.user) return;
                 const designRef = doc(db, 'artifacts', appId, 'users', appState.user.uid, 'designs', id);
                 await deleteDoc(designRef);
@@ -4623,40 +4581,34 @@ Now clarify the user's instruction following ALL rules above!`; const enhancedPr
             // ------------------------------------
             // FIREBASE AUTH & INIT FLOW
             // ------------------------------------
-            if (isCanvasEnv) {
-                try {
-                    // 1. Authenticate FIRST
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        // Use custom token if available (Prod env)
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        // Fallback to anonymous (Dev/Preview env)
-                        await signInAnonymously(auth);
-                    }
-                    
-                    // 2. Set user listener
-                    onAuthStateChanged(auth, async (user) => {
-                        if (user) {
-                            console.log('User authenticated:', user.uid);
-                            appState.user = user;
-                            // 3. Load Data
-                            await loadSettings(); 
-                            await loadCustomPrompts();
-                            await loadAndRenderDesigns();
-                        } else {
-                            console.log('User signed out');
-                        }
-                    });
-                    
-                } catch (error) {
-                    console.error('Failed to initialize cloud database:', error);
-                    showToast('Cloud connection failed. Saving will not work.', 'error');
+            try {
+                // 1. Authenticate FIRST
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    // Use custom token if available (Prod env)
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    // Fallback to anonymous (Dev/Preview env)
+                    await signInAnonymously(auth);
                 }
-            } else {
-                // STANDALONE MODE INIT
-                await loadSettings();
-                await loadCustomPrompts();
-                await loadAndRenderDesigns();
+                
+                // 2. Set user listener
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        console.log('User authenticated:', user.uid);
+                        appState.user = user;
+                        // 3. Load Data
+                        await loadSettings(); // Updated to load full settings
+                        // STEP 9: LOAD PROMPTS ON INIT
+                        await loadCustomPrompts();
+                        await loadAndRenderDesigns();
+                    } else {
+                        console.log('User signed out');
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Failed to initialize cloud database:', error);
+                showToast('Cloud connection failed. Saving will not work.', 'error');
             }
 
             updateGenerationButtons();
