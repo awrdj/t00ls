@@ -132,30 +132,25 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
     <div class="sec-hdr">Audio & Levels</div>
 
     <div class="row">
-      <lbl>Normalization</lbl>
-      <select id="c_norm" onchange="scheduleRecomp()">
-        <option value="perband" selected>Per-Band ✦ recommended</option>
-        <option value="p99">Global 99th %ile</option>
-        <option value="p95">Global 95th %ile</option>
-        <option value="peak">Global Peak</option>
-        <option value="rms">Global RMS</option>
-      </select>
+      <lbl>Gain (dB)</lbl>
+      <input type="range" id="c_gain" min="-12" max="24" value="0" oninput="updateGainLabel();scheduleRecomp()">
+      <span class="val" id="v_gain">0dB</span>
     </div>
+
+    <!-- KEY FIX: Band Blend 0%=natural shape, 100%=all bands equal -->
+    <div class="row">
+      <lbl>Band Blend</lbl>
+      <input type="range" id="c_blend" min="0" max="100" value="30" oninput="sv('c_blend','v_blend','%');scheduleRecomp()">
+      <span class="val" id="v_blend">30%</span>
+    </div>
+    <div class="row"><lbl></lbl><span class="row-note" style="color:#444460">0%=natural shape · 100%=all equal</span></div>
 
     <div class="row">
       <lbl>Side Boost</lbl>
-      <input type="range" id="c_sideboost" min="0" max="300" value="60"
-             oninput="sv('c_sideboost','v_sideboost','%');scheduleRecomp()">
-      <span class="val" id="v_sideboost">60%</span>
+      <input type="range" id="c_sideboost" min="0" max="150" value="40" oninput="sv('c_sideboost','v_sideboost','%');scheduleRecomp()">
+      <span class="val" id="v_sideboost">40%</span>
     </div>
-    <div class="row"><lbl></lbl><span class="row-note" style="color:#444">extra gain for edge bars (sides)</span></div>
-
-    <div class="row">
-      <lbl>Gain (dB)</lbl>
-      <input type="range" id="c_gain" min="-12" max="24" value="0"
-             oninput="updateGainLabel();scheduleRecomp()">
-      <span class="val" id="v_gain">0dB</span>
-    </div>
+    <div class="row"><lbl></lbl><span class="row-note" style="color:#444460">extra nudge for outermost bars only</span></div>
 
     <div class="row"><lbl>Smoothing</lbl><input type="range" id="c_sm" min="0" max="95" value="75" oninput="sv('c_sm','v_sm','%');scheduleRecomp()"><span class="val" id="v_sm">75%</span></div>
     <div class="row"><lbl>FFT Size</lbl><select id="c_fft" onchange="scheduleRecomp()"><option value="1024">1024 — fast</option><option value="2048">2048</option><option value="4096" selected>4096 — default</option><option value="8192">8192 — detailed</option></select></div>
@@ -267,7 +262,7 @@ function fft(re,im){
 }
 
 self.onmessage=function(e){
-  const{channelData,sr,fps,nBars,sm,fftSize,normMode,loBin,hiBin,gain,sideBoost}=e.data;
+  const{channelData,sr,fps,nBars,sm,fftSize,loBin,hiBin,gain,blend,sideBoost}=e.data;
   const re=new Float32Array(fftSize),im=new Float32Array(fftSize);
   const hann=new Float32Array(fftSize);
   for(let i=0;i<fftSize;i++) hann[i]=0.5*(1-Math.cos(2*Math.PI*i/(fftSize-1)));
@@ -276,19 +271,11 @@ self.onmessage=function(e){
   const total=Math.floor(channelData.length/spf);
   const raw=new Float32Array(total*nBars);
 
-  // Build side-boost curve: quadratic, 0 at center → sideBoost at edges
-  // pos=0 at center bar, pos=1 at edge bars
-  const sideBoostCurve=new Float32Array(nBars);
-  for(let b=0;b<nBars;b++){
-    const pos=Math.abs((b/(nBars-1))*2-1); // 0=center, 1=edges
-    sideBoostCurve[b]=1+sideBoost*pos*pos;
-  }
-
-  // Pass 1: compute raw FFT bands
+  // Pass 1 — raw FFT
   let globalRef=0, sumSq=0;
   for(let f=0;f<total;f++){
-    const off=f*spf,len=Math.min(fftSize,channelData.length-off);
-    re.fill(0);im.fill(0);
+    const off=f*spf, len=Math.min(fftSize,channelData.length-off);
+    re.fill(0); im.fill(0);
     for(let i=0;i<len;i++) re[i]=channelData[off+i]*hann[i]*gain;
     fft(re,im);
     const base=f*nBars;
@@ -296,52 +283,52 @@ self.onmessage=function(e){
       const f0=Math.floor(loBin*Math.pow(hiBin/loBin,b/nBars));
       const f1=Math.max(Math.floor(loBin*Math.pow(hiBin/loBin,(b+1)/nBars)),f0+1);
       let s=0,c=0;
-      for(let k=f0;k<=Math.min(f1,hiBin);k++){s+=Math.sqrt(re[k]*re[k]+im[k]*im[k]);c++;}
+      for(let k=f0;k<=Math.min(f1,hiBin);k++){ s+=Math.sqrt(re[k]*re[k]+im[k]*im[k]); c++; }
       const val=c?s/c:0;
       raw[base+b]=val;
-      if(val>globalRef)globalRef=val;
+      if(val>globalRef) globalRef=val;
       sumSq+=val*val;
     }
     if(f%300===0) self.postMessage({type:'progress',pct:Math.round(f/total*70)});
   }
 
-  // Pass 2: compute normalization reference per band or globally
-  let normRefs; // Float32Array of length nBars
+  // Pass 2 — compute global ref (p99) and per-band refs
+  const allVals=Array.from(raw).sort((a,b)=>a-b);
+  const globalNorm=allVals[Math.floor(allVals.length*0.99)]||globalRef||1;
 
-  if(normMode==='perband'){
-    // Each band normalized by its own 99th percentile across all frames
-    // This is the key fix: quiet side bands use their own history, not the loud center
-    normRefs=new Float32Array(nBars);
-    const bandVals=new Float32Array(total);
-    for(let b=0;b<nBars;b++){
-      for(let f=0;f<total;f++) bandVals[f]=raw[f*nBars+b];
-      // Sort a copy
-      const sorted=Float32Array.from(bandVals).sort();
-      normRefs[b]=sorted[Math.floor(total*0.99)]||globalRef||1;
-    }
-  } else {
-    // Global normalization — single reference for all bands
-    let ref;
-    if(normMode==='peak') ref=globalRef;
-    else if(normMode==='rms') ref=Math.sqrt(sumSq/(total*nBars))*8;
-    else{
-      const all=Array.from(raw).sort((a,b)=>a-b);
-      ref=all[Math.floor(all.length*(normMode==='p95'?.95:.99))]||globalRef;
-    }
-    normRefs=new Float32Array(nBars).fill(ref||1);
+  // Per-band p99 — each band's own ceiling
+  const perBandNorm=new Float32Array(nBars);
+  const bandVals=new Float32Array(total);
+  for(let b=0;b<nBars;b++){
+    for(let f=0;f<total;f++) bandVals[f]=raw[f*nBars+b];
+    const sorted=Float32Array.from(bandVals).sort();
+    // Use p99 but floor at 10% of globalNorm so truly silent bands don't explode
+    perBandNorm[b]=Math.max(sorted[Math.floor(total*0.99)]||globalNorm, globalNorm*0.1);
   }
 
-  self.postMessage({type:'progress',pct:85});
+  self.postMessage({type:'progress',pct:82});
 
-  // Pass 3: normalize + apply side boost + smooth
+  // Side-boost curve — quadratic, only affects outermost 30% of bars
+  // blend=0 → use globalNorm only (natural shape)
+  // blend=1 → use perBandNorm only (all bars equal = "always high")
+  // blend=0.3 → sweet spot: sides move, center still dominates
+  const blendedNorm=new Float32Array(nBars);
+  for(let b=0;b<nBars;b++){
+    blendedNorm[b]=globalNorm*(1-blend) + perBandNorm[b]*blend;
+    // Side boost: extra gain on outermost bars (pos=1 at edges, 0 at center)
+    const pos=Math.abs((b/(nBars-1))*2-1);
+    const edgeFactor=Math.pow(Math.max(pos-0.7,0)/0.3, 2); // only outer 30%
+    blendedNorm[b]=blendedNorm[b]/(1+sideBoost*edgeFactor);
+  }
+
+  // Pass 3 — normalize + smooth
   const out=new Float32Array(total*nBars);
   const prev=new Float32Array(nBars);
   for(let f=0;f<total;f++){
     const base=f*nBars;
     for(let i=0;i<nBars;i++){
-      // Normalize by per-band or global ref, then apply side boost curve
-      const normalized=Math.min((raw[base+i]/normRefs[i])*sideBoostCurve[i],1);
-      prev[i]=sm*prev[i]+(1-sm)*normalized;
+      const n=Math.min(raw[base+i]/blendedNorm[i],1);
+      prev[i]=sm*prev[i]+(1-sm)*n;
       out[base+i]=prev[i];
     }
   }
@@ -364,8 +351,8 @@ g('fi').addEventListener('change',e=>loadAudio(e.target.files[0]));
 async function loadAudio(file){
   if(!file||!file.type.startsWith('audio')) return;
   if(activeWorker){activeWorker.terminate();activeWorker=null;}
-  g('fname').className='dz-name';g('fname').textContent=file.name;
-  g('expBtn').disabled=true;g('dlBtn').style.display='none';
+  g('fname').className='dz-name'; g('fname').textContent=file.name;
+  g('expBtn').disabled=true; g('dlBtn').style.display='none';
   setProgress(5,'Decoding audio…');
   const ab=await file.arrayBuffer();
   const ac=new AudioContext();
@@ -388,10 +375,10 @@ function computeFrames(){
     if(!audioBuf) return resolve();
     if(activeWorker) activeWorker.terminate();
     const fps=+v('e_fps'),nBars=+v('c_bars'),sm=+v('c_sm')/100;
-    const fftSize=+v('c_fft'),normMode=v('c_norm');
-    const[loBin,hiBin]=freqBins(audioBuf.sampleRate,fftSize);
+    const fftSize=+v('c_fft');
+    const [loBin,hiBin]=freqBins(audioBuf.sampleRate,fftSize);
     const gain=Math.pow(10,+v('c_gain')/20);
-    // sideBoost: 0=off, 1=100% extra at edges, 3=300% extra
+    const blend=+v('c_blend')/100;       // 0=natural, 1=all equal
     const sideBoost=+v('c_sideboost')/100;
     setProgress(10,'Computing FFT in background…');
     const channelData=new Float32Array(audioBuf.getChannelData(0));
@@ -414,7 +401,7 @@ function computeFrames(){
     };
     activeWorker.onerror=e=>{setProgress(0,'❌ '+e.message);reject(e);};
     activeWorker.postMessage(
-      {channelData,sr:audioBuf.sampleRate,fps,nBars,sm,fftSize,normMode,loBin,hiBin,gain,sideBoost},
+      {channelData,sr:audioBuf.sampleRate,fps,nBars,sm,fftSize,loBin,hiBin,gain,blend,sideBoost},
       [channelData.buffer]
     );
   });
@@ -430,7 +417,7 @@ g('e_fps').addEventListener('change',scheduleRecomp);
 
 // ─── Draw ─────────────────────────────────────────────────────────────────────
 function rrect(ctx,x,y,w,h,r,fill,stroke,lw){
-  if(w<=0||h<=0)return;if(h<0){y+=h;h=-h;}
+  if(w<=0||h<=0)return; if(h<0){y+=h;h=-h;}
   r=Math.min(Math.abs(r),w/2,h/2);
   if(r<0.5){if(fill)ctx.fillRect(x,y,w,h);if(stroke){ctx.lineWidth=lw;ctx.strokeRect(x,y,w,h);}return;}
   ctx.beginPath();
@@ -438,12 +425,12 @@ function rrect(ctx,x,y,w,h,r,fill,stroke,lw){
   ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
   ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
   ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
-  if(fill)ctx.fill();if(stroke){ctx.lineWidth=lw;ctx.stroke();}
+  if(fill)ctx.fill(); if(stroke){ctx.lineWidth=lw;ctx.stroke();}
 }
 
 function drawFrame(ctx,W,H,bands,s,L){
   const n=bands.length,[r1,g1,b1]=s.rgb1;
-  ctx.globalAlpha=s.bgo;ctx.fillStyle=s.bgColor;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
+  ctx.globalAlpha=s.bgo; ctx.fillStyle=s.bgColor; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1;
   if(s.glow>0){ctx.shadowBlur=s.glow;ctx.shadowColor=s.gcol;}else ctx.shadowBlur=0;
   const doFill=s.style!=='outline',doStroke=s.style==='outline';
   for(let i=0;i<n;i++){
@@ -458,20 +445,21 @@ function drawFrame(ctx,W,H,bands,s,L){
     if(s.sym){
       if(s.style==='gradient'){const gr=ctx.createLinearGradient(0,L.cy,0,L.cy+bh);gr.addColorStop(0,s.col2);gr.addColorStop(1,s.col1);ctx.fillStyle=gr;}
       else if(s.style==='glow_only'){const gr=ctx.createLinearGradient(0,L.cy,0,L.cy+bh);gr.addColorStop(0,`rgba(${r1},${g1},${b1},.9)`);gr.addColorStop(1,`rgba(${r1},${g1},${b1},.03)`);ctx.fillStyle=gr;}
-      ctx.strokeStyle=s.col1;rrect(ctx,x,L.cy,L.bw,bh,s.cr,doFill,doStroke,s.olw);
+      ctx.strokeStyle=s.col1;
+      rrect(ctx,x,L.cy,L.bw,bh,s.cr,doFill,doStroke,s.olw);
     }
   }
   if(s.refOn){
     ctx.shadowBlur=s.refBlur;ctx.shadowColor=s.gcol;
     for(let i=0;i<n;i++){
       const bh=Math.max(bands[i]*L.maxH*s.boost,s.minBH);
-      const rH=bh*s.refH;if(rH<1)continue;
+      const rH=bh*s.refH; if(rH<1)continue;
       const x=L.xs[i],yS=L.cy+s.refGap;
       const gr=ctx.createLinearGradient(0,yS,0,yS+rH);
       gr.addColorStop(0,`rgba(${r1},${g1},${b1},${s.refOp})`);
       gr.addColorStop(Math.min(s.refFd+.01,1),`rgba(${r1},${g1},${b1},${s.refOp*(1-s.refFd)})`);
       gr.addColorStop(1,`rgba(${r1},${g1},${b1},0)`);
-      ctx.fillStyle=gr;rrect(ctx,x,yS,L.bw,rH,s.cr,true,false,0);
+      ctx.fillStyle=gr; rrect(ctx,x,yS,L.bw,rH,s.cr,true,false,0);
     }
   }
   ctx.shadowBlur=0;
@@ -480,7 +468,6 @@ function drawFrame(ctx,W,H,bands,s,L){
 // ─── Preview ──────────────────────────────────────────────────────────────────
 const prevCvs=g('prev');
 const prevCtx=prevCvs.getContext('2d',{alpha:true,willReadFrequently:false});
-
 function startPreview(){
   if(prevAnim) cancelAnimationFrame(prevAnim);
   prevFr=0;
@@ -500,13 +487,12 @@ function startPreview(){
 
 // ─── Export ───────────────────────────────────────────────────────────────────
 async function detectCodec(W,H,fps){
-  if(typeof VideoEncoder==='undefined')return null;
+  if(typeof VideoEncoder==='undefined') return null;
   const cands=[{codec:'avc1.640028',format:'mp4',muxCodec:'avc'},{codec:'avc1.4d001f',format:'mp4',muxCodec:'avc'},{codec:'avc1.42001f',format:'mp4',muxCodec:'avc'}];
-  for(const c of cands)for(const hw of['prefer-hardware','prefer-software'])
+  for(const c of cands) for(const hw of['prefer-hardware','prefer-software'])
     try{const r=await VideoEncoder.isConfigSupported({codec:c.codec,width:W,height:H,bitrate:20e6,framerate:fps,hardwareAcceleration:hw});if(r.supported)return{...c,hw};}catch{}
   return null;
 }
-
 async function encodeVideo(W,H,fps,mbps,codecInfo){
   const muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:codecInfo.muxCodec,width:W,height:H},fastStart:'in-memory'});
   let encErr=null;
@@ -514,35 +500,35 @@ async function encodeVideo(W,H,fps,mbps,codecInfo){
   encoder.configure({codec:codecInfo.codec,width:W,height:H,bitrate:mbps*1_000_000,framerate:fps,hardwareAcceleration:codecInfo.hw,latencyMode:'quality'});
   const cvs=typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(W,H):(()=>{const c=document.createElement('canvas');c.width=W;c.height=H;return c;})();
   const ctx=cvs.getContext('2d',{alpha:false});
-  _sDirty=true;const s=getS(),L=getL(W,H,frames[0].length);
+  _sDirty=true; const s=getS(),L=getL(W,H,frames[0].length);
   const total=frames.length,frameDur=Math.round(1_000_000/fps),t0=performance.now();
   for(let i=0;i<total;i++){
-    if(encErr)throw encErr;
+    if(encErr) throw encErr;
     drawFrame(ctx,W,H,frames[i],s,L);
     const vf=new VideoFrame(cvs,{timestamp:i*frameDur,duration:frameDur});
-    encoder.encode(vf,{keyFrame:i%(fps*2)===0});vf.close();
-    if(encoder.encodeQueueSize>12)await new Promise(r=>encoder.addEventListener('dequeue',r,{once:true}));
+    encoder.encode(vf,{keyFrame:i%(fps*2)===0}); vf.close();
+    if(encoder.encodeQueueSize>12) await new Promise(r=>encoder.addEventListener('dequeue',r,{once:true}));
     if(i%30===0){
       const pct=Math.round(i/total*100),ef=(i/((performance.now()-t0)/1000||1)).toFixed(0),rem=Math.round((total-i)/(+ef||1));
       setProgress(pct,`Encoding… ${pct}% · ${ef} fps · ~${rem}s · ${codecInfo.hw==='prefer-hardware'?'🚀 GPU':'💻 CPU'}`);
       await yld();
     }
   }
-  await encoder.flush();encoder.close();if(encErr)throw encErr;muxer.finalize();return muxer.target.buffer;
+  await encoder.flush(); encoder.close(); if(encErr) throw encErr;
+  muxer.finalize(); return muxer.target.buffer;
 }
-
 g('expBtn').addEventListener('click',async()=>{
   const[W,H]=v('e_res').split('x').map(Number),fps=+v('e_fps'),mbps=+v('e_qual');
-  g('expBtn').disabled=true;g('dlBtn').style.display='none';
-  setProgress(2,'Detecting codec…');await yld();
+  g('expBtn').disabled=true; g('dlBtn').style.display='none';
+  setProgress(2,'Detecting codec…'); await yld();
   const codecInfo=await detectCodec(W,H,fps);
-  if(!codecInfo){setProgress(0,'❌ WebCodecs not supported — use Chrome 94+, Safari 16.4+, Firefox 130+');g('expBtn').disabled=false;return;}
-  setProgress(5,`Starting… (${codecInfo.codec} · ${codecInfo.hw})`);await yld();
+  if(!codecInfo){setProgress(0,'❌ WebCodecs not supported — Chrome 94+, Safari 16.4+, Firefox 130+');g('expBtn').disabled=false;return;}
+  setProgress(5,`Starting… (${codecInfo.codec} · ${codecInfo.hw})`); await yld();
   try{
     const buf=await encodeVideo(W,H,fps,mbps,codecInfo);
     const blob=new Blob([buf],{type:'video/mp4'}),url=URL.createObjectURL(blob),dl=g('dlBtn');
-    dl.href=url;dl.download=`visualizer_${W}x${H}.mp4`;dl.style.display='inline-block';
-    dl.textContent=`💾 Download  ${(blob.size/1024/1024).toFixed(1)} MB`;setProgress(100,'✅ Done!');
+    dl.href=url; dl.download=`visualizer_${W}x${H}.mp4`; dl.style.display='inline-block';
+    dl.textContent=`💾 Download  ${(blob.size/1024/1024).toFixed(1)} MB`; setProgress(100,'✅ Done!');
   }catch(err){setProgress(0,'❌ '+err.message);console.error(err);}
   g('expBtn').disabled=false;
 });
