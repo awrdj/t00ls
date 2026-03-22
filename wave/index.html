@@ -64,6 +64,13 @@ input[type=color]{width:34px;height:20px;border:1px solid var(--border);border-r
 .cvs-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px;min-height:0}
 canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;border-radius:4px;
   background:repeating-conic-gradient(#1a1a1a 0% 25%,#121212 0% 50%) 0 0/16px 16px}
+  
+/* PLAYBACK BAR CSS */
+.playback-bar { background: var(--panel); border-top: 1px solid var(--border); padding: 6px 10px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.playback-bar .btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 4px 12px; }
+.playback-bar .btn:hover:not(:disabled) { border-color: var(--accent); }
+#play-time { font-size: .75rem; color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+
 .exp-bar{background:var(--panel);border-top:1px solid var(--border);padding:6px 10px;flex-shrink:0}
 .exp-row1{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px}
 .exp-row1 select{flex:0 0 auto;width:auto;font-size:.75rem}
@@ -96,13 +103,13 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
 
   <div class="sec">
     <div class="sec-hdr">Bars</div>
-    <div class="row"><lbl>Count</lbl><input type="range" id="c_bars" min="8" max="128" value="60" oninput="sv('c_bars','v_bars','');dirty()"><span class="val" id="v_bars">60</span></div>
+    <div class="row"><lbl>Count</lbl><input type="range" id="c_bars" min="8" max="128" value="32" oninput="sv('c_bars','v_bars','');dirty()"><span class="val" id="v_bars">32</span></div>
     <div class="row"><lbl>Width %</lbl><input type="range" id="c_bw" min="10" max="98" value="65" oninput="sv('c_bw','v_bw','%');dirty()"><span class="val" id="v_bw">65%</span></div>
-    <div class="row"><lbl>Max Height %</lbl><input type="range" id="c_bh" min="5" max="80" value="40" oninput="sv('c_bh','v_bh','%');dirty()"><span class="val" id="v_bh">40%</span></div>
-    <div class="row"><lbl>Center Offset</lbl><input type="range" id="c_cy" min="-35" max="35" value="2" oninput="sv('c_cy','v_cy','%');dirty()"><span class="val" id="v_cy">2%</span></div>
-    <div class="row"><lbl>Corner Radius</lbl><input type="range" id="c_cr" min="0" max="30" value="2" oninput="sv('c_cr','v_cr','');dirty()"><span class="val" id="v_cr">2</span></div>
+    <div class="row"><lbl>Max Height %</lbl><input type="range" id="c_bh" min="5" max="80" value="50" oninput="sv('c_bh','v_bh','%');dirty()"><span class="val" id="v_bh">50%</span></div>
+    <div class="row"><lbl>Center Offset</lbl><input type="range" id="c_cy" min="-35" max="35" value="25" oninput="sv('c_cy','v_cy','%');dirty()"><span class="val" id="v_cy">25%</span></div>
+    <div class="row"><lbl>Corner Radius</lbl><input type="range" id="c_cr" min="0" max="30" value="0" oninput="sv('c_cr','v_cr','');dirty()"><span class="val" id="v_cr">0</span></div>
     <div class="row"><lbl>Scale Boost</lbl><input type="range" id="c_boost" min="40" max="300" value="100" oninput="sv('c_boost','v_boost','%');dirty()"><span class="val" id="v_boost">100%</span></div>
-    <div class="row"><lbl>Style</lbl><select id="c_style" onchange="dirty()"><option value="solid">Solid Fill</option><option value="gradient">Gradient Fill</option><option value="outline">Outline</option><option value="glow_only">Glow Only</option></select></div>
+    <div class="row"><lbl>Style</lbl><select id="c_style" onchange="dirty()"><option value="solid" selected>Solid Fill</option><option value="gradient">Gradient Fill</option><option value="outline">Outline</option><option value="glow_only">Glow Only</option></select></div>
     <div class="row"><lbl>Symmetric ↕</lbl><label class="tog"><input type="checkbox" id="c_sym" onchange="dirty()"><span class="tog-sl"></span></label><span class="row-note">mirror top & bottom</span></div>
   </div>
 
@@ -113,49 +120,42 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
     <div class="row"><lbl>Outline Width</lbl><input type="range" id="c_olw" min="1" max="10" value="2" oninput="sv('c_olw','v_olw','px');dirty()"><span class="val" id="v_olw">2px</span></div>
     <div class="row"><lbl>Glow Intensity</lbl><input type="range" id="c_glow" min="0" max="60" value="0" oninput="sv('c_glow','v_glow','');dirty()"><span class="val" id="v_glow">0</span></div>
     <div class="row"><lbl>Glow Color</lbl><input type="color" id="c_gcol" value="#5a5aff" onchange="dirty()"></div>
-    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg();dirty()"><option value="green">Green Screen</option><option value="black" selected>Black</option><option value="white">White</option><option value="custom">Custom →</option></select></div>
-    <div class="row" id="bgcrow" style="display:none"><lbl>BG Color</lbl><input type="color" id="c_bgcol" value="#0d001a" onchange="dirty()"></div>
+    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg();dirty()"><option value="green">Green Screen</option><option value="black">Black</option><option value="white">White</option><option value="custom" selected>Custom →</option></select></div>
+    <div class="row" id="bgcrow"><lbl>BG Color</lbl><input type="color" id="c_bgcol" value="#15859e" onchange="dirty()"></div>
     <div class="row"><lbl>BG Opacity %</lbl><input type="range" id="c_bgo" min="0" max="100" value="100" oninput="sv('c_bgo','v_bgo','%');dirty()"><span class="val" id="v_bgo">100%</span></div>
   </div>
 
   <div class="sec">
     <div class="sec-hdr">Reflection</div>
-    <div class="row"><lbl>Enable</lbl><label class="tog"><input type="checkbox" id="c_ref" checked onchange="dirty()"><span class="tog-sl"></span></label></div>
+    <div class="row"><lbl>Enable</lbl><label class="tog"><input type="checkbox" id="c_ref" onchange="dirty()"><span class="tog-sl"></span></label></div>
     <div class="row"><lbl>Height %</lbl><input type="range" id="c_rh" min="0" max="120" value="45" oninput="sv('c_rh','v_rh','%');dirty()"><span class="val" id="v_rh">45%</span></div>
     <div class="row"><lbl>Opacity %</lbl><input type="range" id="c_ro" min="0" max="100" value="60" oninput="sv('c_ro','v_ro','%');dirty()"><span class="val" id="v_ro">60%</span></div>
     <div class="row"><lbl>Fade Start %</lbl><input type="range" id="c_rf" min="0" max="90" value="0" oninput="sv('c_rf','v_rf','%');dirty()"><span class="val" id="v_rf">0%</span></div>
-    <div class="row"><lbl>Gap px</lbl><input type="range" id="c_rgap" min="0" max="30" value="0" oninput="sv('c_rgap','v_rgap','px');dirty()"><span class="val" id="v_rgap">0px</span></div>
+    <div class="row"><lbl>Gap px</lbl><input type="range" id="c_rgap" min="0" max="30" value="2" oninput="sv('c_rgap','v_rgap','px');dirty()"><span class="val" id="v_rgap">2px</span></div>
     <div class="row"><lbl>Blur px</lbl><input type="range" id="c_rb" min="0" max="12" value="0" oninput="sv('c_rb','v_rb','px');dirty()"><span class="val" id="v_rb">0px</span></div>
   </div>
 
   <div class="sec">
     <div class="sec-hdr">Audio & Levels</div>
-
     <div class="row">
       <lbl>Gain (dB)</lbl>
-      <input type="range" id="c_gain" min="-12" max="24" value="0" oninput="updateGainLabel();scheduleRecomp()">
-      <span class="val" id="v_gain">0dB</span>
+      <input type="range" id="c_gain" min="-12" max="24" value="24" oninput="updateGainLabel();scheduleRecomp()">
+      <span class="val" id="v_gain">+24dB</span>
     </div>
-
-    <!-- KEY FIX: Band Blend 0%=natural shape, 100%=all bands equal -->
     <div class="row">
       <lbl>Band Blend</lbl>
-      <input type="range" id="c_blend" min="0" max="100" value="30" oninput="sv('c_blend','v_blend','%');scheduleRecomp()">
-      <span class="val" id="v_blend">30%</span>
+      <input type="range" id="c_blend" min="0" max="100" value="85" oninput="sv('c_blend','v_blend','%');scheduleRecomp()">
+      <span class="val" id="v_blend">85%</span>
     </div>
-    <div class="row"><lbl></lbl><span class="row-note" style="color:#444460">0%=natural shape · 100%=all equal</span></div>
-
     <div class="row">
       <lbl>Side Boost</lbl>
-      <input type="range" id="c_sideboost" min="0" max="150" value="40" oninput="sv('c_sideboost','v_sideboost','%');scheduleRecomp()">
-      <span class="val" id="v_sideboost">40%</span>
+      <input type="range" id="c_sideboost" min="0" max="150" value="150" oninput="sv('c_sideboost','v_sideboost','%');scheduleRecomp()">
+      <span class="val" id="v_sideboost">150%</span>
     </div>
-    <div class="row"><lbl></lbl><span class="row-note" style="color:#444460">extra nudge for outermost bars only</span></div>
-
-    <div class="row"><lbl>Smoothing</lbl><input type="range" id="c_sm" min="0" max="95" value="75" oninput="sv('c_sm','v_sm','%');scheduleRecomp()"><span class="val" id="v_sm">75%</span></div>
+    <div class="row"><lbl>Smoothing</lbl><input type="range" id="c_sm" min="0" max="95" value="90" oninput="sv('c_sm','v_sm','%');scheduleRecomp()"><span class="val" id="v_sm">90%</span></div>
     <div class="row"><lbl>FFT Size</lbl><select id="c_fft" onchange="scheduleRecomp()"><option value="1024">1024 — fast</option><option value="2048">2048</option><option value="4096" selected>4096 — default</option><option value="8192">8192 — detailed</option></select></div>
-    <div class="row"><lbl>Freq Range</lbl><select id="c_freq" onchange="scheduleRecomp()"><option value="full">Full (20 Hz – 20 kHz)</option><option value="sub">Sub Bass (20–80 Hz)</option><option value="bass">Bass (20–500 Hz)</option><option value="mid">Mids (200 Hz – 4 kHz)</option><option value="high">Highs (2–20 kHz)</option><option value="presence">Presence (1–8 kHz)</option></select></div>
-    <div class="row"><lbl>Min Bar Height</lbl><input type="range" id="c_minbh" min="0" max="20" value="2" oninput="sv('c_minbh','v_minbh','px');dirty()"><span class="val" id="v_minbh">2px</span></div>
+    <div class="row"><lbl>Freq Range</lbl><select id="c_freq" onchange="scheduleRecomp()"><option value="full">Full (30 Hz – 15 kHz)</option><option value="sub">Sub Bass (20–80 Hz)</option><option value="bass">Bass (20–500 Hz)</option><option value="mid">Mids (200 Hz – 4 kHz)</option><option value="high">Highs (2–15 kHz)</option><option value="presence">Presence (1–8 kHz)</option></select></div>
+    <div class="row"><lbl>Min Bar Height</lbl><input type="range" id="c_minbh" min="0" max="20" value="6" oninput="sv('c_minbh','v_minbh','px');dirty()"><span class="val" id="v_minbh">6px</span></div>
   </div>
 
 </div>
@@ -164,6 +164,13 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
   <div class="cvs-wrap">
     <canvas id="prev" width="960" height="540"></canvas>
   </div>
+  
+  <div class="playback-bar">
+    <button class="btn" id="btn-play" onclick="togglePlay()" disabled>▶ Play</button>
+    <button class="btn" id="btn-mute" onclick="toggleMute()" disabled>🔊 Mute</button>
+    <span id="play-time">0:00 / 0:00</span>
+  </div>
+
   <div class="exp-bar">
     <div class="exp-row1">
       <select id="e_res">
@@ -271,7 +278,6 @@ self.onmessage=function(e){
   const total=Math.floor(channelData.length/spf);
   const raw=new Float32Array(total*nBars);
 
-  // Pass 1 — raw FFT
   let globalRef=0;
   for(let f=0;f<total;f++){
     const off=f*spf, len=Math.min(fftSize,channelData.length-off);
@@ -286,7 +292,6 @@ self.onmessage=function(e){
       for(let k=f0;k<=Math.min(f1,hiBin);k++){ s+=Math.sqrt(re[k]*re[k]+im[k]*im[k]); c++; }
       let val=c?s/c:0;
       
-      // Increased tilt to force more activity into the right side
       const tilt = Math.pow(1 + (b/nBars), 3.5); 
       val = val * tilt;
 
@@ -296,7 +301,6 @@ self.onmessage=function(e){
     if(f%300===0) self.postMessage({type:'progress',pct:Math.round(f/total*70)});
   }
 
-  // Pass 2 — compute global ref (p99) and per-band refs
   const allVals=Array.from(raw).sort((a,b)=>a-b);
   const globalNorm=allVals[Math.floor(allVals.length*0.99)]||globalRef||1;
 
@@ -306,7 +310,6 @@ self.onmessage=function(e){
     for(let f=0;f<total;f++) bandVals[f]=raw[f*nBars+b];
     const sorted=Float32Array.from(bandVals).sort();
     
-    // THE FIX: Dropped the floor to 0.00001. Now even dead zones will scale up!
     const bandMax = sorted[Math.floor(total*0.99)] || 0;
     perBandNorm[b]=Math.max(bandMax, globalNorm*0.00001);
   }
@@ -317,13 +320,11 @@ self.onmessage=function(e){
   for(let b=0;b<nBars;b++){
     blendedNorm[b]=globalNorm*(1-blend) + perBandNorm[b]*blend;
     
-    // Wider side-boost to nudge outer edges up for the "smile" shape
     const pos=Math.abs((b/(nBars-1))*2-1);
     const edgeFactor=Math.pow(Math.max(pos-0.2,0)/0.8, 2); 
     blendedNorm[b]=blendedNorm[b]/(1+sideBoost*edgeFactor);
   }
 
-  // Pass 3 — normalize + smooth
   const out=new Float32Array(total*nBars);
   const prev=new Float32Array(nBars);
   for(let f=0;f<total;f++){
@@ -342,6 +343,57 @@ const _workerURL=URL.createObjectURL(new Blob([WORKER_SRC],{type:'application/ja
 // ─── State ────────────────────────────────────────────────────────────────────
 let audioBuf=null,frames=null,prevAnim=null,prevFr=0,activeWorker=null;
 
+// ─── Playback Audio State ─────────────────────────────────────────────────────
+let playCtx = null, playSource = null, playGain = null;
+let startTime = 0, pausedAt = 0, isPlaying = false, isMuted = false;
+
+function initPlayback() {
+  if (!playCtx) {
+    playCtx = new (window.AudioContext || window.webkitAudioContext)();
+    playGain = playCtx.createGain();
+    playGain.connect(playCtx.destination);
+    playGain.gain.value = isMuted ? 0 : 1;
+  }
+}
+
+function togglePlay() {
+  if (!audioBuf) return;
+  initPlayback();
+  
+  if (isPlaying) {
+    if (playSource) { playSource.stop(); playSource.disconnect(); playSource = null; }
+    pausedAt = playCtx.currentTime - startTime;
+    isPlaying = false;
+    g('btn-play').textContent = '▶ Play';
+  } else {
+    if (playCtx.state === 'suspended') playCtx.resume();
+    playSource = playCtx.createBufferSource();
+    playSource.buffer = audioBuf;
+    playSource.connect(playGain);
+    
+    if (pausedAt >= audioBuf.duration) pausedAt = 0;
+    playSource.start(0, pausedAt);
+    startTime = playCtx.currentTime - pausedAt;
+    isPlaying = true;
+    g('btn-play').textContent = '⏸ Pause';
+    
+    playSource.onended = () => {
+      if (isPlaying) {
+        isPlaying = false; 
+        pausedAt = audioBuf.duration;
+        g('btn-play').textContent = '▶ Play';
+      }
+    };
+  }
+}
+
+function toggleMute() {
+  initPlayback();
+  isMuted = !isMuted;
+  playGain.gain.value = isMuted ? 0 : 1;
+  g('btn-mute').textContent = isMuted ? '🔇 Unmute' : '🔊 Mute';
+}
+
 // ─── Upload ───────────────────────────────────────────────────────────────────
 const dz=g('dz');
 dz.addEventListener('click',()=>g('fi').click());
@@ -353,6 +405,13 @@ g('fi').addEventListener('change',e=>loadAudio(e.target.files[0]));
 async function loadAudio(file){
   if(!file||!file.type.startsWith('audio')) return;
   if(activeWorker){activeWorker.terminate();activeWorker=null;}
+  
+  // Reset playback
+  if (isPlaying) togglePlay();
+  pausedAt = 0;
+  g('btn-play').disabled = true;
+  g('btn-mute').disabled = true;
+
   g('fname').className='dz-name'; g('fname').textContent=file.name;
   g('expBtn').disabled=true; g('dlBtn').style.display='none';
   setProgress(5,'Decoding audio…');
@@ -368,7 +427,7 @@ async function loadAudio(file){
 function freqBins(sr,fftSize){
   const bw=sr/fftSize;
   const map={full:[30,15000],sub:[20,80],bass:[20,500],mid:[200,4000],high:[2000,15000],presence:[1000,8000]};
-  const [lo,hi]=map[v('c_freq')]||[20,20000];
+  const [lo,hi]=map[v('c_freq')]||[30,15000];
   return [Math.max(1,Math.floor(lo/bw)),Math.min((fftSize>>1)-1,Math.ceil(hi/bw))];
 }
 
@@ -380,7 +439,7 @@ function computeFrames(){
     const fftSize=+v('c_fft');
     const [loBin,hiBin]=freqBins(audioBuf.sampleRate,fftSize);
     const gain=Math.pow(10,+v('c_gain')/20);
-    const blend=+v('c_blend')/100;       // 0=natural, 1=all equal
+    const blend=+v('c_blend')/100;       
     const sideBoost=+v('c_sideboost')/100;
     setProgress(10,'Computing FFT in background…');
     const channelData=new Float32Array(audioBuf.getChannelData(0));
@@ -396,6 +455,13 @@ function computeFrames(){
         activeWorker=null;
         setProgress(100,`Ready · ${frames.length} frames`);
         g('expBtn').disabled=false;
+        
+        // Enable Playback UI
+        g('btn-play').disabled = false;
+        g('btn-mute').disabled = false;
+        pausedAt = 0;
+        if (isPlaying) { playSource.stop(); isPlaying = false; g('btn-play').textContent = '▶ Play'; }
+        
         prevFr=0;
         startPreview();
         resolve();
@@ -470,21 +536,42 @@ function drawFrame(ctx,W,H,bands,s,L){
 // ─── Preview ──────────────────────────────────────────────────────────────────
 const prevCvs=g('prev');
 const prevCtx=prevCvs.getContext('2d',{alpha:true,willReadFrequently:false});
-function startPreview(){
-  if(prevAnim) cancelAnimationFrame(prevAnim);
-  prevFr=0;
-  const fps=+v('e_fps')||30,interval=1000/fps;
-  let last=0;
-  function tick(now){
-    prevAnim=requestAnimationFrame(tick);
-    if(now-last<interval)return;
-    last=now;
-    if(!frames||!frames.length)return;
-    const s=getS(),L=getL(960,540,frames[0].length);
-    drawFrame(prevCtx,960,540,frames[prevFr%frames.length],s,L);
-    prevFr++;
+
+function startPreview() {
+  if (prevAnim) cancelAnimationFrame(prevAnim);
+  
+  function tick() {
+    prevAnim = requestAnimationFrame(tick);
+    if (!frames || !frames.length) return;
+    
+    // 1. Calculate time based on audio playback state
+    let currTime = 0;
+    if (isPlaying && playCtx) {
+      currTime = playCtx.currentTime - startTime;
+      if (currTime > audioBuf.duration) currTime = audioBuf.duration;
+    } else {
+      currTime = pausedAt;
+    }
+
+    // 2. Update Playback Time display
+    const m = Math.floor(currTime / 60);
+    const s = Math.floor(currTime % 60).toString().padStart(2, '0');
+    const tm = Math.floor(audioBuf.duration / 60);
+    const ts = Math.floor(audioBuf.duration % 60).toString().padStart(2, '0');
+    g('play-time').textContent = `${m}:${s} / ${tm}:${ts}`;
+
+    // 3. Find the exact frame index for that millisecond of audio
+    const fps = +v('e_fps') || 30;
+    let fr = Math.floor(currTime * fps);
+    if (fr >= frames.length) fr = frames.length - 1;
+    if (fr < 0) fr = 0;
+
+    // 4. Draw
+    const sObj = getS(), L = getL(960, 540, frames[0].length);
+    drawFrame(prevCtx, 960, 540, frames[fr], sObj, L);
   }
-  prevAnim=requestAnimationFrame(tick);
+  
+  prevAnim = requestAnimationFrame(tick);
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
