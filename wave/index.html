@@ -284,7 +284,12 @@ self.onmessage=function(e){
       const f1=Math.max(Math.floor(loBin*Math.pow(hiBin/loBin,(b+1)/nBars)),f0+1);
       let s=0,c=0;
       for(let k=f0;k<=Math.min(f1,hiBin);k++){ s+=Math.sqrt(re[k]*re[k]+im[k]*im[k]); c++; }
-      const val=c?s/c:0;
+      let val=c?s/c:0;
+      
+      // FIX 1: Apply Pink Noise Tilt. Boosts high bins naturally before normalization.
+      const tilt = Math.pow(1 + (b/nBars), 2.2); 
+      val = val * tilt;
+
       raw[base+b]=val;
       if(val>globalRef) globalRef=val;
       sumSq+=val*val;
@@ -302,22 +307,19 @@ self.onmessage=function(e){
   for(let b=0;b<nBars;b++){
     for(let f=0;f<total;f++) bandVals[f]=raw[f*nBars+b];
     const sorted=Float32Array.from(bandVals).sort();
-    // Use p99 but floor at 10% of globalNorm so truly silent bands don't explode
-    perBandNorm[b]=Math.max(sorted[Math.floor(total*0.99)]||globalNorm, globalNorm*0.1);
+    // FIX 2: Lowered floor from 10% to 1% to allow quiet high bands to reach full screen height.
+    perBandNorm[b]=Math.max(sorted[Math.floor(total*0.99)]||globalNorm, globalNorm*0.01);
   }
 
   self.postMessage({type:'progress',pct:82});
 
-  // Side-boost curve — quadratic, only affects outermost 30% of bars
-  // blend=0 → use globalNorm only (natural shape)
-  // blend=1 → use perBandNorm only (all bars equal = "always high")
-  // blend=0.3 → sweet spot: sides move, center still dominates
   const blendedNorm=new Float32Array(nBars);
   for(let b=0;b<nBars;b++){
     blendedNorm[b]=globalNorm*(1-blend) + perBandNorm[b]*blend;
-    // Side boost: extra gain on outermost bars (pos=1 at edges, 0 at center)
+    
+    // FIX 3: Smoother, wider side boost for a natural "smile" curve
     const pos=Math.abs((b/(nBars-1))*2-1);
-    const edgeFactor=Math.pow(Math.max(pos-0.7,0)/0.3, 2); // only outer 30%
+    const edgeFactor=Math.pow(Math.max(pos-0.4,0)/0.6, 2); 
     blendedNorm[b]=blendedNorm[b]/(1+sideBoost*edgeFactor);
   }
 
