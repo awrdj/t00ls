@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🎵 Audio Visualizer Studio</title>
+<!-- Suppress favicon 404 -->
+<link rel="icon" href="data:,">
 <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5/build/mp4-muxer.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -61,7 +63,8 @@ input[type=color]{width:34px;height:20px;border:1px solid var(--border);border-r
 .row-note{font-size:.65rem;color:#33334a;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .preview-area{display:flex;flex-direction:column;overflow:hidden;background:#060609}
 .cvs-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px;min-height:0}
-canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;border-radius:4px}
+canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;border-radius:4px;
+  background:repeating-conic-gradient(#1a1a1a 0% 25%,#121212 0% 50%) 0 0/16px 16px}
 .exp-bar{background:var(--panel);border-top:1px solid var(--border);padding:6px 10px;flex-shrink:0}
 .exp-row1{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px}
 .exp-row1 select{flex:0 0 auto;width:auto;font-size:.75rem}
@@ -94,36 +97,43 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
 
   <div class="sec">
     <div class="sec-hdr">Bars</div>
-    <div class="row"><lbl>Count</lbl><input type="range" id="c_bars" min="8" max="128" value="60" oninput="sv('c_bars','v_bars','');rd()"><span class="val" id="v_bars">60</span></div>
-    <div class="row"><lbl>Width %</lbl><input type="range" id="c_bw" min="10" max="98" value="65" oninput="sv('c_bw','v_bw','%');rd()"><span class="val" id="v_bw">65%</span></div>
-    <div class="row"><lbl>Max Height %</lbl><input type="range" id="c_bh" min="5" max="80" value="40" oninput="sv('c_bh','v_bh','%');rd()"><span class="val" id="v_bh">40%</span></div>
-    <div class="row"><lbl>Center Offset</lbl><input type="range" id="c_cy" min="-35" max="35" value="2" oninput="sv('c_cy','v_cy','%');rd()"><span class="val" id="v_cy">2%</span></div>
-    <div class="row"><lbl>Corner Radius</lbl><input type="range" id="c_cr" min="0" max="30" value="2" oninput="sv('c_cr','v_cr','');rd()"><span class="val" id="v_cr">2</span></div>
-    <div class="row"><lbl>Scale Boost</lbl><input type="range" id="c_boost" min="40" max="300" value="100" oninput="sv('c_boost','v_boost','%');rd()"><span class="val" id="v_boost">100%</span></div>
-    <div class="row"><lbl>Style</lbl><select id="c_style" onchange="rd()"><option value="solid">Solid Fill</option><option value="gradient">Gradient Fill</option><option value="outline">Outline</option><option value="glow_only">Glow Only</option></select></div>
-    <div class="row"><lbl>Symmetric ↕</lbl><label class="tog"><input type="checkbox" id="c_sym" onchange="rd()"><span class="tog-sl"></span></label><span class="row-note">mirror bars top & bottom</span></div>
+    <div class="row"><lbl>Count</lbl><input type="range" id="c_bars" min="8" max="128" value="60" oninput="sv('c_bars','v_bars','')"><span class="val" id="v_bars">60</span></div>
+    <div class="row"><lbl>Width %</lbl><input type="range" id="c_bw" min="10" max="98" value="65" oninput="sv('c_bw','v_bw','%')"><span class="val" id="v_bw">65%</span></div>
+    <div class="row"><lbl>Max Height %</lbl><input type="range" id="c_bh" min="5" max="80" value="40" oninput="sv('c_bh','v_bh','%')"><span class="val" id="v_bh">40%</span></div>
+    <div class="row"><lbl>Center Offset</lbl><input type="range" id="c_cy" min="-35" max="35" value="2" oninput="sv('c_cy','v_cy','%')"><span class="val" id="v_cy">2%</span></div>
+    <div class="row"><lbl>Corner Radius</lbl><input type="range" id="c_cr" min="0" max="30" value="2" oninput="sv('c_cr','v_cr','')"><span class="val" id="v_cr">2</span></div>
+    <div class="row"><lbl>Scale Boost</lbl><input type="range" id="c_boost" min="40" max="300" value="100" oninput="sv('c_boost','v_boost','%')"><span class="val" id="v_boost">100%</span></div>
+    <div class="row"><lbl>Style</lbl><select id="c_style"><option value="solid">Solid Fill</option><option value="gradient">Gradient Fill</option><option value="outline">Outline</option><option value="glow_only">Glow Only</option></select></div>
+    <div class="row"><lbl>Symmetric ↕</lbl><label class="tog"><input type="checkbox" id="c_sym"><span class="tog-sl"></span></label><span class="row-note">mirror bars top & bottom</span></div>
   </div>
 
   <div class="sec">
     <div class="sec-hdr">Colors</div>
-    <div class="row"><lbl>Bar / Top Color</lbl><input type="color" id="c_col1" value="#ffffff" onchange="rd()"></div>
-    <div class="row"><lbl>Bar Bottom Color</lbl><input type="color" id="c_col2" value="#7070ff" onchange="rd()"><span class="row-note">gradient & glow</span></div>
-    <div class="row"><lbl>Outline Width</lbl><input type="range" id="c_olw" min="1" max="10" value="2" oninput="sv('c_olw','v_olw','px');rd()"><span class="val" id="v_olw">2px</span></div>
-    <div class="row"><lbl>Glow Intensity</lbl><input type="range" id="c_glow" min="0" max="60" value="0" oninput="sv('c_glow','v_glow','');rd()"><span class="val" id="v_glow">0</span></div>
-    <div class="row"><lbl>Glow Color</lbl><input type="color" id="c_gcol" value="#5a5aff" onchange="rd()"></div>
-    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg();rd()"><option value="green">Green Screen</option><option value="black" selected>Black</option><option value="white">White</option><option value="custom">Custom →</option></select></div>
-    <div class="row" id="bgcrow" style="display:none"><lbl>BG Color</lbl><input type="color" id="c_bgcol" value="#0d001a" onchange="rd()"></div>
-    <div class="row"><lbl>BG Opacity %</lbl><input type="range" id="c_bgo" min="0" max="100" value="100" oninput="sv('c_bgo','v_bgo','%');rd()"><span class="val" id="v_bgo">100%</span></div>
+    <div class="row"><lbl>Bar / Top Color</lbl><input type="color" id="c_col1" value="#ffffff"></div>
+    <div class="row"><lbl>Bar Bottom Color</lbl><input type="color" id="c_col2" value="#7070ff"><span class="row-note">gradient & glow</span></div>
+    <div class="row"><lbl>Outline Width</lbl><input type="range" id="c_olw" min="1" max="10" value="2" oninput="sv('c_olw','v_olw','px')"><span class="val" id="v_olw">2px</span></div>
+    <div class="row"><lbl>Glow Intensity</lbl><input type="range" id="c_glow" min="0" max="60" value="0" oninput="sv('c_glow','v_glow','')"><span class="val" id="v_glow">0</span></div>
+    <div class="row"><lbl>Glow Color</lbl><input type="color" id="c_gcol" value="#5a5aff"></div>
+    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg()"><option value="green">Green Screen</option><option value="black" selected>Black</option><option value="white">White</option><option value="custom">Custom →</option></select></div>
+    <div class="row" id="bgcrow" style="display:none"><lbl>BG Color</lbl><input type="color" id="c_bgcol" value="#0d001a"></div>
+    <div class="row"><lbl>BG Opacity %</lbl><input type="range" id="c_bgo" min="0" max="100" value="100" oninput="sv('c_bgo','v_bgo','%')"><span class="val" id="v_bgo">100%</span></div>
   </div>
 
   <div class="sec">
     <div class="sec-hdr">Reflection</div>
-    <div class="row"><lbl>Enable</lbl><label class="tog"><input type="checkbox" id="c_ref" checked onchange="rd()"><span class="tog-sl"></span></label></div>
-    <div class="row"><lbl>Height %</lbl><input type="range" id="c_rh" min="0" max="120" value="45" oninput="sv('c_rh','v_rh','%');rd()"><span class="val" id="v_rh">45%</span></div>
-    <div class="row"><lbl>Opacity %</lbl><input type="range" id="c_ro" min="0" max="100" value="60" oninput="sv('c_ro','v_ro','%');rd()"><span class="val" id="v_ro">60%</span></div>
-    <div class="row"><lbl>Fade Start %</lbl><input type="range" id="c_rf" min="0" max="90" value="0" oninput="sv('c_rf','v_rf','%');rd()"><span class="val" id="v_rf">0%</span></div>
-    <div class="row"><lbl>Gap px</lbl><input type="range" id="c_rgap" min="0" max="30" value="0" oninput="sv('c_rgap','v_rgap','px');rd()"><span class="val" id="v_rgap">0px</span></div>
-    <div class="row"><lbl>Blur px</lbl><input type="range" id="c_rb" min="0" max="12" value="0" oninput="sv('c_rb','v_rb','px');rd()"><span class="val" id="v_rb">0px</span></div>
+    <div class="row"><lbl>Enable</lbl><label class="tog"><input type="checkbox" id="c_ref" checked><span class="tog-sl"></span></label></div>
+    <div class="row"><lbl>Height %</lbl><input type="range" id="c_rh" min="0" max="120" value="45" oninput="sv('c_rh','v_rh','%')"><span class="val" id="v_rh">45%</span></div>
+    <div class="row"><lbl>Opacity %</lbl><input type="range" id="c_ro" min="0" max="100" value="60" oninput="sv('c_ro','v_ro','%')"><span class="val" id="v_ro">60%</span></div>
+    <div class="row"><lbl>Fade Start %</lbl><input type="range" id="c_rf" min="0" max="90" value="0" oninput="sv('c_rf','v_rf','%')"><span class="val" id="v_rf">0%</span></div>
+    <div class="row"><lbl>Gap px</lbl><input type="range" id="c_rgap" min="0" max="30" value="0" oninput="sv('c_rgap','v_rgap','px')"><span class="val" id="v_rgap">0px</span></div>
+    <div class="row"><lbl>Blur px</lbl><input type="range" id="c_rb" min="0" max="12" value="0" oninput="sv('c_rb','v_rb','px')"><span class="val" id="v_rb">0px</span></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hdr">Breathing & Motion</div>
+    <div class="row"><lbl>Breathe Amount</lbl><input type="range" id="c_breath" min="0" max="20" value="4" oninput="sv('c_breath','v_breath','')"><span class="val" id="v_breath">4</span></div>
+    <div class="row"><lbl>Breathe Speed</lbl><input type="range" id="c_bspeed" min="1" max="30" value="8" oninput="sv('c_bspeed','v_bspeed','')"><span class="val" id="v_bspeed">8</span></div>
+    <div class="row"><lbl>Wave Spread</lbl><input type="range" id="c_bspread" min="0" max="60" value="18" oninput="sv('c_bspread','v_bspread','')"><span class="val" id="v_bspread">18</span></div>
   </div>
 
   <div class="sec">
@@ -132,16 +142,14 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
     <div class="row"><lbl>FFT Size</lbl><select id="c_fft" onchange="recomp()"><option value="1024">1024 — fast</option><option value="2048">2048</option><option value="4096" selected>4096 — default</option><option value="8192">8192 — detailed</option></select></div>
     <div class="row"><lbl>Freq Range</lbl><select id="c_freq" onchange="recomp()"><option value="full">Full (20 Hz – 20 kHz)</option><option value="sub">Sub Bass (20–80 Hz)</option><option value="bass">Bass (20–500 Hz)</option><option value="mid">Mids (200 Hz – 4 kHz)</option><option value="high">Highs (2–20 kHz)</option><option value="presence">Presence (1–8 kHz)</option></select></div>
     <div class="row"><lbl>Normalization</lbl><select id="c_norm" onchange="recomp()"><option value="p99">99th Percentile</option><option value="p95">95th Percentile</option><option value="peak">Absolute Peak</option><option value="rms">RMS Based</option></select></div>
-    <div class="row"><lbl>Min Bar Height</lbl><input type="range" id="c_minbh" min="0" max="20" value="2" oninput="sv('c_minbh','v_minbh','px');rd()"><span class="val" id="v_minbh">2px</span></div>
+    <div class="row"><lbl>Min Bar Height</lbl><input type="range" id="c_minbh" min="0" max="20" value="2" oninput="sv('c_minbh','v_minbh','px')"><span class="val" id="v_minbh">2px</span></div>
   </div>
 
 </div><!-- /ctrl-panel -->
 
 <div class="preview-area">
   <div class="cvs-wrap">
-    <canvas id="prev" width="960" height="540"
-      style="background:repeating-conic-gradient(#1a1a1a 0% 25%,#121212 0% 50%) 0 0/16px 16px">
-    </canvas>
+    <canvas id="prev" width="960" height="540"></canvas>
   </div>
   <div class="exp-bar">
     <div class="exp-row1">
@@ -189,11 +197,15 @@ function hexRGB(hex) {
   return [parseInt(n.slice(0,2),16)|0, parseInt(n.slice(2,4),16)|0, parseInt(n.slice(4,6),16)|0];
 }
 
+// ─── Breathing animation time ─────────────────────────────────────────────────
+// Global — updated by preview loop, overridden per-frame during export
+let breatheT = 0;
+
 // ─── Iterative Radix-2 FFT ───────────────────────────────────────────────────
 function fft(re, im) {
   const n = re.length;
   for (let i=1,j=0; i<n; i++) {
-    let bit = n>>1; for (;j&bit;bit>>=1) j^=bit; j^=bit;
+    let bit = n>>1; for(;j&bit;bit>>=1) j^=bit; j^=bit;
     if (i<j) { let t=re[i];re[i]=re[j];re[j]=t; t=im[i];im[i]=im[j];im[j]=t; }
   }
   for (let len=2; len<=n; len<<=1) {
@@ -204,8 +216,7 @@ function fft(re, im) {
         const uRe=re[i+j], uIm=im[i+j];
         const k=i+j+(len>>1);
         const vRe=re[k]*cRe-im[k]*cIm, vIm=re[k]*cIm+im[k]*cRe;
-        re[i+j]=uRe+vRe; im[i+j]=uIm+vIm;
-        re[k]=uRe-vRe;   im[k]=uIm-vIm;
+        re[i+j]=uRe+vRe; im[i+j]=uIm+vIm; re[k]=uRe-vRe; im[k]=uIm-vIm;
         const nc=cRe*wRe-cIm*wIm; cIm=cRe*wIm+cIm*wRe; cRe=nc;
       }
     }
@@ -238,7 +249,7 @@ function freqBins(sr, fftSize) {
   const bw=sr/fftSize;
   const map={full:[20,20000],sub:[20,80],bass:[20,500],mid:[200,4000],high:[2000,20000],presence:[1000,8000]};
   const [lo,hi]=map[v('c_freq')]||[20,20000];
-  return [Math.max(1,Math.floor(lo/bw)), Math.min((fftSize>>1)-1, Math.ceil(hi/bw))];
+  return [Math.max(1,Math.floor(lo/bw)), Math.min((fftSize>>1)-1,Math.ceil(hi/bw))];
 }
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -307,18 +318,20 @@ async function computeFrames() {
   frames=out;
 }
 
-async function recomp() { if (frames) { await computeFrames(); } }
+async function recomp() { if (audioBuf) { await computeFrames(); } }
 g('e_fps').addEventListener('change',()=>{ if(frames) recomp().then(startPreview); });
 
-// ─── Settings snapshot (call once per export, not per frame) ─────────────────
+// ─── Settings snapshot ────────────────────────────────────────────────────────
+// Called fresh every frame in preview, once per export
 function getSettings() {
   const col1=v('c_col1'), col2=v('c_col2'), gcol=v('c_gcol');
   const bg=v('c_bg'), bgcol=v('c_bgcol');
   const bgColor=bg==='green'?'#00ff00':bg==='black'?'#000000':bg==='white'?'#ffffff':bgcol;
-  const [br,bg2,bb]=hexRGB(bgColor), [r1,g1,b1]=hexRGB(col1), [r2,g2,b2]=hexRGB(col2), [gr,gg,gb]=hexRGB(gcol);
+  const [br,bg2,bb]=hexRGB(bgColor);
+  const [r1,g1,b1]=hexRGB(col1);
   return {
     col1,col2,gcol,bgColor,
-    br,bg2,bb,r1,g1,b1,r2,g2,b2,gr,gg,gb,
+    br,bg2,bb, r1,g1,b1,
     style:v('c_style'), sym:chk('c_sym'),
     glow:+v('c_glow'), olw:+v('c_olw'),
     refOn:chk('c_ref'), refH:+v('c_rh')/100, refOp:+v('c_ro')/100,
@@ -326,10 +339,14 @@ function getSettings() {
     cr:+v('c_cr'), boost:+v('c_boost')/100, minBH:+v('c_minbh'),
     bw_pct:+v('c_bw')/100, bh_pct:+v('c_bh')/100, cy_pct:+v('c_cy')/100,
     bgo:+v('c_bgo')/100,
+    // Breathing
+    breatheAmt:+v('c_breath'),
+    breatheSpeed:+v('c_bspeed')/10,
+    breatheSpread:+v('c_bspread')/100,
   };
 }
 
-// Pre-compute bar x-positions and sizes (constant per resolution)
+// Pre-compute bar x-positions (constant per resolution + bar count)
 function precomputeLayout(W, H, s, n) {
   const areaW=W*0.86, startX=(W-areaW)/2, sp=areaW/n;
   const bw=Math.max(sp*s.bw_pct,1);
@@ -354,24 +371,26 @@ function rrect(ctx,x,y,w,h,r,fill,stroke,lw) {
   if(fill)ctx.fill(); if(stroke){ctx.lineWidth=lw;ctx.stroke();}
 }
 
-// ─── Core draw (takes pre-computed settings + layout for speed) ───────────────
+// ─── Core draw ────────────────────────────────────────────────────────────────
 function drawFrame(ctx, W, H, bands, s, L) {
   const n=bands.length;
+
   // Background
   ctx.globalAlpha=s.bgo;
   ctx.fillStyle=s.bgColor;
   ctx.fillRect(0,0,W,H);
   ctx.globalAlpha=1;
 
-  // Glow
   if (s.glow>0) { ctx.shadowBlur=s.glow; ctx.shadowColor=s.gcol; }
   else ctx.shadowBlur=0;
 
   const doFill=s.style!=='outline', doStroke=s.style==='outline';
 
-  // ── Bars ──
   for (let i=0;i<n;i++) {
-    const bh=Math.max(bands[i]*L.maxH*s.boost, s.minBH);
+    // ── Breathing idle baseline ──
+    // Each bar gets a unique sine phase (i * spread), creating a ripple effect
+    const breathe = s.breatheAmt + Math.sin(breatheT * s.breatheSpeed + i * s.breatheSpread) * s.breatheAmt * 0.6;
+    const bh = Math.max(bands[i] * L.maxH * s.boost, breathe);
     const x=L.xs[i], y0=L.cy-bh;
 
     let fill;
@@ -406,13 +425,14 @@ function drawFrame(ctx, W, H, bands, s, L) {
   if (s.refOn) {
     ctx.shadowBlur=s.refBlur; ctx.shadowColor=s.gcol;
     for (let i=0;i<n;i++) {
-      const bh=Math.max(bands[i]*L.maxH*s.boost,s.minBH);
+      const breathe = s.breatheAmt + Math.sin(breatheT * s.breatheSpeed + i * s.breatheSpread) * s.breatheAmt * 0.6;
+      const bh=Math.max(bands[i]*L.maxH*s.boost, breathe);
       const rH=bh*s.refH; if(rH<1)continue;
       const x=L.xs[i], yStart=L.cy+s.refGap;
       const gr=ctx.createLinearGradient(0,yStart,0,yStart+rH);
-      gr.addColorStop(0, `rgba(${s.r1},${s.g1},${s.b1},${s.refOp})`);
-      gr.addColorStop(Math.min(s.refFd+.01,1), `rgba(${s.r1},${s.g1},${s.b1},${s.refOp*(1-s.refFd)})`);
-      gr.addColorStop(1, `rgba(${s.r1},${s.g1},${s.b1},0)`);
+      gr.addColorStop(0,`rgba(${s.r1},${s.g1},${s.b1},${s.refOp})`);
+      gr.addColorStop(Math.min(s.refFd+.01,1),`rgba(${s.r1},${s.g1},${s.b1},${s.refOp*(1-s.refFd)})`);
+      gr.addColorStop(1,`rgba(${s.r1},${s.g1},${s.b1},0)`);
       ctx.fillStyle=gr;
       rrect(ctx,x,yStart,L.bw,rH,s.cr,true,false,0);
     }
@@ -421,60 +441,52 @@ function drawFrame(ctx, W, H, bands, s, L) {
 }
 
 // ─── Preview ─────────────────────────────────────────────────────────────────
-const prevCvs=g('prev');
-const prevCtx=prevCvs.getContext('2d',{alpha:true,willReadFrequently:false});
-let cachedSettings=null, cachedLayout=null;
-
-function rd() {
-  if (!frames) return;
-  cachedSettings=getSettings();
-  cachedLayout=precomputeLayout(960,540,cachedSettings,frames[0].length);
-  drawFrame(prevCtx,960,540,frames[prevFr%frames.length],cachedSettings,cachedLayout);
-}
+const prevCvs = g('prev');
+const prevCtx = prevCvs.getContext('2d', {alpha:true, willReadFrequently:false});
 
 function startPreview() {
   if (prevAnim) cancelAnimationFrame(prevAnim);
-  prevFr=0;
-  cachedSettings=getSettings();
-  cachedLayout=precomputeLayout(960,540,cachedSettings,frames[0].length);
-  const interval=1000/(+v('e_fps')||30);
+  prevFr=0; breatheT=0;
+  const fps=+v('e_fps')||30;
+  const interval=1000/fps;
   let last=0;
+
   function tick(now) {
-    if (now-last>=interval) {
-      last=now;
-      drawFrame(prevCtx,960,540,frames[prevFr%frames.length],cachedSettings,cachedLayout);
-      prevFr++;
-    }
     prevAnim=requestAnimationFrame(tick);
+    if (now-last < interval) return;
+    last=now;
+
+    // Always read settings fresh — no cache, no null crash
+    const s=getSettings();
+    const n=frames[0].length;
+    const L=precomputeLayout(960,540,s,n);
+
+    // Advance breathing time (continuous, in sync with frame rate)
+    breatheT=prevFr/fps;
+
+    drawFrame(prevCtx,960,540,frames[prevFr%frames.length],s,L);
+    prevFr++;
   }
   prevAnim=requestAnimationFrame(tick);
 }
 
-// Invalidate cache on any setting change
-document.querySelectorAll('input,select').forEach(el=>{
-  el.addEventListener('change',()=>{cachedSettings=null;cachedLayout=null;});
-  el.addEventListener('input', ()=>{cachedSettings=null;cachedLayout=null;});
-});
-
-// ─── Export — WebCodecs tight loop, hardware-accelerated ─────────────────────
+// ─── Export — WebCodecs, hardware-accelerated, no real-time pacing ────────────
 async function detectCodec(W, H, fps) {
   if (typeof VideoEncoder==='undefined') return null;
   const candidates=[
-    {codec:'avc1.640028',format:'mp4',muxCodec:'avc'},  // High Profile L4.0 (best)
-    {codec:'avc1.4d001f',format:'mp4',muxCodec:'avc'},  // Main Profile
-    {codec:'avc1.42001f',format:'mp4',muxCodec:'avc'},  // Baseline
+    {codec:'avc1.640028',format:'mp4',muxCodec:'avc'},
+    {codec:'avc1.4d001f',format:'mp4',muxCodec:'avc'},
+    {codec:'avc1.42001f',format:'mp4',muxCodec:'avc'},
   ];
   for (const c of candidates) {
-    try {
-      // Try hardware first, fall back to software
-      for (const hw of ['prefer-hardware','prefer-software']) {
+    for (const hw of ['prefer-hardware','prefer-software']) {
+      try {
         const res=await VideoEncoder.isConfigSupported({
-          codec:c.codec, width:W, height:H, bitrate:20e6, framerate:fps,
-          hardwareAcceleration:hw
+          codec:c.codec, width:W, height:H, bitrate:20e6, framerate:fps, hardwareAcceleration:hw
         });
-        if (res.supported) return {...c, hardwareAcceleration:hw};
-      }
-    } catch {}
+        if (res.supported) return {...c, hw};
+      } catch {}
+    }
   }
   return null;
 }
@@ -482,7 +494,7 @@ async function detectCodec(W, H, fps) {
 async function encodeVideo(W, H, fps, mbps, codecInfo) {
   const muxer=new Mp4Muxer.Muxer({
     target: new Mp4Muxer.ArrayBufferTarget(),
-    video: { codec: codecInfo.muxCodec, width: W, height: H },
+    video: { codec:codecInfo.muxCodec, width:W, height:H },
     fastStart: 'in-memory',
   });
 
@@ -491,51 +503,48 @@ async function encodeVideo(W, H, fps, mbps, codecInfo) {
     output:(chunk,meta)=>muxer.addVideoChunk(chunk,meta),
     error:e=>{encErr=e;},
   });
-
   encoder.configure({
-    codec: codecInfo.codec,
-    width: W, height: H,
-    bitrate: mbps*1_000_000,
-    framerate: fps,
-    hardwareAcceleration: codecInfo.hardwareAcceleration,
-    latencyMode: 'quality',
+    codec:codecInfo.codec, width:W, height:H,
+    bitrate:mbps*1_000_000, framerate:fps,
+    hardwareAcceleration:codecInfo.hw,
+    latencyMode:'quality',
   });
 
-  // OffscreenCanvas: no DOM, maximum rendering speed
   const cvs=typeof OffscreenCanvas!=='undefined'
     ? new OffscreenCanvas(W,H)
-    : (()=>{ const c=document.createElement('canvas');c.width=W;c.height=H;return c; })();
+    : (()=>{const c=document.createElement('canvas');c.width=W;c.height=H;return c;})();
   const ctx=cvs.getContext('2d',{alpha:false});
 
-  // Pre-compute settings & layout ONCE for the entire export
+  // Pre-compute settings & layout ONCE — no DOM reads inside hot loop
   const s=getSettings();
   const L=precomputeLayout(W,H,s,frames[0].length);
   const total=frames.length;
-  const frameDur=Math.round(1_000_000/fps); // microseconds
-  const keyFrameInterval=fps*2;
+  const frameDur=Math.round(1_000_000/fps);
   const t0=performance.now();
 
   for (let i=0;i<total;i++) {
     if (encErr) throw encErr;
 
+    // Set breathing time to exact frame time so export matches preview exactly
+    breatheT=i/fps;
+
     drawFrame(ctx,W,H,frames[i],s,L);
 
-    const vf=new VideoFrame(cvs,{timestamp:i*frameDur, duration:frameDur});
-    encoder.encode(vf,{keyFrame:i%keyFrameInterval===0});
+    const vf=new VideoFrame(cvs,{timestamp:i*frameDur,duration:frameDur});
+    encoder.encode(vf,{keyFrame:i%(fps*2)===0});
     vf.close();
 
-    // Backpressure: wait for hardware encoder queue to drain if too full
+    // Backpressure: yield only when encoder queue is saturated
     if (encoder.encodeQueueSize>12) {
       await new Promise(res=>encoder.addEventListener('dequeue',res,{once:true}));
     }
 
-    // Yield to UI every 30 frames for progress update
     if (i%30===0) {
       const pct=Math.round(i/total*100);
       const elapsed=(performance.now()-t0)/1000;
-      const fps_actual=i/elapsed||0;
-      const rem=Math.round((total-i)/(fps_actual||1));
-      setProgress(pct,`Encoding… ${pct}% · ${fps_actual.toFixed(0)} fps · ~${rem}s left · ${codecInfo.hardwareAcceleration==='prefer-hardware'?'🚀 GPU':'💻 CPU'}`);
+      const encFps=(i/(elapsed||0.001)).toFixed(0);
+      const rem=Math.round((total-i)/(+encFps||1));
+      setProgress(pct,`Encoding… ${pct}% · ${encFps} fps · ~${rem}s left · ${codecInfo.hw==='prefer-hardware'?'🚀 GPU':'💻 CPU'}`);
       await yld();
     }
   }
@@ -557,12 +566,11 @@ g('expBtn').addEventListener('click', async ()=>{
 
   const codecInfo=await detectCodec(W,H,fps);
   if (!codecInfo) {
-    setProgress(0,'❌ WebCodecs not supported. Use Chrome 94+, Safari 16.4+, or Firefox 130+');
+    setProgress(0,'❌ WebCodecs not supported — use Chrome 94+, Safari 16.4+, or Firefox 130+');
     g('expBtn').disabled=false; return;
   }
 
-  setProgress(5,`Starting encoder (${codecInfo.codec} · ${codecInfo.hardwareAcceleration})…`);
-  await yld();
+  setProgress(5,`Starting… (${codecInfo.codec} · ${codecInfo.hw})`); await yld();
 
   try {
     const buffer=await encodeVideo(W,H,fps,mbps,codecInfo);
@@ -571,7 +579,7 @@ g('expBtn').addEventListener('click', async ()=>{
     const dl=g('dlBtn');
     dl.href=url; dl.download=`visualizer_${W}x${H}.mp4`;
     dl.style.display='inline-block';
-    dl.textContent=`💾 Download  ${(blob.size/1024/1024).toFixed(1)} MB  (.mp4)`;
+    dl.textContent=`💾 Download  ${(blob.size/1024/1024).toFixed(1)} MB`;
     setProgress(100,'✅ Done!');
   } catch(err) {
     setProgress(0,`❌ ${err.message}`);
