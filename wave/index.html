@@ -103,7 +103,7 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
 
   <div class="sec">
     <div class="sec-hdr">Bars</div>
-    <div class="row"><lbl>Count</lbl><input type="range" id="c_bars" min="8" max="128" value="32" oninput="sv('c_bars','v_bars','');dirty()"><span class="val" id="v_bars">32</span></div>
+    <div class="row"><lbl>Count</lbl><input type="range" id="c_bars" min="8" max="128" value="60" oninput="sv('c_bars','v_bars','');dirty()"><span class="val" id="v_bars">60</span></div>
     <div class="row"><lbl>Width %</lbl><input type="range" id="c_bw" min="10" max="98" value="65" oninput="sv('c_bw','v_bw','%');dirty()"><span class="val" id="v_bw">65%</span></div>
     <div class="row"><lbl>Max Height %</lbl><input type="range" id="c_bh" min="5" max="80" value="50" oninput="sv('c_bh','v_bh','%');dirty()"><span class="val" id="v_bh">50%</span></div>
     <div class="row"><lbl>Center Offset</lbl><input type="range" id="c_cy" min="-35" max="35" value="25" oninput="sv('c_cy','v_cy','%');dirty()"><span class="val" id="v_cy">25%</span></div>
@@ -120,8 +120,8 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
     <div class="row"><lbl>Outline Width</lbl><input type="range" id="c_olw" min="1" max="10" value="2" oninput="sv('c_olw','v_olw','px');dirty()"><span class="val" id="v_olw">2px</span></div>
     <div class="row"><lbl>Glow Intensity</lbl><input type="range" id="c_glow" min="0" max="60" value="0" oninput="sv('c_glow','v_glow','');dirty()"><span class="val" id="v_glow">0</span></div>
     <div class="row"><lbl>Glow Color</lbl><input type="color" id="c_gcol" value="#5a5aff" onchange="dirty()"></div>
-    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg();dirty()"><option value="green">Green Screen</option><option value="black">Black</option><option value="white">White</option><option value="custom" selected>Custom →</option></select></div>
-    <div class="row" id="bgcrow"><lbl>BG Color</lbl><input type="color" id="c_bgcol" value="#15859e" onchange="dirty()"></div>
+    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg();dirty()"><option value="green">Green Screen</option><option value="black" selected>Black</option><option value="white">White</option><option value="custom">Custom →</option></select></div>
+    <div class="row" id="bgcrow" style="display:none"><lbl>BG Color</lbl><input type="color" id="c_bgcol" value="#15859e" onchange="dirty()"></div>
     <div class="row"><lbl>BG Opacity %</lbl><input type="range" id="c_bgo" min="0" max="100" value="100" oninput="sv('c_bgo','v_bgo','%');dirty()"><span class="val" id="v_bgo">100%</span></div>
   </div>
 
