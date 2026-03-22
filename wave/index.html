@@ -367,7 +367,7 @@ async function loadAudio(file){
 
 function freqBins(sr,fftSize){
   const bw=sr/fftSize;
-  const map={full:[20,20000],sub:[20,80],bass:[20,500],mid:[200,4000],high:[2000,20000],presence:[1000,8000]};
+  const map={full:[30,15000],sub:[20,80],bass:[20,500],mid:[200,4000],high:[2000,15000],presence:[1000,8000]};
   const [lo,hi]=map[v('c_freq')]||[20,20000];
   return [Math.max(1,Math.floor(lo/bw)),Math.min((fftSize>>1)-1,Math.ceil(hi/bw))];
 }
