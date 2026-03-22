@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🎵 Audio Visualizer Studio</title>
-<!-- Suppress favicon 404 -->
 <link rel="icon" href="data:,">
 <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5/build/mp4-muxer.min.js"></script>
 <style>
@@ -97,55 +96,55 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
 
   <div class="sec">
     <div class="sec-hdr">Bars</div>
-    <div class="row"><lbl>Count</lbl><input type="range" id="c_bars" min="8" max="128" value="60" oninput="sv('c_bars','v_bars','')"><span class="val" id="v_bars">60</span></div>
-    <div class="row"><lbl>Width %</lbl><input type="range" id="c_bw" min="10" max="98" value="65" oninput="sv('c_bw','v_bw','%')"><span class="val" id="v_bw">65%</span></div>
-    <div class="row"><lbl>Max Height %</lbl><input type="range" id="c_bh" min="5" max="80" value="40" oninput="sv('c_bh','v_bh','%')"><span class="val" id="v_bh">40%</span></div>
-    <div class="row"><lbl>Center Offset</lbl><input type="range" id="c_cy" min="-35" max="35" value="2" oninput="sv('c_cy','v_cy','%')"><span class="val" id="v_cy">2%</span></div>
-    <div class="row"><lbl>Corner Radius</lbl><input type="range" id="c_cr" min="0" max="30" value="2" oninput="sv('c_cr','v_cr','')"><span class="val" id="v_cr">2</span></div>
-    <div class="row"><lbl>Scale Boost</lbl><input type="range" id="c_boost" min="40" max="300" value="100" oninput="sv('c_boost','v_boost','%')"><span class="val" id="v_boost">100%</span></div>
-    <div class="row"><lbl>Style</lbl><select id="c_style"><option value="solid">Solid Fill</option><option value="gradient">Gradient Fill</option><option value="outline">Outline</option><option value="glow_only">Glow Only</option></select></div>
-    <div class="row"><lbl>Symmetric ↕</lbl><label class="tog"><input type="checkbox" id="c_sym"><span class="tog-sl"></span></label><span class="row-note">mirror bars top & bottom</span></div>
+    <div class="row"><lbl>Count</lbl><input type="range" id="c_bars" min="8" max="128" value="60" oninput="sv('c_bars','v_bars','');dirty()"><span class="val" id="v_bars">60</span></div>
+    <div class="row"><lbl>Width %</lbl><input type="range" id="c_bw" min="10" max="98" value="65" oninput="sv('c_bw','v_bw','%');dirty()"><span class="val" id="v_bw">65%</span></div>
+    <div class="row"><lbl>Max Height %</lbl><input type="range" id="c_bh" min="5" max="80" value="40" oninput="sv('c_bh','v_bh','%');dirty()"><span class="val" id="v_bh">40%</span></div>
+    <div class="row"><lbl>Center Offset</lbl><input type="range" id="c_cy" min="-35" max="35" value="2" oninput="sv('c_cy','v_cy','%');dirty()"><span class="val" id="v_cy">2%</span></div>
+    <div class="row"><lbl>Corner Radius</lbl><input type="range" id="c_cr" min="0" max="30" value="2" oninput="sv('c_cr','v_cr','');dirty()"><span class="val" id="v_cr">2</span></div>
+    <div class="row"><lbl>Scale Boost</lbl><input type="range" id="c_boost" min="40" max="300" value="100" oninput="sv('c_boost','v_boost','%');dirty()"><span class="val" id="v_boost">100%</span></div>
+    <div class="row"><lbl>Style</lbl><select id="c_style" onchange="dirty()"><option value="solid">Solid Fill</option><option value="gradient">Gradient Fill</option><option value="outline">Outline</option><option value="glow_only">Glow Only</option></select></div>
+    <div class="row"><lbl>Symmetric ↕</lbl><label class="tog"><input type="checkbox" id="c_sym" onchange="dirty()"><span class="tog-sl"></span></label><span class="row-note">mirror bars top & bottom</span></div>
   </div>
 
   <div class="sec">
     <div class="sec-hdr">Colors</div>
-    <div class="row"><lbl>Bar / Top Color</lbl><input type="color" id="c_col1" value="#ffffff"></div>
-    <div class="row"><lbl>Bar Bottom Color</lbl><input type="color" id="c_col2" value="#7070ff"><span class="row-note">gradient & glow</span></div>
-    <div class="row"><lbl>Outline Width</lbl><input type="range" id="c_olw" min="1" max="10" value="2" oninput="sv('c_olw','v_olw','px')"><span class="val" id="v_olw">2px</span></div>
-    <div class="row"><lbl>Glow Intensity</lbl><input type="range" id="c_glow" min="0" max="60" value="0" oninput="sv('c_glow','v_glow','')"><span class="val" id="v_glow">0</span></div>
-    <div class="row"><lbl>Glow Color</lbl><input type="color" id="c_gcol" value="#5a5aff"></div>
-    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg()"><option value="green">Green Screen</option><option value="black" selected>Black</option><option value="white">White</option><option value="custom">Custom →</option></select></div>
-    <div class="row" id="bgcrow" style="display:none"><lbl>BG Color</lbl><input type="color" id="c_bgcol" value="#0d001a"></div>
-    <div class="row"><lbl>BG Opacity %</lbl><input type="range" id="c_bgo" min="0" max="100" value="100" oninput="sv('c_bgo','v_bgo','%')"><span class="val" id="v_bgo">100%</span></div>
+    <div class="row"><lbl>Bar / Top Color</lbl><input type="color" id="c_col1" value="#ffffff" onchange="dirty()"></div>
+    <div class="row"><lbl>Bar Bottom Color</lbl><input type="color" id="c_col2" value="#7070ff" onchange="dirty()"><span class="row-note">gradient & glow</span></div>
+    <div class="row"><lbl>Outline Width</lbl><input type="range" id="c_olw" min="1" max="10" value="2" oninput="sv('c_olw','v_olw','px');dirty()"><span class="val" id="v_olw">2px</span></div>
+    <div class="row"><lbl>Glow Intensity</lbl><input type="range" id="c_glow" min="0" max="60" value="0" oninput="sv('c_glow','v_glow','');dirty()"><span class="val" id="v_glow">0</span></div>
+    <div class="row"><lbl>Glow Color</lbl><input type="color" id="c_gcol" value="#5a5aff" onchange="dirty()"></div>
+    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg();dirty()"><option value="green">Green Screen</option><option value="black" selected>Black</option><option value="white">White</option><option value="custom">Custom →</option></select></div>
+    <div class="row" id="bgcrow" style="display:none"><lbl>BG Color</lbl><input type="color" id="c_bgcol" value="#0d001a" onchange="dirty()"></div>
+    <div class="row"><lbl>BG Opacity %</lbl><input type="range" id="c_bgo" min="0" max="100" value="100" oninput="sv('c_bgo','v_bgo','%');dirty()"><span class="val" id="v_bgo">100%</span></div>
   </div>
 
   <div class="sec">
     <div class="sec-hdr">Reflection</div>
-    <div class="row"><lbl>Enable</lbl><label class="tog"><input type="checkbox" id="c_ref" checked><span class="tog-sl"></span></label></div>
-    <div class="row"><lbl>Height %</lbl><input type="range" id="c_rh" min="0" max="120" value="45" oninput="sv('c_rh','v_rh','%')"><span class="val" id="v_rh">45%</span></div>
-    <div class="row"><lbl>Opacity %</lbl><input type="range" id="c_ro" min="0" max="100" value="60" oninput="sv('c_ro','v_ro','%')"><span class="val" id="v_ro">60%</span></div>
-    <div class="row"><lbl>Fade Start %</lbl><input type="range" id="c_rf" min="0" max="90" value="0" oninput="sv('c_rf','v_rf','%')"><span class="val" id="v_rf">0%</span></div>
-    <div class="row"><lbl>Gap px</lbl><input type="range" id="c_rgap" min="0" max="30" value="0" oninput="sv('c_rgap','v_rgap','px')"><span class="val" id="v_rgap">0px</span></div>
-    <div class="row"><lbl>Blur px</lbl><input type="range" id="c_rb" min="0" max="12" value="0" oninput="sv('c_rb','v_rb','px')"><span class="val" id="v_rb">0px</span></div>
+    <div class="row"><lbl>Enable</lbl><label class="tog"><input type="checkbox" id="c_ref" checked onchange="dirty()"><span class="tog-sl"></span></label></div>
+    <div class="row"><lbl>Height %</lbl><input type="range" id="c_rh" min="0" max="120" value="45" oninput="sv('c_rh','v_rh','%');dirty()"><span class="val" id="v_rh">45%</span></div>
+    <div class="row"><lbl>Opacity %</lbl><input type="range" id="c_ro" min="0" max="100" value="60" oninput="sv('c_ro','v_ro','%');dirty()"><span class="val" id="v_ro">60%</span></div>
+    <div class="row"><lbl>Fade Start %</lbl><input type="range" id="c_rf" min="0" max="90" value="0" oninput="sv('c_rf','v_rf','%');dirty()"><span class="val" id="v_rf">0%</span></div>
+    <div class="row"><lbl>Gap px</lbl><input type="range" id="c_rgap" min="0" max="30" value="0" oninput="sv('c_rgap','v_rgap','px');dirty()"><span class="val" id="v_rgap">0px</span></div>
+    <div class="row"><lbl>Blur px</lbl><input type="range" id="c_rb" min="0" max="12" value="0" oninput="sv('c_rb','v_rb','px');dirty()"><span class="val" id="v_rb">0px</span></div>
   </div>
 
   <div class="sec">
     <div class="sec-hdr">Breathing & Motion</div>
-    <div class="row"><lbl>Breathe Amount</lbl><input type="range" id="c_breath" min="0" max="20" value="4" oninput="sv('c_breath','v_breath','')"><span class="val" id="v_breath">4</span></div>
-    <div class="row"><lbl>Breathe Speed</lbl><input type="range" id="c_bspeed" min="1" max="30" value="8" oninput="sv('c_bspeed','v_bspeed','')"><span class="val" id="v_bspeed">8</span></div>
-    <div class="row"><lbl>Wave Spread</lbl><input type="range" id="c_bspread" min="0" max="60" value="18" oninput="sv('c_bspread','v_bspread','')"><span class="val" id="v_bspread">18</span></div>
+    <div class="row"><lbl>Breathe Amount</lbl><input type="range" id="c_breath" min="0" max="20" value="4" oninput="sv('c_breath','v_breath','');dirty()"><span class="val" id="v_breath">4</span></div>
+    <div class="row"><lbl>Breathe Speed</lbl><input type="range" id="c_bspeed" min="1" max="30" value="8" oninput="sv('c_bspeed','v_bspeed','');dirty()"><span class="val" id="v_bspeed">8</span></div>
+    <div class="row"><lbl>Wave Spread</lbl><input type="range" id="c_bspread" min="0" max="60" value="18" oninput="sv('c_bspread','v_bspread','');dirty()"><span class="val" id="v_bspread">18</span></div>
   </div>
 
   <div class="sec">
     <div class="sec-hdr">Audio & Animation</div>
-    <div class="row"><lbl>Smoothing</lbl><input type="range" id="c_sm" min="0" max="95" value="75" oninput="sv('c_sm','v_sm','%');recomp()"><span class="val" id="v_sm">75%</span></div>
-    <div class="row"><lbl>FFT Size</lbl><select id="c_fft" onchange="recomp()"><option value="1024">1024 — fast</option><option value="2048">2048</option><option value="4096" selected>4096 — default</option><option value="8192">8192 — detailed</option></select></div>
-    <div class="row"><lbl>Freq Range</lbl><select id="c_freq" onchange="recomp()"><option value="full">Full (20 Hz – 20 kHz)</option><option value="sub">Sub Bass (20–80 Hz)</option><option value="bass">Bass (20–500 Hz)</option><option value="mid">Mids (200 Hz – 4 kHz)</option><option value="high">Highs (2–20 kHz)</option><option value="presence">Presence (1–8 kHz)</option></select></div>
-    <div class="row"><lbl>Normalization</lbl><select id="c_norm" onchange="recomp()"><option value="p99">99th Percentile</option><option value="p95">95th Percentile</option><option value="peak">Absolute Peak</option><option value="rms">RMS Based</option></select></div>
-    <div class="row"><lbl>Min Bar Height</lbl><input type="range" id="c_minbh" min="0" max="20" value="2" oninput="sv('c_minbh','v_minbh','px')"><span class="val" id="v_minbh">2px</span></div>
+    <div class="row"><lbl>Smoothing</lbl><input type="range" id="c_sm" min="0" max="95" value="75" oninput="sv('c_sm','v_sm','%');scheduleRecomp()"><span class="val" id="v_sm">75%</span></div>
+    <div class="row"><lbl>FFT Size</lbl><select id="c_fft" onchange="scheduleRecomp()"><option value="1024">1024 — fast</option><option value="2048">2048</option><option value="4096" selected>4096 — default</option><option value="8192">8192 — detailed</option></select></div>
+    <div class="row"><lbl>Freq Range</lbl><select id="c_freq" onchange="scheduleRecomp()"><option value="full">Full (20 Hz – 20 kHz)</option><option value="sub">Sub Bass (20–80 Hz)</option><option value="bass">Bass (20–500 Hz)</option><option value="mid">Mids (200 Hz – 4 kHz)</option><option value="high">Highs (2–20 kHz)</option><option value="presence">Presence (1–8 kHz)</option></select></div>
+    <div class="row"><lbl>Normalization</lbl><select id="c_norm" onchange="scheduleRecomp()"><option value="p99">99th Percentile</option><option value="p95">95th Percentile</option><option value="peak">Absolute Peak</option><option value="rms">RMS Based</option></select></div>
+    <div class="row"><lbl>Min Bar Height</lbl><input type="range" id="c_minbh" min="0" max="20" value="2" oninput="sv('c_minbh','v_minbh','px');dirty()"><span class="val" id="v_minbh">2px</span></div>
   </div>
 
-</div><!-- /ctrl-panel -->
+</div>
 
 <div class="preview-area">
   <div class="cvs-wrap">
@@ -177,85 +176,153 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
     <div class="prog-bar"><div class="prog-fill" id="pf"></div></div>
   </div>
 </div>
-
-</div><!-- /main -->
-</div><!-- /app -->
+</div>
+</div>
 
 <script>
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const g   = id => document.getElementById(id);
 const v   = id => g(id).value;
 const chk = id => g(id).checked;
 const sv  = (rid, vid, sfx) => { g(vid).textContent = v(rid) + sfx; };
 const yld = () => new Promise(r => setTimeout(r, 0));
-
-function bgChg() { g('bgcrow').style.display = v('c_bg') === 'custom' ? 'flex' : 'none'; }
-function setProgress(pct, txt) { g('pf').style.width = pct + '%'; g('pt').textContent = txt; }
-
+function bgChg() { g('bgcrow').style.display = v('c_bg')==='custom'?'flex':'none'; }
+function setProgress(pct, txt) { g('pf').style.width=pct+'%'; g('pt').textContent=txt; }
 function hexRGB(hex) {
-  const n = hex.replace('#','');
+  const n=hex.replace('#','');
   return [parseInt(n.slice(0,2),16)|0, parseInt(n.slice(2,4),16)|0, parseInt(n.slice(4,6),16)|0];
 }
 
-// ─── Breathing animation time ─────────────────────────────────────────────────
-// Global — updated by preview loop, overridden per-frame during export
-let breatheT = 0;
+// ─── Settings cache with dirty flag ──────────────────────────────────────────
+// Only re-reads DOM when something actually changed — fixes slow preview
+let _s = null, _sDirty = true, _L = null, _LKey = '';
 
-// ─── Iterative Radix-2 FFT ───────────────────────────────────────────────────
-function fft(re, im) {
-  const n = re.length;
-  for (let i=1,j=0; i<n; i++) {
-    let bit = n>>1; for(;j&bit;bit>>=1) j^=bit; j^=bit;
-    if (i<j) { let t=re[i];re[i]=re[j];re[j]=t; t=im[i];im[i]=im[j];im[j]=t; }
+function dirty() { _sDirty = true; }
+
+function getS() {
+  if (!_sDirty && _s) return _s;
+  const col1=v('c_col1'), gcol=v('c_gcol');
+  const bg=v('c_bg'), bgcol=v('c_bgcol');
+  const bgColor=bg==='green'?'#00ff00':bg==='black'?'#000000':bg==='white'?'#ffffff':bgcol;
+  _s = {
+    col1, col2:v('c_col2'), gcol, bgColor,
+    bgRGB: hexRGB(bgColor),
+    rgb1:  hexRGB(col1),
+    style: v('c_style'), sym: chk('c_sym'),
+    glow:+v('c_glow'), olw:+v('c_olw'),
+    refOn:chk('c_ref'), refH:+v('c_rh')/100, refOp:+v('c_ro')/100,
+    refFd:+v('c_rf')/100, refGap:+v('c_rgap'), refBlur:+v('c_rb'),
+    cr:+v('c_cr'), boost:+v('c_boost')/100, minBH:+v('c_minbh'),
+    bw_pct:+v('c_bw')/100, bh_pct:+v('c_bh')/100, cy_pct:+v('c_cy')/100,
+    bgo:+v('c_bgo')/100,
+    breatheAmt:+v('c_breath'), breatheSpeed:+v('c_bspeed')/10, breatheSpread:+v('c_bspread')/100,
+  };
+  _sDirty = false;
+  _L = null; // layout depends on settings
+  return _s;
+}
+
+function getL(W, H, n) {
+  const s=_s;
+  const key=`${W}_${H}_${n}_${s.bw_pct}_${s.bh_pct}_${s.cy_pct}`;
+  if (key===_LKey && _L) return _L;
+  const areaW=W*0.86, startX=(W-areaW)/2, sp=areaW/n;
+  const bw=Math.max(sp*s.bw_pct, 1);
+  const xs=new Float32Array(n);
+  for (let i=0;i<n;i++) xs[i]=startX+i*sp+(sp-bw)/2;
+  _L={ xs, bw, maxH:H*s.bh_pct, cy:H*(0.5+s.cy_pct) };
+  _LKey=key;
+  return _L;
+}
+
+// ─── Web Worker (inlined as Blob) — runs FFT off the main thread ──────────────
+const WORKER_SRC = `
+// Iterative FFT
+function fft(re,im){
+  const n=re.length;
+  for(let i=1,j=0;i<n;i++){
+    let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;
+    if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t;}
   }
-  for (let len=2; len<=n; len<<=1) {
-    const a=-2*Math.PI/len, wRe=Math.cos(a), wIm=Math.sin(a);
-    for (let i=0; i<n; i+=len) {
-      let cRe=1, cIm=0;
-      for (let j=0; j<(len>>1); j++) {
-        const uRe=re[i+j], uIm=im[i+j];
-        const k=i+j+(len>>1);
-        const vRe=re[k]*cRe-im[k]*cIm, vIm=re[k]*cIm+im[k]*cRe;
-        re[i+j]=uRe+vRe; im[i+j]=uIm+vIm; re[k]=uRe-vRe; im[k]=uIm-vIm;
-        const nc=cRe*wRe-cIm*wIm; cIm=cRe*wIm+cIm*wRe; cRe=nc;
+  for(let len=2;len<=n;len<<=1){
+    const a=-2*Math.PI/len,wR=Math.cos(a),wI=Math.sin(a);
+    for(let i=0;i<n;i+=len){
+      let cR=1,cI=0;
+      for(let j=0;j<(len>>1);j++){
+        const uR=re[i+j],uI=im[i+j],k=i+j+(len>>1);
+        const vR=re[k]*cR-im[k]*cI,vI=re[k]*cI+im[k]*cR;
+        re[i+j]=uR+vR;im[i+j]=uI+vI;re[k]=uR-vR;im[k]=uI-vI;
+        const nc=cR*wR-cI*wI;cI=cR*wI+cI*wR;cR=nc;
       }
     }
   }
 }
 
-function spectrum(samples, fftSize) {
-  const re=new Float32Array(fftSize), im=new Float32Array(fftSize);
-  const len=Math.min(samples.length,fftSize);
-  for (let i=0;i<len;i++) { const w=0.5*(1-Math.cos(2*Math.PI*i/(fftSize-1))); re[i]=samples[i]*w; }
-  fft(re,im);
-  const mag=new Float32Array(fftSize>>1);
-  for (let i=0;i<(fftSize>>1);i++) mag[i]=Math.sqrt(re[i]*re[i]+im[i]*im[i]);
-  return mag;
-}
+self.onmessage=function(e){
+  const{channelData,sr,fps,nBars,sm,fftSize,normMode,loBin,hiBin}=e.data;
 
-function logBands(mag, n, lo, hi) {
-  const out=new Float32Array(n);
-  for (let i=0;i<n;i++) {
-    const f0=Math.floor(lo*Math.pow(hi/lo,i/n));
-    const f1=Math.max(Math.floor(lo*Math.pow(hi/lo,(i+1)/n)),f0+1);
-    let s=0,c=0;
-    for (let f=f0;f<=Math.min(f1,hi);f++){s+=mag[f];c++;}
-    out[i]=c?s/c:0;
+  // Pre-allocate once — avoids GC pressure per frame
+  const re=new Float32Array(fftSize),im=new Float32Array(fftSize);
+  const hann=new Float32Array(fftSize);
+  for(let i=0;i<fftSize;i++) hann[i]=0.5*(1-Math.cos(2*Math.PI*i/(fftSize-1)));
+
+  const spf=Math.floor(sr/fps);
+  const total=Math.floor(channelData.length/spf);
+  const raw=new Float32Array(total*nBars);
+  let ref=0,sumSq=0;
+
+  for(let f=0;f<total;f++){
+    // Apply Hann window into pre-allocated re[], clear im[]
+    const off=f*spf, len=Math.min(fftSize, channelData.length-off);
+    re.fill(0); im.fill(0);
+    for(let i=0;i<len;i++) re[i]=channelData[off+i]*hann[i];
+    fft(re,im);
+
+    // Log-spaced bands
+    const base=f*nBars;
+    for(let b=0;b<nBars;b++){
+      const f0=Math.floor(loBin*Math.pow(hiBin/loBin,b/nBars));
+      const f1=Math.max(Math.floor(loBin*Math.pow(hiBin/loBin,(b+1)/nBars)),f0+1);
+      let s=0,c=0;
+      for(let k=f0;k<=Math.min(f1,hiBin);k++){s+=Math.sqrt(re[k]*re[k]+im[k]*im[k]);c++;}
+      const val=c?s/c:0;
+      raw[base+b]=val;
+      if(val>ref)ref=val;
+      sumSq+=val*val;
+    }
+    if(f%300===0) self.postMessage({type:'progress',pct:Math.round(f/total*75)});
   }
-  return out;
-}
 
-function freqBins(sr, fftSize) {
-  const bw=sr/fftSize;
-  const map={full:[20,20000],sub:[20,80],bass:[20,500],mid:[200,4000],high:[2000,20000],presence:[1000,8000]};
-  const [lo,hi]=map[v('c_freq')]||[20,20000];
-  return [Math.max(1,Math.floor(lo/bw)), Math.min((fftSize>>1)-1,Math.ceil(hi/bw))];
-}
+  // Normalize
+  let normRef;
+  if(normMode==='peak') normRef=ref;
+  else if(normMode==='rms') normRef=Math.sqrt(sumSq/(total*nBars))*8;
+  else{
+    const flat=Array.from(raw).sort((a,b)=>a-b);
+    normRef=flat[Math.floor(flat.length*(normMode==='p95'?.95:.99))]||ref;
+  }
 
-// ─── State ───────────────────────────────────────────────────────────────────
-let audioBuf=null, frames=null, prevAnim=null, prevFr=0;
+  // Smooth
+  const out=new Float32Array(total*nBars);
+  const prev=new Float32Array(nBars);
+  for(let f=0;f<total;f++){
+    const base=f*nBars;
+    for(let i=0;i<nBars;i++){
+      const n=Math.min(raw[base+i]/(normRef||1),1);
+      prev[i]=sm*prev[i]+(1-sm)*n;
+      out[base+i]=prev[i];
+    }
+  }
+  self.postMessage({type:'done',data:out.buffer,total,nBars},[out.buffer]);
+};
+`;
+const _workerURL = URL.createObjectURL(new Blob([WORKER_SRC],{type:'application/javascript'}));
 
-// ─── Upload ──────────────────────────────────────────────────────────────────
+// ─── State ────────────────────────────────────────────────────────────────────
+let audioBuf=null, frames=null, prevAnim=null, prevFr=0, breatheT=0;
+let activeWorker=null;
+
+// ─── Upload ───────────────────────────────────────────────────────────────────
 const dz=g('dz');
 dz.addEventListener('click',()=>g('fi').click());
 dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
@@ -265,6 +332,8 @@ g('fi').addEventListener('change',e=>loadAudio(e.target.files[0]));
 
 async function loadAudio(file) {
   if (!file||!file.type.startsWith('audio')) return;
+  // Kill any in-progress worker
+  if (activeWorker) { activeWorker.terminate(); activeWorker=null; }
   g('fname').className='dz-name'; g('fname').textContent=file.name;
   g('expBtn').disabled=true; g('dlBtn').style.display='none';
   setProgress(5,'Decoding audio…');
@@ -274,316 +343,259 @@ async function loadAudio(file) {
   await ac.close();
   const m=Math.floor(audioBuf.duration/60), s=Math.floor(audioBuf.duration%60).toString().padStart(2,'0');
   g('dur').textContent=`${m}:${s} · ${(audioBuf.sampleRate/1000).toFixed(1)}kHz`;
-  setProgress(20,'Computing FFT frames…');
-  await yld();
   await computeFrames();
-  setProgress(100,`Ready · ${frames.length} frames`);
-  g('expBtn').disabled=false;
-  startPreview();
 }
 
-// ─── Frame computation ───────────────────────────────────────────────────────
-async function computeFrames() {
-  if (!audioBuf) return;
-  const fps=+v('e_fps'), nBars=+v('c_bars'), sm=+v('c_sm')/100;
-  const fftSize=+v('c_fft'), norm=v('c_norm');
-  const sr=audioBuf.sampleRate, ch=audioBuf.getChannelData(0);
-  const spf=Math.floor(sr/fps), total=Math.floor(ch.length/spf);
-  const [lo,hi]=freqBins(sr,fftSize);
-
-  const raw=[]; let ref=0, sumSq=0;
-  for (let f=0;f<total;f++) {
-    const mag=spectrum(ch.subarray(f*spf,f*spf+fftSize),fftSize);
-    const b=logBands(mag,nBars,lo,hi);
-    raw.push(b);
-    const mx=Math.max(...b); if(mx>ref)ref=mx;
-    for (let i=0;i<nBars;i++) sumSq+=b[i]*b[i];
-    if (f%500===0) { setProgress(20+Math.round(f/total*60),'Computing FFT…'); await yld(); }
-  }
-
-  let normRef;
-  if (norm==='peak') normRef=ref;
-  else if (norm==='rms') normRef=Math.sqrt(sumSq/(total*nBars))*8;
-  else {
-    const all=raw.flatMap(b=>Array.from(b)).sort((a,b)=>a-b);
-    normRef=all[Math.floor(all.length*(norm==='p95'?.95:.99))]||ref;
-  }
-
-  const out=[]; let prev=new Float32Array(nBars);
-  for (let f=0;f<total;f++) {
-    const cur=new Float32Array(nBars);
-    for (let i=0;i<nBars;i++) { const n=Math.min(raw[f][i]/(normRef||1),1); cur[i]=sm*prev[i]+(1-sm)*n; }
-    out.push(cur); prev=cur;
-  }
-  frames=out;
+// ─── FFT via Worker ───────────────────────────────────────────────────────────
+function freqBins(sr, fftSize) {
+  const bw=sr/fftSize;
+  const map={full:[20,20000],sub:[20,80],bass:[20,500],mid:[200,4000],high:[2000,20000],presence:[1000,8000]};
+  const [lo,hi]=map[v('c_freq')]||[20,20000];
+  return [Math.max(1,Math.floor(lo/bw)), Math.min((fftSize>>1)-1,Math.ceil(hi/bw))];
 }
 
-async function recomp() { if (audioBuf) { await computeFrames(); } }
-g('e_fps').addEventListener('change',()=>{ if(frames) recomp().then(startPreview); });
+function computeFrames() {
+  return new Promise((resolve, reject) => {
+    if (!audioBuf) return resolve();
+    if (activeWorker) { activeWorker.terminate(); }
 
-// ─── Settings snapshot ────────────────────────────────────────────────────────
-// Called fresh every frame in preview, once per export
-function getSettings() {
-  const col1=v('c_col1'), col2=v('c_col2'), gcol=v('c_gcol');
-  const bg=v('c_bg'), bgcol=v('c_bgcol');
-  const bgColor=bg==='green'?'#00ff00':bg==='black'?'#000000':bg==='white'?'#ffffff':bgcol;
-  const [br,bg2,bb]=hexRGB(bgColor);
-  const [r1,g1,b1]=hexRGB(col1);
-  return {
-    col1,col2,gcol,bgColor,
-    br,bg2,bb, r1,g1,b1,
-    style:v('c_style'), sym:chk('c_sym'),
-    glow:+v('c_glow'), olw:+v('c_olw'),
-    refOn:chk('c_ref'), refH:+v('c_rh')/100, refOp:+v('c_ro')/100,
-    refFd:+v('c_rf')/100, refGap:+v('c_rgap'), refBlur:+v('c_rb'),
-    cr:+v('c_cr'), boost:+v('c_boost')/100, minBH:+v('c_minbh'),
-    bw_pct:+v('c_bw')/100, bh_pct:+v('c_bh')/100, cy_pct:+v('c_cy')/100,
-    bgo:+v('c_bgo')/100,
-    // Breathing
-    breatheAmt:+v('c_breath'),
-    breatheSpeed:+v('c_bspeed')/10,
-    breatheSpread:+v('c_bspread')/100,
-  };
+    const fps=+v('e_fps'), nBars=+v('c_bars'), sm=+v('c_sm')/100;
+    const fftSize=+v('c_fft'), normMode=v('c_norm');
+    const [loBin,hiBin]=freqBins(audioBuf.sampleRate, fftSize);
+
+    setProgress(10,'Computing FFT in background…');
+
+    // Copy channel data — transfer to worker (zero-copy after copy)
+    const channelData=new Float32Array(audioBuf.getChannelData(0));
+
+    activeWorker=new Worker(_workerURL);
+    activeWorker.onmessage=({data})=>{
+      if (data.type==='progress') {
+        setProgress(data.pct, `Computing FFT… ${data.pct}%`);
+      } else if (data.type==='done') {
+        // Reconstruct frames array from flat Float32Array
+        const flat=new Float32Array(data.data);
+        frames=[];
+        for (let f=0;f<data.total;f++) {
+          frames.push(flat.subarray(f*data.nBars,(f+1)*data.nBars));
+        }
+        activeWorker=null;
+        setProgress(100,`Ready · ${frames.length} frames`);
+        g('expBtn').disabled=false;
+        prevFr=0; breatheT=0;
+        startPreview();
+        resolve();
+      }
+    };
+    activeWorker.onerror=(e)=>{ setProgress(0,'❌ Worker error: '+e.message); reject(e); };
+
+    // Transfer channelData.buffer — zero-copy move to worker
+    activeWorker.postMessage({channelData, sr:audioBuf.sampleRate, fps, nBars, sm, fftSize, normMode, loBin, hiBin},
+      [channelData.buffer]);
+  });
 }
 
-// Pre-compute bar x-positions (constant per resolution + bar count)
-function precomputeLayout(W, H, s, n) {
-  const areaW=W*0.86, startX=(W-areaW)/2, sp=areaW/n;
-  const bw=Math.max(sp*s.bw_pct,1);
-  const maxH=H*s.bh_pct, cy=H*(0.5+s.cy_pct);
-  const xs=new Float32Array(n);
-  for (let i=0;i<n;i++) xs[i]=startX+i*sp+(sp-bw)/2;
-  return { xs, bw, maxH, cy, sp };
+// Debounced recompute — waits 400ms after last change before recomputing
+let _recompTimer=null;
+function scheduleRecomp() {
+  dirty();
+  clearTimeout(_recompTimer);
+  _recompTimer=setTimeout(()=>{ if(audioBuf) computeFrames(); }, 400);
 }
+g('e_fps').addEventListener('change',scheduleRecomp);
 
 // ─── Rounded rect ─────────────────────────────────────────────────────────────
 function rrect(ctx,x,y,w,h,r,fill,stroke,lw) {
-  if (w<=0||h<=0) return;
-  if (h<0){y+=h;h=-h;}
+  if(w<=0||h<=0)return; if(h<0){y+=h;h=-h;}
   r=Math.min(Math.abs(r),w/2,h/2);
-  if (r<0.5) { if(fill)ctx.fillRect(x,y,w,h); if(stroke){ctx.lineWidth=lw;ctx.strokeRect(x,y,w,h);} return; }
+  if(r<0.5){if(fill)ctx.fillRect(x,y,w,h);if(stroke){ctx.lineWidth=lw;ctx.strokeRect(x,y,w,h);}return;}
   ctx.beginPath();
-  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
-  ctx.closePath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
   if(fill)ctx.fill(); if(stroke){ctx.lineWidth=lw;ctx.stroke();}
 }
 
-// ─── Core draw ────────────────────────────────────────────────────────────────
+// ─── Core draw (uses cached settings + layout) ────────────────────────────────
 function drawFrame(ctx, W, H, bands, s, L) {
   const n=bands.length;
+  const [br,bg,bb]=s.bgRGB;
+  const [r1,g1,b1]=s.rgb1;
 
-  // Background
   ctx.globalAlpha=s.bgo;
   ctx.fillStyle=s.bgColor;
   ctx.fillRect(0,0,W,H);
   ctx.globalAlpha=1;
 
-  if (s.glow>0) { ctx.shadowBlur=s.glow; ctx.shadowColor=s.gcol; }
+  if(s.glow>0){ctx.shadowBlur=s.glow;ctx.shadowColor=s.gcol;}
   else ctx.shadowBlur=0;
 
   const doFill=s.style!=='outline', doStroke=s.style==='outline';
 
-  for (let i=0;i<n;i++) {
-    // ── Breathing idle baseline ──
-    // Each bar gets a unique sine phase (i * spread), creating a ripple effect
-    const breathe = s.breatheAmt + Math.sin(breatheT * s.breatheSpeed + i * s.breatheSpread) * s.breatheAmt * 0.6;
-    const bh = Math.max(bands[i] * L.maxH * s.boost, breathe);
+  for(let i=0;i<n;i++){
+    const breathe=s.breatheAmt+Math.sin(breatheT*s.breatheSpeed+i*s.breatheSpread)*s.breatheAmt*0.6;
+    const bh=Math.max(bands[i]*L.maxH*s.boost, breathe);
     const x=L.xs[i], y0=L.cy-bh;
-
     let fill;
-    if (s.style==='gradient') {
+    if(s.style==='gradient'){
       const gr=ctx.createLinearGradient(0,y0,0,L.cy);
-      gr.addColorStop(0,s.col1); gr.addColorStop(1,s.col2); fill=gr;
-    } else if (s.style==='glow_only') {
+      gr.addColorStop(0,s.col1);gr.addColorStop(1,s.col2);fill=gr;
+    } else if(s.style==='glow_only'){
       const gr=ctx.createLinearGradient(0,y0,0,L.cy);
-      gr.addColorStop(0,`rgba(${s.r1},${s.g1},${s.b1},.9)`);
-      gr.addColorStop(.5,`rgba(${s.r1},${s.g1},${s.b1},.35)`);
-      gr.addColorStop(1,`rgba(${s.r1},${s.g1},${s.b1},.03)`); fill=gr;
+      gr.addColorStop(0,`rgba(${r1},${g1},${b1},.9)`);
+      gr.addColorStop(.5,`rgba(${r1},${g1},${b1},.35)`);
+      gr.addColorStop(1,`rgba(${r1},${g1},${b1},.03)`);fill=gr;
     } else fill=s.col1;
-
     ctx.fillStyle=fill; ctx.strokeStyle=s.col1;
     rrect(ctx,x,y0,L.bw,bh,s.cr,doFill,doStroke,s.olw);
-
-    if (s.sym) {
-      if (s.style==='gradient') {
+    if(s.sym){
+      if(s.style==='gradient'){
         const gr=ctx.createLinearGradient(0,L.cy,0,L.cy+bh);
-        gr.addColorStop(0,s.col2); gr.addColorStop(1,s.col1); ctx.fillStyle=gr;
-      } else if (s.style==='glow_only') {
+        gr.addColorStop(0,s.col2);gr.addColorStop(1,s.col1);ctx.fillStyle=gr;
+      } else if(s.style==='glow_only'){
         const gr=ctx.createLinearGradient(0,L.cy,0,L.cy+bh);
-        gr.addColorStop(0,`rgba(${s.r1},${s.g1},${s.b1},.9)`);
-        gr.addColorStop(1,`rgba(${s.r1},${s.g1},${s.b1},.03)`); ctx.fillStyle=gr;
+        gr.addColorStop(0,`rgba(${r1},${g1},${b1},.9)`);
+        gr.addColorStop(1,`rgba(${r1},${g1},${b1},.03)`);ctx.fillStyle=gr;
       }
       ctx.strokeStyle=s.col1;
       rrect(ctx,x,L.cy,L.bw,bh,s.cr,doFill,doStroke,s.olw);
     }
   }
-
-  // ── Reflection ──
-  if (s.refOn) {
+  if(s.refOn){
     ctx.shadowBlur=s.refBlur; ctx.shadowColor=s.gcol;
-    for (let i=0;i<n;i++) {
-      const breathe = s.breatheAmt + Math.sin(breatheT * s.breatheSpeed + i * s.breatheSpread) * s.breatheAmt * 0.6;
-      const bh=Math.max(bands[i]*L.maxH*s.boost, breathe);
+    for(let i=0;i<n;i++){
+      const breathe=s.breatheAmt+Math.sin(breatheT*s.breatheSpeed+i*s.breatheSpread)*s.breatheAmt*0.6;
+      const bh=Math.max(bands[i]*L.maxH*s.boost,breathe);
       const rH=bh*s.refH; if(rH<1)continue;
-      const x=L.xs[i], yStart=L.cy+s.refGap;
-      const gr=ctx.createLinearGradient(0,yStart,0,yStart+rH);
-      gr.addColorStop(0,`rgba(${s.r1},${s.g1},${s.b1},${s.refOp})`);
-      gr.addColorStop(Math.min(s.refFd+.01,1),`rgba(${s.r1},${s.g1},${s.b1},${s.refOp*(1-s.refFd)})`);
-      gr.addColorStop(1,`rgba(${s.r1},${s.g1},${s.b1},0)`);
+      const x=L.xs[i], yS=L.cy+s.refGap;
+      const gr=ctx.createLinearGradient(0,yS,0,yS+rH);
+      gr.addColorStop(0,`rgba(${r1},${g1},${b1},${s.refOp})`);
+      gr.addColorStop(Math.min(s.refFd+.01,1),`rgba(${r1},${g1},${b1},${s.refOp*(1-s.refFd)})`);
+      gr.addColorStop(1,`rgba(${r1},${g1},${b1},0)`);
       ctx.fillStyle=gr;
-      rrect(ctx,x,yStart,L.bw,rH,s.cr,true,false,0);
+      rrect(ctx,x,yS,L.bw,rH,s.cr,true,false,0);
     }
   }
   ctx.shadowBlur=0;
 }
 
-// ─── Preview ─────────────────────────────────────────────────────────────────
-const prevCvs = g('prev');
-const prevCtx = prevCvs.getContext('2d', {alpha:true, willReadFrequently:false});
+// ─── Preview ──────────────────────────────────────────────────────────────────
+const prevCvs=g('prev');
+const prevCtx=prevCvs.getContext('2d',{alpha:true,willReadFrequently:false});
 
 function startPreview() {
-  if (prevAnim) cancelAnimationFrame(prevAnim);
+  if(prevAnim) cancelAnimationFrame(prevAnim);
   prevFr=0; breatheT=0;
-  const fps=+v('e_fps')||30;
-  const interval=1000/fps;
+  const fps=+v('e_fps')||30, interval=1000/fps;
   let last=0;
-
   function tick(now) {
     prevAnim=requestAnimationFrame(tick);
-    if (now-last < interval) return;
+    if(now-last<interval) return;
     last=now;
-
-    // Always read settings fresh — no cache, no null crash
-    const s=getSettings();
+    if(!frames||!frames.length) return;
+    const s=getS();                           // reads DOM only if dirty flag set
     const n=frames[0].length;
-    const L=precomputeLayout(960,540,s,n);
-
-    // Advance breathing time (continuous, in sync with frame rate)
+    const L=getL(960,540,n);                  // recomputes only if layout params changed
     breatheT=prevFr/fps;
-
     drawFrame(prevCtx,960,540,frames[prevFr%frames.length],s,L);
     prevFr++;
   }
   prevAnim=requestAnimationFrame(tick);
 }
 
-// ─── Export — WebCodecs, hardware-accelerated, no real-time pacing ────────────
-async function detectCodec(W, H, fps) {
-  if (typeof VideoEncoder==='undefined') return null;
-  const candidates=[
+// ─── Export ───────────────────────────────────────────────────────────────────
+async function detectCodec(W,H,fps) {
+  if(typeof VideoEncoder==='undefined') return null;
+  const cands=[
     {codec:'avc1.640028',format:'mp4',muxCodec:'avc'},
     {codec:'avc1.4d001f',format:'mp4',muxCodec:'avc'},
     {codec:'avc1.42001f',format:'mp4',muxCodec:'avc'},
   ];
-  for (const c of candidates) {
-    for (const hw of ['prefer-hardware','prefer-software']) {
-      try {
-        const res=await VideoEncoder.isConfigSupported({
-          codec:c.codec, width:W, height:H, bitrate:20e6, framerate:fps, hardwareAcceleration:hw
-        });
-        if (res.supported) return {...c, hw};
-      } catch {}
-    }
-  }
+  for(const c of cands)
+    for(const hw of['prefer-hardware','prefer-software'])
+      try{
+        const r=await VideoEncoder.isConfigSupported({codec:c.codec,width:W,height:H,bitrate:20e6,framerate:fps,hardwareAcceleration:hw});
+        if(r.supported) return{...c,hw};
+      }catch{}
   return null;
 }
 
-async function encodeVideo(W, H, fps, mbps, codecInfo) {
+async function encodeVideo(W,H,fps,mbps,codecInfo) {
   const muxer=new Mp4Muxer.Muxer({
-    target: new Mp4Muxer.ArrayBufferTarget(),
-    video: { codec:codecInfo.muxCodec, width:W, height:H },
-    fastStart: 'in-memory',
+    target:new Mp4Muxer.ArrayBufferTarget(),
+    video:{codec:codecInfo.muxCodec,width:W,height:H},
+    fastStart:'in-memory',
   });
-
   let encErr=null;
   const encoder=new VideoEncoder({
     output:(chunk,meta)=>muxer.addVideoChunk(chunk,meta),
     error:e=>{encErr=e;},
   });
   encoder.configure({
-    codec:codecInfo.codec, width:W, height:H,
-    bitrate:mbps*1_000_000, framerate:fps,
+    codec:codecInfo.codec,width:W,height:H,
+    bitrate:mbps*1_000_000,framerate:fps,
     hardwareAcceleration:codecInfo.hw,
     latencyMode:'quality',
   });
 
   const cvs=typeof OffscreenCanvas!=='undefined'
-    ? new OffscreenCanvas(W,H)
-    : (()=>{const c=document.createElement('canvas');c.width=W;c.height=H;return c;})();
+    ?new OffscreenCanvas(W,H)
+    :(()=>{const c=document.createElement('canvas');c.width=W;c.height=H;return c;})();
   const ctx=cvs.getContext('2d',{alpha:false});
 
-  // Pre-compute settings & layout ONCE — no DOM reads inside hot loop
-  const s=getSettings();
-  const L=precomputeLayout(W,H,s,frames[0].length);
-  const total=frames.length;
-  const frameDur=Math.round(1_000_000/fps);
+  // Snapshot settings + layout once for entire export
+  _sDirty=true; // force fresh read for export
+  const s=getS();
+  const L=getL(W,H,frames[0].length);
+  const total=frames.length, frameDur=Math.round(1_000_000/fps);
   const t0=performance.now();
 
-  for (let i=0;i<total;i++) {
-    if (encErr) throw encErr;
-
-    // Set breathing time to exact frame time so export matches preview exactly
+  for(let i=0;i<total;i++){
+    if(encErr) throw encErr;
     breatheT=i/fps;
-
     drawFrame(ctx,W,H,frames[i],s,L);
-
     const vf=new VideoFrame(cvs,{timestamp:i*frameDur,duration:frameDur});
     encoder.encode(vf,{keyFrame:i%(fps*2)===0});
     vf.close();
-
-    // Backpressure: yield only when encoder queue is saturated
-    if (encoder.encodeQueueSize>12) {
-      await new Promise(res=>encoder.addEventListener('dequeue',res,{once:true}));
-    }
-
-    if (i%30===0) {
+    if(encoder.encodeQueueSize>12)
+      await new Promise(r=>encoder.addEventListener('dequeue',r,{once:true}));
+    if(i%30===0){
       const pct=Math.round(i/total*100);
-      const elapsed=(performance.now()-t0)/1000;
-      const encFps=(i/(elapsed||0.001)).toFixed(0);
-      const rem=Math.round((total-i)/(+encFps||1));
-      setProgress(pct,`Encoding… ${pct}% · ${encFps} fps · ~${rem}s left · ${codecInfo.hw==='prefer-hardware'?'🚀 GPU':'💻 CPU'}`);
+      const ef=(i/((performance.now()-t0)/1000||1)).toFixed(0);
+      const rem=Math.round((total-i)/(+ef||1));
+      setProgress(pct,`Encoding… ${pct}% · ${ef} fps · ~${rem}s · ${codecInfo.hw==='prefer-hardware'?'🚀 GPU':'💻 CPU'}`);
       await yld();
     }
   }
-
-  await encoder.flush();
-  encoder.close();
-  if (encErr) throw encErr;
+  await encoder.flush(); encoder.close();
+  if(encErr) throw encErr;
   muxer.finalize();
   return muxer.target.buffer;
 }
 
-g('expBtn').addEventListener('click', async ()=>{
-  await computeFrames();
-  const [W,H]=v('e_res').split('x').map(Number);
-  const fps=+v('e_fps'), mbps=+v('e_qual');
-
+g('expBtn').addEventListener('click',async()=>{
+  const[W,H]=v('e_res').split('x').map(Number);
+  const fps=+v('e_fps'),mbps=+v('e_qual');
   g('expBtn').disabled=true; g('dlBtn').style.display='none';
   setProgress(2,'Detecting codec…'); await yld();
-
   const codecInfo=await detectCodec(W,H,fps);
-  if (!codecInfo) {
-    setProgress(0,'❌ WebCodecs not supported — use Chrome 94+, Safari 16.4+, or Firefox 130+');
+  if(!codecInfo){
+    setProgress(0,'❌ WebCodecs not supported — use Chrome 94+, Safari 16.4+, Firefox 130+');
     g('expBtn').disabled=false; return;
   }
-
   setProgress(5,`Starting… (${codecInfo.codec} · ${codecInfo.hw})`); await yld();
-
-  try {
-    const buffer=await encodeVideo(W,H,fps,mbps,codecInfo);
-    const blob=new Blob([buffer],{type:'video/mp4'});
+  try{
+    const buf=await encodeVideo(W,H,fps,mbps,codecInfo);
+    const blob=new Blob([buf],{type:'video/mp4'});
     const url=URL.createObjectURL(blob);
     const dl=g('dlBtn');
     dl.href=url; dl.download=`visualizer_${W}x${H}.mp4`;
     dl.style.display='inline-block';
     dl.textContent=`💾 Download  ${(blob.size/1024/1024).toFixed(1)} MB`;
     setProgress(100,'✅ Done!');
-  } catch(err) {
-    setProgress(0,`❌ ${err.message}`);
-    console.error(err);
+  }catch(err){
+    setProgress(0,'❌ '+err.message); console.error(err);
   }
   g('expBtn').disabled=false;
 });
