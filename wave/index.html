@@ -272,7 +272,7 @@ self.onmessage=function(e){
   const raw=new Float32Array(total*nBars);
 
   // Pass 1 — raw FFT
-  let globalRef=0, sumSq=0;
+  let globalRef=0;
   for(let f=0;f<total;f++){
     const off=f*spf, len=Math.min(fftSize,channelData.length-off);
     re.fill(0); im.fill(0);
@@ -286,13 +286,12 @@ self.onmessage=function(e){
       for(let k=f0;k<=Math.min(f1,hiBin);k++){ s+=Math.sqrt(re[k]*re[k]+im[k]*im[k]); c++; }
       let val=c?s/c:0;
       
-      // FIX 1: Apply Pink Noise Tilt. Boosts high bins naturally before normalization.
-      const tilt = Math.pow(1 + (b/nBars), 2.2); 
+      // Increased tilt to force more activity into the right side
+      const tilt = Math.pow(1 + (b/nBars), 3.5); 
       val = val * tilt;
 
       raw[base+b]=val;
       if(val>globalRef) globalRef=val;
-      sumSq+=val*val;
     }
     if(f%300===0) self.postMessage({type:'progress',pct:Math.round(f/total*70)});
   }
@@ -301,14 +300,15 @@ self.onmessage=function(e){
   const allVals=Array.from(raw).sort((a,b)=>a-b);
   const globalNorm=allVals[Math.floor(allVals.length*0.99)]||globalRef||1;
 
-  // Per-band p99 — each band's own ceiling
   const perBandNorm=new Float32Array(nBars);
   const bandVals=new Float32Array(total);
   for(let b=0;b<nBars;b++){
     for(let f=0;f<total;f++) bandVals[f]=raw[f*nBars+b];
     const sorted=Float32Array.from(bandVals).sort();
-    // FIX 2: Lowered floor from 10% to 1% to allow quiet high bands to reach full screen height.
-    perBandNorm[b]=Math.max(sorted[Math.floor(total*0.99)]||globalNorm, globalNorm*0.01);
+    
+    // THE FIX: Dropped the floor to 0.00001. Now even dead zones will scale up!
+    const bandMax = sorted[Math.floor(total*0.99)] || 0;
+    perBandNorm[b]=Math.max(bandMax, globalNorm*0.00001);
   }
 
   self.postMessage({type:'progress',pct:82});
@@ -317,9 +317,9 @@ self.onmessage=function(e){
   for(let b=0;b<nBars;b++){
     blendedNorm[b]=globalNorm*(1-blend) + perBandNorm[b]*blend;
     
-    // FIX 3: Smoother, wider side boost for a natural "smile" curve
+    // Wider side-boost to nudge outer edges up for the "smile" shape
     const pos=Math.abs((b/(nBars-1))*2-1);
-    const edgeFactor=Math.pow(Math.max(pos-0.4,0)/0.6, 2); 
+    const edgeFactor=Math.pow(Math.max(pos-0.2,0)/0.8, 2); 
     blendedNorm[b]=blendedNorm[b]/(1+sideBoost*edgeFactor);
   }
 
