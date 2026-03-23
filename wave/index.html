@@ -105,7 +105,7 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
     <div class="sec-hdr">Bars</div>
     <div class="row"><lbl>Count</lbl><input type="range" id="c_bars" min="8" max="128" value="60" oninput="sv('c_bars','v_bars','');dirty()"><span class="val" id="v_bars">60</span></div>
     <div class="row"><lbl>Width %</lbl><input type="range" id="c_bw" min="10" max="98" value="65" oninput="sv('c_bw','v_bw','%');dirty()"><span class="val" id="v_bw">65%</span></div>
-    <div class="row"><lbl>Max Height %</lbl><input type="range" id="c_bh" min="5" max="80" value="18" oninput="sv('c_bh','v_bh','%');dirty()"><span class="val" id="v_bh">18%</span></div>
+    <div class="row"><lbl>Max Height %</lbl><input type="range" id="c_bh" min="5" max="80" value="15" oninput="sv('c_bh','v_bh','%');dirty()"><span class="val" id="v_bh">15%</span></div>
     <div class="row"><lbl>Center Offset</lbl><input type="range" id="c_cy" min="-35" max="35" value="25" oninput="sv('c_cy','v_cy','%');dirty()"><span class="val" id="v_cy">25%</span></div>
     <div class="row"><lbl>Corner Radius</lbl><input type="range" id="c_cr" min="0" max="30" value="0" oninput="sv('c_cr','v_cr','');dirty()"><span class="val" id="v_cr">0</span></div>
     <div class="row"><lbl>Scale Boost</lbl><input type="range" id="c_boost" min="40" max="300" value="100" oninput="sv('c_boost','v_boost','%');dirty()"><span class="val" id="v_boost">100%</span></div>
@@ -129,10 +129,10 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
     <div class="sec-hdr">Reflection</div>
     <div class="row"><lbl>Enable</lbl><label class="tog"><input type="checkbox" id="c_ref" onchange="dirty()"><span class="tog-sl"></span></label></div>
     <div class="row"><lbl>Fade</lbl><label class="tog"><input type="checkbox" id="c_rfade" checked onchange="dirty()"><span class="tog-sl"></span></label><span class="row-note">fade to transparent</span></div>
-    <div class="row"><lbl>Height %</lbl><input type="range" id="c_rh" min="0" max="120" value="45" oninput="sv('c_rh','v_rh','%');dirty()"><span class="val" id="v_rh">45%</span></div>
-    <div class="row"><lbl>Opacity %</lbl><input type="range" id="c_ro" min="0" max="100" value="60" oninput="sv('c_ro','v_ro','%');dirty()"><span class="val" id="v_ro">60%</span></div>
+    <div class="row"><lbl>Height %</lbl><input type="range" id="c_rh" min="0" max="120" value="60" oninput="sv('c_rh','v_rh','%');dirty()"><span class="val" id="v_rh">60%</span></div>
+    <div class="row"><lbl>Opacity %</lbl><input type="range" id="c_ro" min="0" max="100" value="45" oninput="sv('c_ro','v_ro','%');dirty()"><span class="val" id="v_ro">45%</span></div>
     <div class="row"><lbl>Fade Start %</lbl><input type="range" id="c_rf" min="0" max="90" value="0" oninput="sv('c_rf','v_rf','%');dirty()"><span class="val" id="v_rf">0%</span></div>
-    <div class="row"><lbl>Gap px</lbl><input type="range" id="c_rgap" min="0" max="30" value="2" oninput="sv('c_rgap','v_rgap','px');dirty()"><span class="val" id="v_rgap">2px</span></div>
+    <div class="row"><lbl>Gap px</lbl><input type="range" id="c_rgap" min="0" max="30" value="4" oninput="sv('c_rgap','v_rgap','px');dirty()"><span class="val" id="v_rgap">4px</span></div>
     <div class="row"><lbl>Blur px</lbl><input type="range" id="c_rb" min="0" max="12" value="0" oninput="sv('c_rb','v_rb','px');dirty()"><span class="val" id="v_rb">0px</span></div>
   </div>
 
