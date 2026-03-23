@@ -128,6 +128,7 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
   <div class="sec">
     <div class="sec-hdr">Reflection</div>
     <div class="row"><lbl>Enable</lbl><label class="tog"><input type="checkbox" id="c_ref" onchange="dirty()"><span class="tog-sl"></span></label></div>
+    <div class="row"><lbl>Fade</lbl><label class="tog"><input type="checkbox" id="c_rfade" checked onchange="dirty()"><span class="tog-sl"></span></label><span class="row-note">fade to transparent</span></div>
     <div class="row"><lbl>Height %</lbl><input type="range" id="c_rh" min="0" max="120" value="45" oninput="sv('c_rh','v_rh','%');dirty()"><span class="val" id="v_rh">45%</span></div>
     <div class="row"><lbl>Opacity %</lbl><input type="range" id="c_ro" min="0" max="100" value="60" oninput="sv('c_ro','v_ro','%');dirty()"><span class="val" id="v_ro">60%</span></div>
     <div class="row"><lbl>Fade Start %</lbl><input type="range" id="c_rf" min="0" max="90" value="0" oninput="sv('c_rf','v_rf','%');dirty()"><span class="val" id="v_rf">0%</span></div>
@@ -225,7 +226,7 @@ function getS(){
     style:v('c_style'),sym:chk('c_sym'),
     glow:+v('c_glow'),olw:+v('c_olw'),
     refOn:chk('c_ref'),refH:+v('c_rh')/100,refOp:+v('c_ro')/100,
-    refFd:+v('c_rf')/100,refGap:+v('c_rgap'),refBlur:+v('c_rb'),
+    refFd:+v('c_rf')/100,refGap:+v('c_rgap'),refBlur:+v('c_rb'),refFadeOn:chk('c_rfade'),
     cr:+v('c_cr'),boost:+v('c_boost')/100,minBH:+v('c_minbh'),
     bw_pct:+v('c_bw')/100,bh_pct:+v('c_bh')/100,cy_pct:+v('c_cy')/100,
     bgo:+v('c_bgo')/100,
@@ -523,11 +524,16 @@ function drawFrame(ctx,W,H,bands,s,L){
       const bh=Math.max(bands[i]*L.maxH*s.boost,s.minBH);
       const rH=bh*s.refH; if(rH<1)continue;
       const x=L.xs[i],yS=L.cy+s.refGap;
-      const gr=ctx.createLinearGradient(0,yS,0,yS+rH);
-      gr.addColorStop(0,`rgba(${r1},${g1},${b1},${s.refOp})`);
-      gr.addColorStop(Math.min(s.refFd+.01,1),`rgba(${r1},${g1},${b1},${s.refOp*(1-s.refFd)})`);
-      gr.addColorStop(1,`rgba(${r1},${g1},${b1},0)`);
-      ctx.fillStyle=gr; rrect(ctx,x,yS,L.bw,rH,s.cr,true,false,0);
+      if(s.refFadeOn){
+        const gr=ctx.createLinearGradient(0,yS,0,yS+rH);
+        gr.addColorStop(0,`rgba(${r1},${g1},${b1},${s.refOp})`);
+        gr.addColorStop(Math.min(s.refFd+.01,1),`rgba(${r1},${g1},${b1},${s.refOp*(1-s.refFd)})`);
+        gr.addColorStop(1,`rgba(${r1},${g1},${b1},0)`);
+        ctx.fillStyle=gr;
+      } else {
+        ctx.fillStyle=`rgba(${r1},${g1},${b1},${s.refOp})`;
+      }
+      rrect(ctx,x,yS,L.bw,rH,s.cr,true,false,0);
     }
   }
   ctx.shadowBlur=0;
