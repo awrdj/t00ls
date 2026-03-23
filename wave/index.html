@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="manifest" href="/site.webmanifest">
-<script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5/build/mp4-muxer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5/build/mp4-muxer.min.js">loadColors();</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -118,13 +118,13 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
 
   <div class="sec">
     <div class="sec-hdr">Colors</div>
-    <div class="row"><lbl>Bar / Top Color</lbl><input type="color" id="c_col1" value="#ffffff" onchange="dirty()"></div>
-    <div class="row"><lbl>Bar Bottom Color</lbl><input type="color" id="c_col2" value="#1D41EF" onchange="dirty()"><span class="row-note">gradient & glow</span></div>
+    <div class="row"><lbl>Bar / Top Color</lbl><input type="color" id="c_col1" value="#ffffff" onchange="saveColors();dirty()"></div>
+    <div class="row"><lbl>Bar Bottom Color</lbl><input type="color" id="c_col2" value="#1D41EF" onchange="saveColors();dirty()"><span class="row-note">gradient & glow</span></div>
     <div class="row"><lbl>Outline Width</lbl><input type="range" id="c_olw" min="1" max="10" value="2" oninput="sv('c_olw','v_olw','px');dirty()"><span class="val" id="v_olw">2px</span></div>
     <div class="row"><lbl>Glow Intensity</lbl><input type="range" id="c_glow" min="0" max="60" value="0" oninput="sv('c_glow','v_glow','');dirty()"><span class="val" id="v_glow">0</span></div>
-    <div class="row"><lbl>Glow Color</lbl><input type="color" id="c_gcol" value="#5A5BFF" onchange="dirty()"></div>
-    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg();dirty()"><option value="green">Green Screen</option><option value="black" selected>Black</option><option value="white">White</option><option value="red">Red</option><option value="custom">Custom →</option></select></div>
-    <div class="row" id="bgcrow" style="display:none"><lbl>BG Color</lbl><input type="color" id="c_bgcol" value="#15859e" onchange="dirty()"></div>
+    <div class="row"><lbl>Glow Color</lbl><input type="color" id="c_gcol" value="#5A5BFF" onchange="saveColors();dirty()"></div>
+    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg();saveColors();dirty()"><option value="green">Green Screen</option><option value="black" selected>Black</option><option value="white">White</option><option value="red">Red</option><option value="custom">Custom →</option></select></div>
+    <div class="row" id="bgcrow" style="display:none"><lbl>BG Color</lbl><input type="color" id="c_bgcol" value="#15859e" onchange="saveColors();dirty()"></div>
     <div class="row"><lbl>BG Opacity %</lbl><input type="range" id="c_bgo" min="0" max="100" value="100" oninput="sv('c_bgo','v_bgo','%');dirty()"><span class="val" id="v_bgo">100%</span></div>
   </div>
 
@@ -213,7 +213,7 @@ const yld = () => new Promise(r=>setTimeout(r,0));
 function bgChg(){ g('bgcrow').style.display=v('c_bg')==='custom'?'flex':'none'; }
 function setProgress(pct,txt){ g('pf').style.width=pct+'%'; g('pt').textContent=txt; }
 function hexRGB(hex){ const n=hex.replace('#',''); return [parseInt(n.slice(0,2),16)|0,parseInt(n.slice(2,4),16)|0,parseInt(n.slice(4,6),16)|0]; }
-function updateGainLabel(){ const db=+v('c_gain'); g('v_gain').textContent=(db>0?'+':'')+db+'dB'; }
+function updateGainLabel(){ const db=+v('c_gain'); g('v_gain').textContent=(db>0?'+':'')+db+'dB'; } function saveColors(){['c_col1','c_col2','c_gcol','c_bgcol','c_bg'].forEach(id=>{localStorage.setItem('vs_'+id,g(id).value);});} function loadColors(){['c_col1','c_col2','c_gcol','c_bgcol','c_bg'].forEach(id=>{const sv=localStorage.getItem('vs_'+id);if(sv)g(id).value=sv;});bgChg();dirty();}
 
 // ─── Settings dirty-flag cache ────────────────────────────────────────────────
 let _s=null,_sDirty=true,_L=null,_LKey='';
@@ -630,6 +630,6 @@ g('expBtn').addEventListener('click',async()=>{
   }catch(err){setProgress(0,'❌ '+err.message);console.error(err);}
   g('expBtn').disabled=false;
 });
-</script>
+loadColors();</script>
 </body>
 </html>
