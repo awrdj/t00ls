@@ -175,8 +175,8 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
   <div class="exp-bar">
     <div class="exp-row1">
       <select id="e_res">
-        <option value="1280x720">720p  (1280×720)</option>
-        <option value="1920x1080" selected>1080p (1920×1080)</option>
+        <option value="1280x720" selected>720p  (1280×720)</option>
+        <option value="1920x1080">1080p (1920×1080)</option>
         <option value="2560x1440">1440p (2560×1440)</option>
         <option value="3840x2160">4K   (3840×2160)</option>
       </select>
@@ -187,8 +187,8 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
       </select>
       <select id="e_qual">
         <option value="8">Draft  (8 Mbps)</option>
-        <option value="20">Standard (20 Mbps)</option>
-        <option value="40" selected>High  (40 Mbps)</option>
+        <option value="20" selected>Standard (20 Mbps)</option>
+        <option value="40">High  (40 Mbps)</option>
         <option value="80">Ultra  (80 Mbps)</option>
       </select>
       <button class="btn btn-go" id="expBtn" disabled>⬇ Export MP4</button>
@@ -622,7 +622,7 @@ g('expBtn').addEventListener('click',async()=>{
   try{
     const buf=await encodeVideo(W,H,fps,mbps,codecInfo);
     const blob=new Blob([buf],{type:'video/mp4'}),url=URL.createObjectURL(blob),dl=g('dlBtn');
-    dl.href=url; dl.download=`visualizer_${W}x${H}.mp4`; dl.style.display='inline-block';
+    dl.href=url; dl.download=`${W}x${H}_${fps}fps_${mbps}Mbps_${g('fname').textContent.replace(/\.[^.]+$/,'')}.mp4`; dl.style.display='inline-block';
     dl.textContent=`💾 Download  ${(blob.size/1024/1024).toFixed(1)} MB`; setProgress(100,'✅ Done!');
   }catch(err){setProgress(0,'❌ '+err.message);console.error(err);}
   g('expBtn').disabled=false;
