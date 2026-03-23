@@ -120,7 +120,7 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
     <div class="row"><lbl>Outline Width</lbl><input type="range" id="c_olw" min="1" max="10" value="2" oninput="sv('c_olw','v_olw','px');dirty()"><span class="val" id="v_olw">2px</span></div>
     <div class="row"><lbl>Glow Intensity</lbl><input type="range" id="c_glow" min="0" max="60" value="0" oninput="sv('c_glow','v_glow','');dirty()"><span class="val" id="v_glow">0</span></div>
     <div class="row"><lbl>Glow Color</lbl><input type="color" id="c_gcol" value="#5A5BFF" onchange="dirty()"></div>
-    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg();dirty()"><option value="green">Green Screen</option><option value="black" selected>Black</option><option value="white">White</option><option value="custom">Custom →</option></select></div>
+    <div class="row"><lbl>Background</lbl><select id="c_bg" onchange="bgChg();dirty()"><option value="green">Green Screen</option><option value="black" selected>Black</option><option value="white">White</option><option value="red">Red</option><option value="custom">Custom →</option></select></div>
     <div class="row" id="bgcrow" style="display:none"><lbl>BG Color</lbl><input type="color" id="c_bgcol" value="#15859e" onchange="dirty()"></div>
     <div class="row"><lbl>BG Opacity %</lbl><input type="range" id="c_bgo" min="0" max="100" value="100" oninput="sv('c_bgo','v_bgo','%');dirty()"><span class="val" id="v_bgo">100%</span></div>
   </div>
@@ -218,7 +218,7 @@ function getS(){
   if(!_sDirty&&_s) return _s;
   const col1=v('c_col1'),gcol=v('c_gcol');
   const bg=v('c_bg'),bgcol=v('c_bgcol');
-  const bgColor=bg==='green'?'#00ff00':bg==='black'?'#000000':bg==='white'?'#ffffff':bgcol;
+  const bgColor=bg==='green'?'#00ff00':bg==='black'?'#000000':bg==='white'?'#ffffff':bg==='red'?'#E92700':bgcol;
   _s={
     col1,col2:v('c_col2'),gcol,bgColor,
     bgRGB:hexRGB(bgColor),rgb1:hexRGB(col1),
