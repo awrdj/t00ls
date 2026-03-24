@@ -130,7 +130,7 @@ canvas#prev{max-width:100%;max-height:100%;object-fit:contain;display:block;bord
 
   <div class="sec">
     <div class="sec-hdr">Reflection</div>
-    <div class="row"><lbl>Enable</lbl><label class="tog"><input type="checkbox" id="c_ref" checked onchange="dirty()"><span class="tog-sl"></span></label></div>
+    <div class="row"><lbl>Enable</lbl><label class="tog"><input type="checkbox" id="c_ref" onchange="dirty()"><span class="tog-sl"></span></label></div>
     <div class="row"><lbl>Fade</lbl><label class="tog"><input type="checkbox" id="c_rfade" onchange="dirty()"><span class="tog-sl"></span></label><span class="row-note">fade to transparent</span></div>
     <div class="row"><lbl>Height %</lbl><input type="range" id="c_rh" min="0" max="120" value="60" oninput="sv('c_rh','v_rh','%');dirty()"><span class="val" id="v_rh">60%</span></div>
     <div class="row"><lbl>Opacity %</lbl><input type="range" id="c_ro" min="0" max="100" value="45" oninput="sv('c_ro','v_ro','%');dirty()"><span class="val" id="v_ro">45%</span></div>
