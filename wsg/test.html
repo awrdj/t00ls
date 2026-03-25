@@ -1791,7 +1791,7 @@ if (titleBoxNudgeContainer) titleBoxNudgeContainer.style.display = val === 'side
             }
             shapeSelect.addEventListener('change', () => {
                 const val = shapeSelect.value; customGridEditorContainer.classList.add('hidden'); imageUploadContainer.classList.add('hidden'); saveShapeBtn.classList.add('hidden'); editShapeBtn.classList.add('hidden'); deleteShapeBtn.classList.add('hidden');
-                if (val === 'custom') { customGridEditorContainer.classList.remove('hidden'); saveShapeBtn.classList.remove('hidden'); renderGridEditor(); } else if (val === 'image-upload') { imageUploadContainer.classList.remove('hidden'); } else if (val !== 'rectangle') { editShapeBtn.classList.remove('hidden'); if (val.startsWith('Saved Shapes|')) { deleteShapeBtn.classList.remove('hidden'); } }
+                if (val === 'custom') { customGridEditorContainer.classList.remove('hidden'); saveShapeBtn.classList.remove('hidden'); renderGridEditor(); } else if (val === 'image-upload') { imageUploadContainer.classList.remove('hidden'); } else if (val !== 'rectangle') { editShapeBtn.classList.remove('hidden'); if (val.startsWith('Saved Shapes/')) { deleteShapeBtn.classList.remove('hidden'); } }
                 const content = shapeSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = content.scrollHeight + 300 + "px"; }
             });
             editShapeBtn.addEventListener('click', () => { const initialData = getInitialGrid(); if (!initialData) return; shapeSelect.value = 'custom'; customGridEditorContainer.classList.remove('hidden'); saveShapeBtn.classList.remove('hidden'); editShapeBtn.classList.add('hidden'); renderGridEditor(initialData.grid); const content = shapeSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = content.scrollHeight + 300 + "px"; } });
@@ -1804,8 +1804,8 @@ if (titleBoxNudgeContainer) titleBoxNudgeContainer.style.display = val === 'side
             confirmSaveShapeBtn.addEventListener('click', () => { const name = shapeNameInput.value.trim(); if (!name) return; const currentGrid = parseCustomGridFromEditor(); if (!currentGrid) return; savedShapes[name] = currentGrid.map(row => row.map(cell => cell === null ? 'x' : '.').join('')).join('\n'); localStorage.setItem('kdp_saved_shapes', JSON.stringify(savedShapes)); populateShapes(); shapeSelect.value = `Saved Shapes/${name}`; saveShapeModal.classList.add('hidden'); shapeSelect.dispatchEvent(new Event('change')); });
             deleteShapeBtn.addEventListener('click', () => {
     const val = shapeSelect.value;
-    if (!val.startsWith('Saved Shapes|')) return;
-    const shapeName = val.split('|')[1];
+    if (!val.startsWith('Saved Shapes/')) return;
+const shapeName = val.split('/')[1];
     if (!confirm(`Delete saved shape "${shapeName}"? This cannot be undone.`)) return;
     delete savedShapes[shapeName];
     localStorage.setItem('kdp_saved_shapes', JSON.stringify(savedShapes));
