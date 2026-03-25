@@ -102,7 +102,7 @@
                     <div class="col-span-2">
                         <label for="title-format" class="block text-xs font-medium text-gray-700">Puzzle Title Format</label>
                         <input type="text" id="title-format" value="Puzzle #PUZZLE_NUMBER: #PUZZLE_TITLE" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2 outline-none">
-                        <p class="text-[10px] text-gray-500 mt-1">Use <code class="bg-gray-100 px-1 rounded font-mono">#PUZZLE_TITLE</code> to insert custom topic names.</p>
+                        <p class="text-[10px] text-gray-500 mt-1">Use <code class="bg-gray-100 px-1 rounded font-mono">#PUZZLE_NUMBER</code> and <code class="bg-gray-100 px-1 rounded font-mono">#PUZZLE_TITLE</code>.</p>
                     </div>
                     <div>
                         <label for="starting-number" class="block text-xs font-medium text-gray-700">Start Number At</label>
@@ -760,8 +760,10 @@
                         </div>
 
                         <!-- Word List Width Ratio (hidden by default) -->
-                        <div id="word-list-ratio-container" class="pt-1 border-t border-gray-100 mt-2 hidden">
-                            <div class="flex items-center justify-between mb-1">
+                        <!-- <div id="word-list-ratio-container" class="pt-1 border-t border-gray-100 mt-2 hidden"> -->
+                        <div id="word-list-ratio-container" class="pt-1 border-t mt-2 hidden" style="margin-top:0;">
+                            <p class="text-[10px] text-gray-500 mt-1" style="margin-bottom: 0.25rem;text-align: center;">Side-by-Side 2-Column List Tips: Best to use 40 words per puzzle on a 17x17 grid.</p>
+                            <div class="flex items-center justify-between mb-1 border-t border-gray-200" style="padding-top: 0.25rem;">
                                 <label class="block text-[10px] font-bold text-indigo-900 uppercase">Word List Width</label>
                                 <span id="word-list-ratio-val" class="text-[10px] font-bold text-indigo-600">30%</span>
                             </div>
@@ -770,6 +772,7 @@
 
                         <!-- Title Box Nudge (hidden by default) -->
                         <div id="title-box-nudge-container" class="hidden mt-2">
+                            <p class="text-[10px] text-gray-500 mt-1" style="margin-bottom: 0.25rem;text-align: center;">Side-by-Side Wrap-Under List Tips: Best to use 22 words per puzzle on a 12x14 grid.</p>
                             <div class="flex items-center justify-between gap-3 pt-2 border-t border-gray-200">
                                 <div class="flex items-center gap-1 shrink-0" title="Nudge the title box up or down in side-wrap layout">
                                     <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Title Box Nudge:</span>
