@@ -2711,7 +2711,7 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             // Special handling for Imagen 4.0 which often uses :predict in some environments,
             // but we'll stick to the standard endpoint for now unless specific predict logic is needed.
             // If the user selects "Nano Banana Image Pro", it will pass that ID.
-            return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+            return `https://generativelanguage.googleapis.com/v1alpha/models/${model}:generateContent`;
         };
 
         // ================================================================
