@@ -2301,7 +2301,7 @@
             db = getFirestore(app);
             isFirebaseInitialized = true;
         } else {
-            console.warn("Running outside Canvas environment. Firebase is not configured. Falling back to local storage.");
+            console.warn("Running outside Canvas environment. Firebase is not configured. Falling back to local storage (IndexedDB).");
         }
 
         // STEP 5: UPDATE JAVASCRIPT - CONSTANTS (Original Prompts)
@@ -2959,6 +2959,63 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
         };
 
         // ================================================================
+        // LOCAL INDEXEDDB STORAGE (Fallback for External Hosting)
+        // ================================================================
+        const localDB = {
+            dbName: 'AIDesignGeneratorDB',
+            storeName: 'designs',
+            version: 1,
+            init: function() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.version);
+                    request.onerror = (event) => reject('IndexedDB error: ' + event.target.error);
+                    request.onsuccess = (event) => resolve(event.target.result);
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            db.createObjectStore(this.storeName, { keyPath: 'id' });
+                        }
+                    };
+                });
+            },
+            saveDesign: async function(design) {
+                const db = await this.init();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.put(design);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e);
+                });
+            },
+            getAllDesigns: async function() {
+                const db = await this.init();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.getAll();
+                    request.onsuccess = () => {
+                        const designs = request.result || [];
+                        // Sort by newest first
+                        designs.sort((a, b) => b.createdAt - a.createdAt);
+                        resolve(designs);
+                    };
+                    request.onerror = (e) => reject(e);
+                });
+            },
+            deleteDesign: async function(id) {
+                const db = await this.init();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.delete(id);
+                    request.onsuccess = () => resolve(true);
+                    request.onerror = (e) => reject(e);
+                });
+            }
+        };
+
+        // ================================================================
         // CLOUD STORAGE UTILITIES (FIREBASE)
         // ================================================================
 
@@ -3044,16 +3101,12 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             // Save Design to User's Private Collection with COMPRESSION
             saveDesign: async (design) => {
                 if (!appState.user) {
-                    // Local fallback for external hosting (e.g., GitHub pages)
+                    // Local fallback for external hosting using IndexedDB
                     try {
-                        const localDesigns = JSON.parse(localStorage.getItem('local_designs') || '[]');
-                        localDesigns.unshift(design);
-                        // Keep only last 10 to avoid exceeding 5MB localStorage limit
-                        if (localDesigns.length > 10) localDesigns.pop();
-                        localStorage.setItem('local_designs', JSON.stringify(localDesigns));
+                        await localDB.saveDesign(design);
                         return true;
                     } catch (e) {
-                        console.error('Local storage full', e);
+                        console.error('IndexedDB save failed', e);
                         return false;
                     }
                 }
@@ -3084,8 +3137,30 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             // Load All Designs
             loadAllDesigns: async () => {
                 if (!appState.user) {
-                    // Local fallback for external hosting
-                    return JSON.parse(localStorage.getItem('local_designs') || '[]');
+                    // Local fallback for external hosting using IndexedDB
+                    try {
+                        // Migration Check: If there are designs in legacy localStorage, move them to IndexedDB
+                        const legacyLocal = localStorage.getItem('local_designs');
+                        if (legacyLocal) {
+                            try {
+                                const parsedLegacy = JSON.parse(legacyLocal);
+                                if (Array.isArray(parsedLegacy) && parsedLegacy.length > 0) {
+                                    console.log('Migrating legacy localStorage designs to IndexedDB...');
+                                    for (const d of parsedLegacy) {
+                                        await localDB.saveDesign(d);
+                                    }
+                                }
+                                localStorage.removeItem('local_designs');
+                            } catch (migrateErr) {
+                                console.error('Migration from localStorage failed', migrateErr);
+                            }
+                        }
+                        
+                        return await localDB.getAllDesigns();
+                    } catch(e) {
+                        console.error('IndexedDB load failed', e);
+                        return [];
+                    }
                 }
                 try {
                     const designsRef = collection(db, 'artifacts', appId, 'users', appState.user.uid, 'designs');
@@ -3102,10 +3177,12 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             
             deleteDesign: async (id) => {
                 if (!appState.user) {
-                    // Local fallback for external hosting
-                    let localDesigns = JSON.parse(localStorage.getItem('local_designs') || '[]');
-                    localDesigns = localDesigns.filter(d => d.id !== id);
-                    localStorage.setItem('local_designs', JSON.stringify(localDesigns));
+                    // Local fallback for external hosting using IndexedDB
+                    try {
+                        await localDB.deleteDesign(id);
+                    } catch(e) {
+                        console.error('IndexedDB delete failed', e);
+                    }
                     return;
                 }
                 const designRef = doc(db, 'artifacts', appId, 'users', appState.user.uid, 'designs', id);
