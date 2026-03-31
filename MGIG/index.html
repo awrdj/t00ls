@@ -2029,8 +2029,8 @@
                         <div class="settings-col">
                             <label for="text-model-select">Text / Reasoning Model</label>
                             <select id="text-model-select">
-                                <option value="gemini-2.5-flash-preview-09-2025">gemini-2.5-flash-preview-09-2025 (Free Tier)</option>
-                                <option value="gemini-2.0-flash-exp">gemini-2.0-flash-exp (Paid API)</option>
+                                <option value="gemini-2.5-flash">gemini-2.5-flash (Free Tier)</option>
+                                <option value="gemini-2.5-pro">gemini-2.5-pro (Paid API)</option>
                                 <option value="custom">Custom</option>
                             </select>
                             <input type="text" id="text-model-custom" class="custom-model-input" placeholder="e.g. models/gemini-1.5-pro-002">
@@ -2041,7 +2041,7 @@
                         <div class="settings-col">
                             <label for="image-model-select">Image Generation Model</label>
                             <select id="image-model-select">
-                                <option value="gemini-2.5-flash-image-preview">gemini-2.5-flash-image-preview (Free Tier)</option>
+                                <option value="gemini-2.5-flash-image">gemini-2.5-flash-image (Free Tier)</option>
                                 <option value="gemini-2.5-flash-image">gemini-2.5-flash-image (Paid API)</option>
                                 <option value="custom">Custom</option>
                             </select>
@@ -2651,8 +2651,8 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             currentMode: 'normal',
             apiKey: null,
             // NEW: Model State Defaults (Nano Banana branding)
-            textModel: 'gemini-2.5-flash-preview-09-2025', // Maps to Nano Banana Lite
-            imageModel: 'gemini-2.5-flash-image-preview', // Maps to Nano Banana Image
+            textModel: 'gemini-2.5-flash',
+            imageModel: 'gemini-2.5-flash-image',
             user: null, // Firebase user
             sortOrder: 'newest',
             styleFiles: [],
@@ -2691,13 +2691,9 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
         const CONSTANTS = {
             MAX_FILES: 50,
             GRAY_BACKGROUND: '#808080',
-            // Free Tier Models (Nano Banana branding)
-            FREE_TEXT_MODEL: 'gemini-2.5-flash-preview-09-2025',
-            FREE_IMAGE_MODEL: 'gemini-2.5-flash-image-preview',
-            
-            // NEW: Recommended Paid Models (Nano Banana Pro branding)
-            // UPDATED: Using gemini-2.0-flash-exp for text and gemini-2.5-flash-image for image as requested
-            PAID_TEXT_MODEL_RECOMMENDED: 'gemini-2.0-flash-exp', 
+            FREE_TEXT_MODEL: 'gemini-2.5-flash',
+            FREE_IMAGE_MODEL: 'gemini-2.5-flash-image',
+            PAID_TEXT_MODEL_RECOMMENDED: 'gemini-2.5-pro', 
             PAID_IMAGE_MODEL_RECOMMENDED: 'gemini-2.5-flash-image'
         };
 
