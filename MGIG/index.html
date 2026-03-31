@@ -2041,8 +2041,8 @@
                         <div class="settings-col">
                             <label for="image-model-select">Image Generation Model</label>
                             <select id="image-model-select">
-                                <option value="gemini-2.5-flash-image">gemini-2.5-flash-image (Free Tier)</option>
-                                <option value="gemini-2.5-flash-image">gemini-2.5-flash-image (Paid API)</option>
+                                <option value="gemini-3.1-flash-image-preview">gemini-3.1-flash-image-preview (Free Tier)</option>
+                                <option value="gemini-3.1-flash-image-preview">gemini-3.1-flash-image-preview (Paid API)</option>
                                 <option value="custom">Custom</option>
                             </select>
                             <input type="text" id="image-model-custom" class="custom-model-input" placeholder="e.g. models/imagen-3.0-fast">
@@ -2652,7 +2652,7 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             apiKey: null,
             // NEW: Model State Defaults (Nano Banana branding)
             textModel: 'gemini-2.5-flash',
-            imageModel: 'gemini-2.5-flash-image',
+            imageModel: 'gemini-3.1-flash-image-preview',
             user: null, // Firebase user
             sortOrder: 'newest',
             styleFiles: [],
@@ -2692,9 +2692,9 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             MAX_FILES: 50,
             GRAY_BACKGROUND: '#808080',
             FREE_TEXT_MODEL: 'gemini-2.5-flash',
-            FREE_IMAGE_MODEL: 'gemini-2.5-flash-image',
+            FREE_IMAGE_MODEL: 'gemini-3.1-flash-image-preview',
             PAID_TEXT_MODEL_RECOMMENDED: 'gemini-2.5-pro', 
-            PAID_IMAGE_MODEL_RECOMMENDED: 'gemini-2.5-flash-image'
+            PAID_IMAGE_MODEL_RECOMMENDED: 'gemini-3.1-flash-image-preview'
         };
 
         // UPDATED: Dynamic URL Builders based on selected model
@@ -2711,7 +2711,7 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             // Special handling for Imagen 4.0 which often uses :predict in some environments,
             // but we'll stick to the standard endpoint for now unless specific predict logic is needed.
             // If the user selects "Nano Banana Image Pro", it will pass that ID.
-            return `https://generativelanguage.googleapis.com/v1alpha/models/${model}:generateContent`;
+            return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
         };
 
         // ================================================================
