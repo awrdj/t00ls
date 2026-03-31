@@ -3510,11 +3510,11 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             
             // Use the currently selected Text model for the test
             let testModel = getModelFromUI(DOMElements.textModelSelect, DOMElements.textModelCustom);
-            if (testModel === CONSTANTS.FREE_TEXT_MODEL) {
+            /*if (testModel === CONSTANTS.FREE_TEXT_MODEL) {
                  // If testing key but strictly selected free model, try testing against the recommended paid one
                  // to see if the key is valid for paid usage.
                  testModel = CONSTANTS.PAID_TEXT_MODEL_RECOMMENDED;
-            }
+            }*/
 
             try { 
                 const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/${testModel}:generateContent?key=${apiKey}`; 
@@ -3532,7 +3532,7 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
                     
                     // NEW: Auto-Upgrade Logic on Successful Test
                     // Switch to Nano Banana Pro models automatically
-                    if (DOMElements.textModelSelect.value !== CONSTANTS.PAID_TEXT_MODEL_RECOMMENDED || 
+                    /* if (DOMElements.textModelSelect.value !== CONSTANTS.PAID_TEXT_MODEL_RECOMMENDED || 
                         DOMElements.imageModelSelect.value !== CONSTANTS.PAID_IMAGE_MODEL_RECOMMENDED) {
                         
                         DOMElements.textModelSelect.value = CONSTANTS.PAID_TEXT_MODEL_RECOMMENDED;
@@ -3544,7 +3544,7 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
                         
                         updateModelSettingsUI();
                         showToast('Test passed! Upgraded to Nano Banana Pro models.', 'success');
-                    }
+                    }*/
                     
                 } else { 
                     const error = await response.json(); 
