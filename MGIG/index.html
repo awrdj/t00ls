@@ -2289,12 +2289,20 @@
         // FIREBASE SETUP & APP STATE
         // ================================================================
 
-        // Initialize Firebase with environment configuration
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // Initialize Firebase with environment configuration (Graceful Fallback)
+        let app, auth, db;
+        let isFirebaseInitialized = false;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'local-app-id';
+
+        if (typeof __firebase_config !== 'undefined') {
+            const firebaseConfig = JSON.parse(__firebase_config);
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            isFirebaseInitialized = true;
+        } else {
+            console.warn("Running outside Canvas environment. Firebase is not configured. Falling back to local storage.");
+        }
 
         // STEP 5: UPDATE JAVASCRIPT - CONSTANTS (Original Prompts)
         const DEFAULT_PROMPTS = {
@@ -3036,8 +3044,18 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             // Save Design to User's Private Collection with COMPRESSION
             saveDesign: async (design) => {
                 if (!appState.user) {
-                    console.error('Cannot save design: Not authenticated');
-                    return false;
+                    // Local fallback for external hosting (e.g., GitHub pages)
+                    try {
+                        const localDesigns = JSON.parse(localStorage.getItem('local_designs') || '[]');
+                        localDesigns.unshift(design);
+                        // Keep only last 10 to avoid exceeding 5MB localStorage limit
+                        if (localDesigns.length > 10) localDesigns.pop();
+                        localStorage.setItem('local_designs', JSON.stringify(localDesigns));
+                        return true;
+                    } catch (e) {
+                        console.error('Local storage full', e);
+                        return false;
+                    }
                 }
                 
                 try {
@@ -3065,7 +3083,10 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
 
             // Load All Designs
             loadAllDesigns: async () => {
-                if (!appState.user) return [];
+                if (!appState.user) {
+                    // Local fallback for external hosting
+                    return JSON.parse(localStorage.getItem('local_designs') || '[]');
+                }
                 try {
                     const designsRef = collection(db, 'artifacts', appId, 'users', appState.user.uid, 'designs');
                     const snapshot = await getDocs(designsRef);
@@ -3080,7 +3101,13 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             },
             
             deleteDesign: async (id) => {
-                if (!appState.user) return;
+                if (!appState.user) {
+                    // Local fallback for external hosting
+                    let localDesigns = JSON.parse(localStorage.getItem('local_designs') || '[]');
+                    localDesigns = localDesigns.filter(d => d.id !== id);
+                    localStorage.setItem('local_designs', JSON.stringify(localDesigns));
+                    return;
+                }
                 const designRef = doc(db, 'artifacts', appId, 'users', appState.user.uid, 'designs', id);
                 await deleteDoc(designRef);
             }
@@ -4582,29 +4609,38 @@ Now clarify the user's instruction following ALL rules above!`; const enhancedPr
             // FIREBASE AUTH & INIT FLOW
             // ------------------------------------
             try {
-                // 1. Authenticate FIRST
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    // Use custom token if available (Prod env)
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    // Fallback to anonymous (Dev/Preview env)
-                    await signInAnonymously(auth);
-                }
-                
-                // 2. Set user listener
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        console.log('User authenticated:', user.uid);
-                        appState.user = user;
-                        // 3. Load Data
-                        await loadSettings(); // Updated to load full settings
-                        // STEP 9: LOAD PROMPTS ON INIT
-                        await loadCustomPrompts();
-                        await loadAndRenderDesigns();
+                if (isFirebaseInitialized) {
+                    // 1. Authenticate FIRST
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        // Use custom token if available (Prod env)
+                        await signInWithCustomToken(auth, __initial_auth_token);
                     } else {
-                        console.log('User signed out');
+                        // Fallback to anonymous (Dev/Preview env)
+                        await signInAnonymously(auth);
                     }
-                });
+                    
+                    // 2. Set user listener
+                    onAuthStateChanged(auth, async (user) => {
+                        if (user) {
+                            console.log('User authenticated:', user.uid);
+                            appState.user = user;
+                            // 3. Load Data
+                            await loadSettings(); // Updated to load full settings
+                            // STEP 9: LOAD PROMPTS ON INIT
+                            await loadCustomPrompts();
+                            await loadAndRenderDesigns();
+                        } else {
+                            console.log('User signed out');
+                        }
+                    });
+                } else {
+                    // Offline/External Hosting Fallback
+                    console.log('Running in local mode (no Firebase).');
+                    appState.user = null;
+                    await loadSettings();
+                    await loadCustomPrompts();
+                    await loadAndRenderDesigns();
+                }
                 
             } catch (error) {
                 console.error('Failed to initialize cloud database:', error);
