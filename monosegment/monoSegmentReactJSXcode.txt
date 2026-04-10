@@ -1,0 +1,2813 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { UploadCloud, Image as ImageIcon, Sliders, Play, Loader2, Download, Wand2, CheckCircle2, Layers, PenTool, Pencil, Eraser, X, Check, ZoomIn, ZoomOut, Maximize, Undo2, Redo2, Plus, Images, ChevronDown, RotateCcw, BoxSelect, Type, Upload, Eye, EyeOff } from 'lucide-react';
+
+// Lightweight Binary Parser to extract true DPI from PNG/JPEG headers
+const extractDPI = (dataUrl) => {
+  try {
+    const marker = dataUrl.split(',')[0];
+    const b64Part = dataUrl.split(',')[1].substring(0, 4000); 
+    const bstr = atob(b64Part);
+    
+    if (marker.includes('image/png')) {
+      let offset = 8;
+      while (offset < bstr.length - 12) {
+        const length = (bstr.charCodeAt(offset) << 24) | (bstr.charCodeAt(offset+1) << 16) | (bstr.charCodeAt(offset+2) << 8) | bstr.charCodeAt(offset+3);
+        const type = bstr.substring(offset+4, offset+8);
+        if (type === 'pHYs') {
+          const ppuX = (bstr.charCodeAt(offset+8) << 24) | (bstr.charCodeAt(offset+9) << 16) | (bstr.charCodeAt(offset+10) << 8) | bstr.charCodeAt(offset+11);
+          const unit = bstr.charCodeAt(offset+16);
+          if (unit === 1) return Math.round(ppuX * 0.0254); 
+        }
+        if (type === 'IDAT') break;
+        offset += 12 + length;
+      }
+    } else if (marker.includes('image/jpeg')) {
+      if (bstr.charCodeAt(0) === 0xFF && bstr.charCodeAt(1) === 0xD8) {
+        let offset = 2;
+        while (offset < bstr.length - 4) {
+          if (bstr.charCodeAt(offset) !== 0xFF) break;
+          const markerType = bstr.charCodeAt(offset+1);
+          if (markerType === 0xE0) { 
+            if (bstr.substring(offset+4, offset+8) === 'JFIF') {
+              const units = bstr.charCodeAt(offset+11);
+              const xDensity = (bstr.charCodeAt(offset+12) << 8) | bstr.charCodeAt(offset+13);
+              if (units === 1) return xDensity; 
+              if (units === 2) return Math.round(xDensity * 2.54); 
+            }
+          }
+          const length = (bstr.charCodeAt(offset+2) << 8) | bstr.charCodeAt(offset+3);
+          offset += 2 + length;
+        }
+      }
+    }
+  } catch (e) { 
+    console.error('DPI Extraction Error', e); 
+  }
+  return 72; 
+};
+
+// --- CORE VECTOR PATH BUILDER ---
+const buildPath2D = (path) => {
+  const p = new Path2D();
+  if (path.type === 'auto') {
+    p.moveTo(path.p1.x, path.p1.y);
+    if (path.cp1) p.bezierCurveTo(path.cp1.x, path.cp1.y, path.cp2.x, path.cp2.y, path.p2.x, path.p2.y);
+    else p.lineTo(path.p2.x, path.p2.y);
+  } else if (path.type === 'pen' && path.nodes && path.nodes.length > 0) {
+    p.moveTo(path.nodes[0].x, path.nodes[0].y);
+    for (let i = 1; i < path.nodes.length; i++) {
+      p.bezierCurveTo(path.nodes[i-1].handleOut.x, path.nodes[i-1].handleOut.y, path.nodes[i].handleIn.x, path.nodes[i].handleIn.y, path.nodes[i].x, path.nodes[i].y);
+    }
+  } else if (path.type === 'brush' && path.points && path.points.length > 0) {
+    p.moveTo(path.points[0].x, path.points[0].y);
+    if (path.points.length > 2 && path.smoothness > 0) {
+      for (let i = 2; i < path.points.length; i++) {
+        const p2 = path.points[i - 1];
+        const p3 = path.points[i];
+        const mid = { x: (p2.x + p3.x) / 2, y: (p2.y + p3.y) / 2 };
+        p.quadraticCurveTo(p2.x, p2.y, mid.x, mid.y);
+      }
+      p.lineTo(path.points[path.points.length - 1].x, path.points[path.points.length - 1].y);
+    } else {
+      for (let i = 1; i < path.points.length; i++) {
+        p.lineTo(path.points[i].x, path.points[i].y);
+      }
+    }
+  }
+  return p;
+};
+
+// --- RENDER ENGINE ---
+const renderAllPaths = (ctx, w, h, pathsToRender) => {
+  ctx.clearRect(0, 0, w, h);
+  pathsToRender.forEach(p => {
+    ctx.globalCompositeOperation = p.isEraser ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = p.color;
+    ctx.fillStyle = p.color;
+    ctx.lineWidth = p.thickness;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    const p2d = buildPath2D(p);
+    ctx.stroke(p2d);
+
+    if (p.type === 'brush' && p.points.length === 1) {
+       ctx.beginPath();
+       ctx.arc(p.points[0].x, p.points[0].y, p.thickness / 2, 0, Math.PI * 2);
+       ctx.fill();
+    }
+  });
+  ctx.globalCompositeOperation = 'source-over';
+};
+
+// --- LETTER PLACER ALGORITHM (Python Logic -> JS Native) ---
+const placeLetters = async (maskCanvas, imgObj, settings) => {
+  // Force font load explicitly to guarantee rendering before measuring
+  try {
+    const primaryFont = settings.font.split(',')[0].replace(/['"]/g, '').trim();
+    await document.fonts.load(`bold 20px "${primaryFont}"`);
+  } catch (err) { console.warn('Font load trigger failed'); }
+  await document.fonts.ready;
+
+  const { w, h } = imgObj;
+  const lettersCanvas = document.createElement('canvas');
+  lettersCanvas.width = w; lettersCanvas.height = h;
+  const ctxL = lettersCanvas.getContext('2d');
+
+  const combinedCanvas = document.createElement('canvas');
+  combinedCanvas.width = w; combinedCanvas.height = h;
+  const ctxC = combinedCanvas.getContext('2d', { willReadFrequently: true });
+  
+  const baseImg = new Image();
+  baseImg.src = imgObj.dataUrl;
+  await new Promise(r => { baseImg.onload = r; });
+  
+  ctxC.drawImage(baseImg, 0, 0);
+  const baseData = ctxC.getImageData(0, 0, w, h).data;
+  
+  // Read exact mask to prevent colored lines (like red) from breaking the flood fill
+  const maskData = maskCanvas.getContext('2d').getImageData(0, 0, w, h).data;
+  
+  const labels = new Int32Array(w * h);
+  const regions = [];
+  
+  // Flood Fill looking strictly for WHITE/EMPTY areas
+  let currentLabel = 1;
+  for (let y = 0; y < h; y += 2) { 
+      for (let x = 0; x < w; x += 2) {
+          const startIdx = y * w + x;
+          if (labels[startIdx] === 0) {
+              const r = baseData[startIdx * 4];
+              const g = baseData[startIdx * 4 + 1];
+              const b = baseData[startIdx * 4 + 2];
+              const a = baseData[startIdx * 4 + 3];
+
+              const isMaskWall = maskData[startIdx * 4 + 3] > 128;
+              const isBaseWall = (r < 200 && g < 200 && b < 200) || (a <= 128);
+
+              if (!isMaskWall && !isBaseWall) {
+                  const q = [startIdx];
+                  labels[startIdx] = currentLabel;
+                  let count = 0;
+                  let sumX = 0, sumY = 0;
+                  let touchesBorder = false;
+                  
+                  let head = 0;
+                  while(head < q.length) {
+                      const curr = q[head++];
+                      const cx = curr % w;
+                      const cy = Math.floor(curr / w);
+                      
+                      count++;
+                      sumX += cx; sumY += cy;
+                      
+                      if (cx <= 0 || cx >= w-1 || cy <= 0 || cy >= h-1) touchesBorder = true;
+                      
+                      const neighbors = [curr - 1, curr + 1, curr - w, curr + w];
+                      for(let i=0; i<4; i++) {
+                          const n = neighbors[i];
+                          if (n >= 0 && n < labels.length && labels[n] === 0) {
+                              const nr = baseData[n*4];
+                              const ng = baseData[n*4+1];
+                              const nb = baseData[n*4+2];
+                              const na = baseData[n*4+3];
+
+                              const nIsMaskWall = maskData[n*4 + 3] > 128;
+                              const nIsBaseWall = (nr < 200 && ng < 200 && nb < 200) || (na <= 128);
+
+                              if (!nIsMaskWall && !nIsBaseWall) {
+                                  labels[n] = currentLabel;
+                                  q.push(n);
+                              } else {
+                                  labels[n] = -1; // Wall
+                              }
+                          }
+                      }
+                  }
+                  
+                  if (!touchesBorder && count > 100) {
+                      regions.push({
+                          id: currentLabel,
+                          cx: sumX / count, // Center of Mass (Centroid)
+                          cy: sumY / count
+                      });
+                  }
+                  currentLabel++;
+              } else {
+                  labels[startIdx] = -1; // Wall
+              }
+          }
+      }
+  }
+
+  // Pre-calculate Spiral Nudge Offsets
+  const step = 3;
+  const maxNudge = 300;
+  const offsets = [];
+  for(let dy = -maxNudge; dy <= maxNudge; dy += step) {
+      for(let dx = -maxNudge; dx <= maxNudge; dx += step) {
+          offsets.push({ dx, dy, dist: dx*dx + dy*dy });
+      }
+  }
+  offsets.sort((a,b) => a.dist - b.dist);
+  
+  // Test Canvas for pixel-perfect letter measurement
+  const testCanvas = document.createElement('canvas');
+  const testCtx = testCanvas.getContext('2d', { willReadFrequently: true });
+  
+  const safetyPx = Number(settings.safetyPx) || 0;
+  let defaultLow = Number(settings.minSize) || 4;
+  let defaultHigh = Number(settings.maxSize) || 35;
+  if (defaultLow > defaultHigh) { const t = defaultLow; defaultLow = defaultHigh; defaultHigh = t; }
+
+  for(let r of regions) {
+      
+      // Abstracted the binary search to support Python's 2-Pass safety fallback
+      const tryFit = (margin) => {
+          let best = null;
+          let low = defaultLow, high = defaultHigh;
+          const padding = (margin * 2) + 10;
+          
+          while(low <= high) {
+              let mid = Math.floor((low+high)/2);
+              
+              testCtx.font = `bold ${mid}px ${settings.font}`;
+              testCtx.textBaseline = 'middle';
+              testCtx.textAlign = 'center';
+              const metrics = testCtx.measureText(settings.char);
+              
+              // Fallback for browsers that don't fully support actualBoundingBox
+              const bw = metrics.actualBoundingBoxRight ? (metrics.actualBoundingBoxRight + metrics.actualBoundingBoxLeft) : testCtx.measureText(settings.char).width;
+              const bh = metrics.actualBoundingBoxAscent ? (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent) : mid;
+              
+              const fontW = Math.ceil(bw + padding);
+              const fontH = Math.ceil(bh + padding);
+              
+              if (fontW <= 0 || fontH <= 0 || isNaN(fontW) || isNaN(fontH)) break;
+              
+              testCanvas.width = fontW; testCanvas.height = fontH;
+              testCtx.clearRect(0,0,fontW,fontH);
+              // Important: Re-assign font properties after width/height change clears them
+              testCtx.font = `bold ${mid}px ${settings.font}`;
+              testCtx.textBaseline = 'middle';
+              testCtx.textAlign = 'center';
+              
+              // Draw fat stroke for safety bounds
+              testCtx.lineJoin = 'round';
+              if (margin > 0) {
+                  testCtx.lineWidth = margin * 2;
+                  testCtx.strokeStyle = 'black';
+                  testCtx.strokeText(settings.char, fontW/2, fontH/2);
+              }
+              testCtx.fillStyle = 'black';
+              testCtx.fillText(settings.char, fontW/2, fontH/2);
+              
+              const lData = testCtx.getImageData(0,0,fontW,fontH).data;
+              const letterPixels = [];
+              
+              // Step by 1 to ensure tiny fonts aren't missed
+              for(let ly=0; ly<fontH; ly+=1) {
+                  for(let lx=0; lx<fontW; lx+=1) {
+                      const idx = (ly * fontW + lx) * 4;
+                      if (lData[idx+3] > 128) {
+                          letterPixels.push({ x: lx - Math.floor(fontW/2), y: ly - Math.floor(fontH/2) });
+                      }
+                  }
+              }
+              
+              let foundPos = null;
+              for(let o of offsets) {
+                  const testX = Math.round(r.cx + o.dx);
+                  const testY = Math.round(r.cy + o.dy);
+                  
+                  if (testX - Math.floor(fontW/2) < 0 || testX + Math.floor(fontW/2) >= w || testY - Math.floor(fontH/2) < 0 || testY + Math.floor(fontH/2) >= h) continue;
+
+                  let valid = true;
+                  for(let i=0; i<letterPixels.length; i++) {
+                      const px = testX + letterPixels[i].x;
+                      const py = testY + letterPixels[i].y;
+                      if (labels[py * w + px] !== r.id) {
+                          valid = false;
+                          break;
+                      }
+                  }
+                  if (valid) { foundPos = { x: testX, y: testY }; break; }
+              }
+              
+              if (foundPos) {
+                  best = { size: mid, x: foundPos.x, y: foundPos.y };
+                  low = mid + 1; // It fits! Push for a larger size.
+              } else {
+                  high = mid - 1; // Failed. Drop the size.
+              }
+          }
+          return best;
+      };
+
+      // PASS 1: Try requested safety margin
+      let bestFit = tryFit(safetyPx);
+      
+      // PASS 2 (Python Logic): If it fails, fallback to MIN_SAFETY_PX = 2
+      if (!bestFit && safetyPx > 2) {
+          bestFit = tryFit(2);
+      }
+      
+      // Stamp the absolute best fit
+      if (bestFit) {
+          ctxL.font = `bold ${bestFit.size}px ${settings.font}`;
+          ctxL.fillStyle = settings.color;
+          ctxL.textBaseline = 'middle';
+          ctxL.textAlign = 'center';
+          ctxL.fillText(settings.char, bestFit.x, bestFit.y);
+      }
+  }
+  
+  return lettersCanvas;
+};
+
+// --- CRC32 helper for PNG chunk integrity ---
+const crc32 = (data) => {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < data.length; i++) {
+    crc ^= data[i];
+    for (let j = 0; j < 8; j++) {
+      crc = (crc & 1) ? (0xEDB88320 ^ (crc >>> 1)) : (crc >>> 1);
+    }
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+};
+
+// --- Injects pHYs DPI metadata chunk into a PNG blob ---
+const injectPngDpi = async (blob, dpi) => {
+  const buffer = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  const ppm = Math.round(dpi / 0.0254);
+  const phys = new Uint8Array(21);
+  phys[0]=0; phys[1]=0; phys[2]=0; phys[3]=9;
+  phys[4]=112; phys[5]=72; phys[6]=89; phys[7]=115;
+  phys[8]=(ppm>>24)&255; phys[9]=(ppm>>16)&255; phys[10]=(ppm>>8)&255; phys[11]=ppm&255;
+  phys[12]=(ppm>>24)&255; phys[13]=(ppm>>16)&255; phys[14]=(ppm>>8)&255; phys[15]=ppm&255;
+  phys[16]=1;
+  const crcData = phys.slice(4, 17);
+  const crc = crc32(crcData);
+  phys[17]=(crc>>24)&255; phys[18]=(crc>>16)&255; phys[19]=(crc>>8)&255; phys[20]=crc&255;
+  const result = new Uint8Array(bytes.length + 21);
+  result.set(bytes.slice(0, 33), 0);
+  result.set(phys, 33);
+  result.set(bytes.slice(33), 54);
+  return new Blob([result], { type: 'image/png' });
+};
+
+export default function App() {
+  // Load standard Web Fonts & Comic Relief
+  useEffect(() => {
+    const p1 = document.createElement('link');
+    p1.rel = 'preconnect'; p1.href = 'https://fonts.googleapis.com';
+    const p2 = document.createElement('link');
+    p2.rel = 'preconnect'; p2.href = 'https://fonts.gstatic.com'; p2.crossOrigin = 'anonymous';
+    const l1 = document.createElement('link');
+    l1.href = 'https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&display=swap';
+    l1.rel = 'stylesheet';
+    const l2 = document.createElement('link');
+    l2.href = 'https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Roboto:wght@700&family=Montserrat:wght@700&family=Oswald:wght@700&family=Playfair+Display:wght@700&family=Lato:wght@700&family=Open+Sans:wght@700&display=swap';
+    l2.rel = 'stylesheet';
+    
+    document.head.appendChild(p1);
+    document.head.appendChild(p2);
+    document.head.appendChild(l1);
+    document.head.appendChild(l2);
+  }, []);
+
+  // --- Global Batch State ---
+  const [images, setImages] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(null);
+  
+  const [batchMode, setBatchMode] = useState('uniform'); // 'uniform' | 'adaptive'
+
+  const colorChangeTimeoutRef = useRef(null);
+  
+  const imagesRef = useRef([]);
+  useEffect(() => { imagesRef.current = images; }, [images]);
+
+  const activeIndexRef = useRef(activeIndex);
+  useEffect(() => { activeIndexRef.current = activeIndex; }, [activeIndex]);
+
+  const activeImg = images[activeIndex] || null;
+
+  const imageSize = { w: activeImg?.w || 800, h: activeImg?.h || 600 }; 
+  const imageDpi = activeImg?.dpi || 72;
+  const [workspaceSize, setWorkspaceSize] = useState({ w: 0, h: 0 });
+
+  // --- Algorithm Configuration State ---
+  const [minSpacing, setMinSpacing] = useState(100); 
+  const [maxCutLength, setMaxCutLength] = useState(200); 
+  const [minCutLength, setMinCutLength] = useState(50); 
+  const [lineThickness, setLineThickness] = useState(9); 
+  const [curveSmoothness, setCurveSmoothness] = useState(0.35); 
+  const [lineColor, setLineColor] = useState('#FF0000'); 
+  const [viewerBg, setViewerBg] = useState('transparent'); 
+  
+  const [hideLines, setHideLines] = useState(false);
+  const hideLinesRef = useRef(hideLines);
+  useEffect(() => { hideLinesRef.current = hideLines; }, [hideLines]);
+
+  const [lineBlendMode, setLineBlendMode] = useState('multiply');
+  const lineBlendModeRef = useRef(lineBlendMode);
+  useEffect(() => { lineBlendModeRef.current = lineBlendMode; }, [lineBlendMode]);
+
+  // --- Letter Placer State ---
+  const [letterSettings, setLetterSettings] = useState({
+    enabled: false,
+    char: 'X',
+    font: '"Comic Relief", cursive',
+    color: '#000000',
+    minSize: 4,
+    maxSize: 35,
+    safetyPx: 15
+  });
+
+  const letterSettingsRef = useRef(letterSettings);
+  useEffect(() => { letterSettingsRef.current = letterSettings; }, [letterSettings]);
+
+  // --- SVG Auto-Fitter Settings ---
+  const [svgCanvasSize, setSvgCanvasSize] = useState('2465x3300');
+  const [svgCustomW, setSvgCustomW] = useState(2465);
+  const [svgCustomH, setSvgCustomH] = useState(3300);
+  const [svgScaleMode, setSvgScaleMode] = useState('stretch');
+  const [svgStrokeWidth, setSvgStrokeWidth] = useState(9);
+
+  const [defaultSettings, setDefaultSettings] = useState({
+    minSpacing: 100, maxCutLength: 200, minCutLength: 50,
+    lineThickness: 9, curveSmoothness: 0.35, lineColor: '#FF0000', viewerBg: 'transparent', hideLines: false, lineBlendMode: 'multiply',
+    svgCanvasSize: '2465x3300', svgCustomW: 2465, svgCustomH: 3300, svgScaleMode: 'stretch', svgStrokeWidth: 9
+  });
+
+  // --- View & Zoom/Pan State ---
+  const [showProcessed, setShowProcessed] = useState(true);
+  const [zoom, setZoom] = useState(1);
+  const [minZoom, setMinZoom] = useState(0.1);
+  const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
+  
+  const workspaceRef = useRef(null);
+  const panStart = useRef({ x: 0, y: 0, sl: 0, st: 0 });
+
+  // --- Manual Editing State ---
+  const [viewerMode, setViewerMode] = useState('preview'); 
+  const [editTool, setEditTool] = useState('pen'); 
+  const [eraserSize, setEraserSize] = useState(50); 
+  const [eraserMode, setEraserMode] = useState('magic'); 
+  const [freehandSmoothness, setFreehandSmoothness] = useState(100); 
+
+  const [isDrawing, setIsDrawing] = useState(false);
+  const drawPoints = useRef([]); 
+  const lastDrawnPos = useRef(null); 
+  const isMagicErasing = useRef(false); 
+  
+  const [penNodes, setPenNodes] = useState([]);
+  const [previewPos, setPreviewPos] = useState(null);
+  const isDraggingHandle = useRef(false); 
+
+  const historyRef = useRef([[]]);
+  const historyIndexRef = useRef(0);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  const editCanvasRef = useRef(null);
+  const overlayCanvasRef = useRef(null); 
+
+  useEffect(() => {
+    return () => {
+      imagesRef.current.forEach(img => {
+        if (img.resultImage) URL.revokeObjectURL(img.resultImage);
+        if (img.resultMaskURL) URL.revokeObjectURL(img.resultMaskURL);
+        if (img.resultLettersURL) URL.revokeObjectURL(img.resultLettersURL);
+      });
+    };
+  }, []);
+
+  useEffect(() => {
+    const el = workspaceRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(entries => {
+      for (let entry of entries) {
+         setWorkspaceSize({ w: entry.contentRect.width, h: entry.contentRect.height });
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (activeImg) {
+      historyRef.current = activeImg.history || [[]];
+      historyIndexRef.current = activeImg.historyIndex || 0;
+      setCanUndo(historyIndexRef.current > 0);
+      setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+      calculateInitialZoom(activeImg.w, activeImg.h);
+      setViewerMode('preview');
+      setPenNodes([]);
+
+      // Bind the sliders dynamically to the active image if it has unique parameters stored
+      if (activeImg.params) {
+         setLineThickness(activeImg.params.thick);
+         setMinCutLength(activeImg.params.minCut);
+         setMaxCutLength(activeImg.params.maxCut);
+         setMinSpacing(activeImg.params.spacing);
+         setCurveSmoothness(activeImg.params.smoothness);
+      }
+
+      // Smoothly scroll the filmstrip to keep the active thumbnail in view
+      setTimeout(() => {
+        const thumbEl = document.getElementById(`thumb-${activeIndex}`);
+        if (thumbEl) thumbEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }, 50);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIndex]);
+
+  useEffect(() => {
+    if (viewerMode === 'edit' && editCanvasRef.current && activeImg) {
+      const ctx = editCanvasRef.current.getContext('2d');
+      renderAllPaths(ctx, activeImg.w, activeImg.h, activeImg.paths);
+    }
+  }, [activeImg?.paths, viewerMode, activeImg?.w, activeImg?.h]);
+
+  const calculateInitialZoom = (w, h) => {
+    if (!workspaceRef.current) return;
+    const margin = 60; 
+    const scaleX = (workspaceRef.current.clientWidth - margin) / w;
+    const scaleY = (workspaceRef.current.clientHeight - margin) / h;
+    let initialScale = Math.min(scaleX, scaleY);
+    
+    const baseMinZoom = initialScale > 1 ? 1 : initialScale;
+    setMinZoom(baseMinZoom);
+    setZoom(baseMinZoom);
+  };
+
+  const handleZoomIn = () => setZoom(prev => Math.min(prev * 1.25, 5)); 
+  const handleZoomOut = () => setZoom(prev => Math.max(prev / 1.25, minZoom));
+  const handleFitScreen = () => calculateInitialZoom(imageSize.w, imageSize.h);
+
+  useEffect(() => {
+    const container = workspaceRef.current;
+    if (!container) return;
+
+    const handleWheel = (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        
+        const zoomSensitivity = 0.005;
+        const delta = -e.deltaY * zoomSensitivity;
+        
+        let newZoom = zoom + delta;
+        newZoom = Math.min(Math.max(minZoom, newZoom), 5);
+
+        if (newZoom === zoom) return;
+
+        const rect = container.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        const margin = 60;
+        const oldWidth = Math.max(workspaceSize.w, imageSize.w * zoom + margin);
+        const oldHeight = Math.max(workspaceSize.h, imageSize.h * zoom + margin);
+        
+        const imagePointX = (container.scrollLeft + mouseX) - (oldWidth / 2);
+        const imagePointY = (container.scrollTop + mouseY) - (oldHeight / 2);
+        
+        const ratio = newZoom / zoom;
+        const newImagePointX = imagePointX * ratio;
+        const newImagePointY = imagePointY * ratio;
+        
+        const newWidth = Math.max(workspaceSize.w, imageSize.w * newZoom + margin);
+        const newHeight = Math.max(workspaceSize.h, imageSize.h * newZoom + margin);
+
+        const newScrollLeft = newImagePointX + (newWidth / 2) - mouseX;
+        const newScrollTop = newImagePointY + (newHeight / 2) - mouseY;
+
+        setZoom(newZoom);
+        
+        requestAnimationFrame(() => {
+          if (workspaceRef.current) {
+            workspaceRef.current.scrollLeft = newScrollLeft;
+            workspaceRef.current.scrollTop = newScrollTop;
+          }
+        });
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [zoom, minZoom, imageSize, workspaceSize]); 
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const isInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT';
+
+      if (viewerMode === 'edit') {
+        const ctrlOrCmd = e.ctrlKey || e.metaKey;
+
+        if (ctrlOrCmd && e.key.toLowerCase() === 'z') {
+          e.preventDefault();
+          if (e.shiftKey) handleRedo();
+          else handleUndo();
+          return;
+        } else if (ctrlOrCmd && e.key.toLowerCase() === 'y') {
+          e.preventDefault();
+          handleRedo();
+          return;
+        }
+
+        if (ctrlOrCmd && e.key === 'Enter') {
+          e.preventDefault();
+          document.getElementById('apply-btn')?.click();
+          return;
+        }
+
+        if (!isInput && !ctrlOrCmd && (e.key === 'Escape')) {
+          e.preventDefault();
+          setPenNodes([]);
+          setPreviewPos(null);
+          setViewerMode('preview');
+          return;
+        }
+        if (!isInput && !ctrlOrCmd && (e.key === 'Enter')) {
+          if (editTool === 'pen') {
+            e.preventDefault();
+            document.getElementById('finish-path-btn')?.click();
+          }
+          return;
+        }
+        if (!isInput && !ctrlOrCmd) {
+          if (e.key.toLowerCase() === 'b') {
+            e.preventDefault();
+            setEditTool('brush');
+            setPenNodes([]);
+            setPreviewPos(null);
+            return;
+          }
+          if (e.key.toLowerCase() === 'e') {
+            e.preventDefault();
+            setEditTool('erase');
+            setPenNodes([]);
+            setPreviewPos(null);
+            return;
+          }
+          if (e.key.toLowerCase() === 'p') {
+            e.preventDefault();
+            setEditTool('pen');
+            setPenNodes([]);
+            setPreviewPos(null);
+            return;
+          }
+        }
+
+      }
+
+      if (!isInput && e.key.toLowerCase() === 'r' && viewerMode !== 'edit' && imagesRef.current.length > 0 && activeIndexRef.current >= 0) {
+        e.preventDefault();
+        setViewerMode('edit');
+        return;
+      }
+
+      if (e.code === 'Space' && !isInput) {
+        e.preventDefault(); 
+        setIsSpacePressed(true);
+      }
+
+      // --- Filmstrip Arrow Key Navigation ---
+      if (!isInput && imagesRef.current.length > 1) {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          const currentIdx = activeIndexRef.current;
+          if (currentIdx > 0) {
+            if (viewerMode === 'edit') setViewerMode('preview');
+            setActiveIndex(currentIdx - 1);
+          }
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          const currentIdx = activeIndexRef.current;
+          if (currentIdx < imagesRef.current.length - 1) {
+            if (viewerMode === 'edit') setViewerMode('preview');
+            setActiveIndex(currentIdx + 1);
+          }
+        }
+      }
+    };
+    
+    const handleKeyUp = (e) => {
+      if (e.code === 'Space') {
+        setIsSpacePressed(false);
+        setIsPanning(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    }
+  }, [viewerMode, editTool]);
+
+  useEffect(() => {
+    const handleGlobalMouseMove = (e) => {
+      if (isPanning) {
+         const dx = e.clientX - panStart.current.x;
+         const dy = e.clientY - panStart.current.y;
+         if (workspaceRef.current) {
+           workspaceRef.current.scrollLeft = panStart.current.sl - dx;
+           workspaceRef.current.scrollTop = panStart.current.st - dy;
+         }
+      }
+    };
+    const handleGlobalMouseUp = () => {
+      if (isPanning) setIsPanning(false);
+    };
+
+    if (isPanning) {
+      window.addEventListener('mousemove', handleGlobalMouseMove);
+      window.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isPanning]);
+
+  const handleWorkspaceMouseDown = (e) => {
+    if (e.button === 1 || (e.button === 0 && isSpacePressed)) {
+      e.preventDefault();
+      setIsPanning(true);
+      panStart.current = { 
+        x: e.clientX, 
+        y: e.clientY, 
+        sl: workspaceRef.current.scrollLeft, 
+        st: workspaceRef.current.scrollTop 
+      };
+    }
+  };
+
+  const updateActiveImage = (updates) => {
+    setImages(prev => {
+      const newImgs = [...prev];
+      const idx = activeIndexRef.current;
+      if (idx >= 0 && idx < newImgs.length) {
+        newImgs[idx] = { ...newImgs[idx], ...updates };
+      }
+      return newImgs;
+    });
+  };
+
+  const updateHistoryState = () => {
+    setCanUndo(historyIndexRef.current > 0);
+    setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+  };
+
+  const updatePathsAndHistory = (newPaths) => {
+    const newHistory = historyRef.current.slice(0, historyIndexRef.current + 1);
+    newHistory.push(newPaths);
+    
+    if (newHistory.length > 50) newHistory.shift();
+    
+    historyRef.current = newHistory;
+    historyIndexRef.current = newHistory.length - 1;
+    updateActiveImage({ paths: newPaths, history: newHistory, historyIndex: historyIndexRef.current });
+    updateHistoryState();
+  };
+
+  // Helper to sync UI sliders to the current image's parameters instantly
+  const updateActiveParams = (key, val) => {
+    if (key === 'thick') setLineThickness(val);
+    if (key === 'minCut') setMinCutLength(val);
+    if (key === 'maxCut') setMaxCutLength(val);
+    if (key === 'spacing') setMinSpacing(val);
+    if (key === 'smoothness') setCurveSmoothness(val);
+
+    if (activeImg && activeImg.params) {
+        updateActiveImage({
+            params: { ...activeImg.params, [key]: val }
+        });
+    }
+  };
+
+  const handleUndo = () => {
+    if (historyIndexRef.current > 0) {
+      historyIndexRef.current -= 1;
+      const revertedPaths = historyRef.current[historyIndexRef.current];
+      updateActiveImage({ paths: revertedPaths, historyIndex: historyIndexRef.current });
+      updateHistoryState();
+      setPenNodes([]); 
+      setPreviewPos(null);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndexRef.current < historyRef.current.length - 1) {
+      historyIndexRef.current += 1;
+      const forwardedPaths = historyRef.current[historyIndexRef.current];
+      updateActiveImage({ paths: forwardedPaths, historyIndex: historyIndexRef.current });
+      updateHistoryState();
+      setPenNodes([]); 
+      setPreviewPos(null);
+    }
+  };
+
+  // --- Custom Font Uploader ---
+  const handleCustomFontUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      const fontName = 'CustomFont_' + Date.now();
+      const buffer = await file.arrayBuffer();
+      const font = new FontFace(fontName, buffer);
+      await font.load();
+      document.fonts.add(font);
+      handleLetterSettingChange('font', `"${fontName}"`);
+    } catch (err) {
+      console.error("Failed to load custom font", err);
+      alert("Failed to load font file.");
+    }
+    e.target.value = '';
+  };
+
+  // --- Helper: Generate Blobs from Image Object (Including Letter Placing Pipeline) ---
+  const regenerateBlobsForImage = async (imgObj, pathsOverride) => {
+    const pathsToUse = pathsOverride || imgObj.paths;
+    const currentLS = letterSettingsRef.current;
+    const w = imgObj.w; const h = imgObj.h;
+    
+    const img = new Image();
+    img.src = imgObj.dataUrl;
+    await new Promise(r => { img.onload = r; });
+
+    // Build the Topo Mask
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = w; maskCanvas.height = h;
+    const masterCtx = maskCanvas.getContext('2d');
+    
+    renderAllPaths(masterCtx, w, h, pathsToUse);
+    masterCtx.globalCompositeOperation = 'destination-in';
+    masterCtx.drawImage(img, 0, 0);
+
+    // Build the Full Art Base
+    const fullCanvas = document.createElement('canvas');
+    fullCanvas.width = w; fullCanvas.height = h;
+    const fCtx = fullCanvas.getContext('2d');
+    fCtx.drawImage(img, 0, 0);
+    
+    // Apply lines ONLY if hideLines is toggled off
+    if (!hideLinesRef.current) {
+        fCtx.globalCompositeOperation = lineBlendModeRef.current === 'multiply' ? 'multiply' : 'source-atop';
+        fCtx.drawImage(maskCanvas, 0, 0);
+        
+        // If we used multiply, we must clip off any line overflow from transparent background areas
+        if (lineBlendModeRef.current === 'multiply') {
+            fCtx.globalCompositeOperation = 'destination-in';
+            fCtx.drawImage(img, 0, 0);
+        }
+    }
+
+    let lettersUrl = null;
+
+    // STEP 2: Execute Letter Placer if Enabled
+    if (currentLS.enabled) {
+        const lettersCanvas = await placeLetters(maskCanvas, imgObj, currentLS);
+        
+        fCtx.globalCompositeOperation = 'source-over';
+        fCtx.drawImage(lettersCanvas, 0, 0);
+        
+        const lettersBlob = await injectPngDpi(await new Promise(res => lettersCanvas.toBlob(res, 'image/png')), imgObj.dpi || 300);
+        lettersUrl = URL.createObjectURL(lettersBlob);
+    }
+
+    const fullBlob = await injectPngDpi(await new Promise(res => fullCanvas.toBlob(res, 'image/png')), imgObj.dpi || 300);
+    const maskBlob = await injectPngDpi(await new Promise(res => maskCanvas.toBlob(res, 'image/png')), imgObj.dpi || 300);
+
+    const oldImage = imgObj.resultImage;
+    const oldMask = imgObj.resultMaskURL;
+    const oldLetters = imgObj.resultLettersURL;
+
+    // Defer revocation so React has time to render the new blob URLs without flashing a broken image
+    setTimeout(() => {
+        if (oldImage) URL.revokeObjectURL(oldImage);
+        if (oldMask) URL.revokeObjectURL(oldMask);
+        if (oldLetters) URL.revokeObjectURL(oldLetters);
+    }, 2000);
+
+    return {
+        resultImage: URL.createObjectURL(fullBlob),
+        resultMaskURL: URL.createObjectURL(maskBlob),
+        resultLettersURL: lettersUrl
+    };
+  };
+
+  // --- Trigger Global Retooling on Letter Setting Change ---
+  const handleLetterSettingChange = (key, value) => {
+    setLetterSettings(prev => ({ ...prev, [key]: value }));
+    
+    if (colorChangeTimeoutRef.current) clearTimeout(colorChangeTimeoutRef.current);
+    colorChangeTimeoutRef.current = setTimeout(async () => {
+        setIsProcessing(true);
+        const currentImgs = imagesRef.current; 
+        for (let i = 0; i < currentImgs.length; i++) {
+            const imgObj = currentImgs[i];
+            if (imgObj && imgObj.resultImage) {
+                const newBlobs = await regenerateBlobsForImage(imgObj, imgObj.paths);
+                // Safe functional state update to prevent stale data overwrites
+                setImages(prev => prev.map((img, idx) => idx === i ? { ...img, ...newBlobs } : img));
+            }
+        }
+        setIsProcessing(false);
+    }, 600); // Debounce to allow user to finish typing/sliding
+  };
+
+  const handleLineColorChange = (newColor) => {
+    setLineColor(newColor);
+    if (!/^#[0-9A-Fa-f]{6}$/i.test(newColor)) return;
+    if (imagesRef.current.length === 0) return;
+
+    // 1. Synchronously update vector paths in state for instant raw data tracking, and update the params color
+    setImages(prev => prev.map((img) => {
+        if (!img.paths || img.paths.length === 0) return img;
+        return {
+            ...img,
+            params: { ...img.params, color: newColor },
+            paths: img.paths.map(p => ({ ...p, color: p.isEraser ? null : newColor })),
+            history: img.history.map(h => h.map(p => ({ ...p, color: p.isEraser ? null : newColor })))
+        };
+    }));
+
+    const activeIdx = activeIndexRef.current;
+    if (activeIdx >= 0 && imagesRef.current[activeIdx] && imagesRef.current[activeIdx].paths) {
+        historyRef.current = imagesRef.current[activeIdx].history.map(h => h.map(p => ({ ...p, color: p.isEraser ? null : newColor })));
+    }
+
+    // 2. Debounce rasterization to eliminate race conditions and browser freezing
+    if (colorChangeTimeoutRef.current) clearTimeout(colorChangeTimeoutRef.current);
+    colorChangeTimeoutRef.current = setTimeout(async () => {
+        const nextImages = [...imagesRef.current]; 
+        let bgUpdated = false;
+        
+        // Prioritize actively viewed image
+        if (activeIdx >= 0 && nextImages[activeIdx] && nextImages[activeIdx].resultImage) {
+            const imgObj = nextImages[activeIdx];
+            const recoloredPaths = imgObj.paths.map(p => ({ ...p, color: p.isEraser ? null : newColor }));
+            const newBlobs = await regenerateBlobsForImage(imgObj, recoloredPaths);
+            
+            setImages(prev => prev.map((img, idx) => idx === activeIdx ? { ...img, ...newBlobs } : img));
+        }
+
+        // Process the rest of the batch silently in background
+        for (let i = 0; i < nextImages.length; i++) {
+            if (i === activeIdx) continue; 
+            const imgObj = nextImages[i];
+            if (imgObj && imgObj.resultImage) {
+                const recoloredPaths = imgObj.paths.map(p => ({ ...p, color: p.isEraser ? null : newColor }));
+                const newBlobs = await regenerateBlobsForImage(imgObj, recoloredPaths);
+                setImages(prev => prev.map((img, idx) => idx === i ? { ...img, ...newBlobs } : img));
+                bgUpdated = true;
+            }
+        }
+    }, 150); 
+  };
+
+  const handleBlendModeChange = (mode) => {
+    setLineBlendMode(mode);
+    lineBlendModeRef.current = mode;
+    
+    if (colorChangeTimeoutRef.current) clearTimeout(colorChangeTimeoutRef.current);
+    colorChangeTimeoutRef.current = setTimeout(async () => {
+        setIsProcessing(true);
+        const currentImgs = imagesRef.current; 
+        const activeIdx = activeIndexRef.current;
+        
+        if (activeIdx >= 0 && currentImgs[activeIdx] && currentImgs[activeIdx].resultImage) {
+            const imgObj = currentImgs[activeIdx];
+            const newBlobs = await regenerateBlobsForImage(imgObj, imgObj.paths);
+            setImages(prev => prev.map((img, idx) => idx === activeIdx ? { ...img, ...newBlobs } : img));
+        }
+
+        for (let i = 0; i < currentImgs.length; i++) {
+            if (i === activeIdx) continue; 
+            const imgObj = currentImgs[i];
+            if (imgObj && imgObj.resultImage) {
+                const newBlobs = await regenerateBlobsForImage(imgObj, imgObj.paths);
+                setImages(prev => prev.map((img, idx) => idx === i ? { ...img, ...newBlobs } : img));
+            }
+        }
+        setIsProcessing(false);
+    }, 150);
+  };
+
+  const toggleHideLines = () => {
+    const newVal = !hideLines;
+    setHideLines(newVal);
+    hideLinesRef.current = newVal; 
+    
+    if (colorChangeTimeoutRef.current) clearTimeout(colorChangeTimeoutRef.current);
+    colorChangeTimeoutRef.current = setTimeout(async () => {
+        setIsProcessing(true);
+        const currentImgs = imagesRef.current; 
+        for (let i = 0; i < currentImgs.length; i++) {
+            const imgObj = currentImgs[i];
+            if (imgObj && imgObj.resultImage) {
+                const newBlobs = await regenerateBlobsForImage(imgObj, imgObj.paths);
+                setImages(prev => prev.map((img, idx) => idx === i ? { ...img, ...newBlobs } : img));
+            }
+        }
+        setIsProcessing(false);
+    }, 150);
+  };
+
+  // --- Handlers: File Upload & Multi-Image Mgmt ---
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files).filter(f => f.type.startsWith('image/'));
+    if (files.length > 0) processFiles(files);
+    event.target.value = ''; 
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    const files = Array.from(event.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length > 0) processFiles(files);
+  };
+
+  const processFiles = async (files) => {
+    setIsProcessing(true);
+    const newImages = [];
+    
+    for (let file of files) {
+        let dataUrl;
+        let dpi = 72;
+        let imgW, imgH;
+
+        if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+            try {
+                const text = await file.text();
+                const parser = new DOMParser();
+                const svgDoc = parser.parseFromString(text, "image/svg+xml");
+                const svgEl = svgDoc.documentElement;
+
+                const targetW = svgCanvasSize === 'custom' ? (Number(svgCustomW) || 2465) : parseInt(svgCanvasSize.split('x')[0], 10);
+                const targetH = svgCanvasSize === 'custom' ? (Number(svgCustomH) || 3300) : parseInt(svgCanvasSize.split('x')[1], 10);
+
+                svgEl.setAttribute('width', targetW + 'px');
+                svgEl.setAttribute('height', targetH + 'px');
+
+                if (svgScaleMode === 'stretch') {
+                    svgEl.setAttribute('preserveAspectRatio', 'none');
+                } else {
+                    svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                }
+
+                const allElements = svgEl.querySelectorAll('*');
+                allElements.forEach(el => {
+                   if (el.tagName && el.tagName.toLowerCase() !== 'style') {
+                       el.removeAttribute('fill');
+                       el.removeAttribute('stroke');
+                       el.removeAttribute('stroke-width');
+                       el.removeAttribute('style'); 
+                   }
+                });
+
+                const styleFill = svgDoc.createElementNS('http://www.w3.org/2000/svg', 'style');
+                styleFill.textContent = `
+                  path, rect, circle, ellipse, polygon, polyline, line, text, tspan, use {
+                    fill: #FFFFFF !important;
+                    stroke: none !important;
+                  }
+                `;
+                svgEl.appendChild(styleFill);
+                const serializedFill = new XMLSerializer().serializeToString(svgEl);
+                const svgUrlFill = URL.createObjectURL(new Blob([serializedFill], {type: 'image/svg+xml;charset=utf-8'}));
+                svgEl.removeChild(styleFill);
+
+                const parsedSvgStroke = Number(svgStrokeWidth) || 0;
+                const styleStroke = svgDoc.createElementNS('http://www.w3.org/2000/svg', 'style');
+                styleStroke.textContent = `
+                  path, rect, circle, ellipse, polygon, polyline, line, text, tspan, use {
+                    fill: none !important;
+                    stroke: #000000 !important;
+                    stroke-width: ${parsedSvgStroke * 2}px !important;
+                    stroke-linejoin: round !important;
+                    stroke-linecap: round !important;
+                    vector-effect: non-scaling-stroke !important;
+                  }
+                `;
+                svgEl.appendChild(styleStroke);
+                const serializedStroke = new XMLSerializer().serializeToString(svgEl);
+                const svgUrlStroke = URL.createObjectURL(new Blob([serializedStroke], {type: 'image/svg+xml;charset=utf-8'}));
+
+                const imgFill = new Image();
+                imgFill.src = svgUrlFill;
+                await new Promise((r, reject) => { imgFill.onload = r; imgFill.onerror = reject; });
+
+                const imgStroke = new Image();
+                imgStroke.src = svgUrlStroke;
+                await new Promise((r, reject) => { imgStroke.onload = r; imgStroke.onerror = reject; });
+
+                const canvas = document.createElement('canvas');
+                canvas.width = targetW; canvas.height = targetH;
+                const ctx = canvas.getContext('2d');
+                
+                ctx.drawImage(imgFill, 0, 0, targetW, targetH);
+
+                const canvasStroke = document.createElement('canvas');
+                canvasStroke.width = targetW; canvasStroke.height = targetH;
+                const ctxStroke = canvasStroke.getContext('2d');
+                
+                ctxStroke.drawImage(imgStroke, 0, 0, targetW, targetH); 
+                ctxStroke.globalCompositeOperation = 'destination-in';
+                ctxStroke.drawImage(imgFill, 0, 0, targetW, targetH); 
+
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.drawImage(canvasStroke, 0, 0, targetW, targetH);
+
+                dataUrl = canvas.toDataURL('image/png');
+                dpi = 300; 
+                imgW = targetW;
+                imgH = targetH;
+
+                URL.revokeObjectURL(svgUrlFill);
+                URL.revokeObjectURL(svgUrlStroke);
+            } catch (err) {
+                console.error("SVG Vector Formatting failed:", err);
+                continue; 
+            }
+        } else {
+            dataUrl = await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.readAsDataURL(file);
+            });
+            dpi = extractDPI(dataUrl);
+            
+            const img = new Image();
+            img.src = dataUrl;
+            await new Promise(r => { img.onload = r; });
+            imgW = img.width;
+            imgH = img.height;
+        }
+
+        newImages.push({
+            id: crypto.randomUUID(),
+            name: file.name,
+            dataUrl,
+            dpi,
+            w: imgW,
+            h: imgH,
+            resultImage: null,
+            resultMaskURL: null,
+            resultLettersURL: null,
+            paths: [],
+            params: { thick: lineThickness, minCut: minCutLength, maxCut: maxCutLength, spacing: minSpacing, smoothness: curveSmoothness, color: lineColor },
+            history: [[]],
+            historyIndex: 0,
+            autoStats: null
+        });
+    }
+    
+    let isFirstBatch = false;
+    setImages(prev => {
+        isFirstBatch = prev.length === 0;
+        const nextState = [...prev, ...newImages];
+        return nextState;
+    });
+
+    if (activeIndexRef.current === -1) {
+        setActiveIndex(0);
+    }
+    
+    setTimeout(() => autoProcessBatch(newImages, isFirstBatch), 100);
+  };
+
+  const deleteImage = (index) => {
+    setImages(prev => {
+        const newImgs = [...prev];
+        const removed = newImgs.splice(index, 1)[0];
+        
+        if (removed.resultImage) URL.revokeObjectURL(removed.resultImage);
+        if (removed.resultMaskURL) URL.revokeObjectURL(removed.resultMaskURL);
+        if (removed.resultLettersURL) URL.revokeObjectURL(removed.resultLettersURL);
+        
+        setActiveIndex(currIdx => {
+           if (newImgs.length === 0) return -1;
+           if (currIdx === index) return Math.min(index, newImgs.length - 1);
+           if (currIdx > index) return currIdx - 1;
+           return currIdx;
+        });
+        
+        return newImgs;
+    });
+  };
+
+  // Helper logic extracted for scanning a single image's optimal parameters
+  const calibrateImage = async (imgObj) => {
+    const img = new Image();
+    img.src = imgObj.dataUrl;
+    await new Promise((r) => { img.onload = r; });
+    const w = img.width; const h = img.height;
+    const maxDimension = Math.max(w, h);
+    const calcMinCut = 50; 
+    const calcMaxCut = Math.round(maxDimension * 0.25); 
+    const calcSpacing = 100; 
+
+    return { thick: 9, minCut: calcMinCut, maxCut: calcMaxCut, spacing: calcSpacing, smoothness: curveSmoothness, color: lineColor };
+  };
+
+  // --- 🧠 TOPOLOGICALLY AWARE PROCESSING CORE ---
+  const runAwareSegmenterCore = async (imgObj, params) => {
+    const startTime = performance.now();
+    await new Promise(resolve => setTimeout(resolve, 50)); 
+
+    const thick = Number(params.thick) || 1;
+    const minCut = Number(params.minCut) || 50;
+    const maxCut = Number(params.maxCut) || 200;
+    const spacing = Number(params.spacing) || 100;
+    const smoothness = Number(params.smoothness) || 0;
+    const color = params.color || '#000000';
+    
+    const w = imgObj.w; 
+    const h = imgObj.h;
+    
+    const img = new Image();
+    img.src = imgObj.dataUrl;
+    await new Promise((resolve) => { img.onload = resolve; });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = w; maskCanvas.height = h;
+    const maskCtx = maskCanvas.getContext('2d');
+
+    const data = ctx.getImageData(0, 0, w, h).data;
+
+    const isWall = (x, y) => {
+      x = Math.floor(x); y = Math.floor(y);
+      if (x < 0 || x >= w || y < 0 || y >= h) return true;
+      const idx = (y * w + x) * 4;
+      if (data[idx + 3] < 128) return true; 
+      const brightness = (data[idx] + data[idx+1] + data[idx+2]) / 3;
+      return brightness < 200; 
+    };
+
+    const castRay = (cx, cy, dx, dy, maxDist) => {
+      let x = cx; let y = cy;
+      for (let i = 0; i < maxDist; i++) {
+        if (isWall(x, y)) return { dist: i, p: { x: Math.floor(x), y: Math.floor(y) } };
+        x += dx; y += dy;
+      }
+      return { dist: maxDist, p: null };
+    };
+
+    const getInwardNormal = (x, y, originX, originY) => {
+      let nx = 0, ny = 0; const radius = 4;
+      for(let oy = -radius; oy <= radius; oy++) {
+          for(let ox = -radius; ox <= radius; ox++) {
+              if(ox === 0 && oy === 0) continue;
+              if(isWall(x + ox, y + oy)) { nx -= ox; ny -= oy; }
+          }
+      }
+      const mag = Math.hypot(nx, ny);
+      if (mag > 0.1) {
+          nx /= mag; ny /= mag;
+          const dirX = originX - x, dirY = originY - y;
+          if (nx * dirX + ny * dirY < 0) { nx = -nx; ny = -ny; }
+          return {x: nx, y: ny};
+      }
+      const dirX = originX - x, dirY = originY - y;
+      const dMag = Math.hypot(dirX, dirY);
+      if(dMag === 0) return {x:0, y:0};
+      return {x: dirX/dMag, y: dirY/dMag};
+    };
+
+    const getShortestChord = (cx, cy) => {
+      let bestP1 = null, bestP2 = null;
+      let shortestDist = Infinity;
+      let bestAngle = 0;
+      for (let angle = 0; angle < 180; angle += 10) {
+        const rad = (angle * Math.PI) / 180;
+        const dx = Math.cos(rad), dy = Math.sin(rad);
+
+        const r1 = castRay(cx, cy, dx, dy, maxCut);
+        const r2 = castRay(cx, cy, -dx, -dy, maxCut);
+
+        if (r1.p && r2.p && r1.dist < maxCut && r2.dist < maxCut) {
+          const totalDist = r1.dist + r2.dist;
+          if (totalDist < shortestDist) {
+            shortestDist = totalDist;
+            bestP1 = r1.p; bestP2 = r2.p;
+            bestAngle = angle;
+          }
+        }
+      }
+      return { dist: shortestDist, p1: bestP1, p2: bestP2, angle: bestAngle };
+    };
+
+    const candidates = [];
+    const gridStep = Math.max(5, Math.floor(spacing / 3));
+
+    for (let y = gridStep; y < h; y += gridStep) {
+      for (let x = gridStep; x < w; x += gridStep) {
+        if (!isWall(x, y)) {
+          const chord = getShortestChord(x, y);
+          if (chord.dist >= minCut && chord.dist <= maxCut) {
+            const mx = (chord.p1.x + chord.p2.x) / 2;
+            const my = (chord.p1.y + chord.p2.y) / 2;
+            const perpRad = ((chord.angle + 90) % 360) * Math.PI / 180;
+            const px = Math.cos(perpRad);
+            const py = Math.sin(perpRad);
+            
+            const space1 = castRay(mx, my, px, py, maxCut).dist;
+            const space2 = castRay(mx, my, -px, -py, maxCut).dist;
+            const minDepth = Math.max(minCut * 1.5, chord.dist * 0.4);
+
+            if (space1 > minDepth && space2 > minDepth) {
+              candidates.push({ x, y, chord });
+            }
+          }
+        }
+      }
+    }
+
+    candidates.sort((a, b) => a.chord.dist - b.chord.dist);
+
+    let drawnCount = 0;
+    const drawnMidpoints = [];
+    const newPaths = []; 
+
+    const burnLineToMask = (x0, y0, x1, y1) => {
+      const dist = Math.hypot(x1 - x0, y1 - y0);
+      const steps = Math.max(1, Math.ceil(dist * 2)); 
+      const dx = (x1 - x0) / steps; const dy = (y1 - y0) / steps;
+      let x = x0, y = y0;
+      const radius = Math.max(1, Math.floor(thick / 2));
+
+      for (let i = 0; i <= steps; i++) {
+        for (let oy = -radius; oy <= radius; oy++) {
+          for (let ox = -radius; ox <= radius; ox++) {
+            const px = Math.round(x) + ox; const py = Math.round(y) + oy;
+            if (px >= 0 && px < w && py >= 0 && py < h) {
+              const idx = (py * w + px) * 4;
+              if (data[idx+3] >= 128) {
+                data[idx] = 0; data[idx+1] = 0; data[idx+2] = 0; 
+              }
+            }
+          }
+        }
+        x += dx; y += dy;
+      }
+    };
+
+    for (const cand of candidates) {
+      if (isWall(cand.x, cand.y)) continue;
+
+      let tooClose = false;
+      for (const mid of drawnMidpoints) {
+        if (Math.hypot(cand.x - mid.x, cand.y - mid.y) < spacing) {
+          tooClose = true; break;
+        }
+      }
+      if (tooClose) continue;
+
+      const liveChord = getShortestChord(cand.x, cand.y);
+      
+      if (liveChord.dist >= minCut && liveChord.dist <= maxCut) {
+        const mx = (liveChord.p1.x + liveChord.p2.x) / 2;
+        const my = (liveChord.p1.y + liveChord.p2.y) / 2;
+        const perpRad = ((liveChord.angle + 90) % 360) * Math.PI / 180;
+        const px = Math.cos(perpRad);
+        const py = Math.sin(perpRad);
+        
+        const space1 = castRay(mx, my, px, py, maxCut).dist;
+        const space2 = castRay(mx, my, -px, -py, maxCut).dist;
+        const minDepth = Math.max(minCut * 1.5, liveChord.dist * 0.4);
+
+        if (space1 > minDepth && space2 > minDepth) {
+          const chordDist = liveChord.dist;
+          const n1 = getInwardNormal(liveChord.p1.x, liveChord.p1.y, cand.x, cand.y);
+          const n2 = getInwardNormal(liveChord.p2.x, liveChord.p2.y, cand.x, cand.y);
+
+          const cp1x = liveChord.p1.x + n1.x * (chordDist * smoothness);
+          const cp1y = liveChord.p1.y + n1.y * (chordDist * smoothness);
+          const cp2x = liveChord.p2.x + n2.x * (chordDist * smoothness);
+          const cp2y = liveChord.p2.y + n2.y * (chordDist * smoothness);
+
+          newPaths.push({
+            id: Date.now() + Math.random(),
+            type: 'auto',
+            isEraser: false,
+            color: color,
+            thickness: thick,
+            p1: { x: liveChord.p1.x, y: liveChord.p1.y },
+            p2: { x: liveChord.p2.x, y: liveChord.p2.y },
+            cp1: smoothness > 0.02 ? { x: cp1x, y: cp1y } : null,
+            cp2: smoothness > 0.02 ? { x: cp2x, y: cp2y } : null,
+          });
+
+          if (smoothness > 0.02) {
+            let prevX = liveChord.p1.x, prevY = liveChord.p1.y;
+            const steps = Math.max(8, Math.floor(chordDist)); 
+            for (let i = 1; i <= steps; i++) {
+              const t = i / steps, mt = 1 - t;
+              const cx = mt*mt*mt*liveChord.p1.x + 3*mt*mt*t*cp1x + 3*mt*t*t*cp2x + t*t*t*liveChord.p2.x;
+              const cy = mt*mt*mt*liveChord.p1.y + 3*mt*mt*t*cp1y + 3*mt*t*t*cp2y + t*t*t*liveChord.p2.y;
+              burnLineToMask(prevX, prevY, cx, cy);
+              prevX = cx; prevY = cy;
+            }
+          } else {
+            burnLineToMask(liveChord.p1.x, liveChord.p1.y, liveChord.p2.x, liveChord.p2.y);
+          }
+          drawnMidpoints.push({ x: mx, y: my });
+          drawnCount++;
+        }
+      }
+    }
+
+    renderAllPaths(maskCtx, w, h, newPaths);
+    
+    // Execute Final Pipeline Render logic through our central helper
+    imgObj.paths = newPaths; 
+    const result = await regenerateBlobsForImage(imgObj, newPaths);
+    
+    return {
+        ...result,
+        paths: newPaths,
+        history: [newPaths],
+        historyIndex: 0,
+        autoStats: { thick, lines: drawnCount, time: Math.round(performance.now() - startTime) }
+    };
+  };
+
+  // Automated Batch Logic with Support for Uniform vs Adaptive Modes
+  const autoProcessBatch = async (batchImages, doCalibration) => {
+    setIsProcessing(true);
+    try {
+        if (batchMode === 'uniform') {
+            let baseParams = { thick: Number(lineThickness) || 1, minCut: Number(minCutLength) || 50, maxCut: Number(maxCutLength) || 200, spacing: Number(minSpacing) || 100, smoothness: Number(curveSmoothness) || 0, color: lineColor || '#000000' };
+            
+            if (doCalibration && batchImages.length > 0) {
+                baseParams = await calibrateImage(batchImages[0]);
+                setLineThickness(baseParams.thick);
+                setMinCutLength(baseParams.minCut);
+                setMaxCutLength(baseParams.maxCut);
+                setMinSpacing(baseParams.spacing);
+                
+                setDefaultSettings(prev => ({
+                  ...prev,
+                  lineThickness: baseParams.thick, minCutLength: baseParams.minCut, maxCutLength: baseParams.maxCut, minSpacing: baseParams.spacing
+                }));
+            }
+
+            for (let imgObj of batchImages) {
+                imgObj.params = { ...baseParams };
+                const result = await runAwareSegmenterCore(imgObj, imgObj.params);
+                setImages(prev => prev.map(img => img.id === imgObj.id ? { ...img, ...result, params: imgObj.params } : img));
+            }
+        } else {
+            // Adaptive Mode: Each image gets custom parameters
+            for (let imgObj of batchImages) {
+                let imgParams;
+                if (doCalibration) {
+                    imgParams = await calibrateImage(imgObj);
+                } else {
+                    imgParams = { thick: Number(lineThickness) || 1, minCut: Number(minCutLength) || 50, maxCut: Number(maxCutLength) || 200, spacing: Number(minSpacing) || 100, smoothness: Number(curveSmoothness) || 0, color: lineColor || '#000000' };
+                }
+                imgObj.params = imgParams;
+                const result = await runAwareSegmenterCore(imgObj, imgParams);
+                setImages(prev => prev.map(img => img.id === imgObj.id ? { ...img, ...result, params: imgParams } : img));
+            }
+            // Update global sliders to reflect the first image that is about to become actively viewed
+            if (doCalibration && batchImages.length > 0) {
+                const firstParams = batchImages[0].params;
+                setLineThickness(firstParams.thick);
+                setMinCutLength(firstParams.minCut);
+                setMaxCutLength(firstParams.maxCut);
+                setMinSpacing(firstParams.spacing);
+            }
+        }
+    } catch(e) {
+        console.error("AutoBatch Processing Failed:", e);
+    }
+    setIsProcessing(false);
+  };
+
+  const handleResetSettings = () => {
+    setMinSpacing(defaultSettings.minSpacing);
+    setMaxCutLength(defaultSettings.maxCutLength);
+    setMinCutLength(defaultSettings.minCutLength);
+    setLineThickness(defaultSettings.lineThickness);
+    setCurveSmoothness(defaultSettings.curveSmoothness);
+    handleLineColorChange(defaultSettings.lineColor);
+    setViewerBg(defaultSettings.viewerBg);
+    setHideLines(defaultSettings.hideLines);
+    hideLinesRef.current = defaultSettings.hideLines;
+    setLineBlendMode(defaultSettings.lineBlendMode);
+    lineBlendModeRef.current = defaultSettings.lineBlendMode;
+    
+    setSvgCanvasSize(defaultSettings.svgCanvasSize);
+    setSvgCustomW(defaultSettings.svgCustomW);
+    setSvgCustomH(defaultSettings.svgCustomH);
+    setSvgScaleMode(defaultSettings.svgScaleMode);
+    setSvgStrokeWidth(defaultSettings.svgStrokeWidth);
+  };
+
+  const handleManualRun = async () => {
+    if (!activeImg) return;
+    setIsProcessing(true);
+    setViewerMode('preview');
+    try {
+        const params = { 
+            thick: Number(lineThickness) || 1, 
+            minCut: Number(minCutLength) || 50, 
+            maxCut: Number(maxCutLength) || 200, 
+            spacing: Number(minSpacing) || 100, 
+            smoothness: Number(curveSmoothness) || 0, 
+            color: lineColor || '#000000' 
+        };
+        activeImg.params = params; // Bind manual run params to current image
+        const result = await runAwareSegmenterCore(activeImg, params);
+        updateActiveImage({ ...result, params });
+    } catch(e) { console.error(e); }
+    setIsProcessing(false);
+  };
+
+  const handleBatchRun = async () => {
+    if (images.length === 0) return;
+    setIsProcessing(true);
+    setViewerMode('preview');
+    try {
+        const idsToProcess = imagesRef.current.map(img => img.id);
+        for (let id of idsToProcess) {
+            const imgObj = imagesRef.current.find(i => i.id === id);
+            if (!imgObj) continue;
+            
+            let runParams;
+            if (batchMode === 'uniform') {
+                // Force current UI slider values onto all images
+                runParams = { thick: Number(lineThickness) || 1, minCut: Number(minCutLength) || 50, maxCut: Number(maxCutLength) || 200, spacing: Number(minSpacing) || 100, smoothness: Number(curveSmoothness) || 0, color: lineColor || '#000000' };
+            } else {
+                // Adaptive: Use the specific parameters saved in each image (which could have been individually modified)
+                runParams = imgObj.params || { thick: Number(lineThickness) || 1, minCut: Number(minCutLength) || 50, maxCut: Number(maxCutLength) || 200, spacing: Number(minSpacing) || 100, smoothness: Number(curveSmoothness) || 0, color: lineColor || '#000000' };
+            }
+
+            const result = await runAwareSegmenterCore(imgObj, runParams);
+            setImages(prev => prev.map(img => img.id === id ? { ...img, ...result, params: runParams } : img));
+        }
+    } catch(e) { console.error(e); }
+    setIsProcessing(false);
+  };
+
+  const handleDownload = (urlToDownload, typeLabel, originalName) => {
+    if (!urlToDownload) return;
+    const a = document.createElement('a');
+    a.href = urlToDownload;
+    a.download = `segmented-${typeLabel}-${originalName || Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const loadJSZip = async () => {
+    if (window.JSZip) return window.JSZip;
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      script.onload = () => resolve(window.JSZip);
+      script.onerror = () => {
+        console.error("Failed to load JSZip");
+        reject(new Error("Failed to load JSZip"));
+      };
+      document.head.appendChild(script);
+    });
+  };
+
+  const handleDownloadZip = async (type) => {
+    setIsProcessing(true);
+    setDropdownOpen(null);
+    try {
+      const JSZip = await loadJSZip();
+      const zip = new JSZip();
+      
+      const targetImages = imagesRef.current.filter(img => type === 'mask' ? img.resultMaskURL : type === 'letters' ? img.resultLettersURL : img.resultImage);
+      
+      for (let i = 0; i < targetImages.length; i++) {
+        const img = targetImages[i];
+        const url = type === 'mask' ? img.resultMaskURL : type === 'letters' ? img.resultLettersURL : img.resultImage;
+        const blob = await fetch(url).then(r => r.blob());
+        const baseName = img.name ? img.name.replace(/\.[^/.]+$/, "") : `image-${i+1}`;
+        zip.file(`segmented-${type}-${baseName}.png`, blob);
+      }
+      
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const zipUrl = URL.createObjectURL(zipBlob);
+      
+      const a = document.createElement('a');
+      a.href = zipUrl;
+      a.download = `segmented-${type}s-batch-${Date.now()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(zipUrl);
+    } catch (err) {
+      console.error("ZIP Generation Failed:", err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // --- 🖌 MANUAL EDITING LOGIC ---
+  const startEditing = () => {
+    setViewerMode('edit');
+    setPenNodes([]);
+    setPreviewPos(null);
+    isDraggingHandle.current = false;
+  };
+
+  const saveEdits = async () => {
+    setIsProcessing(true);
+    try {
+      if (penNodes.length > 0) commitPenPath(); 
+      const currentPaths = historyRef.current[historyIndexRef.current];
+      const newBlobs = await regenerateBlobsForImage(activeImg, currentPaths);
+      
+      updateActiveImage({ ...newBlobs, paths: currentPaths });
+      setViewerMode('preview');
+    } catch (e) {
+      console.error("Failed saving edits", e);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const cancelEdits = () => {
+    setViewerMode('preview');
+    setPenNodes([]);
+    isDraggingHandle.current = false;
+  };
+
+  const getCanvasCoordinates = (e) => {
+    if (!overlayCanvasRef.current) return { x: 0, y: 0 };
+    const canvas = overlayCanvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { 
+       x: (clientX - rect.left) / zoom, 
+       y: (clientY - rect.top) / zoom 
+    };
+  };
+
+  const commitPenPath = () => {
+    if (penNodes.length < 2) {
+      setPenNodes([]);
+      setPreviewPos(null);
+      isDraggingHandle.current = false;
+      return;
+    }
+    
+    const newPath = {
+      id: crypto.randomUUID(),
+      type: 'pen',
+      isEraser: false,
+      color: lineColor,
+      thickness: Number(lineThickness) || 1,
+      nodes: [...penNodes]
+    };
+
+    updatePathsAndHistory([...activeImg.paths, newPath]);
+    setPenNodes([]);
+    setPreviewPos(null);
+    isDraggingHandle.current = false;
+  };
+
+  // Live render overlay
+  useEffect(() => {
+    if (viewerMode !== 'edit' || !overlayCanvasRef.current) return;
+    const ctx = overlayCanvasRef.current.getContext('2d');
+    const w = overlayCanvasRef.current.width;
+    const h = overlayCanvasRef.current.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const thick = Number(lineThickness) || 1;
+    const eSize = Number(eraserSize) || 9;
+
+    if ((editTool === 'brush' || (editTool === 'erase' && eraserMode === 'brush')) && previewPos && !isSpacePressed) {
+      const radius = (editTool === 'erase' ? eSize : thick) / 2;
+      
+      ctx.beginPath();
+      ctx.arc(previewPos.x, previewPos.y, radius + (1 / zoom), 0, Math.PI * 2);
+      ctx.lineWidth = 1.5 / zoom; 
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(previewPos.x, previewPos.y, radius, 0, Math.PI * 2);
+      ctx.lineWidth = 1.5 / zoom;
+      ctx.strokeStyle = editTool === 'erase' ? '#000000' : lineColor;
+      ctx.stroke();
+    }
+
+    if (editTool === 'pen' && penNodes.length > 0) {
+      ctx.beginPath();
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = thick;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      ctx.moveTo(penNodes[0].x, penNodes[0].y);
+      for (let i = 1; i < penNodes.length; i++) {
+        const prev = penNodes[i - 1];
+        const curr = penNodes[i];
+        ctx.bezierCurveTo(prev.handleOut.x, prev.handleOut.y, curr.handleIn.x, curr.handleIn.y, curr.x, curr.y);
+      }
+
+      if (previewPos && !isDraggingHandle.current) {
+        const prev = penNodes[penNodes.length - 1];
+        ctx.bezierCurveTo(prev.handleOut.x, prev.handleOut.y, previewPos.x, previewPos.y, previewPos.x, previewPos.y);
+      }
+      ctx.stroke();
+
+      const handleScale = 1 / zoom; 
+      
+      penNodes.forEach((p, idx) => {
+        const hasPulledHandle = p.handleOut.x !== p.x || p.handleOut.y !== p.y;
+        if (hasPulledHandle) {
+          ctx.beginPath();
+          ctx.moveTo(p.handleIn.x, p.handleIn.y);
+          ctx.lineTo(p.handleOut.x, p.handleOut.y);
+          ctx.strokeStyle = '#a5b4fc';
+          ctx.lineWidth = 1 * handleScale;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(p.handleIn.x, p.handleIn.y, 3 * handleScale, 0, Math.PI * 2);
+          ctx.arc(p.handleOut.x, p.handleOut.y, 3 * handleScale, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#6366f1';
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        ctx.beginPath();
+        ctx.rect(p.x - (3 * handleScale), p.y - (3 * handleScale), 6 * handleScale, 6 * handleScale);
+        ctx.fillStyle = idx === penNodes.length - 1 ? '#6366f1' : '#ffffff';
+        ctx.strokeStyle = '#6366f1';
+        ctx.lineWidth = 1.5 * handleScale;
+        ctx.fill();
+        ctx.stroke();
+      });
+    }
+  }, [penNodes, previewPos, editTool, viewerMode, lineColor, lineThickness, zoom, eraserSize, eraserMode, isSpacePressed]);
+
+  const handleMagicEraseVector = (x, y) => {
+    if (!activeImg) return;
+    const ctx = editCanvasRef.current.getContext('2d');
+    
+    let hitIndex = -1;
+    const currentPaths = activeImg.paths || [];
+
+    for (let i = currentPaths.length - 1; i >= 0; i--) {
+      const p = currentPaths[i];
+      if (p.isEraser) continue; 
+
+      const path2d = buildPath2D(p);
+      ctx.lineWidth = p.thickness + 24; 
+      if (ctx.isPointInStroke(path2d, x, y)) {
+          hitIndex = i;
+          break;
+      }
+    }
+
+    if (hitIndex !== -1) {
+      const newPaths = [...currentPaths];
+      newPaths.splice(hitIndex, 1);
+      updatePathsAndHistory(newPaths);
+    }
+  };
+
+  const handleEditMouseDown = (e) => {
+    if (isSpacePressed || e.button === 1 || e.button === 2) return; 
+    e.stopPropagation();
+
+    const { x, y } = getCanvasCoordinates(e);
+    const thick = Number(lineThickness) || 1;
+    const eSize = Number(eraserSize) || 9;
+    
+    if (editTool === 'pen') {
+      isDraggingHandle.current = true;
+      setPenNodes(prev => [...prev, { x, y, handleIn: { x, y }, handleOut: { x, y } }]);
+    } else if (editTool === 'erase' && eraserMode === 'magic') {
+      isMagicErasing.current = true;
+      handleMagicEraseVector(x, y); 
+    } else {
+      setIsDrawing(true);
+      drawPoints.current = [{ x, y }];
+      lastDrawnPos.current = { x, y };
+
+      const ctx = editCanvasRef.current.getContext('2d');
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      if (editTool === 'erase') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.strokeStyle = 'rgba(0,0,0,1)'; 
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+        ctx.lineWidth = eSize;
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = lineColor;
+        ctx.fillStyle = lineColor;
+        ctx.lineWidth = thick;
+      }
+      
+      const radius = (editTool === 'erase' ? eSize : thick) / 2;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  };
+
+  const handleEditMouseMove = (e) => {
+    if (isSpacePressed) {
+      setPreviewPos(null); 
+      return;
+    }
+    const { x, y } = getCanvasCoordinates(e);
+
+    if (editTool === 'erase' && eraserMode === 'magic') {
+      if (isMagicErasing.current) {
+        handleMagicEraseVector(x, y);
+      }
+    } else if (editTool === 'pen') {
+      if (isDraggingHandle.current) {
+        setPenNodes(prev => {
+          const newNodes = [...prev];
+          const lastNode = newNodes[newNodes.length - 1];
+          lastNode.handleOut = { x, y };
+          lastNode.handleIn = { x: lastNode.x * 2 - x, y: lastNode.y * 2 - y };
+          return newNodes;
+        });
+      } else {
+        setPreviewPos({ x, y });
+      }
+    } else if (editTool === 'brush' || (editTool === 'erase' && eraserMode === 'brush')) {
+      setPreviewPos({ x, y }); 
+      
+      if (isDrawing) {
+        const lastPt = drawPoints.current[drawPoints.current.length - 1];
+        const dist = Math.hypot(x - lastPt.x, y - lastPt.y);
+        const skipThreshold = (freehandSmoothness / 100) * 20;
+
+        if (dist > skipThreshold || freehandSmoothness === 0) {
+           drawPoints.current.push({ x, y });
+           const pts = drawPoints.current;
+           
+           if (pts.length >= 3 && lastDrawnPos.current) {
+             const ctx = editCanvasRef.current.getContext('2d');
+             const p2 = pts[pts.length - 2];
+             const p3 = pts[pts.length - 1];
+             const mid = { x: (p2.x + p3.x) / 2, y: (p2.y + p3.y) / 2 };
+
+             ctx.beginPath();
+             ctx.moveTo(lastDrawnPos.current.x, lastDrawnPos.current.y);
+             ctx.quadraticCurveTo(p2.x, p2.y, mid.x, mid.y);
+             ctx.stroke();
+
+             lastDrawnPos.current = mid;
+           }
+        }
+      }
+    }
+  };
+
+  const handleEditMouseUp = (e) => {
+    isMagicErasing.current = false;
+    
+    if (editTool === 'pen') {
+      if (isDraggingHandle.current) {
+        isDraggingHandle.current = false;
+        const { x, y } = getCanvasCoordinates(e);
+        setPreviewPos({ x, y }); 
+      }
+      return;
+    }
+
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    
+    if (previewPos) {
+       drawPoints.current.push(previewPos);
+    }
+
+    const pts = [...drawPoints.current];
+    if (pts.length > 0 && activeImg) {
+       const newPath = {
+          id: crypto.randomUUID(),
+          type: 'brush',
+          isEraser: editTool === 'erase',
+          color: editTool === 'erase' ? null : lineColor,
+          thickness: editTool === 'erase' ? (Number(eraserSize) || 9) : (Number(lineThickness) || 1),
+          smoothness: freehandSmoothness,
+          points: pts
+       };
+       updatePathsAndHistory([...activeImg.paths, newPath]);
+    }
+    
+    drawPoints.current = [];
+    lastDrawnPos.current = null;
+  };
+
+  const handleEditMouseLeave = (e) => {
+    setPreviewPos(null); 
+    handleEditMouseUp(e);
+  };
+
+  const handleEditContextMenu = (e) => {
+    e.preventDefault();
+    if (editTool === 'pen' && penNodes.length > 0) commitPenPath();
+  };
+
+  const PRESET_COLORS = [
+    { label: 'Black', value: '#000000' },
+    { label: 'Red', value: '#FF0000' },
+    { label: 'Blue', value: '#0000FF' },
+    { label: 'Green', value: '#00FF00' },
+    { label: 'White', value: '#FFFFFF' },
+    { label: 'Gray', value: '#808080' },
+  ];
+
+  return (
+    <div className="h-screen flex overflow-hidden bg-gray-100 select-none font-sans">
+      
+      {/* --- LEFT SIDEBAR (CONTROLS) --- */}
+      <div className="w-[420px] flex flex-col bg-white shadow-[4px_0_24px_rgba(0,0,0,0.08)] z-20 flex-shrink-0">
+        
+        {/* Sidebar Header */}
+        <div className="bg-neutral-900 text-white px-6 py-3.5 flex flex-col items-center gap-1">
+          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <Wand2 className="w-5 h-5 text-indigo-400" />
+            MonoSegment
+          </h1>
+        </div>
+
+        {/* Sidebar Scrollable Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+
+          <div className="space-y-3">
+             <div className="flex items-center gap-2 pb-1 border-b border-neutral-200">
+                <Layers className="w-4 h-4 text-neutral-600" />
+                <h2 className="text-sm font-bold text-neutral-800">Batch Upload Mode</h2>
+             </div>
+             <select
+                value={batchMode}
+                onChange={e => setBatchMode(e.target.value)}
+                className="w-full text-sm border border-neutral-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+             >
+                <option value="uniform">Uniform (Match First Image)</option>
+                <option value="adaptive">Adaptive (Auto-Scan Every Image)</option>
+             </select>
+             <p className="text-[10px] text-neutral-500 leading-tight">
+                {batchMode === 'uniform' ? 'Scans the first image and forces its exact parameter blueprint on all subsequent uploads for visual consistency.' : 'Analyzes every uploaded image individually and calculates custom topology parameters for each one.'}
+             </p>
+          </div>
+          
+          <div 
+            className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer
+              ${images.length > 0 ? 'border-neutral-300 bg-neutral-50 hover:bg-neutral-100' : 'border-indigo-300 bg-indigo-50 hover:bg-indigo-100'}
+            `}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+          >
+            <input 
+              type="file" id="file-upload" className="hidden" multiple
+              accept="image/png, image/jpeg, image/webp, image/svg+xml" 
+              onChange={handleFileUpload}
+            />
+            <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-2">
+              <UploadCloud className={`w-8 h-8 ${images.length > 0 ? 'text-neutral-400' : 'text-indigo-500'}`} />
+              <div className="text-sm">
+                <span className="font-semibold text-indigo-600">Click to upload multiple</span>
+                <span className="text-neutral-500"> or drag files here</span>
+              </div>
+              <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wide mt-1">PNG • JPG • SVG</div>
+            </label>
+          </div>
+
+          {/* --- SVG Auto-Fitter Settings Panel --- */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 pb-1 border-b border-neutral-200">
+              <BoxSelect className="w-4 h-4 text-neutral-600" />
+              <h2 className="text-sm font-bold text-neutral-800">SVG Upload Settings</h2>
+            </div>
+            
+            <div className="space-y-4 bg-neutral-50 border border-neutral-200 rounded-lg p-3 shadow-sm">
+              <div>
+                <span className="block text-xs font-semibold text-neutral-700 mb-1">Canvas Resolution</span>
+                <select 
+                  value={svgCanvasSize} onChange={(e) => setSvgCanvasSize(e.target.value)}
+                  className="w-full text-sm border border-neutral-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                >
+                  <option value="2465x3300">2465 × 3300 px (Portrait)</option>
+                  <option value="2588x2625">2588 × 2625 px (Square-ish)</option>
+                  <option value="custom">Custom Size...</option>
+                </select>
+              </div>
+              
+              {svgCanvasSize === 'custom' && (
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <span className="block text-[10px] font-bold text-neutral-500 uppercase mb-0.5">Width (px)</span>
+                    <input type="number" value={svgCustomW} onChange={e=>setSvgCustomW(e.target.value === '' ? '' : Number(e.target.value))} className="w-full text-sm border border-neutral-300 rounded-md p-1.5 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"/>
+                  </div>
+                  <div className="flex-1">
+                    <span className="block text-[10px] font-bold text-neutral-500 uppercase mb-0.5">Height (px)</span>
+                    <input type="number" value={svgCustomH} onChange={e=>setSvgCustomH(e.target.value === '' ? '' : Number(e.target.value))} className="w-full text-sm border border-neutral-300 rounded-md p-1.5 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"/>
+                  </div>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="block text-xs font-semibold text-neutral-700 mb-1">Scale Logic</span>
+                  <select 
+                    value={svgScaleMode} onChange={(e) => setSvgScaleMode(e.target.value)}
+                    className="w-full text-sm border border-neutral-300 rounded-md p-1.5 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                  >
+                    <option value="stretch">Stretch to Fill</option>
+                    <option value="fit">Proportional</option>
+                  </select>
+                </div>
+                <div>
+                  <span className="block text-xs font-semibold text-neutral-700 mb-1">Inner Stroke</span>
+                  <input 
+                    type="number" min="0" step="0.5" value={svgStrokeWidth} onChange={(e) => setSvgStrokeWidth(e.target.value === '' ? '' : Number(e.target.value))}
+                    className="w-full text-sm border border-neutral-300 rounded-md p-1.5 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                    title="Rendered as double-width w/ white overlay to simulate perfect inside stroke"
+                  />
+                </div>
+              </div>
+            </div>
+            <p className="text-[10px] text-neutral-500 leading-tight">SVGs are automatically formatted to 300 DPI, styled with white fills and black inside strokes, and rasterized on upload.</p>
+          </div>
+
+          {activeImg && (
+            <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-lg p-3.5 text-xs shadow-sm">
+              <div className="flex flex-col">
+                <span className="text-neutral-400 font-bold uppercase tracking-wider mb-0.5">Dimensions</span>
+                <span className="text-neutral-700 font-extrabold text-sm">{imageSize.w} × {imageSize.h} <span className="text-neutral-400 font-medium text-xs">px</span></span>
+              </div>
+              <div className="w-px h-8 bg-neutral-200"></div>
+              <div className="flex flex-col text-right">
+                <span className="text-neutral-400 font-bold uppercase tracking-wider mb-0.5">Resolution</span>
+                <span className="text-neutral-700 font-extrabold text-sm">{imageDpi} <span className="text-neutral-400 font-medium text-xs">DPI</span></span>
+              </div>
+            </div>
+          )}
+
+          <div className={`space-y-6 transition-opacity ${viewerMode === 'edit' ? 'opacity-50 pointer-events-none' : ''}`}>
+            
+            <div className="flex items-center gap-2 border-b border-neutral-200 pb-2 justify-between">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-neutral-600" />
+                <h2 className="text-sm font-bold text-neutral-800">Step 1: Line Parameters</h2>
+              </div>
+              <button 
+                onClick={toggleHideLines}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-semibold transition-colors ${hideLines ? 'bg-indigo-100 text-indigo-700' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'}`}
+                title="Toggle Line Visibility on Export/Preview"
+              >
+                {hideLines ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                {hideLines ? 'Lines Hidden' : 'Lines Visible'}
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="font-semibold text-neutral-700">Cell Spacing (Density)</span>
+                  <span className="text-neutral-500 font-medium">{minSpacing}px</span>
+                </div>
+                <input 
+                  type="range" min="15" max="300" value={minSpacing} 
+                  onChange={(e) => updateActiveParams('spacing', Number(e.target.value))}
+                  className="w-full h-1.5 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="font-semibold text-neutral-700">Protect Large Areas (Max Cut)</span>
+                  <span className="text-neutral-500 font-medium">{maxCutLength}px</span>
+                </div>
+                <input 
+                  type="range" min="30" max="800" value={maxCutLength} 
+                  onChange={(e) => updateActiveParams('maxCut', Number(e.target.value))}
+                  className="w-full h-1.5 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="font-semibold text-neutral-700">Ignore Small Gaps (Min Cut)</span>
+                  <span className="text-neutral-500 font-medium">{minCutLength}px</span>
+                </div>
+                <input 
+                  type="range" min="5" max="150" value={minCutLength} 
+                  onChange={(e) => updateActiveParams('minCut', Number(e.target.value))}
+                  className="w-full h-1.5 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="font-semibold text-neutral-700">Organic Curve Smoothness</span>
+                  <span className="text-neutral-500 font-medium">{Math.round(curveSmoothness * 100)}%</span>
+                </div>
+                <input 
+                  type="range" min="0" max="0.5" step="0.05" value={curveSmoothness} 
+                  onChange={(e) => updateActiveParams('smoothness', Number(e.target.value))}
+                  className="w-full h-1.5 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <span className="block text-xs font-semibold text-neutral-700 mb-1.5">Stroke Width</span>
+                  <input 
+                    type="number" min="0.5" max="15" step="0.5" value={lineThickness} 
+                    onChange={(e) => updateActiveParams('thick', e.target.value === '' ? '' : Number(e.target.value))}
+                    className="w-full text-sm border border-neutral-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <span className="block text-xs font-semibold text-neutral-700 mb-1.5">Line Color</span>
+                  <select 
+                    value={PRESET_COLORS.map(c => c.value).includes(lineColor.toUpperCase()) ? lineColor.toUpperCase() : 'custom'} 
+                    onChange={(e) => {
+                      if (e.target.value !== 'custom') {
+                        handleLineColorChange(e.target.value);
+                      } else {
+                        handleLineColorChange('#8B5CF6'); // Default purple when custom selected
+                      }
+                    }}
+                    className="w-full text-sm border border-neutral-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    {PRESET_COLORS.map(c => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                    <option value="custom">Custom...</option>
+                  </select>
+                  {(!PRESET_COLORS.map(c => c.value).includes(lineColor.toUpperCase())) && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="h-8 w-8 rounded-md border border-neutral-300 overflow-hidden flex-shrink-0 relative">
+                        <input 
+                          type="color" 
+                          value={/^#[0-9A-Fa-f]{6}$/i.test(lineColor) ? lineColor : '#000000'} 
+                          onChange={e => handleLineColorChange(e.target.value)} 
+                          className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer" 
+                        />
+                      </div>
+                      <input 
+                        type="text" 
+                        value={lineColor} 
+                        onChange={e => handleLineColorChange(e.target.value)} 
+                        className="flex-1 w-full text-sm border border-neutral-300 rounded-md p-1.5 uppercase focus:ring-2 focus:ring-indigo-500 outline-none font-mono" 
+                        maxLength={7}
+                        placeholder="#HEX"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <span className="block text-xs font-semibold text-neutral-700 mb-1.5">Blend Mode</span>
+                  <select 
+                    value={lineBlendMode} onChange={(e) => handleBlendModeChange(e.target.value)}
+                    className="w-full text-sm border border-neutral-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    <option value="multiply">Multiply (Under Art)</option>
+                    <option value="normal">Normal (Over Art)</option>
+                  </select>
+                </div>
+                <div>
+                  <span className="block text-xs font-semibold text-neutral-700 mb-1.5">Viewer Background</span>
+                  <select 
+                    value={viewerBg} onChange={(e) => setViewerBg(e.target.value)}
+                    className="w-full text-sm border border-neutral-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    <option value="transparent">Grid</option>
+                    <option value="#00FFFF">Cyan</option>
+                    <option value="#FF00FF">Magenta</option>
+                    <option value="#FFFF00">Yellow</option>
+                    <option value="#000000">Black</option>
+                    <option value="#FFFFFF">White</option>
+                  </select>
+                </div>
+              </div>
+
+              <button 
+                onClick={handleResetSettings}
+                className="w-full mt-2 py-2 px-3 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 hover:text-neutral-800 text-xs font-bold rounded-md flex items-center justify-center gap-1.5 transition-colors border border-neutral-200 shadow-sm"
+                title="Restore settings to their initial or calibrated defaults"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset Settings
+              </button>
+            </div>
+
+            {/* --- STEP 2: LETTER PLACER SETTINGS --- */}
+            <div className="pt-5 border-t border-neutral-200 space-y-4">
+              <div className="flex items-center justify-between pb-1 border-b border-neutral-200">
+                <div className="flex items-center gap-2">
+                  <Type className="w-4 h-4 text-neutral-600" />
+                  <h2 className="text-sm font-bold text-neutral-800">Step 2: Letter Placer</h2>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" checked={letterSettings.enabled} onChange={(e) => handleLetterSettingChange('enabled', e.target.checked)} />
+                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+              
+              <div className={`space-y-4 transition-opacity ${letterSettings.enabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="block text-xs font-semibold text-neutral-700 mb-1 select-text">Character (X, O or •)</span>
+                    <input 
+                      type="text" maxLength={1} value={letterSettings.char} onChange={(e) => handleLetterSettingChange('char', e.target.value)}
+                      className="w-full text-center font-bold text-lg border border-neutral-300 rounded-md p-1 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-semibold text-neutral-700 mb-1">Safety Margin</span>
+                    <input 
+                      type="number" min="0" value={letterSettings.safetyPx} onChange={(e) => handleLetterSettingChange('safetyPx', e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                      className="w-full text-sm text-center border border-neutral-300 rounded-md p-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"
+                      title="Pixels away from walls"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                   <div className="col-span-2">
+                    <span className="block text-xs font-semibold text-neutral-700 mb-1">Text Color</span>
+                    <select 
+                      value={PRESET_COLORS.map(c => c.value).includes(letterSettings.color.toUpperCase()) ? letterSettings.color.toUpperCase() : 'custom'} 
+                      onChange={(e) => {
+                        if (e.target.value !== 'custom') {
+                          handleLetterSettingChange('color', e.target.value);
+                        } else {
+                          handleLetterSettingChange('color', '#8B5CF6'); // distinct color so it triggers the "custom" UI
+                        }
+                      }}
+                      className="w-full text-sm border border-neutral-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    >
+                      {PRESET_COLORS.map(c => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                      <option value="custom">Custom...</option>
+                    </select>
+                    {(!PRESET_COLORS.map(c => c.value).includes(letterSettings.color.toUpperCase())) && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="h-8 w-8 rounded-md border border-neutral-300 overflow-hidden flex-shrink-0 relative">
+                          <input 
+                            type="color" 
+                            value={/^#[0-9A-Fa-f]{6}$/i.test(letterSettings.color) ? letterSettings.color : '#000000'} 
+                            onChange={e => handleLetterSettingChange('color', e.target.value)} 
+                            className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer" 
+                          />
+                        </div>
+                        <input 
+                          type="text" 
+                          value={letterSettings.color} 
+                          onChange={e => handleLetterSettingChange('color', e.target.value)} 
+                          className="flex-1 w-full text-sm border border-neutral-300 rounded-md p-1.5 uppercase focus:ring-2 focus:ring-indigo-500 outline-none font-mono" 
+                          maxLength={7}
+                          placeholder="#HEX"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="block text-xs font-semibold text-neutral-700 mb-1">Typeface (Font)</span>
+                  <div className="flex gap-2">
+                    <select 
+                      value={letterSettings.font} onChange={(e) => handleLetterSettingChange('font', e.target.value)}
+                      className="flex-1 text-sm border border-neutral-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    >
+                      <option value='"Comic Relief", cursive'>Comic Relief</option>
+                      <option value='"Comic Neue", cursive'>Comic Neue</option>
+                      <option value="Arial">Arial</option>
+                      <option value="Impact">Impact</option>
+                      <option value="Roboto">Roboto</option>
+                      <option value="Montserrat">Montserrat</option>
+                      <option value="Oswald">Oswald</option>
+                      <option value="Playfair Display">Playfair Display</option>
+                      <option value="Lato">Lato</option>
+                      <option value="Open Sans">Open Sans</option>
+                      <option value="Verdana">Verdana</option>
+                      {letterSettings.customFontLoaded && <option value={letterSettings.font} disabled>Custom Uploaded Font</option>}
+                    </select>
+                    <label className="bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-neutral-700 rounded-md px-3 flex items-center justify-center cursor-pointer transition-colors" title="Upload custom .ttf or .otf font">
+                      <Upload className="w-4 h-4" />
+                      <input type="file" accept=".ttf,.otf" className="hidden" onChange={handleCustomFontUpload} />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="block text-xs font-semibold text-neutral-700 mb-1">Min Size (px)</span>
+                    <input 
+                      type="number" min="1" max="1000" value={letterSettings.minSize} onChange={(e) => handleLetterSettingChange('minSize', e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                      className="w-full text-sm border border-neutral-300 rounded-md p-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-semibold text-neutral-700 mb-1">Max Size (px)</span>
+                    <input 
+                      type="number" min="1" max="3000" value={letterSettings.maxSize} onChange={(e) => handleLetterSettingChange('maxSize', e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                      className="w-full text-sm border border-neutral-300 rounded-md p-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {activeImg?.autoStats && !isProcessing && (
+              <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 space-y-1 mt-4">
+                <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-xs">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Generation Complete
+                </div>
+                <p className="text-[11px] text-emerald-600 leading-relaxed">
+                  Generated <b>{activeImg.autoStats.lines}</b> cuts using a <b>{activeImg.autoStats.thick}px</b> stroke in {activeImg.autoStats.time}ms.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar Sticky Footer */}
+        <div className="p-5 border-t border-neutral-200 bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.02)] space-y-2">
+          {images.length > 1 && (
+            <button
+              onClick={handleBatchRun}
+              disabled={isProcessing || viewerMode === 'edit'}
+              className={`w-full py-2.5 px-4 rounded-lg font-bold text-white flex justify-center items-center gap-2 transition-all shadow-md
+                ${viewerMode === 'edit'
+                  ? 'bg-neutral-300 cursor-not-allowed' 
+                  : isProcessing 
+                    ? 'bg-purple-400 cursor-wait' 
+                    : 'bg-purple-600 hover:bg-purple-700 hover:shadow-lg active:scale-[0.98]'
+                }
+              `}
+            >
+              {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Images className="w-4 h-4" />}
+              <span>Batch Generate All ({images.length})</span>
+            </button>
+          )}
+          <button
+            onClick={handleManualRun}
+            disabled={!activeImg || isProcessing || viewerMode === 'edit'}
+            className={`w-full py-3 px-4 rounded-lg font-bold flex justify-center items-center gap-2 transition-all
+              ${(!activeImg || viewerMode === 'edit')
+                ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed' 
+                : isProcessing 
+                  ? 'bg-indigo-300 text-indigo-700 cursor-wait' 
+                  : images.length > 1 
+                      ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-sm active:scale-[0.98]'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg active:scale-[0.98]'
+              }
+            `}
+          >
+            {isProcessing && <Loader2 className="w-5 h-5 animate-spin" />}
+            {isProcessing && <span>Processing...</span>}
+            {!isProcessing && <Play className="w-5 h-5" />}
+            {!isProcessing && <span>{images.length > 1 ? 'Generate Current Only' : 'Generate Lines & Letters'}</span>}
+          </button>
+        </div>
+      </div>
+
+      {/* --- RIGHT WORKSPACE (PREVIEW) --- */}
+      <div className="flex-1 flex flex-col bg-gray-200 relative overflow-hidden">
+        
+        {/* Workspace Top Control Bar */}
+        {viewerMode === 'preview' ? (
+          <div className="h-14 bg-white border-b border-gray-300 flex justify-between items-center px-4 shadow-sm z-10 flex-shrink-0">
+            
+            {/* Left side: Zoom Controls & Preview Toggles */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1 bg-neutral-100 rounded-md border border-neutral-200 p-0.5">
+                <button onClick={handleZoomOut} disabled={zoom <= minZoom} className="p-1.5 text-neutral-600 hover:bg-white rounded disabled:opacity-30"><ZoomOut className="w-4 h-4"/></button>
+                <span className="text-xs font-semibold text-neutral-600 w-12 text-center">{Math.round(zoom * 100)}%</span>
+                <button onClick={handleZoomIn} disabled={zoom >= 5} className="p-1.5 text-neutral-600 hover:bg-white rounded disabled:opacity-30"><ZoomIn className="w-4 h-4"/></button>
+                <div className="w-px h-4 bg-neutral-300 mx-1"></div>
+                <button onClick={handleFitScreen} className="p-1.5 text-neutral-600 hover:bg-white rounded" title="Fit to Screen"><Maximize className="w-4 h-4"/></button>
+              </div>
+
+              {activeImg && activeImg.resultImage && (
+                <div className="flex bg-neutral-200/60 p-0.5 rounded-md border border-neutral-200 shadow-inner">
+                  <button
+                    onClick={() => setShowProcessed(false)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition-all ${!showProcessed ? 'bg-white shadow-sm text-indigo-700' : 'text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100/50'}`}
+                  >
+                    Original
+                  </button>
+                  <button
+                    onClick={() => setShowProcessed(true)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition-all ${showProcessed ? 'bg-white shadow-sm text-indigo-700' : 'text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100/50'}`}
+                  >
+                    Processed
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {/* Right side: Tools & Export */}
+            <div className="flex gap-2 relative z-50">
+              {dropdownOpen && (
+                <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(null)} />
+              )}
+
+              {activeImg && activeImg.resultImage && activeImg.resultMaskURL && (
+                <>
+                  <button 
+                    onClick={startEditing}
+                    className="relative z-50 text-xs flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 text-purple-700 font-medium transition-colors shadow-sm"
+                    title="Draw or erase lines manually"
+                  >
+                    <PenTool className="w-3.5 h-3.5" /> Refine Current
+                  </button>
+                  <div className="w-px bg-neutral-300 mx-1 z-50"></div>
+                  
+                  {/* Save Mask Dropdown */}
+                  <div className="relative z-50">
+                    <button 
+                      onClick={() => setDropdownOpen(dropdownOpen === 'mask' ? null : 'mask')}
+                      className="text-xs flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 text-neutral-700 font-medium transition-colors shadow-sm"
+                    >
+                      <Layers className="w-3.5 h-3.5" /> Save Mask <ChevronDown className="w-3 h-3 ml-0.5" />
+                    </button>
+                    {dropdownOpen === 'mask' && (
+                      <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-md w-48 py-1">
+                        <button 
+                          onClick={() => handleDownloadZip('mask')} 
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <Images className="w-4 h-4"/> All Masks (ZIP)
+                        </button>
+                        <button 
+                          onClick={() => { handleDownload(activeImg.resultMaskURL, 'mask-only', activeImg.name); setDropdownOpen(null); }} 
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <Layers className="w-4 h-4"/> Current Mask Only
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Save Letters Dropdown (Only show if enabled) */}
+                  {letterSettings.enabled && activeImg.resultLettersURL && (
+                    <div className="relative z-50">
+                      <button 
+                        onClick={() => setDropdownOpen(dropdownOpen === 'letters' ? null : 'letters')}
+                        className="text-xs flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 text-neutral-700 font-medium transition-colors shadow-sm"
+                      >
+                        <Type className="w-3.5 h-3.5" /> Save Letters <ChevronDown className="w-3 h-3 ml-0.5" />
+                      </button>
+                      {dropdownOpen === 'letters' && (
+                        <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-md w-48 py-1">
+                          <button 
+                            onClick={() => handleDownloadZip('letters')} 
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <Images className="w-4 h-4"/> All Letters (ZIP)
+                          </button>
+                          <button 
+                            onClick={() => { handleDownload(activeImg.resultLettersURL, 'letters-only', activeImg.name); setDropdownOpen(null); }} 
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <Type className="w-4 h-4"/> Current Letters Only
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Save Art Dropdown */}
+                  <div className="relative z-50">
+                    <button 
+                      onClick={() => setDropdownOpen(dropdownOpen === 'art' ? null : 'art')}
+                      className="text-xs flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 text-neutral-700 font-medium transition-colors shadow-sm"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Save Art <ChevronDown className="w-3 h-3 ml-0.5" />
+                    </button>
+                    {dropdownOpen === 'art' && (
+                      <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 shadow-lg rounded-md w-48 py-1">
+                        <button 
+                          onClick={() => handleDownloadZip('art')} 
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <Images className="w-4 h-4"/> All Art Pages (ZIP)
+                        </button>
+                        <button 
+                          onClick={() => { handleDownload(activeImg.resultImage, 'full-art', activeImg.name); setDropdownOpen(null); }} 
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <Download className="w-4 h-4"/> Current Art Only
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="h-14 bg-purple-50 border-b border-purple-200 flex justify-between items-center px-4 shadow-sm z-10 flex-shrink-0">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-bold text-purple-700 flex items-center gap-2">
+                <PenTool className="w-4 h-4" />
+                Refine Mode
+              </span>
+
+              <div className="flex items-center gap-1 bg-white/50 rounded-md border border-purple-200 p-0.5">
+                <button onClick={handleZoomOut} disabled={zoom <= minZoom} className="p-1.5 text-purple-700 hover:bg-white rounded disabled:opacity-30"><ZoomOut className="w-4 h-4"/></button>
+                <span className="text-xs font-semibold text-purple-800 w-12 text-center">{Math.round(zoom * 100)}%</span>
+                <button onClick={handleZoomIn} disabled={zoom >= 5} className="p-1.5 text-purple-700 hover:bg-white rounded disabled:opacity-30"><ZoomIn className="w-4 h-4"/></button>
+                <div className="w-px h-4 bg-purple-200 mx-1"></div>
+                <button onClick={handleFitScreen} className="p-1.5 text-purple-700 hover:bg-white rounded" title="Fit to Screen"><Maximize className="w-4 h-4"/></button>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              
+              {/* Undo/Redo Engine Controls */}
+              <div className="flex items-center gap-1 bg-white/50 rounded-md border border-purple-200 p-0.5 mr-1">
+                <button 
+                  onClick={handleUndo} 
+                  disabled={!canUndo} 
+                  className="p-1.5 text-purple-700 hover:bg-white rounded disabled:opacity-30"
+                  title="Undo (Ctrl+Z)"
+                >
+                  <Undo2 className="w-4 h-4"/>
+                </button>
+                <button 
+                  onClick={handleRedo} 
+                  disabled={!canRedo} 
+                  className="p-1.5 text-purple-700 hover:bg-white rounded disabled:opacity-30"
+                  title="Redo (Ctrl+Shift+Z)"
+                >
+                  <Redo2 className="w-4 h-4"/>
+                </button>
+              </div>
+
+              <div className="flex bg-white border border-neutral-300 rounded-md shadow-sm overflow-hidden">
+                <button 
+                  onClick={() => { setEditTool('pen'); setPenNodes([]); setPreviewPos(null); }} 
+                  className={`p-1.5 transition-colors ${editTool === 'pen' ? 'bg-purple-100 text-purple-700' : 'text-neutral-500 hover:bg-neutral-50'}`}
+                  title="Vector Pen (Click points. Drag to curve. Right-click to finish)"
+                >
+                  <PenTool className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => { setEditTool('brush'); setPenNodes([]); setPreviewPos(null); }} 
+                  className={`p-1.5 border-l border-neutral-200 transition-colors ${editTool === 'brush' ? 'bg-purple-100 text-purple-700' : 'text-neutral-500 hover:bg-neutral-50'}`}
+                  title="Freehand Brush (Drag to draw)"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => { setEditTool('erase'); setPenNodes([]); setPreviewPos(null); }} 
+                  className={`p-1.5 border-l border-neutral-200 transition-colors ${editTool === 'erase' ? 'bg-purple-100 text-purple-700' : 'text-neutral-500 hover:bg-neutral-50'}`}
+                  title="Eraser (Drag to delete)"
+                >
+                  <Eraser className="w-4 h-4" />
+                </button>
+              </div>
+
+              {editTool === 'pen' && penNodes.length > 0 && (
+                <div className="flex bg-white border border-neutral-300 rounded-md shadow-sm overflow-hidden items-center ml-1">
+                  <button 
+                    id="finish-path-btn"
+                    onClick={commitPenPath} 
+                    className="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
+                    title="Press Enter or Escape to finish"
+                  >
+                    Finish Path (Enter)
+                  </button>
+                </div>
+              )}
+
+              {editTool === 'erase' && (
+                <div className="flex bg-white border border-neutral-300 rounded-md shadow-sm overflow-hidden items-center ml-1">
+                  <button 
+                    onClick={() => setEraserMode('brush')} 
+                    className={`text-xs font-semibold px-2 py-1.5 transition-colors ${eraserMode === 'brush' ? 'bg-indigo-100 text-indigo-700' : 'text-neutral-500 hover:bg-neutral-50'}`}
+                    title="Erase manually by drawing over lines"
+                  >
+                    Brush
+                  </button>
+                  <button 
+                    onClick={() => setEraserMode('magic')} 
+                    className={`text-xs font-semibold px-2 py-1.5 border-l border-neutral-200 transition-colors ${eraserMode === 'magic' ? 'bg-indigo-100 text-indigo-700' : 'text-neutral-500 hover:bg-neutral-50'}`}
+                    title="Click any line to instantly delete the entire vector segment"
+                  >
+                    Magic Erase
+                  </button>
+                </div>
+              )}
+
+              {/* Brush Smoothness Slider */}
+              {(editTool === 'brush' || (editTool === 'erase' && eraserMode === 'brush')) && (
+                <div className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-md border border-neutral-200 shadow-sm ml-1 min-w-[120px]">
+                  <span className="text-xs font-medium text-neutral-500">Smooth:</span>
+                  <input 
+                    type="range" min="0" max="100" step="1" value={freehandSmoothness} 
+                    onChange={e => setFreehandSmoothness(Number(e.target.value))} 
+                    className="w-16 accent-purple-600 flex-1"
+                    title="Higher values stabilize jagged mouse movements"
+                  />
+                </div>
+              )}
+              
+              <div className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-md border border-neutral-200 shadow-sm ml-1 min-w-[100px]">
+                <span className="text-xs font-medium text-neutral-500">Size:</span>
+                {editTool === 'erase' && eraserMode === 'brush' ? (
+                  <input 
+                    type="range" min="1" max="50" step="0.5" value={eraserSize} 
+                    onChange={e => setEraserSize(Number(e.target.value))} 
+                    className="w-16 accent-purple-600 flex-1"
+                  />
+                ) : editTool === 'erase' && eraserMode === 'magic' ? (
+                  <span className="text-xs font-bold text-neutral-400 flex-1 text-center">Auto</span>
+                ) : (
+                  <span className="text-xs font-bold text-neutral-700 flex-1 text-center">{lineThickness}px</span>
+                )}
+              </div>
+
+              <div className="flex gap-2 ml-2 border-l border-purple-200 pl-3">
+                <button 
+                  onClick={cancelEdits} 
+                  className="text-xs flex items-center gap-1 px-3 py-1.5 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 text-neutral-600 font-medium transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" /> Cancel
+                </button>
+                <button 
+                  id="apply-btn"
+                  onClick={saveEdits} 
+                  disabled={isProcessing}
+                  className="text-xs flex items-center gap-1 px-3 py-1.5 bg-purple-600 border border-purple-700 rounded-md hover:bg-purple-700 text-white font-medium transition-colors shadow-sm disabled:opacity-50"
+                  title="Save and Apply (Ctrl+Enter)"
+                >
+                  {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Workspace Physical Artboard Area */}
+        <div 
+          id="preview-workspace" 
+          className={`flex-1 overflow-auto relative outline-none ${isPanning ? 'cursor-grabbing' : isSpacePressed ? 'cursor-grab' : ''}`}
+          ref={workspaceRef}
+          onMouseDown={handleWorkspaceMouseDown}
+        >
+          {/* Inner container scales up with zoom */}
+          <div 
+            className="relative transition-opacity duration-200"
+            style={{ 
+               width: Math.max(workspaceSize.w, imageSize.w * zoom + 60), 
+               height: Math.max(workspaceSize.h, imageSize.h * zoom + 60),
+               opacity: isProcessing ? 0.6 : 1 
+            }}
+          >
+            
+            {/* Physical bounding box of the art */}
+            <div 
+              id="physical-page"
+              className="absolute shadow-2xl origin-center"
+              onContextMenu={viewerMode === 'edit' ? handleEditContextMenu : undefined}
+              style={{
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: imageSize.w * zoom,
+                height: imageSize.h * zoom,
+                backgroundColor: viewerBg === 'transparent' ? '#ffffff' : viewerBg,
+                backgroundImage: viewerBg === 'transparent' ? 'radial-gradient(#e5e7eb 1px, transparent 1px)' : 'none', 
+                backgroundSize: `${20 * zoom}px ${20 * zoom}px`
+              }}
+            >
+              
+              {!activeImg && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-400">
+                  <ImageIcon className="w-12 h-12 opacity-30 mb-2" />
+                  <p className="text-xs font-semibold">Workspace (Upload to begin)</p>
+                </div>
+              )}
+
+              {/* Preview Mode Render */}
+              {activeImg && viewerMode === 'preview' && (
+                <img 
+                  src={showProcessed && activeImg.resultImage ? activeImg.resultImage : activeImg.dataUrl} 
+                  alt="Artboard" 
+                  className="w-full h-full object-fill pointer-events-none" 
+                />
+              )}
+
+              {/* Edit Mode Render */}
+              {viewerMode === 'edit' && activeImg && (
+                <>
+                  <img 
+                    src={activeImg.dataUrl} 
+                    alt="Base" 
+                    className="w-full h-full object-fill pointer-events-none" 
+                  />
+                  
+                  {/* Commits applied here */}
+                  <canvas
+                    ref={editCanvasRef}
+                    width={imageSize.w}
+                    height={imageSize.h}
+                    className="absolute inset-0 object-fill pointer-events-none"
+                    style={{ width: '100%', height: '100%', mixBlendMode: lineBlendMode === 'multiply' ? 'multiply' : 'normal' }}
+                  />
+                  
+                  {/* Interactive overlay */}
+                  <canvas
+                    ref={overlayCanvasRef}
+                    width={imageSize.w}
+                    height={imageSize.h}
+                    className={`absolute inset-0 object-fill touch-none ${
+                      isSpacePressed ? '' :
+                      (editTool === 'brush' || (editTool === 'erase' && eraserMode === 'brush')) ? 'cursor-none' : 
+                      'cursor-crosshair'
+                    }`}
+                    style={{ width: '100%', height: '100%', mixBlendMode: lineBlendMode === 'multiply' ? 'multiply' : 'normal' }}
+                    onMouseDown={handleEditMouseDown}
+                    onMouseMove={handleEditMouseMove}
+                    onMouseUp={handleEditMouseUp}
+                    onMouseLeave={handleEditMouseLeave}
+                    onTouchStart={handleEditMouseDown}
+                    onTouchMove={handleEditMouseMove}
+                    onTouchEnd={handleEditMouseUp}
+                  />
+                </>
+              )}
+
+            </div>
+          </div>
+        </div>
+
+        {/* Filmstrip / Multi-Image Dock */}
+        {images.length > 0 && (
+          <div className="h-24 bg-white border-t border-gray-300 flex items-center px-4 gap-3 overflow-x-auto flex-shrink-0 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] scrollbar-hide">
+            {images.map((img, i) => (
+               <div 
+                 key={img.id} 
+                 id={`thumb-${i}`}
+                 className={`group relative bg-neutral-900 w-16 h-16 rounded-md border-2 overflow-hidden flex-shrink-0 cursor-pointer transition-all ${i === activeIndex ? 'border-indigo-600 shadow-md scale-105' : 'border-gray-200 hover:border-indigo-400'}`}
+                 onClick={() => {
+                    if (viewerMode === 'edit') setViewerMode('preview'); // safe exit from edit mode
+                    setActiveIndex(i);
+                 }}
+                 title={img.name}
+               >
+                  <img src={img.dataUrl} className="w-full h-full object-contain" alt="thumbnail" />
+                  
+                  {img.resultImage && (
+                     <div className="absolute bottom-1.5 left-1.5 bg-emerald-500 rounded-full w-2.5 h-2.5 border-2 border-white shadow-sm" title="Processed"></div>
+                  )}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); deleteImage(i); }}
+                    className="absolute top-1 right-1 bg-red-500 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 hover:scale-110 shadow-sm flex items-center justify-center"
+                    title="Remove Image"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+               </div>
+            ))}
+            
+            <label className="w-16 h-16 rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer flex-shrink-0 transition-colors ml-1" title="Add more images">
+               <input type="file" multiple accept="image/png, image/jpeg, image/webp, image/svg+xml" className="hidden" onChange={handleFileUpload} />
+               <Plus className="w-6 h-6" />
+            </label>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
