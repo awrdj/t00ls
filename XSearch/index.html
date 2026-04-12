@@ -1123,6 +1123,13 @@
             <!-- Explanations ☆ Section -->
             <div id="section-how" class="view-section">
                 <div class="search-section-card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
+                    <!-- Search Modes Overview -->
+                    <div style="background: var(--x-surface); border: 1px solid var(--x-border); border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                        <h3 class="section-heading" style="border-bottom: 1px solid var(--x-border); padding-bottom: 10px;">Search Modes Explained</h3>
+                        <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Global Search:</strong> The standard investigator mode. Searches the entirety of 𝕏 applying your selected keywords, engagement limits, and deep filters.</p>
+                        <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Profile Search:</strong> Target a specific user. Enter an 𝕏 Handle to exclusively search within their past posts, replies, and quoted content while still applying advanced rules.</p>
+                        <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 0;"><strong style="color: var(--x-text-main);">Smart Search:</strong> For advanced users. Paste your own complex Boolean logic strings into the "Smart Sentence" field, and use the UI to stack additional filters on top without breaking the syntax.</p>
+                    </div>
                     <div class="row-3">
                         <!-- Words Section -->
                         <div style="background: var(--x-surface); border: 1px solid var(--x-border); border-radius: 12px; padding: 20px;">
@@ -1148,7 +1155,13 @@
                             <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Minimums (MIN):</strong> High thresholds wipe out bots and isolate viral consensus opinions.</p>
                             <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Maximums (MAX):</strong> Clicking the MIN/MAX toggle to set a maximum ceiling (e.g. Max Likes: 10) is the ultimate trick for finding raw, unamplified eyewitness data during a breaking crisis.</p>
                             <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Anchor Tweet IDs:</strong> By picking "After Tweet ID" in Time Constraints, you use the Snowflake ID embedded in a specific Tweet to perfectly boundary a search to the exact millisecond, bypassing timezone bugs.</p>
-                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 0;"><strong style="color: var(--x-text-main);">Machine Tags:</strong> Use the OSINT tags under Language to find raw media void of text, bot-rings, or cashtag pump-and-dumps.</p>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 8px;"><strong style="color: var(--x-text-main);">OSINT Machine Tags (Deep Metadata):</strong></p>
+                            <ul style="font-size: 13px; color: var(--x-text-muted); margin-top: 0; margin-bottom: 0; padding-left: 20px; line-height: 1.6;">
+                                <li><strong style="color: var(--x-text-main);">Media Only (No Text):</strong> Uses <code>lang:zxx</code> to find raw imagery or leaked documents entirely devoid of human commentary.</li>
+                                <li><strong style="color: var(--x-text-main);">Mentions Only (Spam):</strong> Uses <code>lang:qam</code> to find posts containing only @mentions. Ideal for tracking automated botnets or harassment rings.</li>
+                                <li><strong style="color: var(--x-text-main);">Cashtags Only:</strong> Uses <code>lang:qct</code> to find posts consisting solely of ticker symbols (e.g. $TSLA), exposing financial pump-and-dump coordination.</li>
+                                <li><strong style="color: var(--x-text-main);">Undefined:</strong> Uses <code>lang:und</code> to capture anomalous character sets, dense numerical dumps, or encrypted strings.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
