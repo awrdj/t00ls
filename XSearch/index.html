@@ -25,6 +25,18 @@
             --x-button-text: #0f1419;
             --x-button-hover: #d7dbdc;
         }
+        :root[data-theme="light"] {
+            color-scheme: light;
+            --x-bg: #ffffff;
+            --x-surface: #f7f9f9;
+            --x-surface-hover: #eff3f4;
+            --x-border: #cfd9de;
+            --x-text-main: #0f1419;
+            --x-text-muted: #536471;
+            --x-button-bg: #0f1419;
+            --x-button-text: #ffffff;
+            --x-button-hover: #272c30;
+        }
 
         body {
             padding: 0px;
@@ -35,6 +47,7 @@
             font-family: "TwitterChirp", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         * {
@@ -154,12 +167,12 @@
            START: Live Query Preview
            ========================================= */
         #live-preview-container {
-            border: 1px dashed #ffffff;
+            border: 1px dashed var(--x-border);
             background-color: rgba(29, 155, 240, 0.03);
             transition: all 0.3s ease;
         }
         .live-preview-box {
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: var(--x-bg);
             border: 1px solid var(--x-border);
             border-radius: 8px;
             padding: 12px 15px;
@@ -373,19 +386,22 @@
             <!-- Header Structure -->
             <div class="header-row">
                 <h2 class="brand-name">𝕏 Search</h2>
-                <div class="view-selector-wrapper">
-                    <select id="view-selector">
-                        <option value="global">Global Search</option>
-                        <option value="profile">Profile Search</option>
-                        <option value="smart">Smart Search</option>
-                        <option value="how">Explanations</option>
-                    </select>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <button id="theme-toggle" style="background: transparent; border: 1px solid var(--x-border); color: var(--x-text-main); border-radius: 9999px; height: 40px; padding: 0 15px; cursor: pointer; font-weight: 700; transition: background-color 0.2s;">☀️ Light</button>
+                    <div class="view-selector-wrapper">
+                        <select id="view-selector">
+                            <option value="global">Global Search</option>
+                            <option value="profile">Profile Search</option>
+                            <option value="smart">Smart Search</option>
+                            <option value="how">Explanations</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <!-- Live Preview Container -->
             <div id="live-preview-container" class="search-section-card">
-                <h3 class="section-heading" style="color: white; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+                <h3 class="section-heading" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
                     Live Query Preview
                 </h3>
                 <div class="live-preview-box" id="live-preview-text">
@@ -1147,6 +1163,23 @@
     <!-- App Logic -->
     <script type="text/javascript">
         $(function(){
+            // --- Theme Toggle Logic ---
+            let savedTheme = localStorage.getItem("xsniper_theme") || "dark";
+            if (savedTheme === "light") {
+                document.documentElement.setAttribute("data-theme", "light");
+                $("#theme-toggle").text("🌙 Dark");
+            }
+
+            $("#theme-toggle").on("click", function() {
+                let currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+                let newTheme = currentTheme === "dark" ? "light" : "dark";
+                
+                document.documentElement.setAttribute("data-theme", newTheme);
+                localStorage.setItem("xsniper_theme", newTheme);
+                
+                $(this).text(newTheme === "dark" ? "☀️ Light" : "🌙 Dark");
+            });
+
             // --- Configuration matching original extension setup ---
             let filterConfig = {
                 subscription: "free",
