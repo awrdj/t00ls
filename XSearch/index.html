@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>𝕏 Search</title>
+    <!-- Include DateRangePicker CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <style>
+        /* =========================================
+           START: X (Twitter) Theme Variables & Reset
+           ========================================= */
+        :root {
+            color-scheme: dark; 
+            --x-bg: #000000;
+            --x-surface: #16181c;
+            --x-surface-hover: #202327;
+            --x-border: #2f3336;
+            --x-text-main: #e7e9ea;
+            --x-text-muted: #71767b;
+            --x-blue: #1d9bf0;
+            --x-blue-hover: #1a8cd8;
+            --x-button-bg: #eff3f4;
+            --x-button-text: #0f1419;
+            --x-button-hover: #d7dbdc;
+        }
+
+        body {
+            padding: 0px;
+            margin: 0px;
+            overflow-x: hidden; 
+            background-color: var(--x-bg);
+            color: var(--x-text-main);
+            font-family: "TwitterChirp", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        #main {
+            position: relative;
+            margin: 0px auto;
+            background: var(--x-bg);
+            text-align: center;
+            padding: 20px 2%; 
+            display: block;
+            width: 100%; 
+            max-width: 100%; 
+        }
+
+        /* =========================================
+           START: Header Styles
+           ========================================= */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px; 
+            padding-bottom: 15px; 
+            border-bottom: 1px solid var(--x-border); 
+        }
+
+        .brand-name {
+            margin: 0;
+            font-size: 26px;
+            color: var(--x-text-main); 
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .view-selector-wrapper {
+            position: relative;
+            width: 180px; 
+        }
+
+        #view-selector {
+            appearance: none;          
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            
+            width: 100%;
+            height: 40px;
+            padding: 0 20px;
+            padding-right: 40px; 
+            
+            background-color: var(--x-bg); 
+            color: var(--x-text-main);            
+            
+            border: 1px solid var(--x-border);
+            border-radius: 9999px; 
+            
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-family: inherit;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M7%2010L12%2015L17%2010%22%20stroke%3D%22%2371767b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 18px;
+        }
+
+        #view-selector:hover { background-color: var(--x-surface); }
+        #view-selector:focus { border-color: var(--x-blue); box-shadow: 0 0 0 1px var(--x-blue); }
+
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =========================================
+           START: Section Cards 
+           ========================================= */
+        .search-section-card {
+            background-color: var(--x-bg);
+            border: 1px solid var(--x-border);
+            border-radius: 12px;
+            padding: 15px; 
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .section-heading {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--x-text-main);
+            margin-top: 0;
+            margin-bottom: 15px;
+            letter-spacing: -0.3px;
+        }
+
+        .divider-heading {
+            font-size: 13px;
+            color: var(--x-blue);
+            margin: 20px 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+        
+        .divider-heading:first-child { margin-top: 0; }
+
+        /* =========================================
+           START: Live Query Preview
+           ========================================= */
+        #live-preview-container {
+            border: 1px dashed #ffffff;
+            background-color: rgba(29, 155, 240, 0.03);
+            transition: all 0.3s ease;
+        }
+        .live-preview-box {
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--x-border);
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: var(--x-text-main);
+            font-size: 14px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            word-break: break-all;
+            letter-spacing: 0.5px;
+        }
+
+        /* =========================================
+           START: Grid Systems
+           ========================================= */
+        .row-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: 15px; }
+        .row-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 15px; }
+        .row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px; }
+        .row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
+        .row-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px; }
+        .row-search { display: grid; grid-template-columns: 1fr 180px; gap: 15px; margin-bottom: 15px; }
+        .row-profile-search { display: grid; grid-template-columns: 1fr 2fr 180px; gap: 15px; margin-bottom: 15px; }
+        
+        /* 30% / 70% Layout Grid */
+        .grid-30-70 {
+            display: grid;
+            grid-template-columns: 3fr 7fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .col-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .mb-0 { margin-bottom: 0 !important; }
+
+        /* =========================================
+           START: Form Styles & Floating Labels
+           ========================================= */
+        p.form-item, div.form-item { 
+            position: relative; 
+            margin: 0; 
+            width: 100%;
+        }
+
+        .form-item__label {
+            font-size: 13px;
+            line-height: 20px;
+            color: var(--x-text-muted);
+            position: absolute;
+            top: 50%;
+            left: 15px;
+            margin-top: -9px;
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.77, 0, 0.175, 1);
+            font-weight: 400;
+            z-index: 5;
+        }
+
+        .form-item__label.small-label-text { font-size: 12px; }
+
+        .form-item__field {
+            font-weight: 400;
+            font-size: 14px;
+            color: var(--x-text-main);
+            width: 100%;
+            height: 48px; 
+            padding-right: 15px;
+            padding-left: 15px;
+            background: var(--x-bg);
+            border: 1px solid var(--x-border);
+            border-radius: 8px;
+            outline: 0;
+            -webkit-appearance: none;
+            box-sizing: border-box;
+            padding-top: 14px; 
+            font-family: inherit;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .form-item__field::placeholder { color: transparent; transition: color 0.2s; }
+        .is-focused .form-item__field::placeholder { color: var(--x-text-muted); }
+        .form-item__field:hover { background-color: var(--x-surface); }
+
+        select.form-item__field {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M7%2010L12%2015L17%2010%22%20stroke%3D%22%2371767b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+            padding-right: 35px; 
+        }
+
+        .is-focused .form-item__label,
+        .is-filled .form-item__label {
+            top: 0; margin-top: 6px; font-size: 10px; color: var(--x-text-muted);
+        }
+
+        .is-focused .form-item__label { color: var(--x-blue); }
+
+        .is-focused .form-item__field {
+            border-color: var(--x-blue);
+            box-shadow: 0 0 0 1px var(--x-blue);
+            background-color: var(--x-bg); 
+        }
+
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
+            appearance: none; margin: 0;
+        }
+
+        /* =========================================
+           START: Left-Docked Min/Max Toggle
+           ========================================= */
+        .form-item.has-toggle .toggle-min-max {
+            position: absolute; top: 0; left: 0; width: 48px; height: 48px; cursor: pointer; margin: 0; z-index: 10; opacity: 0; 
+        }
+
+        .form-item.has-toggle .min-max-visual {
+            position: absolute; top: 1px; left: 1px; width: 48px; height: 46px;
+            background-color: transparent; border-right: 1px solid var(--x-border); border-radius: 7px 0 0 7px;
+            pointer-events: none; display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; color: var(--x-text-muted); transition: all 0.2s;
+        }
+
+        .form-item.has-toggle .min-max-visual::before { content: "MIN"; }
+        .form-item.has-toggle .toggle-min-max:checked + .min-max-visual { background-color: rgba(29, 155, 240, 0.1); border-right-color: rgba(29, 155, 240, 0.3); color: var(--x-blue); }
+        .form-item.has-toggle .toggle-min-max:checked + .min-max-visual::before { content: "MAX"; }
+
+        .form-item.has-toggle .form-item__field { padding-left: 62px; }
+        .form-item.has-toggle .form-item__label { left: 62px; }
+
+        /* =========================================
+           START: Buttons
+           ========================================= */
+        .button {
+            align-items: center; background: var(--x-button-bg); border: 0; border-radius: 9999px;
+            color: var(--x-button-text); cursor: pointer; font-weight: 700; font-size: 15px; display: inline-flex; justify-content: center;
+            height: 48px; padding: 0 24px; text-decoration: none; outline: 0; width: 100%;
+            transition: background-color 0.2s; font-family: inherit;
+        }
+        .button:hover { background-color: var(--x-button-hover); }
+
+        /* =========================================
+           START: Time Group Fixes
+           ========================================= */
+        .time-group { width: 100%; position: relative; }
+        .time-group > input { width: 100%; transition: opacity 0.3s; }
+        .time-group > input:disabled { opacity: 0.3; cursor: not-allowed; display: none; }
+        .time-group > input:not(:disabled) { opacity: 1; display: block; }
+        .time-group-in::placeholder { color: var(--x-text-muted) !important; }
+
+        /* =========================================
+           START: Inline Logic Cards
+           ========================================= */
+        .logic-card {
+            background: var(--x-surface); border: 1px solid var(--x-border); border-radius: 8px;
+            padding: 8px 15px; display: flex; flex-direction: column; justify-content: center; height: 48px;
+        }
+
+        .logic-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: var(--x-text-muted); margin-bottom: 4px; }
+        .logic-options { display: flex; gap: 15px; }
+        .logic-options p.radio-item { margin: 0; display: flex; align-items: center; }
+        .logic-options label { font-size: 12px; color: var(--x-text-main); margin-left: 6px; cursor: pointer; }
+        .logic-options input[type="radio"] { margin: 0; width: 14px; height: 14px; accent-color: var(--x-blue); cursor: pointer; }
+        .logic-options input[type="radio"]:disabled + label { color: var(--x-border); cursor: not-allowed; }
+
+        /* X Switch Toggle */
+        .switch { position: relative; display: inline-block; width: 32px; height: 16px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--x-border); transition: .2s; border-radius: 9999px; }
+        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: white; transition: .2s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--x-blue); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        /* =========================================
+           START: DateRangePicker Fixes (Dark Mode + Arrows)
+           ========================================= */
+        .daterangepicker { background-color: var(--x-bg) !important; border: 1px solid var(--x-border) !important; color: var(--x-text-main) !important; border-radius: 12px !important; box-shadow: 0 4px 12px rgba(255,255,255,0.05) !important; }
+        .daterangepicker .calendar-table { background-color: var(--x-bg) !important; border: none !important; }
+        .daterangepicker td.off, .daterangepicker td.off.in-range { background-color: var(--x-bg) !important; color: var(--x-border) !important; }
+        .daterangepicker td.available:hover, .daterangepicker th.available:hover { background-color: var(--x-surface) !important; border-radius: 4px; }
+        .daterangepicker td.active, .daterangepicker td.active:hover { background-color: var(--x-blue) !important; color: #fff !important; border-radius: 4px; }
+        .daterangepicker td.in-range { background-color: rgba(29, 155, 240, 0.15) !important; }
+        .daterangepicker .calendar-table .next span, .daterangepicker .calendar-table .prev span { border-color: var(--x-text-main) !important; }
+        .daterangepicker th.available:hover span { border-color: #fff !important; }
+        .daterangepicker:before { border-bottom-color: var(--x-border) !important; }
+        .daterangepicker:after { border-bottom-color: var(--x-bg) !important; }
+
+        /* =========================================
+           START: Responsive Rules
+           ========================================= */
+        @media (max-width: 1300px) {
+            .row-6 { grid-template-columns: repeat(3, 1fr); }
+            .row-5 { grid-template-columns: repeat(3, 1fr); }
+            .row-4 { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 900px) {
+            .row-6, .row-5, .row-4, .row-3, .row-2, .row-search, .row-profile-search { grid-template-columns: repeat(2, 1fr); }
+            .grid-30-70 { grid-template-columns: 1fr; } 
+        }
+        @media (max-width: 600px) {
+            .row-6, .row-5, .row-4, .row-3, .row-2, .row-search, .row-profile-search { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="main">
+            <!-- Header Structure -->
+            <div class="header-row">
+                <h2 class="brand-name">𝕏 Search</h2>
+                <div class="view-selector-wrapper">
+                    <select id="view-selector">
+                        <option value="global">Global Search</option>
+                        <option value="profile">Profile Search</option>
+                        <option value="smart">Smart Search</option>
+                        <option value="how">Explanations</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Live Preview Container -->
+            <div id="live-preview-container" class="search-section-card">
+                <h3 class="section-heading" style="color: white; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+                    Live Query Preview
+                </h3>
+                <div class="live-preview-box" id="live-preview-text">
+                    <span style="color: var(--x-text-muted);">Start typing to generate search query...</span>
+                </div>
+            </div>
+
+            <!-- Global Section -->
+            <div id="section-global" class="view-section active">
+                <form action="" id="search_form_gl" autocomplete="off">
+                    
+                    <!-- Card 1: Core Search -->
+                    <div class="search-section-card">
+                        <h3 class="section-heading">Core Search Criteria</h3>
+                        <div class="row-search">
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-keyword-gl">Search Term</label>
+                                <input class="form-item__field" type="text" name="tw_keyword_gl" id="tw-keyword-gl" placeholder="Keywords">
+                            </p>
+                            <div class="form-item">
+                                <button id="search_gl" class="button">Search 𝕏</button>
+                            </div>
+                        </div>
+
+                        <div class="row-6 mb-0">
+                             <p class="form-item">
+                                <label class="form-item__label" for="tw-verified-gl">Users Type</label>
+                                <select class="form-item__field" data-key="9" name="tw_verified_gl" id="tw-verified-gl">
+                                    <option value=""></option>
+                                    <option value="1">Everyone</option>
+                                    <option value="2">Accounts You Follow</option>
+                                    <option value="5">Trusted Network</option>
+                                    <option value="4">X Premium (Blue Check)</option>
+                                    <option value="3">Legacy Verified</option>
+                                </select>
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-filter-gl">Filter Focus</label>
+                                <select class="form-item__field" data-key="11" name="tw_filter_gl" id="tw-filter-gl">
+                                    <option value=""></option>
+                                    <option value="1">Hashtags</option>
+                                    <option value="2">Retweets</option>
+                                    <option value="3">Replies</option>
+                                    <option value="4">Quote</option>
+                                    <option value="5">Choices Poll</option>
+                                    <option value="6">Images Poll</option>
+                                    <option value="7">Has Engagement</option>
+                                    <option value="8">Safe (Exclude NSFW content)</option>
+                                </select>
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-sentiment-gl">Sentiment / Intent</label>
+                                <select class="form-item__field" name="tw_sentiment_gl" id="tw-sentiment-gl">
+                                    <option value="">Any Intent</option>
+                                    <option value="?">Questions Only (?)</option>
+                                    <option value=":)">Positive Sentiment (:))</option>
+                                    <option value=":(">Negative Sentiment (:( )</option>
+                                </select>
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-feed-type-gl">Feed Sort Type</label>
+                                <select class="form-item__field" data-key="10" name="tw_feed_type_gl" id="tw-feed-type-gl">
+                                    <option value="1">Top Posts</option>
+                                    <option value="2">Latest Posts</option>
+                                </select>
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-types-gl">Media Type</label>
+                                <select class="form-item__field" data-key="3" name="tw_types_gl" id="tw-types-gl">
+                                    <option value=""></option>
+                                    <option value="1">All Media</option>
+                                    <option value="2">Image</option>
+                                    <option value="3">Video</option>
+                                    <option value="4">News</option>
+                                    <option value="5">Links</option>
+                                </select>
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-language-gl">Language / Deep Tag</label>
+                                <select class="form-item__field" data-key="6" name="tw_language_gl" id="tw-language-gl">
+                                    <option value=""></option>
+                                    <optgroup label="OSINT Machine Tags">
+                                        <option value="61">Media Only (No Text)</option>
+                                        <option value="62">Mentions Only (Spam)</option>
+                                        <option value="63">Cashtags Only</option>
+                                        <option value="64">Undefined/Anomalous</option>
+                                    </optgroup>
+                                    <optgroup label="Standard Languages">
+                                        <option value="13">English</option>
+                                        <option value="2">Arabic</option>
+                                        <option value="18">French</option>
+                                        <option value="14">Spanish</option>
+                                        <option value="1">Amharic</option> <option value="3">Bulgarian</option> <option value="4">Bengali</option> <option value="5">Tibetan</option> <option value="6">Catalan</option> <option value="7">Cherokee</option> <option value="8">Czech</option> <option value="9">Danish</option> <option value="10">German</option> <option value="11">Maldivian</option> <option value="12">Greek</option> <option value="15">Estonian</option> <option value="16">Persian</option> <option value="17">Finnish</option> <option value="19">Gujarati</option> <option value="20">Hindi</option> <option value="21">Haitian</option> <option value="22">Hungarian</option> <option value="23">Armenian</option> <option value="24">Indonesian</option> <option value="25">Icelandic</option> <option value="26">Italian</option> <option value="27">Inuktitut</option> <option value="28">Hebrew</option> <option value="29">Japanese</option> <option value="30">Georgian</option> <option value="31">Khmer</option> <option value="32">Kannada</option> <option value="33">Korean</option> <option value="34">Lao</option> <option value="35">Lithuanian</option> <option value="36">Latvian</option> <option value="37">Malayalam</option> <option value="38">Myanmar</option> <option value="39">Nepali</option> <option value="40">Dutch</option> <option value="41">Norwegian</option> <option value="42">Odia (Oriya)</option> <option value="43">Panjabi</option> <option value="44">Polish</option> <option value="45">Portuguese</option> <option value="46">Romanian</option> <option value="47">Russian</option> <option value="48">Sinhala</option> <option value="49">Slovak</option> <option value="50">Slovene</option> <option value="51">Swedish</option> <option value="52">Tamil</option> <option value="53">Telugu</option> <option value="54">Thai</option> <option value="55">Tagalog</option> <option value="56">Turkish</option> <option value="57">Ukrainian</option> <option value="58">Urdu</option> <option value="59">Vietnamese</option> <option value="60">Chinese</option>
+                                    </optgroup>
+                                </select>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Unified Metrics & Rules -->
+                    <div class="search-section-card">
+                        
+                        <!-- 30% / 70% Split Area -->
+                        <div class="grid-30-70">
+                            <!-- Left: 30% Engagement -->
+                            <div>
+                                <div class="section-heading">Engagement Metrics</div>
+                                <div class="col-stack">
+                                    <p class="form-item has-toggle mb-0">
+                                        <label class="form-item__label" for="tw-favourites-gl">Favourites</label>
+                                        <input class="form-item__field" data-key="4" type="number" min="1" name="tw_favourites_gl" id="tw-favourites-gl" data-toggle="true" placeholder="e.g. 50">
+                                        <input type="checkbox" name="tw_favourites_toggle_gl" class="toggle-min-max">
+                                        <span class="min-max-visual"></span>
+                                    </p>
+                                    <p class="form-item has-toggle mb-0">
+                                        <label class="form-item__label" for="tw-replies-gl">Replies</label>
+                                        <input class="form-item__field" data-key="8" type="number" min="1" name="tw_replies_gl" id="tw-replies-gl" data-toggle="true" placeholder="e.g. 10">
+                                        <input type="checkbox" name="tw_replies_toggle_gl" class="toggle-min-max">
+                                        <span class="min-max-visual"></span>
+                                    </p>
+                                    <p class="form-item has-toggle mb-0">
+                                        <label class="form-item__label" for="tw-retweets-gl">Retweets</label>
+                                        <input class="form-item__field" data-key="5" type="number" min="1" name="tw_retweets_gl" id="tw-retweets-gl" data-toggle="true" placeholder="e.g. 100">
+                                        <input type="checkbox" name="tw_retweets_toggle_gl" class="toggle-min-max">
+                                        <span class="min-max-visual"></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Right: 70% Targeting -->
+                            <div>
+                                <div class="section-heading">Targeting & Time Range</div>
+                                <div class="row-2" style="grid-template-columns: repeat(3, 1fr);">
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-mention-gl">Mentioning Text</label>
+                                        <input class="form-item__field" data-key="2" type="text" name="tw_mention_gl" id="tw-mention-gl" placeholder="@username">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-list-gl">Target List</label>
+                                        <input class="form-item__field" data-key="15" type="text" name="tw_list_gl" id="tw-list-gl" placeholder="username/list-slug">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-source-gl">Shared Url</label>
+                                        <input class="form-item__field" data-key="13" type="text" name="tw_source_gl" id="tw-source-gl" placeholder="example.com">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-hashtags-gl">Specific Hashtags</label>
+                                        <input class="form-item__field" type="text" name="tw_hashtags_gl" id="tw-hashtags-gl" placeholder="#topic">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-location-gl">Location (Broad)</label>
+                                        <input class="form-item__field" data-key="7" type="text" name="tw_location_gl" id="tw-location-gl" placeholder="City, Country">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-geocode-gl">Geocode (Strict)</label>
+                                        <input class="form-item__field" data-key="14" type="text" name="tw_geocode_gl" id="tw-geocode-gl" placeholder="e.g. 40.71,-74.00,5km">
+                                    </p>
+                                </div>
+                                <div class="row-2 mb-0">
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-time-gl">Time Constraint</label>
+                                        <select class="form-item__field" data-key="12" name="tw_time_gl" id="tw-time-gl">
+                                            <option value="">Any Time</option>
+                                            <option value="1">Within Elapsed</option>
+                                            <option value="2">Specific Dates</option>
+                                            <option value="3">After Tweet ID (Anchor)</option>
+                                        </select>
+                                    </p>
+                                    <div class="form-item">
+                                        <label class="form-item__label">Duration / Target Range</label>
+                                        <div class="time-group form-item-time-pf time-date-range-pf">
+                                            <input class="form-item__field time-group-in" placeholder="e.g. 2d, 5h, 30m" type="text" name="tw_time_txt_1_gl" id="tw-time-txt-gl-1" disabled>
+                                            <input class="form-item__field time-group-in tw-date-range" placeholder="Click to Select Dates" type="text" name="tw_time_txt_2_gl" id="tw-time-txt-gl-2" disabled>
+                                            <input class="form-item__field time-group-in" placeholder="Paste Tweet Snowflake ID" type="text" name="tw_time_txt_3_gl" id="tw-time-txt-gl-3" disabled>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 6 inputs split perfectly into 2 rows of 3 -->
+                        <div class="section-heading" style="margin-top: 25px;">Advanced Inclusion & Exclusion Rules</div>
+                        <div class="row-3">
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-exact-phrase-gl">This Exact Phrase</label>
+                                <input class="form-item__field" type="text" name="tw_exact_phrase_gl" id="tw-exact-phrase-gl" placeholder="Quote">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-any-words-gl">Any Of These Words</label>
+                                <input class="form-item__field" type="text" name="tw_any_words_gl" id="tw-any-words-gl" placeholder="Word OR Word">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-none-words-gl">None Of These Words</label>
+                                <input class="form-item__field" type="text" name="tw_none_words_gl" id="tw-none-words-gl" placeholder="Exclude Word">
+                            </p>
+                        </div>
+                        <div class="row-3 mb-0">
+                            <p class="form-item">
+                                <label class="form-item__label small-label-text" for="tw-mentioning-gl">Tags These Accounts</label>
+                                <input class="form-item__field" type="text" name="tw_mentioning_gl" id="tw-mentioning-gl" placeholder="@username">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-from-gl">From Accounts</label>
+                                <input class="form-item__field" type="text" name="tw_from_gl" id="tw-from-gl" placeholder="@username">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-to-gl">To Accounts</label>
+                                <input class="form-item__field" type="text" name="tw_to_gl" id="tw-to-gl" placeholder="@username">
+                            </p>
+                        </div>
+
+                        <!-- Bottom Logic Row -->
+                        <div class="section-heading" style="margin-top: 15px;">Logic Filters</div>
+                        <div class="row-2 mb-0">
+                            <div class="logic-card">
+                                <div class="logic-header">
+                                    <span>Replies Logic</span>
+                                    <label class="switch">
+                                        <input type="checkbox" name="tw_replies_toggle_gl" id="tw-replies-toggle-gl" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="filter-group-options logic-options">
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-replies-include-gl" name="tw_replies_filter_gl" value="include" checked>
+                                        <label for="tw-replies-include-gl">Include replies & original</label>
+                                    </p>
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-replies-only-gl" name="tw_replies_filter_gl" value="only">
+                                        <label for="tw-replies-only-gl">Only show replies</label>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="logic-card">
+                                <div class="logic-header">
+                                    <span>Links Logic</span>
+                                    <label class="switch">
+                                        <input type="checkbox" name="tw_links_toggle_gl" id="tw-links-toggle-gl" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="filter-group-options logic-options">
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-links-include-gl" name="tw_links_filter_gl" value="include" checked>
+                                        <label for="tw-links-include-gl">Include posts with links</label>
+                                    </p>
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-links-only-gl" name="tw_links_filter_gl" value="only">
+                                        <label for="tw-links-only-gl">Only show posts with links</label>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div> 
+                </form>
+            </div>
+
+            <!-- Smart Section -->
+            <div id="section-smart" class="view-section">
+                <form action="" id="search_form_sm" autocomplete="off">
+                    
+                    <!-- Card 1: Core Search -->
+                    <div class="search-section-card">
+                        <h3 class="section-heading">Core Search Criteria</h3>
+                        <div class="row-search">
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-keyword-sm">Smart Sentence</label>
+                                <input class="form-item__field" type="text" name="tw_keyword_sm" id="tw-keyword-sm" placeholder="Paste syntax here...">
+                            </p>
+                            <div class="form-item">
+                                <button id="search_sm" class="button">Search 𝕏</button>
+                            </div>
+                        </div>
+                        
+                        <div class="row-6 mb-0">
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-verified-sm">Users Type</label>
+                                <select class="form-item__field" data-key="9" name="tw_verified_sm" id="tw-verified-sm">
+                                    <option value=""></option>
+                                    <option value="1">Everyone</option>
+                                    <option value="2">Accounts You Follow</option>
+                                    <option value="5">Trusted Network</option>
+                                    <option value="4">X Premium (Blue Check)</option>
+                                    <option value="3">Legacy Verified</option>
+                                </select>
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-filter-sm">Filter Focus</label>
+                                <select class="form-item__field" data-key="11" name="tw_filter_sm" id="tw-filter-sm">
+                                    <option value=""></option>
+                                    <option value="1">Hashtags</option>
+                                    <option value="2">Retweets</option>
+                                    <option value="3">Replies</option>
+                                    <option value="4">Quote</option>
+                                    <option value="5">Choices Poll</option>
+                                    <option value="6">Images Poll</option>
+                                    <option value="7">Has Engagement</option>
+                                    <option value="8">Safe (Exclude NSFW content)</option>
+                                </select>
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-sentiment-sm">Sentiment / Intent</label>
+                                <select class="form-item__field" name="tw_sentiment_sm" id="tw-sentiment-sm">
+                                    <option value="">Any Intent</option>
+                                    <option value="?">Questions Only (?)</option>
+                                    <option value=":)">Positive Sentiment (:))</option>
+                                    <option value=":(">Negative Sentiment (:( )</option>
+                                </select>
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-feed-type-sm">Feed Sort Type</label>
+                                <select class="form-item__field" data-key="10" name="tw_feed_type_sm" id="tw-feed-type-sm">
+                                    <option value="1">Top Posts</option>
+                                    <option value="2">Latest Posts</option>
+                                </select>
+                            </p>
+                             <p class="form-item">
+                                <label class="form-item__label" for="tw-types-sm">Media Type</label>
+                                <select class="form-item__field" data-key="3" name="tw_types_sm" id="tw-types-sm">
+                                    <option value=""></option>
+                                    <option value="1">All Media</option>
+                                    <option value="2">Image</option>
+                                    <option value="3">Video</option>
+                                    <option value="4">News</option>
+                                    <option value="5">Links</option>
+                                </select>
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-language-sm">Language / Deep Tag</label>
+                                <select class="form-item__field" data-key="6" name="tw_language_sm" id="tw-language-sm">
+                                    <option value=""></option>
+                                    <optgroup label="OSINT Machine Tags">
+                                        <option value="61">Media Only (No Text)</option>
+                                        <option value="62">Mentions Only (Spam)</option>
+                                        <option value="63">Cashtags Only</option>
+                                        <option value="64">Undefined/Anomalous</option>
+                                    </optgroup>
+                                    <optgroup label="Standard Languages">
+                                        <option value="13">English</option>
+                                        <option value="2">Arabic</option>
+                                         <option value="1">Amharic</option> <option value="3">Bulgarian</option> <option value="4">Bengali</option> <option value="5">Tibetan</option> <option value="6">Catalan</option> <option value="7">Cherokee</option> <option value="8">Czech</option> <option value="9">Danish</option> <option value="10">German</option> <option value="11">Maldivian</option> <option value="12">Greek</option> <option value="14">Spanish</option> <option value="15">Estonian</option> <option value="16">Persian</option> <option value="17">Finnish</option> <option value="18">French</option> <option value="19">Gujarati</option> <option value="20">Hindi</option> <option value="21">Haitian</option> <option value="22">Hungarian</option> <option value="23">Armenian</option> <option value="24">Indonesian</option> <option value="25">Icelandic</option> <option value="26">Italian</option> <option value="27">Inuktitut</option> <option value="28">Hebrew</option> <option value="29">Japanese</option> <option value="30">Georgian</option> <option value="31">Khmer</option> <option value="32">Kannada</option> <option value="33">Korean</option> <option value="34">Lao</option> <option value="35">Lithuanian</option> <option value="36">Latvian</option> <option value="37">Malayalam</option> <option value="38">Myanmar</option> <option value="39">Nepali</option> <option value="40">Dutch</option> <option value="41">Norwegian</option> <option value="42">Odia (Oriya)</option> <option value="43">Panjabi</option> <option value="44">Polish</option> <option value="45">Portuguese</option> <option value="46">Romanian</option> <option value="47">Russian</option> <option value="48">Sinhala</option> <option value="49">Slovak</option> <option value="50">Slovene</option> <option value="51">Swedish</option> <option value="52">Tamil</option> <option value="53">Telugu</option> <option value="54">Thai</option> <option value="55">Tagalog</option> <option value="56">Turkish</option> <option value="57">Ukrainian</option> <option value="58">Urdu</option> <option value="59">Vietnamese</option> <option value="60">Chinese</option>
+                                    </optgroup>
+                                </select>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Unified Metrics & Rules -->
+                    <div class="search-section-card">
+                        
+                        <!-- 30% / 70% Split Area -->
+                        <div class="grid-30-70">
+                            <!-- Left: 30% Engagement -->
+                            <div>
+                                <div class="section-heading">Engagement Metrics</div>
+                                <div class="col-stack">
+                                    <p class="form-item has-toggle mb-0">
+                                        <label class="form-item__label" for="tw-favourites-sm">Favourites</label>
+                                        <input class="form-item__field" data-key="4" type="number" min="1" name="tw_favourites_sm" id="tw-favourites-sm" data-toggle="true" placeholder="e.g. 50">
+                                        <input type="checkbox" name="tw_favourites_toggle_sm" class="toggle-min-max">
+                                        <span class="min-max-visual"></span>
+                                    </p>
+                                    <p class="form-item has-toggle mb-0">
+                                        <label class="form-item__label" for="tw-replies-sm">Replies</label>
+                                        <input class="form-item__field" data-key="8" type="number" min="1" name="tw_replies_sm" id="tw-replies-sm" data-toggle="true" placeholder="e.g. 10">
+                                        <input type="checkbox" name="tw_replies_toggle_sm" class="toggle-min-max">
+                                        <span class="min-max-visual"></span>
+                                    </p>
+                                    <p class="form-item has-toggle mb-0">
+                                        <label class="form-item__label" for="tw-retweets-sm">Retweets</label>
+                                        <input class="form-item__field" data-key="5" type="number" min="1" name="tw_retweets_sm" id="tw-retweets-sm" data-toggle="true" placeholder="e.g. 100">
+                                        <input type="checkbox" name="tw_retweets_toggle_sm" class="toggle-min-max">
+                                        <span class="min-max-visual"></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Right: 70% Targeting -->
+                            <div>
+                                <div class="section-heading">Targeting & Time Range</div>
+                                <div class="row-2" style="grid-template-columns: repeat(3, 1fr);">
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-mention-sm">Mentioning Text</label>
+                                        <input class="form-item__field" data-key="2" type="text" name="tw_mention_sm" id="tw-mention-sm" placeholder="@username">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-list-sm">Target List</label>
+                                        <input class="form-item__field" data-key="15" type="text" name="tw_list_sm" id="tw-list-sm" placeholder="username/list-slug">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-source-sm">Shared Url</label>
+                                        <input class="form-item__field" data-key="13" type="text" name="tw_source_sm" id="tw-source-sm" placeholder="example.com">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-hashtags-sm">Specific Hashtags</label>
+                                        <input class="form-item__field" type="text" name="tw_hashtags_sm" id="tw-hashtags-sm" placeholder="#topic">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-location-sm">Location (Broad)</label>
+                                        <input class="form-item__field" data-key="7" type="text" name="tw_location_sm" id="tw-location-sm" placeholder="City, Country">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-geocode-sm">Geocode (Strict)</label>
+                                        <input class="form-item__field" data-key="14" type="text" name="tw_geocode_sm" id="tw-geocode-sm" placeholder="e.g. 40.71,-74.00,5km">
+                                    </p>
+                                </div>
+                                <div class="row-2 mb-0">
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-time-sm">Time Constraint</label>
+                                        <select class="form-item__field" data-key="12" name="tw_time_sm" id="tw-time-sm">
+                                            <option value="">Any Time</option>
+                                            <option value="1">Within Elapsed</option>
+                                            <option value="2">Specific Dates</option>
+                                            <option value="3">After Tweet ID (Anchor)</option>
+                                        </select>
+                                    </p>
+                                    <div class="form-item">
+                                        <label class="form-item__label">Duration / Target Range</label>
+                                        <div class="time-group form-item-time-pf time-date-range-pf">
+                                            <input class="form-item__field time-group-in" placeholder="e.g. 2d, 5h, 30m" type="text" name="tw_time_txt_1_sm" id="tw-time-txt-sm-1" disabled>
+                                            <input class="form-item__field time-group-in tw-date-range" placeholder="Click to Select Dates" type="text" name="tw_time_txt_2_sm" id="tw-time-txt-sm-2" disabled>
+                                            <input class="form-item__field time-group-in" placeholder="Paste Tweet Snowflake ID" type="text" name="tw_time_txt_3_sm" id="tw-time-txt-sm-3" disabled>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 6 inputs split perfectly into 2 rows of 3 -->
+                        <div class="section-heading" style="margin-top: 25px;">Advanced Inclusion & Exclusion Rules</div>
+                        <div class="row-3">
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-exact-phrase-sm">This Exact Phrase</label>
+                                <input class="form-item__field" type="text" name="tw_exact_phrase_sm" id="tw-exact-phrase-sm" placeholder="Quote">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-any-words-sm">Any Of These Words</label>
+                                <input class="form-item__field" type="text" name="tw_any_words_sm" id="tw-any-words-sm" placeholder="Word OR Word">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-none-words-sm">None Of These Words</label>
+                                <input class="form-item__field" type="text" name="tw_none_words_sm" id="tw-none-words-sm" placeholder="Exclude Word">
+                            </p>
+                        </div>
+                        <div class="row-3 mb-0">
+                            <p class="form-item">
+                                <label class="form-item__label small-label-text" for="tw-mentioning-sm">Tags These Accounts</label>
+                                <input class="form-item__field" type="text" name="tw_mentioning_sm" id="tw-mentioning-sm" placeholder="@username">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-from-sm">From Accounts</label>
+                                <input class="form-item__field" type="text" name="tw_from_sm" id="tw-from-sm" placeholder="@username">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-to-sm">To Accounts</label>
+                                <input class="form-item__field" type="text" name="tw_to_sm" id="tw-to-sm" placeholder="@username">
+                            </p>
+                        </div>
+                        <!-- Bottom Logic Row -->
+                        <div class="section-heading" style="margin-top: 15px;">Logic Filters</div>
+                        <div class="row-2 mb-0">
+                            <div class="logic-card">
+                                <div class="logic-header">
+                                    <span>Replies Logic</span>
+                                    <label class="switch">
+                                        <input type="checkbox" name="tw_replies_toggle_sm" id="tw-replies-toggle-sm" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="filter-group-options logic-options">
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-replies-include-sm" name="tw_replies_filter_sm" value="include" checked>
+                                        <label for="tw-replies-include-sm">Include replies & original</label>
+                                    </p>
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-replies-only-sm" name="tw_replies_filter_sm" value="only">
+                                        <label for="tw-replies-only-sm">Only show replies</label>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="logic-card">
+                                <div class="logic-header">
+                                    <span>Links Logic</span>
+                                    <label class="switch">
+                                        <input type="checkbox" name="tw_links_toggle_sm" id="tw-links-toggle-sm" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="filter-group-options logic-options">
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-links-include-sm" name="tw_links_filter_sm" value="include" checked>
+                                        <label for="tw-links-include-sm">Include posts with links</label>
+                                    </p>
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-links-only-sm" name="tw_links_filter_sm" value="only">
+                                        <label for="tw-links-only-sm">Only show posts with links</label>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div> 
+                </form>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="section-profile" class="view-section">
+                <form action="" id="search_form" autocomplete="off">
+                    
+                    <!-- Card 1: Target Profile Base -->
+                    <div class="search-section-card">
+                        <h3 class="section-heading">Target Profile Criteria</h3>
+                        <div class="row-profile-search">
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-handle">𝕏 Handle</label>
+                                <input class="form-item__field" data-key="1" type="text" name="tw_handle" id="tw-handle" placeholder="@username">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-keyword-pf">Search Term</label>
+                                <input class="form-item__field" type="text" name="tw_keyword_pf" id="tw-keyword-pf" placeholder="Keywords">
+                            </p>
+                            <div class="form-item">
+                                <button id="search" class="button">Search Profile</button>
+                            </div>
+                        </div>
+
+                        <div class="row-3 mb-0">
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-feed-type-pf">Feed Sort Type</label>
+                                <select class="form-item__field" data-key="10" name="tw_feed_type_pf" id="tw-feed-type-pf">
+                                    <option value="1">Top Posts</option>
+                                    <option value="2">Latest Posts</option>
+                                </select>
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-filter-pf">Filter Focus</label>
+                                <select class="form-item__field" data-key="11" name="tw_filter_pf" id="tw-filter-pf" data-toggle="true">
+                                    <option value="">No Filter</option>
+                                    <option value="1">Hashtags</option>
+                                    <option value="2">Retweets</option>
+                                    <option value="3">Replies</option>
+                                    <option value="4">Quote</option>
+                                    <option value="5">Choices Poll</option>
+                                    <option value="6">Images Poll</option>
+                                    <option value="7">Has Engagement</option>
+                                    <option value="8">Safe (Exclude NSFW content)</option>
+                                </select>
+                                <input type="checkbox" name="tw_filter_toggle_pf" style="display:none;">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-sentiment-pf">Sentiment / Intent</label>
+                                <select class="form-item__field" name="tw_sentiment_pf" id="tw-sentiment-pf">
+                                    <option value="">Any Intent</option>
+                                    <option value="?">Questions Only (?)</option>
+                                    <option value=":)">Positive Sentiment (:))</option>
+                                    <option value=":(">Negative Sentiment (:( )</option>
+                                </select>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Unified Metrics & Rules -->
+                    <div class="search-section-card">
+                        
+                        <!-- 30% / 70% Split Area -->
+                        <div class="grid-30-70">
+                            <!-- Left: 30% Engagement -->
+                            <div>
+                                <div class="section-heading">Engagement Metrics</div>
+                                <div class="col-stack">
+                                    <p class="form-item has-toggle mb-0">
+                                        <label class="form-item__label" for="tw-favourites-pf">Favourites</label>
+                                        <input class="form-item__field" data-key="4" type="number" min="1" name="tw_favourites_pf" id="tw-favourites-pf" data-toggle="true" placeholder="e.g. 50">
+                                        <input type="checkbox" name="tw_favourites_toggle_pf" class="toggle-min-max">
+                                        <span class="min-max-visual"></span>
+                                    </p>
+                                    <p class="form-item has-toggle mb-0">
+                                        <label class="form-item__label" for="tw-replies-pf">Replies</label>
+                                        <input class="form-item__field" data-key="8" type="number" min="1" name="tw_replies_pf" id="tw-replies-pf" data-toggle="true" placeholder="e.g. 10">
+                                        <input type="checkbox" name="tw_replies_toggle_pf" class="toggle-min-max">
+                                        <span class="min-max-visual"></span>
+                                    </p>
+                                    <p class="form-item has-toggle mb-0">
+                                        <label class="form-item__label" for="tw-retweets-pf">Retweets</label>
+                                        <input class="form-item__field" data-key="5" type="number" min="1" name="tw_retweets_pf" id="tw-retweets-pf" data-toggle="true" placeholder="e.g. 100">
+                                        <input type="checkbox" name="tw_retweets_toggle_pf" class="toggle-min-max">
+                                        <span class="min-max-visual"></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Right: 70% Targeting -->
+                            <div>
+                                <div class="section-heading">Targeting & Time Range</div>
+                                <div class="row-2" style="grid-template-columns: repeat(3, 1fr);">
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-mention-pf">Mentioning Text</label>
+                                        <input class="form-item__field" data-key="2" type="text" name="tw_mention_pf" id="tw-mention-pf" placeholder="@username">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-list-pf">Target List</label>
+                                        <input class="form-item__field" data-key="15" type="text" name="tw_list_pf" id="tw-list-pf" placeholder="username/list-slug">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-source-pf">Shared Url</label>
+                                        <input class="form-item__field" data-key="13" type="text" name="tw_source_pf" id="tw-source-pf" placeholder="example.com">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-hashtags-pf">Specific Hashtags</label>
+                                        <input class="form-item__field" type="text" name="tw_hashtags_pf" id="tw-hashtags-pf" placeholder="#topic">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-location-pf">Location (Broad)</label>
+                                        <input class="form-item__field" data-key="7" type="text" name="tw_location_pf" id="tw-location-pf" placeholder="City, Country">
+                                    </p>
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-geocode-pf">Geocode (Strict)</label>
+                                        <input class="form-item__field" data-key="14" type="text" name="tw_geocode_pf" id="tw-geocode-pf" placeholder="e.g. 40.71,-74.00,5km">
+                                    </p>
+                                </div>
+                                <div class="row-2 mb-0">
+                                    <p class="form-item">
+                                        <label class="form-item__label" for="tw-time-pf">Time Constraint</label>
+                                        <select class="form-item__field" data-key="12" name="tw_time_pf" id="tw-time-pf">
+                                            <option value="">Any Time</option>
+                                            <option value="1">Within Elapsed</option>
+                                            <option value="2">Specific Dates</option>
+                                            <option value="3">After Tweet ID (Anchor)</option>
+                                        </select>
+                                    </p>
+                                    <div class="form-item">
+                                        <label class="form-item__label">Duration / Target Range</label>
+                                        <div class="time-group form-item-time-pf time-date-range-pf">
+                                            <input class="form-item__field time-group-in" placeholder="e.g. 2d, 5h, 30m" type="text" name="tw_time_txt_1_pf" id="tw-time-txt-pf-1" disabled>
+                                            <input class="form-item__field time-group-in tw-date-range" placeholder="Click to Select Dates" type="text" name="tw_time_txt_2_pf" id="tw-time-txt-pf-2" disabled>
+                                            <input class="form-item__field time-group-in" placeholder="Paste Tweet Snowflake ID" type="text" name="tw_time_txt_3_pf" id="tw-time-txt-pf-3" disabled>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 6 inputs split perfectly into 2 rows of 3 -->
+                        <div class="section-heading" style="margin-top: 25px;">Advanced Inclusion & Exclusion Rules</div>
+                        <div class="row-3">
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-exact-phrase-pf">This Exact Phrase</label>
+                                <input class="form-item__field" type="text" name="tw_exact_phrase_pf" id="tw-exact-phrase-pf" placeholder="Quote">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-any-words-pf">Any Of These Words</label>
+                                <input class="form-item__field" type="text" name="tw_any_words_pf" id="tw-any-words-pf" placeholder="Word OR Word">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-none-words-pf">None Of These Words</label>
+                                <input class="form-item__field" type="text" name="tw_none_words_pf" id="tw-none-words-pf" placeholder="Exclude Word">
+                            </p>
+                        </div>
+                        <div class="row-3 mb-0">
+                            <p class="form-item">
+                                <label class="form-item__label small-label-text" for="tw-mentioning-pf">Tags These Accounts</label>
+                                <input class="form-item__field" type="text" name="tw_mentioning_pf" id="tw-mentioning-pf" placeholder="@username">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-from-pf">From Accounts</label>
+                                <input class="form-item__field" type="text" name="tw_from_pf" id="tw-from-pf" placeholder="@username">
+                            </p>
+                            <p class="form-item">
+                                <label class="form-item__label" for="tw-to-pf">To Accounts</label>
+                                <input class="form-item__field" type="text" name="tw_to_pf" id="tw-to-pf" placeholder="@username">
+                            </p>
+                        </div>
+
+                        <!-- Bottom Logic Row -->
+                        <div class="section-heading" style="margin-top: 15px;">Logic Filters</div>
+                        <div class="row-2 mb-0">
+                            <div class="logic-card">
+                                <div class="logic-header">
+                                    <span>Replies Logic</span>
+                                    <label class="switch">
+                                        <input type="checkbox" name="tw_replies_toggle_pf" id="tw-replies-toggle-pf" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="filter-group-options logic-options">
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-replies-include-pf" name="tw_replies_filter_pf" value="include" checked>
+                                        <label for="tw-replies-include-pf">Include replies & original</label>
+                                    </p>
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-replies-only-pf" name="tw_replies_filter_pf" value="only">
+                                        <label for="tw-replies-only-pf">Only show replies</label>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="logic-card">
+                                <div class="logic-header">
+                                    <span>Links Logic</span>
+                                    <label class="switch">
+                                        <input type="checkbox" name="tw_links_toggle_pf" id="tw-links-toggle-pf" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="filter-group-options logic-options">
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-links-include-pf" name="tw_links_filter_pf" value="include" checked>
+                                        <label for="tw-links-include-pf">Include posts with links</label>
+                                    </p>
+                                    <p class="radio-item">
+                                        <input type="radio" id="tw-links-only-pf" name="tw_links_filter_pf" value="only">
+                                        <label for="tw-links-only-pf">Only show posts with links</label>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div> 
+                </form>
+            </div>
+
+            <!-- Explanations ☆ Section -->
+            <div id="section-how" class="view-section">
+                <div class="search-section-card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
+                    <div class="row-3">
+                        <!-- Words Section -->
+                        <div style="background: var(--x-surface); border: 1px solid var(--x-border); border-radius: 12px; padding: 20px;">
+                            <h3 class="section-heading" style="border-bottom: 1px solid var(--x-border); padding-bottom: 10px;">Words & Syntax</h3>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Capital OR Matters:</strong> Use capitalized OR between words to find either term. Lowercase "or" will break the search engine. <br><span style="color: var(--x-blue); background-color: rgba(29, 155, 240, 0.1); padding: 2px 4px; border-radius: 4px; font-size: 12px; margin-top: 4px; display: inline-block;">Correct: dogs OR cats</span></p>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Exact Phrases:</strong> Quotes force rigid matching, bypassing autocorrect entirely. <br><span style="color: var(--x-blue); background-color: rgba(29, 155, 240, 0.1); padding: 2px 4px; border-radius: 4px; font-size: 12px; margin-top: 4px; display: inline-block;">Example: "golden hour"</span></p>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Forced Matches (+):</strong> Add a plus sign to force a match for deliberate typos or unbroken codes. <br><span style="color: var(--x-blue); background-color: rgba(29, 155, 240, 0.1); padding: 2px 4px; border-radius: 4px; font-size: 12px; margin-top: 4px; display: inline-block;">Example: +radiooooo</span></p>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 0;"><strong style="color: var(--x-text-main);">These hashtags:</strong> Finds posts that include specific hashtags natively. <br><span style="color: var(--x-blue); background-color: rgba(29, 155, 240, 0.1); padding: 2px 4px; border-radius: 4px; font-size: 12px; margin-top: 4px; display: inline-block;">Example: #OSINT</span></p>
+                        </div>
+
+                        <!-- Accounts & Targeting Section -->
+                        <div style="background: var(--x-surface); border: 1px solid var(--x-border); border-radius: 12px; padding: 20px;">
+                            <h3 class="section-heading" style="border-bottom: 1px solid var(--x-border); padding-bottom: 10px;">Accounts & Location</h3>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Target Lists:</strong> Restrict your search to a specific curated cohort. Incredible for filtering noise. <br><span style="color: var(--x-blue); background-color: rgba(29, 155, 240, 0.1); padding: 2px 4px; border-radius: 4px; font-size: 12px; margin-top: 4px; display: inline-block;">Example: username/list-slug</span></p>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Trusted Networks:</strong> Under Users Type, selecting "Trusted" searches only second-degree connections (people followed by people you follow). Great alternative to Blue Checkmarks.</p>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Geocode (Strict):</strong> Draw an algorithmic geofence. Often better than broad "Location". <br><span style="color: var(--x-blue); background-color: rgba(29, 155, 240, 0.1); padding: 2px 4px; border-radius: 4px; font-size: 12px; margin-top: 4px; display: inline-block;">Example: 40.71,-74.00,5km</span></p>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 0;"><strong style="color: var(--x-text-main);">Tags Accounts:</strong> Shows any post where usernames are tagged, regardless of origin.</p>
+                        </div>
+
+                        <!-- Engagement & Dates Section -->
+                        <div style="background: var(--x-surface); border: 1px solid var(--x-border); border-radius: 12px; padding: 20px;">
+                            <h3 class="section-heading" style="border-bottom: 1px solid var(--x-border); padding-bottom: 10px;">Engagement & Timelines</h3>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Minimums (MIN):</strong> High thresholds wipe out bots and isolate viral consensus opinions.</p>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Maximums (MAX):</strong> Clicking the MIN/MAX toggle to set a maximum ceiling (e.g. Max Likes: 10) is the ultimate trick for finding raw, unamplified eyewitness data during a breaking crisis.</p>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 15px;"><strong style="color: var(--x-text-main);">Anchor Tweet IDs:</strong> By picking "After Tweet ID" in Time Constraints, you use the Snowflake ID embedded in a specific Tweet to perfectly boundary a search to the exact millisecond, bypassing timezone bugs.</p>
+                            <p style="font-size: 14px; color: var(--x-text-muted); margin-bottom: 0;"><strong style="color: var(--x-text-main);">Machine Tags:</strong> Use the OSINT tags under Language to find raw media void of text, bot-rings, or cashtag pump-and-dumps.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+    <!-- Dependencies via CDN instead of local files -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    
+    <!-- App Logic -->
+    <script type="text/javascript">
+        $(function(){
+            // --- Configuration matching original extension setup ---
+            let filterConfig = {
+                subscription: "free",
+                access_keys: [],
+                filters: [
+                    {},
+                    {id: 1, key: "from", has_option: !1, option_values: !1},
+                    {id: 2, key: "to", has_option: !1, option_values: !1},
+                    {id: 3, key: "filter", has_option: !0, option_values: ["","media","images","native_video","news","links"]},
+                    {id: 4, key: "min_faves", has_option: !1, option_values: !1},
+                    {id: 5, key: "min_retweets", has_option: !1, option_values: !1},
+                    {id: 6, key: "lang", has_option: !0, option_values: ["","am","ar","bg","bn","bo","ca","ch`","cs","da","de","dv","el","en","es","et","fa","fi","fr","gu","hi","ht","hu","hy","in","is","it","iu","iw","ja","ka","km","kn","ko","lo","lt","lv","ml","my","ne","nl","no","or","pa","pl","pt","ro","ru","si","sk","sl","sv","ta","te","th","tl","tr","uk","ur","vi","zh","zxx","qam","qct","und"]},
+                    {id: 7, key: "near", has_option: !1, option_values: !1},
+                    {id: 8, key: "min_replies", has_option: !1, option_values: !1},
+                    {id: 9, key: "filter", has_option: !0, option_values: ["","","follows","verified","blue_verified","trusted"]},
+                    {id: 10, key: "f", has_option: !0, option_values: ["","","live"]},
+                    {id: 11, key: "filter", has_option: !0, option_values: ["","hashtags","retweets","replies","quote",{poll:"filter:poll filter:native_card"},{poll:"filter:poll filter:card"},"has:engagement","safe"]},
+                    {id: 12, key: "since,until", has_option: !0, option_values: ["","within","since,until","since_id"]},
+                    {id: 13, key: "url", has_option: !1, option_values: !1},
+                    {id: 14, key: "geocode", has_option: !1, option_values: !1},
+                    {id: 15, key: "list", has_option: !1, option_values: !1}
+                ]
+            };
+
+            let formStateArray = [];
+
+            function storeFormState(t, a, i, l, s="") {
+                for(; formStateArray.length <= a;) formStateArray.push(null);
+                formStateArray[a] = {form_ID: t, has_option: i, option_values: l, toggle: s};
+            }
+
+            function toggleRadios(e) {
+                let t = $(e).closest(".logic-card").find('.filter-group-options [type="radio"]');
+                $(e).is(":checked") ? t.removeAttr("disabled") : t.attr("disabled", "disabled");
+            }
+
+            // --- Real-time Live Preview Logic ---
+            function updatePreview() {
+                let activeView = localStorage.getItem("xsniper_activeView") || "global";
+                
+                if (activeView === "how") {
+                    $("#live-preview-container").hide();
+                    return;
+                } else {
+                    $("#live-preview-container").show();
+                }
+
+                let s = activeView === "global" ? "search_form_gl" : activeView === "profile" ? "search_form" : "search_form_sm";
+                let l = "search_form" === s ? "_pf" : "search_form_sm" === s ? "_sm" : "_gl";
+                let queryStr = "";
+
+                let c = $("#" + s + ' [name="tw_keyword' + l + '"]').val();
+                if (c) {
+                    if ("search_form_sm" === s) {
+                        let e = c.replace(/@\d+/g, " ").replace(/\s+/g, " ").trim(), t = c.split(/@\d+/), a = "";
+                        t.forEach(function(x){
+                            let txt = x.trim();
+                            txt.length > 0 && txt.split(/\s+/).length >= 2 && (a += ' "' + txt + '"');
+                        });
+                        queryStr += e + a + " ";
+                    } else queryStr += c + " ";
+                }
+
+                let f = $("#" + s + ' [name="tw_exact_phrase' + l + '"]').val();
+                f && (queryStr += '"' + f + '" ');
+
+                let p = $("#" + s + ' [name="tw_any_words' + l + '"]').val();
+                p && (queryStr += "(" + p + ") ");
+
+                let m = $("#" + s + ' [name="tw_none_words' + l + '"]').val();
+                m && (queryStr += "-" + m + " ");
+
+                let h = $("#" + s + ' [name="tw_hashtags' + l + '"]').val();
+                h && (queryStr += " (#" + h.replace(/^#/, "") + ") ");
+
+                let v = $("#" + s + ' [name="tw_from' + l + '"]').val();
+                v && (queryStr += " (from:" + v.replace(/^@/, "") + ") ");
+
+                let g = $("#" + s + ' [name="tw_to' + l + '"]').val();
+                g && (queryStr += " (to:" + g.replace(/^@/, "") + ") ");
+
+                let u = $("#" + s + ' [name="tw_mentioning' + l + '"]').val();
+                u && (queryStr += " (@" + u.replace(/^@/, "") + ") ");
+                
+                // Sentiment appended directly 
+                let intent = $("#" + s + ' [name="tw_sentiment' + l + '"]').val();
+                if (intent) { queryStr += intent + " "; }
+
+                let w = $("#" + s + ' [name="tw_replies_toggle' + l + '"]').is(":checked"),
+                    b = $("#" + s + ' [name="tw_replies_filter' + l + '"]:checked').val(),
+                    k = $("#" + s + ' [name="tw_links_toggle' + l + '"]').is(":checked"),
+                    y = $("#" + s + ' [name="tw_links_filter' + l + '"]:checked').val();
+
+                w ? "only" === b && (queryStr += "filter:replies ") : queryStr += "-filter:replies ";
+                k ? "only" === y && (queryStr += "filter:links ") : queryStr += "-filter:links ";
+
+                let excludedFields = ["tw_keyword" + l, "tw_exact_phrase" + l, "tw_any_words" + l, "tw_none_words" + l, "tw_hashtags" + l, "tw_from" + l, "tw_to" + l, "tw_mentioning" + l, "tw_replies_filter" + l, "tw_links_filter" + l, "tw_time" + l, "tw_feed_type" + l, "tw_sentiment" + l];
+
+                $("#" + s).find(":input").not('[type="checkbox"]').not(".time-group-in").not("button").each(function(){
+                    let e = $(this).attr("name");
+                    if (!e || excludedFields.includes(e) || "" === this.value) return;
+                    let t = $(this).data("key"), lVal = this.value;
+                    if (void 0 !== t && !1 !== t && filterConfig.filters[t]) {
+                        let eConf = filterConfig.filters[t], 
+                            o = $(this).data("toggle") && $(this).next('input[type="checkbox"]').is(":checked") ? "-" : "";
+                            
+                        if (eConf.has_option) {
+                            if (eConf.option_values[lVal] && "" !== eConf.option_values[lVal]) {
+                                "object" == typeof eConf.option_values[lVal] ? (!o && eConf.option_values[lVal].poll && (queryStr += eConf.option_values[lVal].poll + " ")) : (queryStr += o + eConf.key + ":" + eConf.option_values[lVal] + " ");
+                            }
+                        } else {
+                            eConf.key && lVal && (queryStr += o + eConf.key + ":" + lVal + " ");
+                        }
+                    }
+                });
+
+                let o = $("#" + s + ' [name="tw_time' + l + '"]'),
+                    r = $("#" + s + ' [name="tw_time_txt_1' + l + '"]'),
+                    n = $("#" + s + ' [name="tw_time_txt_2' + l + '"]'),
+                    i3 = $("#" + s + ' [name="tw_time_txt_3' + l + '"]');
+                
+                let C = o.val();
+                
+                if (1 == C) {
+                    let e = r.val();
+                    e && (queryStr += "within_time:" + e + " ");
+                } else if (2 == C) {
+                    let e = n.val();
+                    if (e) {
+                        let t = e.split(" to ");
+                        if (2 === t.length && filterConfig.filters[12] && filterConfig.filters[12].option_values[2]) {
+                            let lArr = filterConfig.filters[12].option_values[2].split(",");
+                            2 === lArr.length && (queryStr += lArr[0] + ":" + t[0] + " " + lArr[1] + ":" + t[1] + " ");
+                        }
+                    }
+                } else if (3 == C) {
+                    let e = i3.val();
+                    if (e) {
+                        queryStr += "since_id:" + e + " ";
+                    }
+                }
+
+                queryStr = queryStr.trim();
+                
+                if (queryStr === "") {
+                    $("#live-preview-text").html('<span style="color: var(--x-text-muted);">Start typing to generate search query...</span>');
+                } else {
+                    $("#live-preview-text").text(queryStr);
+                }
+            }
+
+            // Bind updatePreview to all form interactions
+            $('form').on('input change', ':input', function() {
+                updatePreview();
+            });
+
+            // --- View Handling with localStorage ---
+            let activeView = localStorage.getItem("xsniper_activeView") || "global";
+            $("#view-selector").val(activeView);
+            $(".view-section").removeClass("active");
+            $("#section-" + activeView).addClass("active");
+
+            $("#view-selector").on("change", function(){
+                let e = $(this).val();
+                $(".view-section").removeClass("active");
+                $("#section-" + e).addClass("active");
+                localStorage.setItem("xsniper_activeView", e);
+                updatePreview(); // update preview based on view change
+            });
+
+            // --- Form state restoration ---
+            try {
+                let storedData = localStorage.getItem("xsniper_data");
+                if(storedData) {
+                    let parsedData = JSON.parse(storedData);
+                    parsedData.forEach(function(e, t){
+                        if(null !== e){
+                            let a, i = "#" + e.form_ID;
+                            if(a = "search_form" === e.form_ID ? "_pf" : "search_form_sm" === e.form_ID ? "_sm" : "_gl", 0 !== t){
+                                let s;
+                                if(12 === t && Array.isArray(e.option_values)){
+                                    s = i + ' [name="tw_time'+a+'"]';
+                                    let t = $(s);
+                                    if(t.length){
+                                        t.val(e.option_values[0]);
+                                        t.parent().addClass("is-filled");
+                                        let l = $(i + ' [name="tw_time_txt_1'+a+'"]'), 
+                                            sObj = $(i + ' [name="tw_time_txt_2'+a+'"]'),
+                                            i3Obj = $(i + ' [name="tw_time_txt_3'+a+'"]'), 
+                                            o = t.next(".time-group");
+                                        
+                                        if(1 == e.option_values[0]) {
+                                            l.val(e.option_values[1]);
+                                            l.removeAttr("disabled");
+                                            sObj.attr("disabled","disabled");
+                                            i3Obj.attr("disabled","disabled");
+                                            o.length && o.addClass("active");
+                                        } else if(2 == e.option_values[0]) {
+                                            if(sObj.val(e.option_values[1]), sObj.removeAttr("disabled"), l.attr("disabled","disabled"), i3Obj.attr("disabled","disabled"), !o.length || "search_form_gl" !== e.form_ID && "search_form_sm" !== e.form_ID) {
+                                                if("search_form" === e.form_ID){
+                                                    let e_ctx = sObj.closest(".time-date-range-pf");
+                                                    e_ctx.length && e_ctx.addClass("is-filled");
+                                                    let t_ctx = l.closest(".form-item-time-pf");
+                                                    t_ctx.length && t_ctx.addClass("is-filled")
+                                                }
+                                            } else o.addClass("active")
+                                        } else if (3 == e.option_values[0]) {
+                                            i3Obj.val(e.option_values[1]);
+                                            i3Obj.removeAttr("disabled");
+                                            l.attr("disabled","disabled");
+                                            sObj.attr("disabled","disabled");
+                                            o.length && o.addClass("active");
+                                        }
+                                    }
+                                } else {
+                                    s = i + ' [data-key="'+t+'"]';
+                                    let a = $(s);
+                                    if(a.length){
+                                        e.has_option;
+                                        a.val(e.option_values);
+                                        a.parent().addClass("is-filled");
+                                        if("" !== e.toggle){
+                                            let checkboxToggle = a.next('input[type="checkbox"]');
+                                            checkboxToggle.prop("checked", !0);
+                                        }
+                                    }
+                                }
+                            } else {
+                                $(i + ' [name^="tw_keyword"]').val(e.option_values);
+                                $(i + ' [name^="tw_keyword"]').parent().addClass("is-filled");
+                            }
+                        }
+                    });
+                }
+            } catch(err) {
+                console.error("Error parsing stored data", err);
+            }
+
+            // UI interaction handling & LABEL ANIMATION FIX
+            $(".form-item__field").on("focus blur change", function(e){
+                let $target = $(e.target);
+                let $wrapper = $target.closest(".form-item");
+                
+                // Force label up if it's a dropdown, time-group, or has a value
+                let isSelect = $target.is("select");
+                let isTimeGroup = $target.hasClass("time-group-in");
+                let hasValue = $target.val() !== "";
+                let shouldBeFilled = isSelect || isTimeGroup || hasValue;
+
+                if (e.type === "focus") {
+                    $wrapper.addClass("is-focused");
+                } else {
+                    $wrapper.removeClass("is-focused");
+                }
+
+                if (shouldBeFilled) {
+                    $wrapper.addClass("is-filled");
+                } else {
+                    $wrapper.removeClass("is-filled");
+                }
+            });
+
+            // Main Submission handler
+            $("#search, #search_gl, #search_sm").on("click", function(t){
+                t.preventDefault();
+                let l, s = $(t.target).parents("form").attr("id");
+                l = "search_form" === s ? "_pf" : "search_form_sm" === s ? "_sm" : "_gl";
+                
+                let o = $("#" + s + ' [name="tw_time' + l + '"]'),
+                    r = $("#" + s + ' [name="tw_time_txt_1' + l + '"]'),
+                    n = $("#" + s + ' [name="tw_time_txt_2' + l + '"]'),
+                    i3 = $("#" + s + ' [name="tw_time_txt_3' + l + '"]'),
+                    d = $("#" + s + ' [name="tw_handle"]');
+
+                if(1 == o.val() && "" === r.val()) return void r.css("border-color", "#f4212e");
+                if(2 == o.val() && "" === n.val()) return n.css("border-color", "#f4212e"), void("search_form" === s && n.closest(".time-group").css("border-color", "#f4212e"));
+                if(3 == o.val() && "" === i3.val()) return void i3.css("border-color", "#f4212e");
+                if("search_form" === s && "" === d.val()) return void d.css("border-color", "#f4212e");
+
+                let queryStr = "";
+                formStateArray = [];
+                let c = $("#" + s + ' [name="tw_keyword' + l + '"]').val();
+                
+                if (c) {
+                    if ("search_form_sm" === s) {
+                        let e = c.replace(/@\d+/g, " ").replace(/\s+/g, " ").trim(), t = c.split(/@\d+/), a = "";
+                        t.forEach(function(e){
+                            let t = e.trim();
+                            t.length > 0 && t.split(/\s+/).length >= 2 && (a += ' "' + t + '"');
+                        });
+                        queryStr += e + a + " ";
+                    } else queryStr += c + " ";
+                    storeFormState(s, 0, !1, c);
+                }
+
+                let f = $("#" + s + ' [name="tw_exact_phrase' + l + '"]').val();
+                f && (queryStr += '"' + f + '" ');
+
+                let p = $("#" + s + ' [name="tw_any_words' + l + '"]').val();
+                p && (queryStr += "(" + p + ") ");
+
+                let m = $("#" + s + ' [name="tw_none_words' + l + '"]').val();
+                m && (queryStr += "-" + m + " ");
+
+                let h = $("#" + s + ' [name="tw_hashtags' + l + '"]').val();
+                h && (queryStr += " (#" + h.replace(/^#/, "") + ") ");
+
+                let v = $("#" + s + ' [name="tw_from' + l + '"]').val();
+                v && (queryStr += " (from:" + v.replace(/^@/, "") + ") ");
+
+                let g = $("#" + s + ' [name="tw_to' + l + '"]').val();
+                g && (queryStr += " (to:" + g.replace(/^@/, "") + ") ");
+
+                let u = $("#" + s + ' [name="tw_mentioning' + l + '"]').val();
+                u && (queryStr += " (@" + u.replace(/^@/, "") + ") ");
+                
+                // Sentiment appended directly 
+                let intent = $("#" + s + ' [name="tw_sentiment' + l + '"]').val();
+                if (intent) { queryStr += intent + " "; }
+
+                let w = $("#" + s + ' [name="tw_replies_toggle' + l + '"]').is(":checked"),
+                    b = $("#" + s + ' [name="tw_replies_filter' + l + '"]:checked').val(),
+                    k = $("#" + s + ' [name="tw_links_toggle' + l + '"]').is(":checked"),
+                    y = $("#" + s + ' [name="tw_links_filter' + l + '"]:checked').val();
+
+                w ? "only" === b && (queryStr += "filter:replies ") : queryStr += "-filter:replies ";
+                k ? "only" === y && (queryStr += "filter:links ") : queryStr += "-filter:links ";
+
+                let excludedFields = ["tw_keyword" + l, "tw_exact_phrase" + l, "tw_any_words" + l, "tw_none_words" + l, "tw_hashtags" + l, "tw_from" + l, "tw_to" + l, "tw_mentioning" + l, "tw_replies_filter" + l, "tw_links_filter" + l, "tw_time" + l, "tw_feed_type" + l, "tw_sentiment" + l];
+
+                $("#" + s).find(":input").not('[type="checkbox"]').not(".time-group-in").not("button").each(function(){
+                    let e = $(this).attr("name");
+                    if (!e || excludedFields.includes(e) || "" === this.value) return;
+                    let t = $(this).data("key"), l = this.value;
+                    if (void 0 !== t && !1 !== t && filterConfig.filters[t]) {
+                        let e = filterConfig.filters[t], 
+                            o = $(this).data("toggle") && $(this).next('input[type="checkbox"]').is(":checked") ? "-" : "";
+                            
+                        if (e.has_option) {
+                            if (e.option_values[l] && "" !== e.option_values[l]) {
+                                "object" == typeof e.option_values[l] ? (!o && e.option_values[l].poll && (queryStr += e.option_values[l].poll + " ", storeFormState(s, t, !0, l, o))) : (queryStr += o + e.key + ":" + e.option_values[l] + " ", storeFormState(s, t, !0, l, o));
+                            }
+                        } else {
+                            e.key && l && (queryStr += o + e.key + ":" + l + " ", storeFormState(s, t, !1, l, o));
+                        }
+                    }
+                });
+
+                let C = o.val();
+                if (1 == C) {
+                    let e = r.val();
+                    e && (queryStr += "within_time:" + e + " ", storeFormState(s, 12, !0, [C, e]));
+                } else if (2 == C) {
+                    let e = n.val();
+                    if (e) {
+                        let t = e.split(" to ");
+                        if (2 === t.length && filterConfig.filters[12] && filterConfig.filters[12].option_values[2]) {
+                            let l = filterConfig.filters[12].option_values[2].split(",");
+                            2 === l.length && (queryStr += l[0] + ":" + t[0] + " " + l[1] + ":" + t[1] + " ", storeFormState(s, 12, !0, [C, e]));
+                        }
+                    }
+                } else if (3 == C) {
+                    let e = i3.val();
+                    if (e) {
+                        queryStr += "since_id:" + e + " ", storeFormState(s, 12, !0, [C, e]);
+                    }
+                }
+
+                let finalUrl = "https://twitter.com/search?q=" + encodeURIComponent(queryStr.trim());
+                if (2 == $("#" + s + ' [name="tw_feed_type' + l + '"]').val()) {
+                    finalUrl += "&f=live";
+                    storeFormState(s, 10, !0, 2);
+                } else {
+                    storeFormState(s, 10, !0, 1);
+                }
+
+                // Save to local storage instead of chrome.storage
+                localStorage.setItem("xsniper_data", JSON.stringify(formStateArray));
+                
+                // Open new tab natively
+                window.open(finalUrl + "&src=typed_query&ats=true", "_blank");
+            });
+
+            $('[name^="tw_replies_toggle_"], [name^="tw_links_toggle_"]').change(function(){
+                toggleRadios(this);
+            }).each(function(){
+                toggleRadios(this);
+            });
+
+            $('[name="tw_time_gl"], [name="tw_time_pf"], [name="tw_time_sm"]').change(function(){
+                let e, t = $(this).parents("form");
+                e = "search_form" === t.attr("id") ? "_pf" : "search_form_sm" === t.attr("id") ? "_sm" : "_gl";
+                let a = t.find('[name="tw_time_txt_1' + e + '"]'),
+                    i = t.find('[name="tw_time_txt_2' + e + '"]'),
+                    i3 = t.find('[name="tw_time_txt_3' + e + '"]'),
+                    l = "_pf" === e ? a.closest(".form-item-time-pf") : a.closest(".time-group"),
+                    s = "_pf" === e ? i.closest(".time-date-range-pf") : i.closest(".time-group");
+
+                a.val("");
+                i.val("");
+                i3.val("");
+                a.css("border-color", "");
+                i.css("border-color", "");
+                i3.css("border-color", "");
+
+                if (1 == $(this).val()) {
+                    a.removeAttr("disabled");
+                    i.attr("disabled", "disabled");
+                    i3.attr("disabled", "disabled");
+                    l.addClass("active");
+                    s.removeClass("active");
+                    "_pf" === e && (l.addClass("is-filled"), s.removeClass("is-filled"));
+                } else if (2 == $(this).val()) {
+                    a.attr("disabled", "disabled");
+                    i.removeAttr("disabled");
+                    i3.attr("disabled", "disabled");
+                    l.removeClass("active");
+                    s.addClass("active");
+                    "_pf" === e && l.removeClass("is-filled");
+                } else if (3 == $(this).val()) {
+                    a.attr("disabled", "disabled");
+                    i.attr("disabled", "disabled");
+                    i3.removeAttr("disabled");
+                    l.addClass("active");
+                    s.removeClass("active");
+                    "_pf" === e && l.addClass("is-filled");
+                } else {
+                    a.attr("disabled", "disabled");
+                    i.attr("disabled", "disabled");
+                    i3.attr("disabled", "disabled");
+                    l.removeClass("active");
+                    s.removeClass("active");
+                    "_pf" === e && (l.removeClass("is-filled"), s.removeClass("is-filled"));
+                }
+                a.trigger("change");
+                i.trigger("change");
+                i3.trigger("change");
+            }).trigger("change");
+
+            $(".tw-date-range").daterangepicker({
+                autoUpdateInput: !1,
+                autoApply: !0,
+                drops: "up",
+                opens: "left",
+                locale: { format: "YYYY-MM-DD", cancelLabel: "Clear" }
+            });
+
+            $(".tw-date-range").on("apply.daterangepicker", function(e, t){
+                $(this).val(t.startDate.format("YYYY-MM-DD") + " to " + t.endDate.format("YYYY-MM-DD"));
+                $(this).trigger("change");
+                $(this).attr("name").endsWith("_pf") && $(this).closest(".time-date-range-pf").addClass("is-filled");
+            });
+            
+            // Re-trigger visual states based on any pre-filled browser caching
+            setTimeout(function() {
+                $(".form-item__field").each(function() {
+                    let $target = $(this);
+                    let isSelect = $target.is("select");
+                    let isTimeGroup = $target.hasClass("time-group-in");
+                    let hasValue = $target.val() !== "";
+                    
+                    if (hasValue || isSelect || isTimeGroup) {
+                        $target.closest(".form-item").addClass("is-filled");
+                    }
+                });
+                
+                // Trigger initial preview load
+                updatePreview();
+            }, 100);
+        });
+    </script>
+</body>
+</html>
