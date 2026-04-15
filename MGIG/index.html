@@ -480,6 +480,30 @@
             transform: scale(1.1);
         }
 
+        .thumbnail-move {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 28px;
+            height: 28px;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+        .thumbnail:hover .thumbnail-move {
+            opacity: 1;
+        }
+        .thumbnail-move:hover {
+            background: rgba(118, 75, 162, 1);
+            transform: scale(1.1);
+        }
+        
         .thumbnail:nth-child(1) { animation-delay: 0ms; }
         .thumbnail:nth-child(2) { animation-delay: 100ms; }
         .thumbnail:nth-child(3) { animation-delay: 200ms; }
@@ -3641,10 +3665,59 @@ Now use your expert analysis skills to create {{variationCount}} HIGH-SELLING va
             updateUploadInfo(type); 
         };
 
-        const renderThumbnail = (fileObject, gridElement, type, index) => { const thumb = document.createElement('div'); thumb.className = 'thumbnail'; thumb.dataset.id = fileObject.id; thumb.dataset.type = type; thumb.title = fileObject.file.name; thumb.style.animationDelay = `${(index % 20) * 50}ms`; thumb.innerHTML = `<img src="${fileObject.base64}" alt="${fileObject.file.name}"><span class="thumbnail-index">${index}</span><button class="thumbnail-remove" data-id="${fileObject.id}" data-type="${type}">&times;</button>`; gridElement.appendChild(thumb); if (type !== 'variation') { thumb.addEventListener('click', (e) => { if (e.target.classList.contains('thumbnail-remove')) return; toggleThumbnailSelection(thumb, fileObject); }); } };
+        const renderThumbnail = (fileObject, gridElement, type, index) => { const thumb = document.createElement('div'); thumb.className = 'thumbnail'; thumb.dataset.id = fileObject.id; thumb.dataset.type = type; thumb.title = fileObject.file.name; thumb.style.animationDelay = `${(index % 20) * 50}ms`;
+        let moveBtnHTML = '';
+        if (type === 'style') {
+            moveBtnHTML = `<button class="thumbnail-move" data-action="move-right" data-id="${fileObject.id}" title="Move to Niche"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>`;
+        } else if (type === 'niche') {
+            moveBtnHTML = `<button class="thumbnail-move" data-action="move-left" data-id="${fileObject.id}" title="Move to Style"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>`;
+        }
+
+        thumb.innerHTML = `<img src="${fileObject.base64}" alt="${fileObject.file.name}"><span class="thumbnail-index">${index}</span><button class="thumbnail-remove" data-id="${fileObject.id}" data-type="${type}">&times;</button>${moveBtnHTML}`;
+        gridElement.appendChild(thumb); if (type !== 'variation') { thumb.addEventListener('click', (e) => { if (e.target.classList.contains('thumbnail-remove')) return; toggleThumbnailSelection(thumb, fileObject); }); } };
         const toggleThumbnailSelection = (thumbElement, fileObject) => { fileObject.selected = !fileObject.selected; thumbElement.style.outline = fileObject.selected ? '3px solid #667eea' : 'none'; };
-        const initThumbnailGridActions = () => { DOMElements.app.addEventListener('click', (e) => { const target = e.target; if (target.classList.contains('thumbnail-remove')) { e.stopPropagation(); const id = target.dataset.id; const type = target.dataset.type; removeFile(id, type); } if (target.dataset.action === 'select-all') { const type = target.dataset.target; const { fileArray, grid } = getFileArrayAndGrid(type); const allSelected = fileArray.every(f => f.selected); fileArray.forEach(f => f.selected = !allSelected); grid.querySelectorAll('.thumbnail').forEach((thumb, i) => { thumb.style.outline = fileArray[i].selected ? '3px solid #667eea' : 'none'; }); target.textContent = allSelected ? 'Select All' : 'Deselect All'; } if (target.dataset.action === 'delete-selected') { const type = target.dataset.target; const { fileArray, grid } = getFileArrayAndGrid(type); const selectedIds = fileArray.filter(f => f.selected).map(f => f.id); if (selectedIds.length === 0) { showToast('No images selected to delete.', 'warning'); return; } selectedIds.forEach(id => removeFile(id, type, false)); updateUploadInfo(type); } }); };
+        const initThumbnailGridActions = () => { DOMElements.app.addEventListener('click', (e) => { const target = e.target; if (target.classList.contains('thumbnail-remove')) { e.stopPropagation(); const id = target.dataset.id; const type = target.dataset.type; removeFile(id, type); }
+        const moveBtn = target.closest('.thumbnail-move');
+                if (moveBtn) {
+                    e.stopPropagation();
+                    moveImage(moveBtn.dataset.id, moveBtn.dataset.action);
+                    return;
+                }
+        if (target.dataset.action === 'select-all') { const type = target.dataset.target; const { fileArray, grid } = getFileArrayAndGrid(type); const allSelected = fileArray.every(f => f.selected); fileArray.forEach(f => f.selected = !allSelected); grid.querySelectorAll('.thumbnail').forEach((thumb, i) => { thumb.style.outline = fileArray[i].selected ? '3px solid #667eea' : 'none'; }); target.textContent = allSelected ? 'Select All' : 'Deselect All'; } if (target.dataset.action === 'delete-selected') { const type = target.dataset.target; const { fileArray, grid } = getFileArrayAndGrid(type); const selectedIds = fileArray.filter(f => f.selected).map(f => f.id); if (selectedIds.length === 0) { showToast('No images selected to delete.', 'warning'); return; } selectedIds.forEach(id => removeFile(id, type, false)); updateUploadInfo(type); } }); };
         const getFileArrayAndGrid = (type) => { if (type === 'style') { return { fileArray: appState.styleFiles, grid: DOMElements.styleThumbnailGrid }; } else if (type === 'niche') { return { fileArray: appState.nicheFiles, grid: DOMElements.nicheThumbnailGrid }; } return { fileArray: [], grid: null }; };
+        const moveImage = (id, action) => {
+            let sourceArray, destArray, destGrid, destType;
+
+            if (action === 'move-right') {
+                sourceArray = appState.styleFiles;
+                destArray = appState.nicheFiles;
+                destGrid = DOMElements.nicheThumbnailGrid;
+                destType = 'niche';
+            } else {
+                sourceArray = appState.nicheFiles;
+                destArray = appState.styleFiles;
+                destGrid = DOMElements.styleThumbnailGrid;
+                destType = 'style';
+            }
+
+            if (destArray.length >= CONSTANTS.MAX_FILES) {
+                showToast(`Destination panel is full.`, 'warning');
+                return;
+            }
+
+            const index = sourceArray.findIndex(f => f.id === id);
+            if (index > -1) {
+                const fileObject = sourceArray[index];
+                // 1. Remove from old panel
+                removeFile(id, action === 'move-right' ? 'style' : 'niche', true);
+                
+                // 2. Add to new panel
+                fileObject.selected = false;
+                destArray.push(fileObject);
+                renderThumbnail(fileObject, destGrid, destType, destArray.length);
+                updateUploadInfo(destType);
+            }
+        };
         const removeFile = (id, type, updateInfo = true) => { let targetArray; let gridElement; if (type === 'style') { targetArray = appState.styleFiles; gridElement = DOMElements.styleThumbnailGrid; } else if (type === 'niche') { targetArray = appState.nicheFiles; gridElement = DOMElements.nicheThumbnailGrid; } else { appState.variationFile = null; gridElement = DOMElements.variationThumbnailGrid; gridElement.innerHTML = ''; if (updateInfo) updateUploadInfo(type); return; } const index = targetArray.findIndex(f => f.id === id); if (index > -1) { targetArray.splice(index, 1); const thumb = gridElement.querySelector(`[data-id="${id}"]`); if (thumb) thumb.remove(); if (updateInfo) updateUploadInfo(type); } };
         const updateUploadInfo = (type) => { let count, infoElement, totalSize, fileArray; if (type === 'style') { fileArray = appState.styleFiles; infoElement = DOMElements.styleUploadInfo; } else if (type === 'niche') { fileArray = appState.nicheFiles; infoElement = DOMElements.nicheUploadInfo; } else { count = appState.variationFile ? 1 : 0; infoElement = DOMElements.variationUploadInfo; infoElement.textContent = count === 1 ? `1 image uploaded` : 'No image uploaded'; updateGenerationButtons(); return; } count = fileArray.length; totalSize = fileArray.reduce((acc, f) => acc + f.file.size, 0); infoElement.textContent = `${count}/${CONSTANTS.MAX_FILES} images | ${formatBytes(totalSize)}`; let gridElement = (type === 'style') ? DOMElements.styleThumbnailGrid : DOMElements.nicheThumbnailGrid; gridElement.querySelectorAll('.thumbnail-index').forEach((span, i) => { span.textContent = i + 1; }); updateGenerationButtons(); };
         const initDragAndDrop = () => { const zones = [ { zone: DOMElements.styleDropZone, input: DOMElements.styleFileInput, type: 'style' }, { zone: DOMElements.nicheDropZone, input: DOMElements.nicheFileInput, type: 'niche' }, { zone: DOMElements.variationDropZone, input: DOMElements.variationFileInput, type: 'variation' } ]; zones.forEach(({ zone, input, type }) => { ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => { zone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false); }); ['dragenter', 'dragover'].forEach(eventName => { zone.addEventListener(eventName, () => zone.classList.add('drag-over'), false); }); ['dragleave', 'drop'].forEach(eventName => { zone.addEventListener(eventName, () => zone.classList.remove('drag-over'), false); }); zone.addEventListener('drop', (e) => { handleFileUpload(e.dataTransfer.files, type); }, false); zone.addEventListener('click', () => { input.click(); }); input.addEventListener('change', (e) => { handleFileUpload(e.target.files, type); e.target.value = null; }); }); };
