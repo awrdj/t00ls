@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deep Keyword Miner</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36' fill='none'><rect width='36' height='36' rx='8' fill='%2301696f' opacity='0.1'/><path d='M10 14 L18 8 L26 14 L26 26 L10 26 Z' stroke='%2301696f' stroke-width='1.8' fill='none' stroke-linejoin='round'/><circle cx='18' cy='19' r='3' fill='%2301696f'/><path d='M18 22 L18 26' stroke='%2301696f' stroke-width='1.8' stroke-linecap='round'/><path d='M13 17 L16 19' stroke='%2301696f' stroke-width='1.5' stroke-linecap='round' opacity='0.6'/><path d='M23 17 L20 19' stroke='%2301696f' stroke-width='1.5' stroke-linecap='round' opacity='0.6'/></svg>">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       DESIGN TOKENS — NEXUS SYSTEM
+       ============================================================ */
+    :root, [data-theme="light"] {
+      --color-bg:               #f7f6f2;
+      --color-surface:          #f9f8f5;
+      --color-surface-2:        #fbfbf9;
+      --color-surface-offset:   #f0ede8;
+      --color-surface-dynamic:  #e8e5df;
+      --color-divider:          #dcd9d5;
+      --color-border:           #d4d1ca;
+      --color-text:             #28251d;
+      --color-text-muted:       #7a7974;
+      --color-text-faint:       #bab9b4;
+      --color-text-inverse:     #f9f8f4;
+      --color-primary:          #01696f;
+      --color-primary-hover:    #0c4e54;
+      --color-primary-active:   #0f3638;
+      --color-primary-highlight:#cedcd8;
+      --color-warning:          #964219;
+      --color-warning-highlight:#fff3e0;
+      --color-error:            #a12c7b;
+      --color-error-highlight:  #ffebee;
+      --color-success:          #437a22;
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
+      --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
+      --shadow-lg: 0 12px 32px oklch(0.2 0.01 80 / 0.12);
+      --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+      --space-4: 1rem;    --space-5: 1.25rem; --space-6: 1.5rem;
+      --space-8: 2rem;    --space-10: 2.5rem; --space-12: 3rem;
+      --text-xs:   clamp(0.75rem,  0.7rem  + 0.25vw, 0.875rem);
+      --text-sm:   clamp(0.875rem, 0.8rem  + 0.35vw, 1rem);
+      --text-base: clamp(1rem,     0.95rem + 0.25vw, 1.125rem);
+      --text-lg:   clamp(1.125rem, 1rem    + 0.75vw, 1.5rem);
+      --text-xl:   clamp(1.5rem,   1.2rem  + 1.25vw, 2.25rem);
+      --font-body: 'Satoshi', 'Segoe UI', sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --color-bg:               #171614;
+      --color-surface:          #1c1b19;
+      --color-surface-2:        #201f1d;
+      --color-surface-offset:   #1d1c1a;
+      --color-surface-dynamic:  #2d2c2a;
+      --color-divider:          #262523;
+      --color-border:           #393836;
+      --color-text:             #cdccca;
+      --color-text-muted:       #797876;
+      --color-text-faint:       #5a5957;
+      --color-text-inverse:     #2b2a28;
+      --color-primary:          #4f98a3;
+      --color-primary-hover:    #227f8b;
+      --color-primary-active:   #1a626b;
+      --color-primary-highlight:#313b3b;
+      --color-warning:          #bb653b;
+      --color-warning-highlight:#2a1f14;
+      --color-error:            #d163a7;
+      --color-error-highlight:  #2a1520;
+      --color-success:          #6daa45;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) {
+        --color-bg:#171614; --color-surface:#1c1b19; --color-surface-2:#201f1d;
+        --color-surface-offset:#1d1c1a; --color-surface-dynamic:#2d2c2a;
+        --color-divider:#262523; --color-border:#393836;
+        --color-text:#cdccca; --color-text-muted:#797876; --color-text-faint:#5a5957;
+        --color-text-inverse:#2b2a28; --color-primary:#4f98a3;
+        --color-primary-hover:#227f8b; --color-primary-active:#1a626b;
+        --color-primary-highlight:#313b3b; --color-warning:#bb653b;
+        --color-warning-highlight:#2a1f14; --color-error:#d163a7;
+        --color-error-highlight:#2a1520; --color-success:#6daa45;
+      }
+    }
+
+    /* ============================================================
+       BASE RESET
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+    body {
+      min-height: 100dvh;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text);
+      background-color: var(--color-bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--space-8) var(--space-4) var(--space-12);
+      transition: background-color var(--transition), color var(--transition);
+    }
+    img, svg { display: block; }
+    button { cursor: pointer; background: none; border: none; font: inherit; color: inherit; }
+    input, select { font: inherit; color: inherit; }
+    :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: var(--radius-sm); }
+
+    /* ============================================================
+       TOPBAR
+       ============================================================ */
+    .topbar { width: 100%; max-width: 680px; display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); }
+    .brand { display: flex; align-items: center; gap: var(--space-3); }
+    .brand-logo { width: 36px; height: 36px; color: var(--color-primary); }
+    .brand-name { font-size: var(--text-base); font-weight: 700; color: var(--color-text); letter-spacing: -0.02em; }
+    .brand-name span { color: var(--color-primary); }
+    .theme-toggle {
+      width: 36px; height: 36px; border-radius: var(--radius-full); background: var(--color-surface);
+      border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center;
+      color: var(--color-text-muted); transition: background var(--transition), border-color var(--transition), color var(--transition);
+    }
+    .theme-toggle:hover { background: var(--color-surface-dynamic); color: var(--color-text); }
+
+    /* ============================================================
+       MAIN CARD
+       ============================================================ */
+    .card { width: 100%; max-width: 680px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); overflow: hidden; }
+    .view { padding: var(--space-6); }
+    .view-header { margin-bottom: var(--space-5); }
+    .view-title { font-size: var(--text-lg); font-weight: 700; color: var(--color-text); letter-spacing: -0.02em; line-height: 1.2; }
+    .view-subtitle { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+
+    /* ============================================================
+       FORM ELEMENTS
+       ============================================================ */
+    .field-group { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-5); }
+    .field { display: flex; flex-direction: column; gap: var(--space-2); }
+    .field-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .input, select.input {
+      width: 100%; padding: var(--space-3) var(--space-4); background: var(--color-bg); border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--color-text);
+      transition: border-color var(--transition), box-shadow var(--transition), background var(--transition); appearance: none;
+    }
+    .input::placeholder { color: var(--color-text-faint); }
+    .input:focus { border-color: var(--color-primary); outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-primary) 15%, transparent); }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    .input-advanced { background: var(--color-warning-highlight) !important; border-color: color-mix(in oklch, var(--color-warning) 25%, var(--color-border)) !important; }
+    .input-advanced:focus { border-color: var(--color-warning) !important; box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-warning) 12%, transparent) !important; }
+    .input-negative { background: var(--color-error-highlight) !important; border-color: color-mix(in oklch, var(--color-error) 25%, var(--color-border)) !important; }
+    .input-negative:focus { border-color: var(--color-error) !important; box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-error) 12%, transparent) !important; }
+    
+    .select-wrapper { position: relative; }
+    .select-wrapper::after {
+      content: ''; position: absolute; right: var(--space-4); top: 50%; transform: translateY(-50%);
+      border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--color-text-muted); pointer-events: none;
+    }
+    select.input { padding-right: var(--space-10); cursor: pointer; }
+
+    /* ============================================================
+       PLATFORMS GRID
+       ============================================================ */
+    .platforms-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2) var(--space-3);
+      margin-bottom: var(--space-5); padding: var(--space-4); background: var(--color-surface-offset);
+      border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+    }
+    .platform-label {
+      display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); font-weight: 500;
+      color: var(--color-text-muted); cursor: pointer; padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm); border: 1px solid transparent; transition: all var(--transition);
+    }
+    .platform-label:hover { background: var(--color-surface-dynamic); color: var(--color-text); }
+    .platform-label input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--color-primary); cursor: pointer; }
+    .platform-label.checked { background: var(--color-primary-highlight); border-color: color-mix(in oklch, var(--color-primary) 30%, transparent); color: var(--color-primary); }
+    .platforms-section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--space-2); }
+    .platforms-section-label { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .plat-controls { display: flex; gap: var(--space-2); font-size: var(--text-xs); }
+    .plat-controls a { color: var(--color-primary); text-decoration: none; font-weight: 600; }
+    .plat-controls a:hover { text-decoration: underline; }
+
+    /* ============================================================
+       ANALYZE BUTTON
+       ============================================================ */
+    .action-row { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6); }
+    .btn-analyze {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: var(--space-2);
+      padding: var(--space-3) var(--space-6); background: var(--color-primary); color: var(--color-text-inverse);
+      font-size: var(--text-sm); font-weight: 700; border-radius: var(--radius-md); letter-spacing: -0.01em;
+      transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+      box-shadow: 0 1px 3px color-mix(in oklch, var(--color-primary) 40%, transparent);
+    }
+    .btn-analyze:hover:not(:disabled) { background: var(--color-primary-hover); box-shadow: 0 4px 12px color-mix(in oklch, var(--color-primary) 30%, transparent); }
+    .btn-analyze:active:not(:disabled) { background: var(--color-primary-active); transform: translateY(1px); }
+    .btn-analyze:disabled { background: var(--color-surface-dynamic); color: var(--color-text-faint); box-shadow: none; cursor: not-allowed; }
+    
+    .spinner {
+      display: none; width: 18px; height: 18px; border: 2.5px solid color-mix(in oklch, var(--color-primary) 30%, transparent);
+      border-top-color: var(--color-primary); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
+    }
+    .spinner.visible { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ============================================================
+       RESULTS SECTION
+       ============================================================ */
+    .results-bar {
+      display: none; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3);
+      padding: var(--space-3) var(--space-4); background: var(--color-surface-offset);
+      border: 1px solid var(--color-border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; border-bottom: none;
+    }
+    .results-bar.visible { display: flex; }
+    .results-count { font-size: var(--text-xs); font-weight: 700; color: var(--color-text-muted); display: flex; align-items: center; gap: var(--space-2); }
+    
+    .results-controls { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+    .results-control-group { display: flex; align-items: center; gap: var(--space-2); }
+    .results-control-label { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: 500; }
+    .results-control-input { 
+      padding: 2px 8px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); 
+      background: var(--color-surface); color: var(--color-text); font-size: var(--text-xs); width: 50px; text-align: center;
+    }
+    .results-control-select {
+      padding: 2px 20px 2px 8px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); 
+      background: var(--color-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%237a7974' d='M6 8.825l-4.762-4.762L2.175 3.15 6 6.975l3.825-3.825 1.062.913L6 8.825z'/%3E%3C/svg%3E") no-repeat right 4px center;
+      color: var(--color-text); font-size: var(--text-xs); appearance: none; cursor: pointer;
+    }
+
+    .export-btns { display: flex; gap: var(--space-2); }
+    .btn-export {
+      font-size: var(--text-xs); font-weight: 600; padding: var(--space-1) var(--space-3); border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text-muted); transition: all var(--transition);
+    }
+    .btn-export:hover { background: var(--color-surface-dynamic); color: var(--color-text); border-color: var(--color-text-muted); }
+    .btn-export.copied { background: var(--color-primary-highlight); color: var(--color-primary); border-color: color-mix(in oklch, var(--color-primary) 30%, transparent); }
+
+    /* Result list */
+    .results-list {
+      list-style: none; padding: 0; margin: 0; max-height: 400px; overflow-y: auto;
+      border: 1px solid var(--color-border); border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      background: var(--color-surface-2); overscroll-behavior: contain; scroll-behavior: smooth;
+    }
+    .results-list:not(.has-bar) { border-radius: var(--radius-lg); }
+    .result-item {
+      display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--color-divider); font-size: var(--text-sm); color: var(--color-text);
+      cursor: pointer; transition: background var(--transition);
+    }
+    .result-item:last-child { border-bottom: none; }
+    .result-item:hover { background: var(--color-surface-offset); }
+    .result-item:active { background: var(--color-surface-dynamic); }
+    
+    .kw-text { flex: 1; font-weight: 500; }
+    
+    /* Icons & Badges */
+    .source-logos { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .plat-icon { width: 14px; height: 14px; object-fit: contain; }
+    .plat-icon-grey { filter: /*grayscale(100%)*/ opacity(0.25); }
+    /*[data-theme="dark"] .plat-icon { filter: brightness(0) invert(1); }
+    [data-theme="dark"] .plat-icon-grey { filter: brightness(0) invert(1) opacity(0.3); }*/
+
+    .count-badge {
+      display: inline-flex; align-items: center; justify-content: center; background: #eee;
+      color: #666; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-full);
+    }
+    [data-theme="dark"] .count-badge {
+      background: #333; color: #aaa;
+    }
+    .badge-mid { background: #fff3cd; color: #856404; }
+    [data-theme="dark"] .badge-mid { background: #4d3e0a; color: #ffc107; }
+    .badge-high { background: #ff9900; color: #2c2c2c; }
+    [data-theme="dark"] .badge-high { background: #ff9900; color: #1a1a1a; }
+
+    .copy-icon { color: var(--color-text-faint); opacity: 0; transition: opacity var(--transition); flex-shrink: 0; margin-right: 12px; margin-left: auto; cursor: pointer; }
+    .result-item:hover .copy-icon { opacity: 1; }
+    .result-item.copied-flash { background: var(--color-primary-highlight); color: var(--color-primary); }
+    .result-item.result-error { color: var(--color-error); background: var(--color-error-highlight); cursor: default; pointer-events: none; }
+
+    /* Empty / loading states */
+    .state-msg { padding: var(--space-10); text-align: center; }
+    .state-msg .state-icon { width: 40px; height: 40px; margin: 0 auto var(--space-4); color: var(--color-text-faint); }
+    .state-msg p { font-size: var(--text-sm); color: var(--color-text-muted); max-width: 32ch; margin: 0 auto; }
+    .state-msg .state-title { font-size: var(--text-base); font-weight: 600; color: var(--color-text-muted); margin-bottom: var(--space-2); }
+
+    /* Skeleton shimmer */
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .skeleton {
+      background: linear-gradient(90deg, var(--color-surface-offset) 25%, var(--color-surface-dynamic) 50%, var(--color-surface-offset) 75%);
+      background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; border-radius: var(--radius-sm);
+    }
+    .skeleton-row { height: 42px; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); display: flex; align-items: center; }
+    .skeleton-text { height: 12px; border-radius: var(--radius-sm); }
+
+    /* Scrollbar */
+    .results-list::-webkit-scrollbar { width: 6px; }
+    .results-list::-webkit-scrollbar-track { background: transparent; }
+    .results-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: var(--radius-full); }
+    .results-list::-webkit-scrollbar-thumb:hover { background: var(--color-text-faint); }
+
+    @media (max-width: 580px) {
+      .input-row { grid-template-columns: 1fr; }
+      .platforms-grid { grid-template-columns: repeat(2, 1fr); }
+      .results-bar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <svg class="brand-logo" viewBox="0 0 36 36" fill="none">
+        <rect width="36" height="36" rx="8" fill="currentColor" opacity="0.1"/>
+        <path d="M10 14 L18 8 L26 14 L26 26 L10 26 Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+        <circle cx="18" cy="19" r="3" fill="currentColor"/>
+        <path d="M18 22 L18 26" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M13 17 L16 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+        <path d="M23 17 L20 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+      </svg>
+      <span class="brand-name">Keyword<span>Miner</span></span>
+    </div>
+    <button class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="view">
+      <div class="view-header">
+        <h1 class="view-title">Deep Keyword Research</h1>
+        <p class="view-subtitle">Pull unified autocomplete suggestions from multiple search engines</p>
+      </div>
+
+      <div class="field-group">
+        <div class="field">
+          <label class="field-label" for="market-select">Amazon Region <small style="font-size: xx-small;">(This applies only to Amazon)</small></label>
+          <div class="select-wrapper">
+            <select id="market-select" class="input">
+              <option value="US">🇺🇸 Amazon.com — United States</option>
+              <option value="UK">🇬🇧 Amazon.co.uk — United Kingdom</option>
+              <option value="DE">🇩🇪 Amazon.de — Germany</option>
+              <option value="FR">🇫🇷 Amazon.fr — France</option>
+              <option value="ES">🇪🇸 Amazon.es — Spain</option>
+              <option value="IT">🇮🇹 Amazon.it — Italy</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-row">
+          <div class="field">
+            <label class="field-label" for="kw-title">Product Title</label>
+            <input id="kw-title" class="input" type="text" placeholder="e.g. running shoes" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="kw-brand">Brand Name <!--<small style="font-size: xx-small;">(Optional)</small>--></label>
+            <input id="kw-brand" class="input" type="text" placeholder="e.g. Nike (Optional)" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="input-row">
+            <div class="field">
+              <label class="field-label" for="kw-advanced">Advanced Modifiers <!--<small style="font-size: xx-small;">(Optional)</small>--></label>
+              <input id="kw-advanced" class="input input-advanced" type="text" placeholder="e.g. for kids, funny, best (Optional)" autocomplete="off"/>
+            </div>
+            <div class="field">
+              <label class="field-label" for="kw-negative">Negative Keywords <!--<small style="font-size: xx-small;">(Optional)</small>--></label>
+              <input id="kw-negative" class="input input-negative" type="text" placeholder="e.g. free, cheap (Optional)" autocomplete="off"/>
+            </div>
+        </div>
+      </div>
+
+      <div class="platforms-section-header">
+          <div class="platforms-section-label">Select Platforms</div>
+          <div class="plat-controls">
+              <a href="#" id="select-all">Select all</a> &middot; <a href="#" id="deselect-all">Deselect all</a>
+          </div>
+      </div>
+      
+      <div class="platforms-grid" id="platform-grid"></div>
+
+      <div class="action-row">
+        <button id="btn-analyze" class="btn-analyze">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          Analyze Keywords
+        </button>
+        <div id="spinner" class="spinner"></div>
+      </div>
+
+      <div id="results-bar" class="results-bar">
+        <div class="results-count">
+          <span>Keywords</span>
+          <span id="results-count" class="count-badge">0</span>
+        </div>
+        
+        <div class="results-controls">
+            <div class="results-control-group">
+                <label class="results-control-label" for="filter-min-words">Min Words:</label>
+                <input type="number" id="filter-min-words" class="results-control-input" value="1" min="1" max="20">
+            </div>
+            <div class="results-control-group">
+                <label class="results-control-label" for="filter-sort">Sort:</label>
+                <select id="filter-sort" class="results-control-select">
+                    <option value="sources-desc">Most Sources</option>
+                    <option value="sources-asc">Fewest Sources</option>
+                    <option value="a-z">A → Z</option>
+                    <option value="z-a">Z → A</option>
+                    <option value="wc-asc">Words ↑</option>
+                    <option value="wc-desc">Words ↓</option>
+                </select>
+            </div>
+            <div class="export-btns">
+              <button id="btn-copy" class="btn-export">Copy All</button>
+              <button id="btn-txt"  class="btn-export">.TXT</button>
+              <button id="btn-csv"  class="btn-export">.CSV</button>
+            </div>
+        </div>
+      </div>
+      <ul id="results-list" class="results-list" role="list">
+        <li>
+          <div class="state-msg">
+            <div class="state-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </div>
+            <p class="state-title">Ready to mine</p>
+            <p>Select platforms, enter a query, and click Analyze.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+<script>
+// ── THEME TOGGLE ───────────────────────────────────────────────
+(function(){
+  const toggle = document.querySelector('[data-theme-toggle]');
+  const root   = document.documentElement;
+  let dark = localStorage.getItem('kwr-theme') === 'dark' || (!localStorage.getItem('kwr-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+  
+  const updateToggle = () => {
+    root.setAttribute('data-theme', dark ? 'dark' : 'light');
+    localStorage.setItem('kwr-theme', dark ? 'dark' : 'light');
+    toggle.setAttribute('aria-label', 'Switch to ' + (dark ? 'light' : 'dark') + ' mode');
+    toggle.innerHTML = dark
+      ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`
+      : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+  };
+  updateToggle();
+  toggle.addEventListener('click', () => { dark = !dark; updateToggle(); });
+})();
+
+// ── CONFIG & ENGINE ────────────────────────────────────────────
+const WORKER_URL = "https://cors-proxy-keyword-tool.awrdjmusic.workers.dev/?url=";
+
+const markets = {
+  US: { mid: "ATVPDKIKX0DER",  domain: "completion.amazon.com" },
+  UK: { mid: "A1F83G8C2ARO7P", domain: "completion.amazon.co.uk" },
+  DE: { mid: "A1PA6795UKMFR9", domain: "completion.amazon.de" },
+  FR: { mid: "A13V1IB3VIYZZH", domain: "completion.amazon.fr" },
+  ES: { mid: "A1RKKUPIHCS9HS", domain: "completion.amazon.es" },
+  IT: { mid: "APJ6JRA9NG5V4",  domain: "completion.amazon.it" }
+};
+
+const ALL_PLATFORMS = ['Amazon', 'Bing', 'DuckDuckGo', 'Google', 'Wikipedia', 'YouTube'];
+const PLATFORM_DOMAINS = {
+    'Amazon':      'amazon.com',
+    'Bing':        'bing.com',
+    'DuckDuckGo':  'duckduckgo.com',
+    'Google':      'google.com',
+    'Wikipedia':   'wikipedia.org',
+    'YouTube':     'youtube.com'
+};
+
+const platformConfig = {
+  Google:     { buildUrl: q => "https://suggestqueries.google.com/complete/search?client=firefox&q=" + encodeURIComponent(q), parseResponse: async r => JSON.parse(await r.text())[1] || [] },
+  Bing:       { buildUrl: q => "https://api.bing.com/osjson.aspx?query=" + encodeURIComponent(q),                             parseResponse: async r => JSON.parse(await r.text())[1] || [] },
+  DuckDuckGo: { buildUrl: q => "https://duckduckgo.com/ac/?q=" + encodeURIComponent(q),                                       parseResponse: async r => (JSON.parse(await r.text()) || []).map(x => x.phrase) },
+  YouTube:    { buildUrl: q => "https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=" + encodeURIComponent(q), parseResponse: async r => { const t = await r.text(); const o = JSON.parse(t.substring(t.indexOf("(")+1, t.lastIndexOf(")"))); return o[1]?.map(x => x[0]) || []; } },
+  Wikipedia:  { buildUrl: q => "https://en.wikipedia.org/w/api.php?action=opensearch&search=" + encodeURIComponent(q),        parseResponse: async r => JSON.parse(await r.text())[1] || [] }
+};
+
+const MODIFIERS = {
+  PRODUCT_ATTRIBUTES: ["for men","for women","for kids","for toddlers","for boys","for girls","large","small","medium","xl","2xl","black","white","red","blue","green","2 pack","3 pack","gift","eco friendly","waterproof","long sleeve","short sleeve"],
+  USER_INTENT:        ["review","vs","alternative","unboxing","tutorial","test","how to use","best","cheap","top rated","deals","discount","for sale","ideas","outfit"],
+  QUESTIONS:          ["what is","how does","why is","are","where to buy","can i wear","is"]
+};
+const ALPHABET = "abcdefghijklmnopqrstuvwxyz".split("");
+
+function kwrSubPhrases(text) {
+    if (!text) return [];
+    const words = text.toLowerCase().split(/\s+/).filter(Boolean);
+    const s = new Set(words);
+    for (let i = 0; i < words.length; i++)
+        for (let j = i+1; j < words.length; j++)
+            s.add(words.slice(i, j+1).join(" "));
+    if (words.length > 1) s.add(words.join(" "));
+    return [...s];
+}
+
+function kwrBuildPrefixes(title, brand, advancedWords) {
+    const results = new Set();
+    const t = title?.trim().toLowerCase() || "";
+    const b = brand?.trim().toLowerCase() || "";
+    const advanced = advancedWords ? advancedWords.split(",").map(e => e.trim()).filter(Boolean) : [];
+    let bases = new Set();
+    if (t && b) { bases.add(`${t} ${b}`); bases.add(`${b} ${t}`); }
+    else if (t) { bases.add(t); }
+    else if (b) { kwrSubPhrases(b).forEach(e => bases.add(e)); }
+    
+    const baseArray = [...bases];
+    if (advanced.length > 0) {
+        baseArray.forEach(base => { results.add(base); advanced.forEach(adv => results.add(`${base} ${adv}`)); });
+    } else {
+        baseArray.forEach(base => {
+            results.add(base);
+            MODIFIERS.PRODUCT_ATTRIBUTES.forEach(m => results.add(`${base} ${m}`));
+            MODIFIERS.USER_INTENT.forEach(m => { results.add(`${base} ${m}`); results.add(`${m} ${base}`); });
+            MODIFIERS.QUESTIONS.forEach(m => { results.add(`${m} ${base}`); if (m !== "are" && m !== "is") results.add(`${base} ${m} good`); });
+            ALPHABET.forEach(l => results.add(`${base} ${l}`));
+        });
+    }
+    return [...results];
+}
+
+async function kwrFetch(tasks, limit) {
+    const results = [], queue = [...tasks];
+    async function worker() {
+        if (!queue.length) return;
+        const task = queue.shift();
+        try {
+            const res = await fetch(WORKER_URL + encodeURIComponent(task.url));
+            if (res.ok) results.push(...await task.parser(res));
+        } catch(e) { console.error("KWR fetch error:", e); }
+        await worker();
+    }
+    await Promise.all(Array(limit).fill(null).map(() => worker()));
+    return results;
+}
+
+async function executeScraping({ title, brand, advancedWords, negativeKeywords, platforms }) {
+    const prefixes = kwrBuildPrefixes(title, brand, advancedWords);
+    let tasks = [];
+
+    platforms.forEach(plat => {
+        if (plat === 'Amazon') {
+            const marketCode = document.getElementById('market-select').value;
+            const m = markets[marketCode] || markets.US;
+            const baseUrl = `https://${m.domain}/api/2017/suggestions?page-type=Gateway&alias=aps&mid=${m.mid}`;
+            
+            prefixes.forEach(p => tasks.push({ 
+                url: `${baseUrl}&prefix=${encodeURIComponent(p)}`, 
+                parser: async r => { 
+                    const j = await r.json(); 
+                    return (j.suggestions?.map(s => s.value) || []).map(kw => ({ keyword: kw, source: 'Amazon' }));
+                } 
+            }));
+        } else {
+            const pc = platformConfig[plat];
+            if (pc) prefixes.forEach(p => tasks.push({
+                url: pc.buildUrl(p),
+                parser: async r => (await pc.parseResponse(r)).map(kw => ({ keyword: kw, source: plat }))
+            }));
+        }
+    });
+
+    const rawResults = await kwrFetch(tasks, 15);
+
+    const sourceMap = new Map();
+    rawResults.forEach(({ keyword, source }) => {
+        const kl = keyword.toLowerCase().trim();
+        if (!sourceMap.has(kl)) sourceMap.set(kl, { keyword: keyword.trim(), sources: new Set() });
+        sourceMap.get(kl).sources.add(source);
+    });
+    let unique = [...sourceMap.values()].map(({ keyword, sources }) => ({ keyword, sources: [...sources] }));
+
+    if (negativeKeywords) {
+        const negs = negativeKeywords.split(",").map(e => e.trim().toLowerCase()).filter(e => e);
+        if (negs.length) unique = unique.filter(item => !negs.some(n => item.keyword.toLowerCase().includes(n)));
+    }
+    if (title) {
+        const tl = title.trim().toLowerCase();
+        if (tl) unique = unique.filter(item => item.keyword.toLowerCase().includes(tl));
+    }
+    return unique;
+}
+
+// ── UI CONTROLLERS ─────────────────────────────────────────────
+const grid = document.getElementById('platform-grid');
+function renderCheckboxes() {
+    grid.innerHTML = '';
+    const mkt = document.getElementById('market-select').value;
+    ALL_PLATFORMS.forEach(key => {
+        const label = document.createElement('label');
+        const isAmazon = key === 'Amazon';
+        label.className = `platform-label ${isAmazon ? 'checked' : ''}`;
+        const labelText = isAmazon ? `Amazon <span id="amz-cb-label" style="opacity:0.7; margin-left:2px;">(${mkt})</span>` : key;
+        label.innerHTML = `<input type="checkbox" class="plat-cb" value="${key}" ${isAmazon ? 'checked' : ''} /> ${labelText}`;
+        label.querySelector('input').addEventListener('change', e => label.classList.toggle('checked', e.target.checked));
+        grid.appendChild(label);
+    });
+}
+renderCheckboxes();
+
+document.getElementById('market-select').addEventListener('change', (e) => {
+    const label = document.getElementById('amz-cb-label');
+    if(label) label.textContent = `(${e.target.value})`;
+});
+
+document.getElementById('select-all').addEventListener('click', e => {
+    e.preventDefault(); 
+    document.querySelectorAll('.plat-cb').forEach(cb => { cb.checked = true; cb.parentElement.classList.add('checked'); });
+});
+document.getElementById('deselect-all').addEventListener('click', e => {
+    e.preventDefault(); 
+    document.querySelectorAll('.plat-cb').forEach(cb => { cb.checked = false; cb.parentElement.classList.remove('checked'); });
+});
+
+// Data handling
+let currentData = [];
+
+function sortData(data, sortVal) {
+    const arr = [...data];
+    if (sortVal === 'a-z') return arr.sort((a, b) => a.keyword.localeCompare(b.keyword));
+    if (sortVal === 'z-a') return arr.sort((a, b) => b.keyword.localeCompare(a.keyword));
+    if (sortVal === 'wc-asc') return arr.sort((a, b) => a.keyword.trim().split(/\s+/).length - b.keyword.trim().split(/\s+/).length);
+    if (sortVal === 'wc-desc') return arr.sort((a, b) => b.keyword.trim().split(/\s+/).length - a.keyword.trim().split(/\s+/).length);
+    if (sortVal === 'sources-desc') return arr.sort((a, b) => b.sources.length - a.sources.length || a.keyword.localeCompare(b.keyword));
+    if (sortVal === 'sources-asc') return arr.sort((a, b) => a.sources.length - b.sources.length || a.keyword.localeCompare(b.keyword));
+    return arr;
+}
+
+function filterData(data) {
+    const minW = Math.max(1, parseInt(document.getElementById('filter-min-words').value) || 1);
+    return data.filter(item => item.keyword.trim().split(/\s+/).length >= minW);
+}
+
+function updateUI() {
+    const list = document.getElementById('results-list');
+    const bar = document.getElementById('results-bar');
+    const countEl = document.getElementById('results-count');
+    
+    if(currentData.error) {
+        bar.classList.remove('visible');
+        list.className = 'results-list';
+        list.innerHTML = `<li class="result-item result-error">⚠ Error: ${currentData.error}</li>`;
+        return;
+    }
+
+    const filtered = filterData(currentData);
+    const sorted = sortData(filtered, document.getElementById('filter-sort').value);
+
+    if (sorted.length === 0) {
+        bar.classList.remove('visible');
+        list.className = 'results-list';
+        list.innerHTML = `<li><div class="state-msg">
+            <div class="state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v3M11 14h.01" stroke-linecap="round"/></svg></div>
+            <p class="state-title">No results match filters</p>
+            <p>Try lowering the minimum word count or modifying search terms.</p>
+        </div></li>`;
+        // if we actually have data but filtered it all out, keep bar visible so user can change filter back
+        if(currentData.length > 0) bar.classList.add('visible'); 
+        return;
+    }
+
+    bar.classList.add('visible');
+    list.className = 'results-list has-bar';
+    countEl.textContent = sorted.length.toLocaleString();
+
+    const copySvg = `<svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+
+    list.innerHTML = '';
+    sorted.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'result-item';
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'kw-text';
+        textSpan.textContent = item.keyword;
+
+        const logosSpan = document.createElement('span');
+        logosSpan.className = 'source-logos';
+        ALL_PLATFORMS.forEach(plat => {
+            const img = document.createElement('img');
+            const domain = PLATFORM_DOMAINS[plat] || 'google.com';
+            img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+            img.className = 'plat-icon' + (item.sources.map(s=>s.toLowerCase()).includes(plat.toLowerCase()) ? '' : ' plat-icon-grey');
+            logosSpan.appendChild(img);
+        });
+
+        const badgeClass = item.sources.length >= 3 ? 'badge-high' : item.sources.length >= 2 ? 'badge-mid' : '';
+        const badge = `<span class="count-badge ${badgeClass}">×${item.sources.length}</span>`;
+
+       li.innerHTML = textSpan.outerHTML + copySvg + logosSpan.outerHTML + badge;
+        
+        li.addEventListener('click', () => {
+            navigator.clipboard.writeText(item.keyword).then(() => {
+                li.classList.add('copied-flash');
+                setTimeout(() => li.classList.remove('copied-flash'), 700);
+            });
+        });
+        list.appendChild(li);
+    });
+}
+
+// Event Listeners for Filters
+document.getElementById('filter-min-words').addEventListener('input', updateUI);
+document.getElementById('filter-sort').addEventListener('change', updateUI);
+
+// Main Execution
+document.getElementById('btn-analyze').addEventListener('click', async () => {
+    const title = document.getElementById('kw-title').value.trim();
+    const brand = document.getElementById('kw-brand').value.trim();
+    const platforms = Array.from(document.querySelectorAll('.plat-cb:checked')).map(cb => cb.value);
+    
+    if (!title && !brand) { document.getElementById('kw-title').focus(); return; }
+    if (!platforms.length) { alert("Please select at least one platform."); return; }
+    
+    const btn = document.getElementById('btn-analyze');
+    const spinner = document.getElementById('spinner');
+    const list = document.getElementById('results-list');
+    
+    btn.disabled = true;
+    btn.innerHTML = `Analyzing…`;
+    spinner.classList.add('visible');
+    document.getElementById('results-bar').classList.remove('visible');
+    
+    list.innerHTML = Array(8).fill(null).map((_, i) => `<li class="skeleton-row" aria-hidden="true"><div class="skeleton skeleton-text" style="width:${40 + Math.sin(i * 1.3) * 25 + 10}%"></div></li>`).join('');
+    list.className = 'results-list';
+    
+    try {
+        currentData = await executeScraping({ 
+            title, brand, 
+            advancedWords: document.getElementById('kw-advanced').value, 
+            negativeKeywords: document.getElementById('kw-negative').value, 
+            platforms 
+        });
+        updateUI();
+    } catch(e) {
+        currentData = {error: e.message};
+        updateUI();
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Analyze Keywords`;
+        spinner.classList.remove('visible');
+    }
+});
+
+// Exports
+function getExportData() { return sortData(filterData(currentData), document.getElementById('filter-sort').value); }
+function getFilename(ext) {
+    const clean = (s, max = 25) => (s || '').trim().replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '-').slice(0, max);
+    const sortLabels = { 'a-z': 'AZ', 'z-a': 'ZA', 'wc-asc': 'WordsAsc', 'wc-desc': 'WordsDesc', 'sources-desc': 'MostSources', 'sources-asc': 'FewestSources' };
+
+    const title     = clean(document.getElementById('kw-title')?.value);
+    const brand     = clean(document.getElementById('kw-brand')?.value, 20);
+    const adv       = clean(document.getElementById('kw-advanced')?.value, 20);
+    const neg       = clean(document.getElementById('kw-negative')?.value, 20);
+    const sortVal   = document.getElementById('filter-sort')?.value || 'sources-desc';
+    const sortLabel = sortLabels[sortVal] || sortVal;
+    const minW      = document.getElementById('filter-min-words')?.value || '1';
+
+    const checked = [...document.querySelectorAll('.plat-cb:checked')].map(cb => cb.value);
+    const context = checked.length > 3 ? checked.slice(0, 3).join('+') + `+${checked.length - 3}more` : (checked.join('+') || 'AllPlatforms');
+
+    const now = new Date();
+    const ts  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
+
+    const parts = ['KWMiner'];
+    if (title) parts.push(title);
+    if (brand) parts.push(`B-${brand}`);
+    if (adv)   parts.push(`A-${adv}`);
+    if (neg)   parts.push(`NEG-${neg}`);
+    parts.push(context);
+    parts.push(`minW${minW}`);
+    parts.push(sortLabel);
+    parts.push(ts);
+
+    return parts.join('_') + '.' + ext;
+}
+
+document.getElementById('btn-copy').addEventListener('click', function() {
+    const d = getExportData(); if(!d.length) return;
+    navigator.clipboard.writeText(d.map(i=>i.keyword).join('\n')).then(() => {
+        const orig = this.textContent; this.textContent = 'Copied!'; this.classList.add('copied');
+        setTimeout(() => { this.textContent = orig; this.classList.remove('copied'); }, 2000);
+    });
+});
+document.getElementById('btn-txt').addEventListener('click', () => {
+    const d = getExportData(); if(!d.length) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([d.map(i=>i.keyword).join('\n')], {type:'text/plain'}));
+    a.download = getFilename('txt'); a.click();
+});
+document.getElementById('btn-csv').addEventListener('click', () => {
+    const d = getExportData(); if(!d.length) return;
+    const csv = 'Keyword,Sources\n' + d.map(i => `${i.keyword.includes(',') ? `"${i.keyword}"` : i.keyword},${i.sources.join(' | ')}`).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+    a.download = getFilename('csv'); a.click();
+});
+
+</script>
+</body>
+</html>
