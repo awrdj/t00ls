@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Forge - 2-View Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc; /* Slate 50 */
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top: 3px solid #3b82f6;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toasts */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: #1e293b;
+            border-left: 4px solid #3b82f6;
+            padding: 12px 20px;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease-out forwards;
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(10px); } }
+
+        /* View Transitions */
+        .view-section { display: none; }
+        .view-section.active { display: flex; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="glass-panel px-6 py-4 flex items-center justify-between z-10 shadow-md">
+        <div class="flex items-center gap-3">
+            <i data-lucide="dna" class="text-blue-400"></i>
+            <h1 class="text-xl font-bold tracking-wider text-white">SCRIPT FORGE <span class="text-xs text-blue-400 ml-2 border border-blue-400/30 px-2 py-1 rounded">STUDIO</span></h1>
+        </div>
+
+        <!-- The View Toggle -->
+        <div class="flex bg-slate-900 rounded-full p-1 border border-slate-700 shadow-inner">
+            <button id="nav-v1" class="px-6 py-1.5 rounded-full text-sm font-semibold transition-all bg-blue-600 text-white shadow">
+                ✍️ Script Engine
+            </button>
+            <button id="nav-v2" class="px-6 py-1.5 rounded-full text-sm font-semibold transition-all text-slate-400 hover:text-white">
+                🎬 B-Roll Director
+            </button>
+        </div>
+
+        <button id="btn-settings" class="text-slate-400 hover:text-white transition-colors p-2" title="API Settings">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+        </button>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: SCRIPT ENGINE (Text Generation Only) -->
+    <!-- ========================================== -->
+    <div id="view-1" class="view-section active flex-1 overflow-hidden">
+        
+        <!-- Left Panel: Inputs & Settings -->
+        <div class="w-1/3 min-w-[400px] glass-panel border-r border-slate-700 flex flex-col overflow-y-auto z-10 shadow-xl">
+            
+            <!-- Formula Manager -->
+            <div class="p-6 border-b border-slate-700">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="database" class="w-4 h-4"></i> Channel Formula
+                    </h2>
+                </div>
+                
+                <div class="flex gap-2 mb-3">
+                    <select id="formula-select" class="flex-1 bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                        <option value="">-- Select Saved Formula --</option>
+                    </select>
+                    <button id="btn-delete-formula" class="bg-red-900/30 text-red-400 hover:bg-red-900/50 border border-red-900/50 rounded p-2 transition-colors" title="Delete Formula">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <input type="text" id="formula-name" placeholder="Formula Name (e.g., Hidden Archive)" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 mb-3 hidden transition-all">
+                
+                <textarea id="formula-content" rows="6" placeholder="Paste the channel DNA, rules, tone, and formatting constraints here..." class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-none mb-3"></textarea>
+                
+                <div class="flex gap-2">
+                    <button id="btn-new-formula" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white rounded py-2 text-sm transition-colors font-medium">New</button>
+                    <button id="btn-save-formula" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded py-2 text-sm transition-colors font-medium flex justify-center items-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i> Save
+                    </button>
+                </div>
+            </div>
+
+            <!-- RESTORED: Channel Profiles -->
+            <div class="p-6 border-b border-slate-700 bg-slate-800/30">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="tv" class="w-4 h-4"></i> Your Channel Profiles
+                    </h2>
+                </div>
+                
+                <div class="flex gap-2 mb-3">
+                    <select id="channel-select" class="flex-1 bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                        <option value="">-- Select Saved Channel --</option>
+                    </select>
+                    <button id="btn-delete-channel" class="bg-red-900/30 text-red-400 hover:bg-red-900/50 border border-red-900/50 rounded p-2 transition-colors" title="Delete Channel">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <input type="text" id="channel-name-input" placeholder="Channel Name (e.g., The Global Truth)" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-white focus:outline-none focus:border-blue-500 mb-3 hidden transition-all">
+                
+                <div class="flex gap-2">
+                    <button id="btn-new-channel" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white rounded py-2 text-sm transition-colors font-medium">New</button>
+                    <button id="btn-save-channel" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded py-2 text-sm transition-colors font-medium flex justify-center items-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i> Save
+                    </button>
+                </div>
+            </div>
+
+            <!-- Transcript Input -->
+            <div class="p-6 border-b border-slate-700 flex-1 flex flex-col">
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-4">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> Interview Transcript
+                </h2>
+                <textarea id="transcript-content" placeholder="Paste the raw interview transcript here. E.g. Dr. Jeffrey Sachs..." class="w-full flex-1 bg-slate-800 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-none"></textarea>
+            </div>
+
+            <!-- Generation Settings & Action -->
+            <div class="p-6 bg-slate-800/50">
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Target Length</label>
+                        <span id="length-val" class="text-blue-400 font-bold text-sm bg-blue-900/30 px-2 py-1 rounded">30 Minutes</span>
+                    </div>
+                    <input type="range" id="script-length" min="5" max="60" value="30" class="w-full accent-blue-500">
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Speaking Pace</label>
+                        <span id="pacing-val" class="text-blue-400 font-bold text-sm bg-blue-900/30 px-2 py-1 rounded">150 WPM</span>
+                    </div>
+                    <input type="range" id="script-pacing" min="110" max="180" value="150" step="5" class="w-full accent-blue-500">
+                </div>
+
+                <!-- RESTORED: Generation Engine Toggle -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Generation Engine</label>
+                    </div>
+                    <select id="generation-mode" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                        <option value="standard">Standard (Fast - Word Count Enforcer)</option>
+                        <option value="chunking" selected>Deep Dive (Auto-Chunking - Maximum Length)</option>
+                    </select>
+                </div>
+
+                <button id="btn-generate" class="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-4 font-bold text-lg tracking-wide transition-all shadow-lg flex items-center justify-center gap-3">
+                    <i data-lucide="zap" class="w-5 h-5"></i>
+                    <span>GENERATE TEXT SCRIPT</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Panel: Script Output -->
+        <div class="flex-1 bg-[#0f172a] overflow-y-auto p-8 relative" id="output-container">
+            <!-- Empty State -->
+            <div id="empty-state" class="h-full flex flex-col items-center justify-center text-slate-500 opacity-70">
+                <i data-lucide="align-left" class="w-24 h-24 mb-6 text-slate-600"></i>
+                <h2 class="text-2xl font-bold text-slate-400 mb-2">Script Engine Ready</h2>
+                <p class="text-sm max-w-md text-center">Generate the narrative foundation here. Visuals will be added in the next step.</p>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading-state" class="hidden h-full flex flex-col items-center justify-center text-blue-400">
+                <div class="loader mb-6 !w-12 !h-12 !border-4 !border-t-blue-500"></div>
+                <h2 id="loading-text" class="text-xl font-bold mb-2 animate-pulse">Drafting Narrative Arc...</h2>
+            </div>
+
+            <!-- Results State -->
+            <div id="results-state" class="hidden max-w-3xl mx-auto pb-20">
+                <div class="flex flex-col gap-6 mb-8 border-b border-slate-700 pb-8">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Alternative Titles</h2>
+                        <button onclick="copyFullScript()" class="bg-blue-600 hover:bg-blue-500 border border-blue-500 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors text-sm font-medium whitespace-nowrap shadow-lg">
+                            <i data-lucide="copy" class="w-4 h-4"></i> Copy Full Script
+                        </button>
+                    </div>
+                    <div id="out-titles-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                </div>
+                
+                <div id="out-script" class="space-y-6 text-slate-300 leading-relaxed text-lg font-light">
+                    <!-- Dynamic Content Populated Here -->
+                </div>
+
+                <!-- HANDOFF BUTTON -->
+                <button id="btn-handoff" class="mt-12 w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg py-5 font-bold text-xl tracking-wide transition-all shadow-lg flex items-center justify-center gap-3 group">
+                    <i data-lucide="clapperboard" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
+                    <span>SEND TO B-ROLL DIRECTOR 🎬</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: B-ROLL DIRECTOR (Visual Timeline)  -->
+    <!-- ========================================== -->
+    <div id="view-2" class="view-section flex-1 overflow-hidden bg-[#0a0f1c]">
+        
+        <!-- Left Panel: B-Roll Inputs & Stats -->
+        <div class="w-1/3 min-w-[400px] glass-panel border-r border-slate-700 flex flex-col overflow-y-auto z-10 shadow-xl">
+            
+            <!-- Final Script Input -->
+            <div class="p-6 border-b border-slate-700 flex-1 flex flex-col">
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-4">
+                    <i data-lucide="file-check" class="w-4 h-4"></i> Final Approved Script
+                </h2>
+                <textarea id="v2-script" placeholder="Paste the final text script here to generate the visual timeline..." class="w-full flex-1 bg-slate-800 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors resize-none"></textarea>
+            </div>
+
+            <!-- Math & Generation Settings -->
+            <div class="p-6 bg-slate-800/50 border-b border-slate-700">
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-700 pb-2">Audio Track Duration</h2>
+                
+                <div class="flex gap-4 mb-6">
+                    <div class="flex-1">
+                        <label class="block text-xs text-slate-400 mb-1">Minutes</label>
+                        <input type="number" id="v2-min" value="10" min="0" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs text-slate-400 mb-1">Seconds</label>
+                        <input type="number" id="v2-sec" value="0" min="0" max="59" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors">
+                    </div>
+                </div>
+
+                <!-- Stats Display -->
+                <div class="bg-slate-900 border border-slate-700 rounded-lg p-4 grid grid-cols-2 gap-4 divide-x divide-slate-700">
+                    <div class="text-center">
+                        <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Words</p>
+                        <p id="v2-stat-words" class="text-2xl font-bold text-white">0</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Calculated WPM</p>
+                        <p id="v2-stat-wpm" class="text-2xl font-bold text-emerald-400">0.0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Generation Settings -->
+            <div class="p-6 bg-slate-800/50">
+                <div class="mb-6">
+                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">Image Aspect Ratio</h2>
+                    <select id="v2-image-aspect-ratio" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+                        <option value="16:9" selected>16:9 (Landscape - Standard)</option>
+                        <option value="9:16">9:16 (Vertical - Shorts/TikTok)</option>
+                        <option value="1:1">1:1 (Square)</option>
+                    </select>
+                </div>
+
+                <button id="btn-generate-broll" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg py-4 font-bold text-lg tracking-wide transition-all shadow-lg flex items-center justify-center gap-3">
+                    <i data-lucide="film" class="w-5 h-5"></i>
+                    <span>GENERATE TIMELINE</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Panel: B-Roll Output & Bulk Export -->
+        <div class="flex-1 overflow-y-auto p-8 relative flex flex-col" id="v2-output-container">
+            
+            <!-- V2 Empty State -->
+            <div id="v2-empty-state" class="flex-1 flex flex-col items-center justify-center text-slate-500 opacity-70">
+                <i data-lucide="video" class="w-24 h-24 mb-6 text-slate-600"></i>
+                <h2 class="text-2xl font-bold text-slate-400 mb-2">Director's Board Empty</h2>
+                <p class="text-sm max-w-md text-center">Ensure your final script and accurate audio lengths are set, then generate the physical timeline.</p>
+            </div>
+
+            <!-- V2 Loading State -->
+            <div id="v2-loading-state" class="hidden flex-1 flex flex-col items-center justify-center text-emerald-400">
+                <div class="loader mb-6 !w-12 !h-12 !border-4 !border-t-emerald-500"></div>
+                <h2 id="v2-loading-text" class="text-xl font-bold mb-2 animate-pulse">Directing Visuals...</h2>
+                <p class="text-sm text-slate-400">Plotting timeline and calculating exact timecodes based on WPM.</p>
+            </div>
+
+            <!-- V2 Results State -->
+            <div id="v2-results-state" class="hidden max-w-5xl mx-auto w-full pb-10 flex flex-col gap-8">
+                
+                <!-- The Timeline Feed -->
+                <div>
+                    <h2 class="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-6 border-b border-slate-700 pb-3">
+                        <i data-lucide="list-video" class="text-emerald-400"></i> Editing Timeline
+                    </h2>
+                    <div id="v2-timeline-feed" class="space-y-4">
+                        <!-- Rendered Asset Cards -->
+                    </div>
+                </div>
+
+                <!-- Bulk Exports -->
+                <div class="pt-8 border-t border-slate-700 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Image Prompts -->
+                    <div class="bg-slate-800/50 rounded-lg border border-slate-700 p-4 flex flex-col">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-purple-400 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="image"></i> Image Prompts <span id="v2-count-img" class="bg-purple-900/50 text-purple-200 px-2 py-0.5 rounded text-xs ml-2">0</span>
+                            </h3>
+                            <button onclick="copyToClipboard(document.getElementById('v2-bulk-img').value, 'Image Prompts')" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy All
+                            </button>
+                        </div>
+                        <textarea id="v2-bulk-img" readonly class="w-full flex-1 bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-300 font-mono resize-none focus:outline-none min-h-[250px]"></textarea>
+                    </div>
+
+                    <!-- Video Prompts -->
+                    <div class="bg-slate-800/50 rounded-lg border border-slate-700 p-4 flex flex-col">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="video"></i> Video Prompts <span id="v2-count-vid" class="bg-emerald-900/50 text-emerald-200 px-2 py-0.5 rounded text-xs ml-2">0</span>
+                            </h3>
+                            <button onclick="copyToClipboard(document.getElementById('v2-bulk-vid').value, 'Video Prompts')" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy All
+                            </button>
+                        </div>
+                        <textarea id="v2-bulk-vid" readonly class="w-full flex-1 bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-300 font-mono resize-none focus:outline-none min-h-[250px]"></textarea>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-4 shrink-0 border-b border-slate-700 pb-4">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="settings" class="w-5 h-5 text-blue-400"></i> Tool Settings & System Prompts
+                </h2>
+                <button id="btn-close-settings" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <!-- Scrollable Content -->
+            <div class="overflow-y-auto pr-2 flex-1 space-y-6">
+                <!-- API Key Section -->
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="key" class="w-4 h-4 text-blue-400"></i> API Configuration</h3>
+                    <p class="text-xs text-slate-400 mb-2">Enter your Gemini API Key to use this tool on GitHub Pages. (Not required inside the Canvas environment).</p>
+                    <div class="relative">
+    <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 pr-10 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+    <button id="btn-toggle-api-key" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors" title="Toggle Visibility">
+        <i data-lucide="eye" id="icon-api-key-visibility" class="w-4 h-4"></i>
+    </button>
+</div>
+                </div>
+
+                <!-- System Prompts Section -->
+                <div class="border-t border-slate-700 pt-6">
+                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="bot" class="w-4 h-4 text-emerald-400"></i> Core AI Directives</h3>
+                    <p class="text-xs text-slate-400 mb-4">Customize the core AI system instructions. Leave the `{{BRACKETED}}` variables exactly as they are to ensure the dynamic engine data (like word counts) is injected properly.</p>
+
+                    <!-- Prompt: Standard -->
+                    <div class="mb-4 bg-slate-900/50 p-4 rounded border border-slate-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-bold text-slate-200">View 1: Standard Script Generation</label>
+                            <button onclick="restorePrompt('standard')" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"><i data-lucide="rotate-ccw" class="w-3 h-3"></i> Restore Default</button>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mb-2 font-mono">Variables: {{CHANNEL_NAME}}, {{TARGET_WORDS}}, {{PACING_INSTRUCTION}}</p>
+                        <textarea id="prompt-standard" rows="4" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-xs text-slate-300 font-mono resize-y focus:outline-none focus:border-blue-500"></textarea>
+                    </div>
+
+                    <!-- Prompt: Outline -->
+                    <div class="mb-4 bg-slate-900/50 p-4 rounded border border-slate-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-bold text-slate-200">View 1: Deep Dive (Outline Phase)</label>
+                            <button onclick="restorePrompt('outline')" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"><i data-lucide="rotate-ccw" class="w-3 h-3"></i> Restore Default</button>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mb-2 font-mono">Variables: {{CHANNEL_NAME}}, {{NUM_CHAPTERS}}, {{MINUTES}}</p>
+                        <textarea id="prompt-outline" rows="3" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-xs text-slate-300 font-mono resize-y focus:outline-none focus:border-blue-500"></textarea>
+                    </div>
+
+                    <!-- Prompt: Chapter -->
+                    <div class="mb-4 bg-slate-900/50 p-4 rounded border border-slate-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-bold text-slate-200">View 1: Deep Dive (Chapter Writing)</label>
+                            <button onclick="restorePrompt('chapter')" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"><i data-lucide="rotate-ccw" class="w-3 h-3"></i> Restore Default</button>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mb-2 font-mono">Variables: {{CURRENT_CHAPTER}}, {{TOTAL_CHAPTERS}}, {{CHANNEL_NAME}}, {{WORDS_PER_CHAPTER}}, {{PACING_INSTRUCTION}}, {{HOOK_INSTRUCTION}}, {{OUTRO_INSTRUCTION}}</p>
+                        <textarea id="prompt-chapter" rows="6" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-xs text-slate-300 font-mono resize-y focus:outline-none focus:border-blue-500"></textarea>
+                    </div>
+
+                    <!-- Prompt: B-Roll -->
+                    <div class="mb-2 bg-slate-900/50 p-4 rounded border border-slate-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-bold text-emerald-400">View 2: B-Roll Director</label>
+                            <button onclick="restorePrompt('broll')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"><i data-lucide="rotate-ccw" class="w-3 h-3"></i> Restore Default</button>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mb-2 font-mono">Variables: None</p>
+                        <textarea id="prompt-broll" rows="6" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-xs text-slate-300 font-mono resize-y focus:outline-none focus:border-emerald-500"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-6 pt-4 border-t border-slate-700 shrink-0">
+                <button id="btn-save-settings" class="w-full bg-blue-600 hover:bg-blue-500 text-white rounded py-3 font-bold tracking-wide transition-colors shadow flex justify-center items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Save All Settings
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        lucide.createIcons();
+
+        // --- State ---
+        let appFormulas = [];
+        let appChannels = [];
+        // Instant load backup to prevent "lost data" race conditions on refresh
+        let appSettings = { 
+            id: 'main', 
+            apiKey: localStorage.getItem('fast_cache_api') || '', 
+            prompts: JSON.parse(localStorage.getItem('fast_cache_prompts') || 'null') 
+        };
+
+        // --- Firebase Setup ---
+        let auth, db, currentUser;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const isFirebaseEnabled = typeof __firebase_config !== 'undefined';
+
+        if (isFirebaseEnabled) {
+            const firebaseConfig = JSON.parse(__firebase_config);
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            const initAuth = async () => {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (err) { console.error("Auth error:", err); }
+            };
+            initAuth();
+
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if (user) {
+                    onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'formulas'), (snapshot) => {
+                        appFormulas = snapshot.docs.map(doc => doc.data());
+                        updateFormulaDropdown();
+                    });
+                    onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'channels'), (snapshot) => {
+                        appChannels = snapshot.docs.map(doc => doc.data());
+                        updateChannelDropdown();
+                    });
+                    onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'main'), (snapshot) => {
+                        if (snapshot.exists()) {
+                            appSettings = snapshot.data();
+                            // Keep the fast-cache synced with the permanent database
+                            localStorage.setItem('fast_cache_api', appSettings.apiKey || '');
+                            if (appSettings.prompts) localStorage.setItem('fast_cache_prompts', JSON.stringify(appSettings.prompts));
+                        }
+                    });
+                } else {
+                    appFormulas = []; appChannels = []; appSettings = { id: 'main', apiKey: '', prompts: null };
+                    updateFormulaDropdown(); updateChannelDropdown();
+                }
+            });
+        }
+
+        // --- Core Configurations ---
+        const apiKey = ""; 
+        function getActiveApiKey() { return appSettings.apiKey || apiKey || ""; }
+        function getTextModelUrl() { return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${getActiveApiKey()}`; }
+        function getImageModelUrl() { return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${getActiveApiKey()}`; }
+
+        // --- UI Variables ---
+        const ui = {
+            // Nav Toggle
+            navV1: document.getElementById('nav-v1'),
+            navV2: document.getElementById('nav-v2'),
+            view1: document.getElementById('view-1'),
+            view2: document.getElementById('view-2'),
+
+            // View 1
+            formulaSelect: document.getElementById('formula-select'),
+            formulaName: document.getElementById('formula-name'),
+            formulaContent: document.getElementById('formula-content'),
+            btnNewFormula: document.getElementById('btn-new-formula'),
+            btnSaveFormula: document.getElementById('btn-save-formula'),
+            btnDeleteFormula: document.getElementById('btn-delete-formula'),
+            
+            // Restored View 1 Elements
+            channelSelect: document.getElementById('channel-select'),
+            channelNameInput: document.getElementById('channel-name-input'),
+            btnNewChannel: document.getElementById('btn-new-channel'),
+            btnSaveChannel: document.getElementById('btn-save-channel'),
+            btnDeleteChannel: document.getElementById('btn-delete-channel'),
+            generationMode: document.getElementById('generation-mode'),
+
+            transcriptContent: document.getElementById('transcript-content'),
+            scriptLength: document.getElementById('script-length'),
+            lengthVal: document.getElementById('length-val'),
+            scriptPacing: document.getElementById('script-pacing'),
+            pacingVal: document.getElementById('pacing-val'),
+            btnGenerate: document.getElementById('btn-generate'),
+            emptyState: document.getElementById('empty-state'),
+            loadingState: document.getElementById('loading-state'),
+            loadingText: document.getElementById('loading-text'),
+            resultsState: document.getElementById('results-state'),
+            outTitlesContainer: document.getElementById('out-titles-container'),
+            outScript: document.getElementById('out-script'),
+            btnHandoff: document.getElementById('btn-handoff'),
+
+            // View 2
+            v2Script: document.getElementById('v2-script'),
+            v2Min: document.getElementById('v2-min'),
+            v2Sec: document.getElementById('v2-sec'),
+            v2StatWords: document.getElementById('v2-stat-words'),
+            v2StatWpm: document.getElementById('v2-stat-wpm'),
+            v2ImageAspectRatio: document.getElementById('v2-image-aspect-ratio'),
+            btnGenerateBroll: document.getElementById('btn-generate-broll'),
+            v2EmptyState: document.getElementById('v2-empty-state'),
+            v2LoadingState: document.getElementById('v2-loading-state'),
+            v2ResultsState: document.getElementById('v2-results-state'),
+            v2TimelineFeed: document.getElementById('v2-timeline-feed'),
+            v2BulkImg: document.getElementById('v2-bulk-img'),
+            v2BulkVid: document.getElementById('v2-bulk-vid'),
+            v2CountImg: document.getElementById('v2-count-img'),
+            v2CountVid: document.getElementById('v2-count-vid'),
+
+            // Settings
+            btnSettings: document.getElementById('btn-settings'),
+            settingsModal: document.getElementById('settings-modal'),
+            btnCloseSettings: document.getElementById('btn-close-settings'),
+            apiKeyInput: document.getElementById('api-key-input'),
+            btnToggleApiKey: document.getElementById('btn-toggle-api-key'),
+            iconApiKeyVisibility: document.getElementById('icon-api-key-visibility'),
+            btnSaveSettings: document.getElementById('btn-save-settings')
+        };
+
+        // --- System Prompts Engine ---
+        const DEFAULT_PROMPTS = {
+            standard: `You are an elite YouTube Scriptwriter. Identity Rule: This script is for a channel named "{{CHANNEL_NAME}}". Strictly follow the Channel Formula.\nTARGET LENGTH: EXACTLY {{TARGET_WORDS}} words. {{PACING_INSTRUCTION}} Pace the script to hit this word count.\nRULE: Output strictly the narrative text. DO NOT write B-roll descriptions or visual markers.`,
+            outline: `You are the Lead Architect for the YouTube channel "{{CHANNEL_NAME}}". Break this transcript down into exactly {{NUM_CHAPTERS}} sequential chapters for a {{MINUTES}}-minute video based on the Channel Formula. Ensure the focus for each chapter is clear. Also provide 3 distinct potential titles.`,
+            chapter: `You are writing Chapter {{CURRENT_CHAPTER}} of {{TOTAL_CHAPTERS}} for the YouTube channel "{{CHANNEL_NAME}}". \nStrict Rules: \n- ONLY write the narrative text for this specific chapter. DO NOT write B-roll descriptions or visual markers.\n- TARGET LENGTH: EXACTLY {{WORDS_PER_CHAPTER}} words for this chapter. {{PACING_INSTRUCTION}} \n{{HOOK_INSTRUCTION}}\n{{OUTRO_INSTRUCTION}}`,
+            broll: `Role: You are an elite Geopolitical News Producer and AI B-Roll Director. Your job is to take a user's script and generate highly realistic, physically accurate image and video prompts for military and political news b-roll.\n\nCore Rules for Visuals:\n1. Journalistic & Military Realism: All prompts must dictate authentic, documentary-style footage (e.g., press briefings, satellite imagery, tactical troop movements, diplomatic summits). For videos, include camera styles typical of news media (e.g., telephoto zoom, drone reconnaissance shot, handheld combat camera).\n2. No Action-Movie Tropes: Absolutely no sci-fi weapons, over-the-top Hollywood explosions, or impossible physics. Military hardware, vehicles, and uniforms must be physically accurate and grounded in reality.\n3. Direct Subject References: Use the exact names of politicians, generals, military assets, and contested locations mentioned in the script (e.g., F-35 fighter jet, Pentagon briefing room, Strait of Taiwan, Vladimir Putin).\n4. PACING & DENSITY: You must generate a steady stream of B-roll. Aim for at least one visual asset per paragraph, or roughly every 20 to 30 seconds of spoken dialogue. Generate B-roll markers to introduce new subjects, emphasize key statistics, cover geographical shifts, or simply maintain viewer retention during long explanations. Do not leave long, multi-minute gaps without visuals.\n\nOutput strictly in the defined JSON schema. Do not calculate timecodes or format into lists; the frontend engine will handle all math and text extraction automatically.`
+        };
+
+        function getPrompts() {
+            if (appSettings.prompts) {
+                return { ...DEFAULT_PROMPTS, ...appSettings.prompts };
+            }
+            return { ...DEFAULT_PROMPTS };
+        }
+
+        window.restorePrompt = function(key) {
+            document.getElementById(`prompt-${key}`).value = DEFAULT_PROMPTS[key];
+            showToast(`Restored default prompt. Don't forget to save!`);
+        };
+
+        // --- Utils ---
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast text-sm text-white font-medium';
+            toast.innerText = message;
+            document.getElementById('toast-container').appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease-in forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        async function fetchWithRetry(url, options, retries = 5) {
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+                    return await res.json();
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    await new Promise(r => setTimeout(r, delays[i]));
+                }
+            }
+        }
+
+        window.copyToClipboard = function(text, entity) {
+            const tempInput = document.createElement("textarea");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            showToast(`${entity} copied!`);
+        }
+
+        window.copyFullScript = function() {
+            const blocks = document.querySelectorAll('.pure-script-text');
+            if(blocks.length === 0) return showToast("No script to copy!");
+            let fullText = "";
+            blocks.forEach(block => fullText += block.innerText.trim() + "\n\n");
+            window.copyToClipboard(fullText.trim(), "Full Script");
+        }
+
+        function switchView(viewId) {
+            if (viewId === 'v1') {
+                ui.view1?.classList.add('active');
+                ui.view2?.classList.remove('active');
+                if(ui.navV1) ui.navV1.className = "px-6 py-1.5 rounded-full text-sm font-semibold transition-all bg-blue-600 text-white shadow";
+                if(ui.navV2) ui.navV2.className = "px-6 py-1.5 rounded-full text-sm font-semibold transition-all text-slate-400 hover:text-white";
+            } else {
+                ui.view2?.classList.add('active');
+                ui.view1?.classList.remove('active');
+                if(ui.navV2) ui.navV2.className = "px-6 py-1.5 rounded-full text-sm font-semibold transition-all bg-emerald-600 text-white shadow";
+                if(ui.navV1) ui.navV1.className = "px-6 py-1.5 rounded-full text-sm font-semibold transition-all text-slate-400 hover:text-white";
+                calculateV2Stats(); 
+            }
+        }
+
+        ui.navV1?.addEventListener('click', () => switchView('v1'));
+        ui.navV2?.addEventListener('click', () => switchView('v2'));
+
+        // --- IndexedDB for Formulas & Channels ---
+        const DB_NAME = 'ScriptMasterDB', DB_VERSION = 3, STORE_NAME = 'formulas', STORE_CHANNELS = 'channels', STORE_SETTINGS = 'settings';
+        let localDb;
+
+        function initLocalDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = e => reject(e.target.error);
+                request.onsuccess = e => { localDb = e.target.result; resolve(); };
+                request.onupgradeneeded = e => {
+                    const dbObj = e.target.result;
+                    if (!dbObj.objectStoreNames.contains(STORE_NAME)) dbObj.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    if (!dbObj.objectStoreNames.contains(STORE_CHANNELS)) dbObj.createObjectStore(STORE_CHANNELS, { keyPath: 'id' });
+                    if (!dbObj.objectStoreNames.contains(STORE_SETTINGS)) dbObj.createObjectStore(STORE_SETTINGS, { keyPath: 'id' });
+                };
+            });
+        }
+
+        async function loadSettingsIndexedDB() {
+            if (!localDb) return null;
+            return new Promise((res, rej) => {
+                const req = localDb.transaction([STORE_SETTINGS], 'readonly').objectStore(STORE_SETTINGS).get('main');
+                req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+            });
+        }
+
+        async function saveSettingsDB(settingsData) {
+            if (isFirebaseEnabled && currentUser) return setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'main'), settingsData);
+            if (!localDb) return;
+            return new Promise((res, rej) => {
+                const req = localDb.transaction([STORE_SETTINGS], 'readwrite').objectStore(STORE_SETTINGS).put(settingsData);
+                req.onsuccess = () => res(); req.onerror = () => rej(req.error);
+            });
+        }
+        
+        async function loadFormulasIndexedDB() {
+            if (!localDb) return [];
+            return new Promise((res, rej) => {
+                const req = localDb.transaction([STORE_NAME], 'readonly').objectStore(STORE_NAME).getAll();
+                req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+            });
+        }
+        async function saveFormulaDB(formula) {
+            if (isFirebaseEnabled && currentUser) return setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'formulas', formula.id), formula);
+            if (!localDb) return;
+            return new Promise((res, rej) => {
+                const req = localDb.transaction([STORE_NAME], 'readwrite').objectStore(STORE_NAME).put(formula);
+                req.onsuccess = () => res(); req.onerror = () => rej(req.error);
+            });
+        }
+        async function deleteFormulaDB(id) {
+            if (isFirebaseEnabled && currentUser) return deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'formulas', id));
+            if (!localDb) return;
+            return new Promise((res, rej) => {
+                const req = localDb.transaction([STORE_NAME], 'readwrite').objectStore(STORE_NAME).delete(id);
+                req.onsuccess = () => res(); req.onerror = () => rej(req.error);
+            });
+        }
+
+        async function loadChannelsIndexedDB() {
+            if (!localDb) return [];
+            return new Promise((res, rej) => {
+                const req = localDb.transaction([STORE_CHANNELS], 'readonly').objectStore(STORE_CHANNELS).getAll();
+                req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+            });
+        }
+        async function saveChannelDB(channel) {
+            if (isFirebaseEnabled && currentUser) return setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'channels', channel.id), channel);
+            if (!localDb) return;
+            return new Promise((res, rej) => {
+                const req = localDb.transaction([STORE_CHANNELS], 'readwrite').objectStore(STORE_CHANNELS).put(channel);
+                req.onsuccess = () => res(); req.onerror = () => rej(req.error);
+            });
+        }
+        async function deleteChannelDB(id) {
+            if (isFirebaseEnabled && currentUser) return deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'channels', id));
+            if (!localDb) return;
+            return new Promise((res, rej) => {
+                const req = localDb.transaction([STORE_CHANNELS], 'readwrite').objectStore(STORE_CHANNELS).delete(id);
+                req.onsuccess = () => res(); req.onerror = () => rej(req.error);
+            });
+        }
+
+        // Dropdowns Updates
+        function updateFormulaDropdown() {
+            let targetSelection = ui.formulaSelect?.value || localStorage.getItem('last_selected_formula');
+            if(!ui.formulaSelect) return;
+            ui.formulaSelect.innerHTML = '<option value="">-- Select Saved Formula --</option>';
+            appFormulas.forEach(f => {
+                const opt = document.createElement('option'); opt.value = f.id; opt.textContent = f.name;
+                ui.formulaSelect.appendChild(opt);
+            });
+            if (targetSelection && appFormulas.some(f => f.id === targetSelection)) {
+                ui.formulaSelect.value = targetSelection;
+                if (ui.formulaContent && ui.formulaContent.value.trim() === '') {
+                    ui.formulaContent.value = appFormulas.find(f => f.id === targetSelection).content;
+                    ui.formulaName?.classList.add('hidden');
+                }
+            } else {
+                ui.formulaName?.classList.remove('hidden');
+            }
+        }
+
+        function updateChannelDropdown() {
+            let targetSelection = ui.channelSelect?.value || localStorage.getItem('last_selected_channel');
+            if(!ui.channelSelect) return;
+            ui.channelSelect.innerHTML = '<option value="">-- Select Saved Channel --</option>';
+            appChannels.forEach(c => {
+                const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name;
+                ui.channelSelect.appendChild(opt);
+            });
+            if (targetSelection && appChannels.some(c => c.id === targetSelection)) {
+                ui.channelSelect.value = targetSelection;
+                ui.channelNameInput?.classList.add('hidden');
+                if(ui.channelNameInput) ui.channelNameInput.value = '';
+            } else {
+                ui.channelNameInput?.classList.remove('hidden');
+            }
+        }
+
+        // Setup formula UI listeners...
+        ui.btnNewFormula?.addEventListener('click', () => { ui.formulaSelect.value = ''; localStorage.removeItem('last_selected_formula'); ui.formulaName?.classList.remove('hidden'); if(ui.formulaName) ui.formulaName.value = ''; if(ui.formulaContent) ui.formulaContent.value = ''; ui.formulaName?.focus(); });
+        ui.formulaSelect?.addEventListener('change', (e) => {
+            const id = e.target.value;
+            if (id) { localStorage.setItem('last_selected_formula', id); ui.formulaName?.classList.add('hidden'); if(ui.formulaContent) ui.formulaContent.value = appFormulas.find(f => f.id === id).content; }
+            else { localStorage.removeItem('last_selected_formula'); if(ui.formulaContent) ui.formulaContent.value = ''; ui.formulaName?.classList.remove('hidden'); }
+        });
+        ui.btnSaveFormula?.addEventListener('click', async () => {
+            const content = ui.formulaContent?.value.trim();
+            if (!content) return showToast("Cannot save empty formula!");
+            let id = ui.formulaSelect?.value, name = ui.formulaSelect?.value ? appFormulas.find(f=>f.id===id).name : ui.formulaName?.value.trim();
+            if (!name) return showToast("Provide a name!");
+            if(!id) id = 'form_'+Date.now();
+            try { localStorage.setItem('last_selected_formula', id); await saveFormulaDB({id, name, content}); showToast("Saved!"); ui.formulaName?.classList.add('hidden'); if(!isFirebaseEnabled){ appFormulas = await loadFormulasIndexedDB(); updateFormulaDropdown(); } } catch(err) { showToast("Error: " + err.message); }
+        });
+        ui.btnDeleteFormula?.addEventListener('click', async () => {
+            const id = ui.formulaSelect?.value; if(!id) return showToast("Select a formula.");
+            try { localStorage.removeItem('last_selected_formula'); if(ui.formulaContent) ui.formulaContent.value = ''; await deleteFormulaDB(id); showToast("Deleted."); if(!isFirebaseEnabled){ appFormulas = await loadFormulasIndexedDB(); updateFormulaDropdown(); } } catch(err) { showToast("Error: "+err.message); }
+        });
+
+        // Setup channel UI listeners...
+        ui.btnNewChannel?.addEventListener('click', () => { ui.channelSelect.value = ''; localStorage.removeItem('last_selected_channel'); ui.channelNameInput?.classList.remove('hidden'); if(ui.channelNameInput) ui.channelNameInput.value = ''; ui.channelNameInput?.focus(); });
+        ui.channelSelect?.addEventListener('change', (e) => {
+            const id = e.target.value;
+            if (id) { localStorage.setItem('last_selected_channel', id); ui.channelNameInput?.classList.add('hidden'); if(ui.channelNameInput) ui.channelNameInput.value = ''; }
+            else { localStorage.removeItem('last_selected_channel'); ui.channelNameInput?.classList.remove('hidden'); }
+        });
+        ui.btnSaveChannel?.addEventListener('click', async () => {
+            let id, name;
+            if (ui.channelSelect?.value) return showToast("Channel is already saved!");
+            else { name = ui.channelNameInput?.value.trim(); if (!name) return showToast("Please type a channel name."); id = 'chan_' + Date.now(); }
+            try { localStorage.setItem('last_selected_channel', id); await saveChannelDB({ id, name }); showToast("Channel saved successfully!"); ui.channelNameInput?.classList.add('hidden'); if (!isFirebaseEnabled) { appChannels = await loadChannelsIndexedDB(); updateChannelDropdown(); } } catch (err) { showToast("Error saving: " + err.message); }
+        });
+        ui.btnDeleteChannel?.addEventListener('click', async () => {
+            const id = ui.channelSelect?.value; if (!id) return showToast("Select a channel to delete.");
+            try { localStorage.removeItem('last_selected_channel'); if(ui.channelNameInput) ui.channelNameInput.value = ''; ui.channelNameInput?.classList.remove('hidden'); await deleteChannelDB(id); showToast("Channel deleted."); if (!isFirebaseEnabled) { appChannels = await loadChannelsIndexedDB(); updateChannelDropdown(); } } catch (err) { showToast("Error deleting: " + err.message); }
+        });
+
+
+        // Sliders & Settings
+        ui.scriptLength?.addEventListener('input', e => { if(ui.lengthVal) ui.lengthVal.innerText = `${e.target.value} Minutes`; });
+        ui.scriptPacing?.addEventListener('input', e => { if(ui.pacingVal) ui.pacingVal.innerText = `${e.target.value} WPM`; });
+        ui.btnToggleApiKey?.addEventListener('click', () => {
+            if (ui.apiKeyInput?.type === 'password') {
+                ui.apiKeyInput.type = 'text';
+                ui.iconApiKeyVisibility?.setAttribute('data-lucide', 'eye-off');
+            } else {
+                if (ui.apiKeyInput) ui.apiKeyInput.type = 'password';
+                ui.iconApiKeyVisibility?.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        });
+        ui.btnSettings?.addEventListener('click', () => { 
+            if(ui.apiKeyInput) {
+                // FIX: Load from the new database, not localStorage
+                ui.apiKeyInput.value = appSettings.apiKey || ''; 
+                
+                // FEATURE: Force the input to be hidden (password mode) every time you open settings
+                ui.apiKeyInput.type = 'password';
+                ui.iconApiKeyVisibility?.setAttribute('data-lucide', 'eye');
+                lucide.createIcons();
+            }
+            
+            // Load custom prompts into textareas
+            const prompts = getPrompts();
+            const elStd = document.getElementById('prompt-standard');
+            const elOut = document.getElementById('prompt-outline');
+            const elChap = document.getElementById('prompt-chapter');
+            const elBroll = document.getElementById('prompt-broll');
+            if(elStd) elStd.value = prompts.standard;
+            if(elOut) elOut.value = prompts.outline;
+            if(elChap) elChap.value = prompts.chapter;
+            if(elBroll) elBroll.value = prompts.broll;
+
+            ui.settingsModal?.classList.remove('hidden'); 
+        });
+        ui.btnCloseSettings?.addEventListener('click', () => ui.settingsModal?.classList.add('hidden'));
+        ui.btnSaveSettings?.addEventListener('click', async () => { 
+            const k = ui.apiKeyInput?.value.trim() || ''; 
+            
+            // Save custom prompts
+            const newPrompts = {
+                standard: document.getElementById('prompt-standard')?.value || DEFAULT_PROMPTS.standard,
+                outline: document.getElementById('prompt-outline')?.value || DEFAULT_PROMPTS.outline,
+                chapter: document.getElementById('prompt-chapter')?.value || DEFAULT_PROMPTS.chapter,
+                broll: document.getElementById('prompt-broll')?.value || DEFAULT_PROMPTS.broll
+            };
+            
+            appSettings = { id: 'main', apiKey: k, prompts: newPrompts };
+
+            // Save to the instant fast-cache
+            localStorage.setItem('fast_cache_api', k);
+            localStorage.setItem('fast_cache_prompts', JSON.stringify(newPrompts));
+
+            try {
+                await saveSettingsDB(appSettings);
+                ui.settingsModal?.classList.add('hidden'); 
+                showToast("Settings and Prompts saved successfully."); 
+            } catch (err) {
+                showToast("Error saving settings: " + err.message);
+            }
+        });
+
+        async function executeGeminiCall(systemInstruction, userPrompt, schema) {
+            const payload = { contents: [{ parts: [{ text: userPrompt }] }], systemInstruction: { parts: [{ text: systemInstruction }] }, generationConfig: { responseMimeType: "application/json", responseSchema: schema } };
+            const result = await fetchWithRetry(getTextModelUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            return JSON.parse(result.candidates[0].content.parts[0].text.replace(/```json\n?|Identity|```/g, '').trim());
+        }
+
+        function renderScript(data) {
+            if(ui.outTitlesContainer) ui.outTitlesContainer.innerHTML = '';
+            (data.titles || []).forEach((t, i) => {
+                if(ui.outTitlesContainer) {
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = "bg-slate-800/50 border border-slate-700 p-4 rounded-lg flex flex-col justify-between";
+                    
+                    const p = document.createElement('p');
+                    p.className = "text-white font-bold leading-tight mb-3";
+                    p.textContent = t;
+                    
+                    const btn = document.createElement('button');
+                    btn.className = "text-xs font-bold text-blue-400 bg-blue-900/20 hover:bg-blue-900/40 px-3 py-1.5 rounded transition-colors self-start flex items-center gap-1";
+                    btn.innerHTML = `<i data-lucide="copy" class="w-3 h-3"></i> Copy`;
+                    btn.onclick = () => window.copyToClipboard(t, 'Title');
+                    
+                    titleDiv.appendChild(p);
+                    titleDiv.appendChild(btn);
+                    ui.outTitlesContainer.appendChild(titleDiv);
+                }
+            });
+
+            if(ui.outScript) ui.outScript.innerHTML = '';
+            (data.sections || []).forEach(sec => {
+                const el = document.createElement('div');
+                el.className = "pl-4 border-l-2 border-slate-700 relative group pr-10 mb-6";
+                el.innerHTML = `
+                    <p class="pure-script-text text-slate-300 leading-relaxed text-lg font-light">${sec.content}</p>
+                    <button class="absolute top-0 right-0 p-2 text-slate-500 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-600 rounded opacity-0 group-hover:opacity-100 transition-all shadow-md btn-copy-block" title="Copy Text">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                    </button>
+                `;
+                el.querySelector('.btn-copy-block').onclick = () => window.copyToClipboard(sec.content, 'Paragraph');
+                if(ui.outScript) ui.outScript.appendChild(el);
+            });
+            lucide.createIcons();
+            ui.loadingState?.classList.add('hidden'); ui.resultsState?.classList.remove('hidden');
+        }
+
+        // ==========================================
+        // VIEW 1 GENERATION (Text Only - Standard & Chunking Restored)
+        // ==========================================
+        ui.btnGenerate?.addEventListener('click', async () => {
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) { ui.settingsModal?.classList.remove('hidden'); return showToast("API Key needed!"); }
+
+            const formula = ui.formulaContent?.value.trim() || '';
+            const transcript = ui.transcriptContent?.value.trim() || '';
+            const minutes = parseInt(ui.scriptLength?.value || "30", 10);
+            const wpm = parseInt(ui.scriptPacing?.value || "150", 10);
+            const mode = ui.generationMode?.value || "standard";
+
+            // Resolve Channel Name safely
+            let myChannel = "this channel";
+            if (ui.channelSelect?.value) {
+                const found = appChannels.find(c => c.id === ui.channelSelect.value);
+                if (found) myChannel = found.name;
+            } else if (ui.channelNameInput?.value.trim()) {
+                myChannel = ui.channelNameInput.value.trim();
+            }
+
+            if (!formula || !transcript) return showToast("Provide Formula and Transcript.");
+
+            ui.emptyState?.classList.add('hidden'); ui.resultsState?.classList.add('hidden'); ui.loadingState?.classList.remove('hidden');
+            if(ui.btnGenerate) { ui.btnGenerate.disabled = true; ui.btnGenerate.classList.add('opacity-50'); }
+
+            try {
+                const targetWords = minutes * wpm;
+                const pacingInstruction = wpm >= 165 ? "Write fast, punchy, high-energy sentences." : wpm <= 130 ? "Write slow, deliberate, dramatic paragraphs." : "Maintain standard engaging pace.";
+                const activePrompts = getPrompts();
+
+                // Shared schema - purely narrative
+                const sectionsArraySchema = {
+                    type: "ARRAY",
+                    items: {
+                        type: "OBJECT",
+                        properties: {
+                            content: { type: "STRING", description: "The actual script text. No visual notes." }
+                        }, required: ["content"]
+                    }
+                };
+
+                let finalScriptData = { titles: [], sections: [] };
+
+                if (mode === "standard") {
+                    if(ui.loadingText) ui.loadingText.innerText = "Drafting Narrative Arc...";
+                    const schema = {
+                        type: "OBJECT",
+                        properties: {
+                            titles: { type: "ARRAY", items: { type: "STRING" }, minItems: 3, maxItems: 3 },
+                            sections: sectionsArraySchema
+                        }, required: ["titles", "sections"]
+                    };
+
+                    const systemInstruction = activePrompts.standard
+                        .replace(/{{CHANNEL_NAME}}/g, myChannel)
+                        .replace(/{{TARGET_WORDS}}/g, targetWords)
+                        .replace(/{{PACING_INSTRUCTION}}/g, pacingInstruction);
+
+                    finalScriptData = await executeGeminiCall(systemInstruction, `FORMULA:\n${formula}\n\nTRANSCRIPT:\n${transcript}\n\nGenerate script (${targetWords} words).`, schema);
+                
+                } else {
+                    // Deep Dive: Auto-Chunking Engine (Restored logic, text-only output)
+                    if(ui.loadingText) ui.loadingText.innerText = "Phase 1: Architecting Master Outline...";
+                    
+                    const numChapters = Math.max(3, Math.round(minutes / 6)); 
+                    const wordsPerChapter = Math.round(targetWords / numChapters);
+                    
+                    const outlineSchema = {
+                        type: "OBJECT",
+                        properties: {
+                            titles: { type: "ARRAY", items: { type: "STRING" }, minItems: 3, maxItems: 3 },
+                            chapters: {
+                                type: "ARRAY",
+                                items: { type: "OBJECT", properties: { chapterNumber: { type: "INTEGER" }, focus: { type: "STRING" } }, required: ["chapterNumber", "focus"] }
+                            }
+                        }, required: ["titles", "chapters"]
+                    };
+
+                    const outlineInstruction = activePrompts.outline
+                        .replace(/{{CHANNEL_NAME}}/g, myChannel)
+                        .replace(/{{NUM_CHAPTERS}}/g, numChapters)
+                        .replace(/{{MINUTES}}/g, minutes);
+
+                    const outlineData = await executeGeminiCall(outlineInstruction, `CHANNEL FORMULA:\n${formula}\n\nTRANSCRIPT:\n${transcript}`, outlineSchema);
+                    finalScriptData.titles = outlineData.titles;
+
+                    const chapterSchema = { type: "OBJECT", properties: { sections: sectionsArraySchema }, required: ["sections"] };
+
+                    for (let i = 0; i < outlineData.chapters.length; i++) {
+                        const chapter = outlineData.chapters[i];
+                        if(ui.loadingText) ui.loadingText.innerText = `Phase 2: Writing Chapter ${i + 1} of ${outlineData.chapters.length}...`;
+                        const isFirst = i === 0;
+                        const isLast = i === outlineData.chapters.length - 1;
+                        
+                        const hookInstruction = isFirst ? "- INCLUDE the high-stakes video Hook and Intro in this chapter." : "- DO NOT write an intro or hook. Plunge straight into the ongoing narrative.";
+                        const outroInstruction = isLast ? "- INCLUDE the dramatic Outro and Call to Action." : "- DO NOT write an outro. End on a cliffhanger or transition point.";
+
+                        const chapterInstruction = activePrompts.chapter
+                            .replace(/{{CURRENT_CHAPTER}}/g, i + 1)
+                            .replace(/{{TOTAL_CHAPTERS}}/g, outlineData.chapters.length)
+                            .replace(/{{CHANNEL_NAME}}/g, myChannel)
+                            .replace(/{{WORDS_PER_CHAPTER}}/g, wordsPerChapter)
+                            .replace(/{{PACING_INSTRUCTION}}/g, pacingInstruction)
+                            .replace(/{{HOOK_INSTRUCTION}}/g, hookInstruction)
+                            .replace(/{{OUTRO_INSTRUCTION}}/g, outroInstruction);
+
+                        const chapterData = await executeGeminiCall(chapterInstruction, `FORMULA:\n${formula}\n\nENTIRE TRANSCRIPT FOR CONTEXT:\n${transcript}\n\nYOUR TASK NOW:\nWrite script sections exclusively for Chapter ${i + 1}. Focus: ${chapter.focus}`, chapterSchema);
+                        finalScriptData.sections = finalScriptData.sections.concat(chapterData.sections);
+                    }
+                    if(ui.loadingText) ui.loadingText.innerText = "Phase 3: Finalizing Assembly...";
+                }
+
+                renderScript(finalScriptData);
+
+            } catch (err) {
+                console.error(err); showToast("Error generating script.");
+                ui.emptyState?.classList.remove('hidden'); ui.loadingState?.classList.add('hidden');
+            } finally {
+                if(ui.btnGenerate) { ui.btnGenerate.disabled = false; ui.btnGenerate.classList.remove('opacity-50'); }
+            }
+        });
+
+        // ==========================================
+        // HANDOFF LOGIC (V1 -> V2)
+        // ==========================================
+        ui.btnHandoff?.addEventListener('click', () => {
+            const blocks = document.querySelectorAll('.pure-script-text');
+            let fullText = "";
+            blocks.forEach(b => fullText += b.innerText.trim() + "\n\n");
+            
+            // Populate V2
+            if(ui.v2Script) ui.v2Script.value = fullText.trim();
+            if(ui.v2Min) ui.v2Min.value = ui.scriptLength?.value || "10";
+            if(ui.v2Sec) ui.v2Sec.value = "0";
+            
+            // Switch & Calculate
+            switchView('v2');
+            showToast("Script transferred to B-Roll Director.");
+        });
+
+        // ==========================================
+        // VIEW 2 LOGIC & MATH
+        // ==========================================
+        
+        function calculateV2Stats() {
+            const text = ui.v2Script?.value.trim() || '';
+            const words = text ? text.split(/\s+/).filter(w => w.length > 0).length : 0;
+            const min = parseInt(ui.v2Min?.value || "0");
+            const sec = parseInt(ui.v2Sec?.value || "0");
+            const totalMin = min + (sec / 60);
+            
+            if(ui.v2StatWords) ui.v2StatWords.innerText = words;
+            if(ui.v2StatWpm) ui.v2StatWpm.innerText = totalMin > 0 ? (words / totalMin).toFixed(1) : "0.0";
+            return { words, totalMin, wpm: totalMin > 0 ? (words / totalMin) : 0 };
+        }
+
+        ui.v2Script?.addEventListener('input', calculateV2Stats);
+        ui.v2Min?.addEventListener('input', calculateV2Stats);
+        ui.v2Sec?.addEventListener('input', calculateV2Stats);
+
+        function formatTimecode(seconds) {
+            if (isNaN(seconds) || !isFinite(seconds)) return "00:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // True Aspect Ratio Cropper
+        function cropImageToRatio(base64Str, ratioStr) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const [ratioW, ratioH] = ratioStr.split(':').map(Number);
+                    const targetRatio = ratioW / ratioH;
+                    const sourceRatio = img.width / img.height;
+                    
+                    let drawWidth = img.width;
+                    let drawHeight = img.height;
+                    let offsetX = 0;
+                    let offsetY = 0;
+                    
+                    if (sourceRatio > targetRatio) {
+                        drawWidth = img.height * targetRatio;
+                        offsetX = (img.width - drawWidth) / 2;
+                    } else {
+                        drawHeight = img.width / targetRatio;
+                        offsetY = (img.height - drawHeight) / 2;
+                    }
+                    
+                    canvas.width = drawWidth;
+                    canvas.height = drawHeight;
+                    
+                    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight, 0, 0, drawWidth, drawHeight);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = reject;
+                img.src = "data:image/png;base64," + base64Str;
+            });
+        }
+
+        // Nano Banana Image Generator
+        window.triggerImageGen = async function(prompt, containerId, cardNumber, timeStr, searchQuery) {
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) {
+                ui.settingsModal?.classList.remove('hidden');
+                return showToast("Please configure your API Key in settings first!");
+            }
+
+            const container = document.getElementById(containerId);
+            if(!container) return;
+            container.classList.remove('hidden');
+            container.innerHTML = `
+                <div class="p-8 flex flex-col items-center justify-center text-purple-400 bg-slate-900 border border-slate-700 rounded shadow-inner">
+                    <div class="loader mb-3 !w-8 !h-8 !border-2 !border-t-purple-500"></div>
+                    <span class="text-xs font-semibold uppercase tracking-wider">Nano Banana 🍌 Rendering...</span>
+                </div>
+            `;
+
+            try {
+                const selectedRatio = ui.v2ImageAspectRatio?.value || "16:9";
+                const finalPrompt = `[CRITICAL COMPOSITION: Keep the main subject perfectly centered in the middle of the frame. Do not place essential details on the far edges. This image will be cropped to a ${selectedRatio} aspect ratio.] ${prompt}`;
+                
+                const payload = {
+                    contents: [{parts: [{ text: finalPrompt }]}],
+                    generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+                };
+
+                const result = await fetchWithRetry(getImageModelUrl(), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                let b64 = null;
+                if (result.candidates && result.candidates[0]?.content?.parts) {
+                    const imagePart = result.candidates[0].content.parts.find(p => p.inlineData);
+                    if (imagePart) {
+                        b64 = imagePart.inlineData.data;
+                    }
+                }
+
+                if (b64) {
+                    const finalImageB64 = await cropImageToRatio(b64, selectedRatio);
+                    
+                    // Create a clean, organized filename
+                    const cleanTime = timeStr ? timeStr.replace(/[^0-9:-]/g, '').replace(/:/g, '') : 'time';
+                    const cleanQuery = searchQuery ? searchQuery.replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/ /g, '_').substring(0, 30) : 'image';
+                    const fileName = `Asset_${cardNumber}_${cleanTime}_${cleanQuery}.png`;
+
+                    container.innerHTML = `
+                        <div class="relative group w-full">
+                            <img src="${finalImageB64}" class="w-full h-auto rounded shadow-lg border border-slate-700" alt="Generated Asset">
+                            <a href="${finalImageB64}" download="${fileName}" class="absolute top-2 right-2 bg-slate-900/90 hover:bg-slate-800 text-white px-3 py-2 rounded opacity-0 group-hover:opacity-100 transition-opacity border border-slate-600 shadow-lg flex items-center gap-2 text-xs font-bold" title="Download Image">
+                                <i data-lucide="download" class="w-4 h-4"></i> Download Image
+                            </a>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                } else {
+                    throw new Error("No image data returned.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `
+                    <div class="p-4 bg-red-900/30 text-red-400 text-xs border-t border-red-900/50 break-words">
+                        Failed to generate image. Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        ui.btnGenerateBroll?.addEventListener('click', async () => {
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) { ui.settingsModal?.classList.remove('hidden'); return showToast("API Key needed!"); }
+
+            const script = ui.v2Script?.value.trim() || '';
+            if (!script) return showToast("Please paste the final script.");
+            
+            const stats = calculateV2Stats();
+            if (stats.wpm <= 0) return showToast("Audio track length must be greater than 0.");
+
+            ui.v2EmptyState?.classList.add('hidden'); ui.v2ResultsState?.classList.add('hidden'); ui.v2LoadingState?.classList.remove('hidden');
+            if(ui.btnGenerateBroll) { ui.btnGenerateBroll.disabled = true; ui.btnGenerateBroll.classList.add('opacity-50'); }
+
+            try {
+                const schema = {
+                    type: "OBJECT",
+                    properties: {
+                        assets: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    anchor: { type: "STRING", description: "Exact 5-7 word quote from the script where this b-roll triggers." },
+                                    type: { type: "STRING", description: "Must be exactly 'Image' or 'Video'" },
+                                    prompt: { type: "STRING", description: "Hyper-realistic prompt." },
+                                    searchQuery: { type: "STRING", description: "Optimized stock footage search query." }
+                                }, required: ["anchor", "type", "prompt", "searchQuery"]
+                            }
+                        }
+                    }, required: ["assets"]
+                };
+
+                const systemInstruction = getPrompts().broll;
+
+                const data = await executeGeminiCall(systemInstruction, `SCRIPT TO ANALYZE:\n\n${script}`, schema);
+                
+                // --- Perform the JavaScript Timestamp Math ---
+                const fullTextLower = script.toLowerCase();
+                let imagesList = [];
+                let videosList = [];
+
+                if(ui.v2TimelineFeed) {
+                    ui.v2TimelineFeed.innerHTML = data.assets && data.assets.length > 0 
+                        ? `<div class="mb-4 text-sm font-semibold text-slate-400 border-b border-slate-700/50 pb-2">Total Visuals Generated: <span class="text-emerald-400">${data.assets.length}</span></div>` 
+                        : '';
+                }
+                
+                if(!data.assets || data.assets.length === 0) {
+                    if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML = '<p class="text-red-400">Error: No assets generated.</p>';
+                } else {
+                    // --- Pass 1: Calculate Start Times with Fuzzy Matching ---
+                    let lastStartSec = 0;
+                    const cleanScript = fullTextLower.replace(/[^\w\s]/gi, '');
+
+                    data.assets.forEach(asset => {
+                        let anchorLower = asset.anchor.toLowerCase();
+                        let anchorIndex = fullTextLower.indexOf(anchorLower);
+                        
+                        // Fuzzy Match 1: Punctuation stripped
+                        if (anchorIndex === -1) {
+                            const cleanAnchor = anchorLower.replace(/[^\w\s]/gi, '');
+                            if (cleanAnchor.trim().length > 0) {
+                                const cleanIndex = cleanScript.indexOf(cleanAnchor);
+                                if (cleanIndex !== -1) {
+                                    anchorIndex = Math.floor((cleanIndex / cleanScript.length) * fullTextLower.length);
+                                }
+                            }
+                        }
+
+                        // Fuzzy Match 2: First 3 words
+                        if (anchorIndex === -1) {
+                            const words = anchorLower.split(/\s+/).filter(w => w.length > 0);
+                            if (words.length >= 3) {
+                                const partial = words.slice(0, 3).join(' ');
+                                anchorIndex = fullTextLower.indexOf(partial);
+                            }
+                        }
+                        
+                        let startSec = 0;
+                        if (anchorIndex !== -1) {
+                            const textUpToAnchor = script.substring(0, anchorIndex);
+                            const wordsUpToAnchor = textUpToAnchor.trim() === "" ? 0 : textUpToAnchor.trim().split(/\s+/).length;
+                            startSec = (wordsUpToAnchor / stats.wpm) * 60;
+                            
+                            // Ensure chronological sequence
+                            if (startSec < lastStartSec) startSec = lastStartSec + 0.5;
+                        } else {
+                            // Fallback: maintain chronological order
+                            startSec = lastStartSec + 2; 
+                        }
+
+                        asset._startSec = startSec;
+                        lastStartSec = startSec;
+                    });
+
+                    // --- Pass 2: Calculate End Times and Render ---
+                    data.assets.forEach((asset, index) => {
+                        const startSec = asset._startSec;
+                        let endSec = startSec + 5; // default 5 seconds max
+
+                        // Prevent overlap by checking next clip's start time
+                        if (index < data.assets.length - 1) {
+                            const nextStartSec = data.assets[index + 1]._startSec;
+                            endSec = Math.min(startSec + 5, nextStartSec);
+                            if (endSec <= startSec) endSec = startSec + 1; // minimum 1s duration
+                        }
+
+                        const timeStr = `[${formatTimecode(startSec)} - ${formatTimecode(endSec)}]`;
+
+                        // Categorize for bulk exports
+                        if (asset.type.toLowerCase() === 'image') imagesList.push(asset.prompt);
+                        else videosList.push(asset.prompt);
+
+                        const safeQuery = asset.searchQuery.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                        const encodedQuery = encodeURIComponent(asset.searchQuery);
+                        const safePrompt = asset.prompt.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                        const assetId = `v2-asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                        const promptId = `${assetId}-prompt`;
+                        const queryId = `${assetId}-query`;
+
+                        // Render Card
+                        const isImg = asset.type.toLowerCase() === 'image';
+                        const icon = isImg ? 'image' : 'video';
+                        const colorStr = isImg ? 'text-purple-400' : 'text-emerald-400';
+                        const focusColor = isImg ? 'focus:border-purple-500' : 'focus:border-emerald-500';
+                        
+                        const pixabayBase = isImg ? 'https://pixabay.com/images/search/' : 'https://pixabay.com/videos/search/';
+                        const pexelsBase = isImg ? 'https://www.pexels.com/search/' : 'https://www.pexels.com/search/videos/';
+                        const unsplashBase = 'https://unsplash.com/s/photos/'; // Unsplash uses this URL universally
+
+                        let actionButtons = `
+                            <div class="flex flex-wrap gap-2 mt-2 pt-3 border-t border-slate-700">
+                                <button onclick="window.open('https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                    <i data-lucide="external-link" class="w-3 h-3"></i> Google
+                                </button>
+                                <button onclick="window.open('https://yandex.com/images/search?text=' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                    <i data-lucide="external-link" class="w-3 h-3"></i> Yandex
+                                </button>
+                                <button onclick="window.open('${pixabayBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                    <i data-lucide="external-link" class="w-3 h-3"></i> Pixabay
+                                </button>
+                                <button onclick="window.open('${pexelsBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                    <i data-lucide="external-link" class="w-3 h-3"></i> Pexels
+                                </button>
+                                <button onclick="window.open('${unsplashBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                    <i data-lucide="external-link" class="w-3 h-3"></i> Unsplash
+                                </button>
+                                <button onclick="triggerImageGen(document.getElementById('${promptId}').value, '${assetId}-img', '${index + 1}', '${timeStr}', document.getElementById('${queryId}').value)" class="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                    <i data-lucide="wand-2" class="w-3 h-3"></i> Nano Banana Gen
+                                </button>
+                            </div>
+                        `;
+                        
+                        let imageContainer = `<div id="${assetId}-img" class="mt-3 hidden rounded overflow-hidden border border-slate-700 w-full max-w-lg"></div>`;
+
+                        if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML += `
+                            <div class="bg-slate-800 border border-slate-700 rounded-lg p-5 flex flex-col lg:flex-row gap-4 hover:border-slate-500 transition-colors">
+                                <div class="lg:w-1/4 border-r border-slate-700 pr-4">
+                                    <p class="font-mono text-emerald-300 font-bold mb-2">${timeStr}</p>
+                                    <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Anchor</p>
+                                    <p class="text-sm text-slate-300 italic">"...${asset.anchor}..."</p>
+                                </div>
+                                <div class="lg:w-3/4 flex flex-col gap-2">
+                                    <p class="text-xs font-bold ${colorStr} uppercase tracking-widest flex items-center gap-2 mb-1">
+                                        <span class="bg-slate-700 text-white px-2 py-0.5 rounded-md shadow-sm">#${index + 1}</span>
+                                        <i data-lucide="${icon}" class="w-4 h-4"></i> ${asset.type} Asset
+                                    </p>
+                                    
+                                    <div class="bg-slate-900 rounded p-3 border border-slate-700 flex flex-col gap-3">
+                                        <div>
+                                            <div class="flex justify-between items-center mb-1">
+                                                <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Generated Prompt</label>
+                                                <button onclick="copyToClipboard(document.getElementById('${promptId}').value, 'Prompt')" class="text-[10px] text-slate-400 hover:text-white transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                                            </div>
+                                            <textarea id="${promptId}" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-slate-200 focus:outline-none ${focusColor} transition-colors resize-y min-h-[70px] leading-relaxed">${safePrompt}</textarea>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between items-center mb-1">
+                                                <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Search Query</label>
+                                                <button onclick="copyToClipboard(document.getElementById('${queryId}').value, 'Search Query')" class="text-[10px] text-slate-400 hover:text-white transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                                            </div>
+                                            <input type="text" id="${queryId}" value="${safeQuery}" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm font-mono text-blue-300 focus:outline-none focus:border-blue-500 transition-colors">
+                                        </div>
+                                        ${actionButtons}
+                                    </div>
+                                    ${imageContainer}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Populate Bulk Textareas
+                if(ui.v2BulkImg) ui.v2BulkImg.value = imagesList.join('\n\n');
+                if(ui.v2BulkVid) ui.v2BulkVid.value = videosList.join('\n\n');
+                
+                // Update the counters
+                if(ui.v2CountImg) ui.v2CountImg.innerText = imagesList.length;
+                if(ui.v2CountVid) ui.v2CountVid.innerText = videosList.length;
+
+                lucide.createIcons();
+                ui.v2LoadingState?.classList.add('hidden'); ui.v2ResultsState?.classList.remove('hidden');
+
+            } catch (err) {
+                console.error(err); showToast("Error generating B-Roll timeline.");
+                ui.v2EmptyState?.classList.remove('hidden'); ui.v2LoadingState?.classList.add('hidden');
+            } finally {
+                if(ui.btnGenerateBroll) { ui.btnGenerateBroll.disabled = false; ui.btnGenerateBroll.classList.remove('opacity-50'); }
+            }
+        });
+
+        // Initialize local db on load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try { 
+                await initLocalDB(); 
+                if(!isFirebaseEnabled) { 
+                    appFormulas = await loadFormulasIndexedDB(); 
+                    updateFormulaDropdown(); 
+                    appChannels = await loadChannelsIndexedDB(); 
+                    updateChannelDropdown(); 
+                    const savedSettings = await loadSettingsIndexedDB();
+                    if (savedSettings) appSettings = savedSettings;
+                } 
+            } 
+            catch(e) { console.error(e); }
+        });
+
+    </script>
+</body>
+</html>
