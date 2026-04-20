@@ -396,6 +396,44 @@
 </div>
                 </div>
 
+                <!-- Model Configuration Section -->
+                <div class="border-t border-slate-700 pt-6 mt-6 mb-6">
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-2"><i data-lucide="cpu" class="w-4 h-4 text-purple-400"></i> AI Models</h3>
+                            <p class="text-xs text-slate-400">Select standard models or enter custom ones.</p>
+                        </div>
+                        <a href="https://ai.google.dev/gemini-api/docs/models/gemini" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"><i data-lucide="external-link" class="w-3 h-3"></i> View Available Models</a>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Text Model -->
+                        <div class="flex flex-col gap-2">
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-slate-500 mb-1 block tracking-wider">Text Generation Model (View 1 & Timeline)</label>
+                                <select id="select-text-model" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                                    <option value="gemini-2.5-flash-preview-09-2025">gemini-2.5-flash-preview-09-2025 (Default)</option>
+                                    <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                                    <option value="custom">Custom...</option>
+                                </select>
+                            </div>
+                            <input type="text" id="custom-text-model" placeholder="e.g. gemini-3.0-pro" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors hidden">
+                        </div>
+
+                        <!-- Image Model -->
+                        <div class="flex flex-col gap-2">
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-slate-500 mb-1 block tracking-wider">Image Generation Model (Nano Banana)</label>
+                                <select id="select-image-model" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                                    <option value="gemini-2.5-flash-image-preview">gemini-2.5-flash-image-preview (Default)</option>
+                                    <option value="custom">Custom...</option>
+                                </select>
+                            </div>
+                            <input type="text" id="custom-image-model" placeholder="e.g. gemini-3-pro-image" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors hidden">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- System Prompts Section -->
                 <div class="border-t border-slate-700 pt-6">
                     <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="bot" class="w-4 h-4 text-emerald-400"></i> Core AI Directives</h3>
@@ -469,7 +507,8 @@
         let appSettings = { 
             id: 'main', 
             apiKey: localStorage.getItem('fast_cache_api') || '', 
-            prompts: JSON.parse(localStorage.getItem('fast_cache_prompts') || 'null') 
+            prompts: JSON.parse(localStorage.getItem('fast_cache_prompts') || 'null'),
+            models: JSON.parse(localStorage.getItem('fast_cache_models') || '{"text":"gemini-2.5-flash-preview-09-2025", "image":"gemini-2.5-flash-image-preview"}')
         };
 
         // --- Firebase Setup ---
@@ -511,6 +550,7 @@
                             // Keep the fast-cache synced with the permanent database
                             localStorage.setItem('fast_cache_api', appSettings.apiKey || '');
                             if (appSettings.prompts) localStorage.setItem('fast_cache_prompts', JSON.stringify(appSettings.prompts));
+                            if (appSettings.models) localStorage.setItem('fast_cache_models', JSON.stringify(appSettings.models));
                         }
                     });
                 } else {
@@ -523,8 +563,14 @@
         // --- Core Configurations ---
         const apiKey = ""; 
         function getActiveApiKey() { return appSettings.apiKey || apiKey || ""; }
-        function getTextModelUrl() { return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${getActiveApiKey()}`; }
-        function getImageModelUrl() { return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${getActiveApiKey()}`; }
+        function getTextModelUrl() { 
+            const model = appSettings.models?.text || "gemini-2.5-flash-preview-09-2025";
+            return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${getActiveApiKey()}`; 
+        }
+        function getImageModelUrl() { 
+            const model = appSettings.models?.image || "gemini-2.5-flash-image-preview";
+            return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${getActiveApiKey()}`; 
+        }
 
         // --- UI Variables ---
         const ui = {
@@ -588,15 +634,19 @@
             apiKeyInput: document.getElementById('api-key-input'),
             btnToggleApiKey: document.getElementById('btn-toggle-api-key'),
             iconApiKeyVisibility: document.getElementById('icon-api-key-visibility'),
-            btnSaveSettings: document.getElementById('btn-save-settings')
+            btnSaveSettings: document.getElementById('btn-save-settings'),
+            selectTextModel: document.getElementById('select-text-model'),
+            customTextModel: document.getElementById('custom-text-model'),
+            selectImageModel: document.getElementById('select-image-model'),
+            customImageModel: document.getElementById('custom-image-model')
         };
 
         // --- System Prompts Engine ---
         const DEFAULT_PROMPTS = {
-            standard: `You are an elite YouTube Scriptwriter. Identity Rule: This script is for a channel named "{{CHANNEL_NAME}}". Strictly follow the Channel Formula.\nTARGET LENGTH: EXACTLY {{TARGET_WORDS}} words. {{PACING_INSTRUCTION}} Pace the script to hit this word count.\nRULE: Output strictly the narrative text. DO NOT write B-roll descriptions or visual markers.`,
-            outline: `You are the Lead Architect for the YouTube channel "{{CHANNEL_NAME}}". Break this transcript down into exactly {{NUM_CHAPTERS}} sequential chapters for a {{MINUTES}}-minute video based on the Channel Formula. Ensure the focus for each chapter is clear. Also provide 3 distinct potential titles.`,
-            chapter: `You are writing Chapter {{CURRENT_CHAPTER}} of {{TOTAL_CHAPTERS}} for the YouTube channel "{{CHANNEL_NAME}}". \nStrict Rules: \n- ONLY write the narrative text for this specific chapter. DO NOT write B-roll descriptions or visual markers.\n- TARGET LENGTH: EXACTLY {{WORDS_PER_CHAPTER}} words for this chapter. {{PACING_INSTRUCTION}} \n{{HOOK_INSTRUCTION}}\n{{OUTRO_INSTRUCTION}}`,
-            broll: `Role: You are an elite Geopolitical News Producer and AI B-Roll Director. Your job is to take a user's script and generate highly realistic, physically accurate image and video prompts for military and political news b-roll.\n\nCore Rules for Visuals:\n1. Journalistic & Military Realism: All prompts must dictate authentic, documentary-style footage (e.g., press briefings, satellite imagery, tactical troop movements, diplomatic summits). For videos, include camera styles typical of news media (e.g., telephoto zoom, drone reconnaissance shot, handheld combat camera).\n2. No Action-Movie Tropes: Absolutely no sci-fi weapons, over-the-top Hollywood explosions, or impossible physics. Military hardware, vehicles, and uniforms must be physically accurate and grounded in reality.\n3. Direct Subject References: Use the exact names of politicians, generals, military assets, and contested locations mentioned in the script (e.g., F-35 fighter jet, Pentagon briefing room, Strait of Taiwan, Vladimir Putin).\n4. PACING & DENSITY: You must generate a steady stream of B-roll. Aim for at least one visual asset per paragraph, or roughly every 20 to 30 seconds of spoken dialogue. Generate B-roll markers to introduce new subjects, emphasize key statistics, cover geographical shifts, or simply maintain viewer retention during long explanations. Do not leave long, multi-minute gaps without visuals.\n\nOutput strictly in the defined JSON schema. Do not calculate timecodes or format into lists; the frontend engine will handle all math and text extraction automatically.`
+            standard: `You are an elite YouTube Scriptwriter. Identity Rule: This script is for a channel named "{{CHANNEL_NAME}}". Strictly apply the STYLE, TONE, and FORMATTING of the Channel Formula. \n\nCRITICAL FIREWALL RULE: The Formula may contain generic examples of hooks, topics, or names. DO NOT copy facts, specific names, or example hooks directly from the Formula. ALL facts, quotes, subjects, and adapted hooks MUST be drawn entirely from the provided Transcript.\n\nTARGET LENGTH: EXACTLY {{TARGET_WORDS}} words. {{PACING_INSTRUCTION}} Pace the script to hit this word count.\nRULE: Output strictly the narrative text. DO NOT write B-roll descriptions or visual markers.`,
+            outline: `You are the Lead Architect for the YouTube channel "{{CHANNEL_NAME}}". Break this transcript down into exactly {{NUM_CHAPTERS}} sequential chapters for a {{MINUTES}}-minute video using the STRUCTURE and TONE of the Channel Formula. \n\nCRITICAL: Do not use example topics or names from the Formula. Base the outline entirely on the factual information in the Transcript. Ensure the focus for each chapter is clear. Also provide 3 distinct potential titles.`,
+            chapter: `You are writing Chapter {{CURRENT_CHAPTER}} of {{TOTAL_CHAPTERS}} for the YouTube channel "{{CHANNEL_NAME}}". \nStrict Rules: \n- Apply the tone of the Channel Formula, but DO NOT copy example facts, names, or example hooks from the Formula. Rely 100% on the Transcript for information.\n- ONLY write the narrative text for this specific chapter. DO NOT write B-roll descriptions or visual markers.\n- TARGET LENGTH: EXACTLY {{WORDS_PER_CHAPTER}} words for this chapter. {{PACING_INSTRUCTION}} \n{{HOOK_INSTRUCTION}} (If writing a hook, adapt it to the Transcript's facts. Do not copy formula examples literally.)\n{{OUTRO_INSTRUCTION}}`,
+            broll: `Role: You are an elite Geopolitical News Producer and AI B-Roll Director. Your job is to take a user's script and generate highly realistic, physically accurate image and video prompts for military and political news b-roll.\n\nCore Rules for Visuals:\n1. Journalistic & Military Realism: All prompts must dictate authentic, documentary-style footage (e.g., press briefings, satellite imagery, tactical troop movements, diplomatic summits). For videos, include camera styles typical of news media (e.g., telephoto zoom, drone reconnaissance shot, handheld combat camera).\n2. Ban on Hollywood Buzzwords & Tropes: DO NOT use words like "cinematic", "epic", "blockbuster", or "movie-like". Absolutely no sci-fi weapons or impossible physics. Instead, force realism by using terms like "raw footage", "C-SPAN style", "AP news broadcast", "archival footage", or "documentary realism".\n3. Direct Subject References: Use the exact names of politicians, generals, military assets, and contested locations mentioned in the script (e.g., F-35 fighter jet, Pentagon briefing room, Strait of Taiwan, Vladimir Putin).\n4. PACING & DENSITY: You must generate a steady stream of B-roll. Aim for at least one visual asset per paragraph, or roughly every 20 to 30 seconds of spoken dialogue. Generate B-roll markers to introduce new subjects, emphasize key statistics, cover geographical shifts, or simply maintain viewer retention during long explanations. Do not leave long, multi-minute gaps without visuals.\n\nOutput strictly in the defined JSON schema. Do not calculate timecodes or format into lists; the frontend engine will handle all math and text extraction automatically.`
         };
 
         function getPrompts() {
@@ -835,6 +885,15 @@
         // Sliders & Settings
         ui.scriptLength?.addEventListener('input', e => { if(ui.lengthVal) ui.lengthVal.innerText = `${e.target.value} Minutes`; });
         ui.scriptPacing?.addEventListener('input', e => { if(ui.pacingVal) ui.pacingVal.innerText = `${e.target.value} WPM`; });
+        
+        ui.selectTextModel?.addEventListener('change', (e) => {
+            if(e.target.value === 'custom') ui.customTextModel?.classList.remove('hidden');
+            else ui.customTextModel?.classList.add('hidden');
+        });
+        ui.selectImageModel?.addEventListener('change', (e) => {
+            if(e.target.value === 'custom') ui.customImageModel?.classList.remove('hidden');
+            else ui.customImageModel?.classList.add('hidden');
+        });
         ui.btnToggleApiKey?.addEventListener('click', () => {
             if (ui.apiKeyInput?.type === 'password') {
                 ui.apiKeyInput.type = 'text';
@@ -867,6 +926,28 @@
             if(elChap) elChap.value = prompts.chapter;
             if(elBroll) elBroll.value = prompts.broll;
 
+            // Load saved models into dropdowns
+            const savedText = appSettings.models?.text || "gemini-2.5-flash-preview-09-2025";
+            const savedImage = appSettings.models?.image || "gemini-2.5-flash-image-preview";
+            
+            if (ui.selectTextModel && ui.selectTextModel.querySelector(`option[value="${savedText}"]`)) {
+                ui.selectTextModel.value = savedText;
+                ui.customTextModel?.classList.add('hidden');
+            } else if (ui.selectTextModel) {
+                ui.selectTextModel.value = 'custom';
+                ui.customTextModel.value = savedText;
+                ui.customTextModel?.classList.remove('hidden');
+            }
+
+            if (ui.selectImageModel && ui.selectImageModel.querySelector(`option[value="${savedImage}"]`)) {
+                ui.selectImageModel.value = savedImage;
+                ui.customImageModel?.classList.add('hidden');
+            } else if (ui.selectImageModel) {
+                ui.selectImageModel.value = 'custom';
+                ui.customImageModel.value = savedImage;
+                ui.customImageModel?.classList.remove('hidden');
+            }
+
             ui.settingsModal?.classList.remove('hidden'); 
         });
         ui.btnCloseSettings?.addEventListener('click', () => ui.settingsModal?.classList.add('hidden'));
@@ -880,12 +961,18 @@
                 chapter: document.getElementById('prompt-chapter')?.value || DEFAULT_PROMPTS.chapter,
                 broll: document.getElementById('prompt-broll')?.value || DEFAULT_PROMPTS.broll
             };
+
+            // Save Models
+            const finalTxtModel = ui.selectTextModel?.value === 'custom' ? ui.customTextModel?.value.trim() : ui.selectTextModel?.value;
+            const finalImgModel = ui.selectImageModel?.value === 'custom' ? ui.customImageModel?.value.trim() : ui.selectImageModel?.value;
+            const newModels = { text: finalTxtModel || "gemini-2.5-flash-preview-09-2025", image: finalImgModel || "gemini-2.5-flash-image-preview" };
             
-            appSettings = { id: 'main', apiKey: k, prompts: newPrompts };
+            appSettings = { id: 'main', apiKey: k, prompts: newPrompts, models: newModels };
 
             // Save to the instant fast-cache
             localStorage.setItem('fast_cache_api', k);
             localStorage.setItem('fast_cache_prompts', JSON.stringify(newPrompts));
+            localStorage.setItem('fast_cache_models', JSON.stringify(newModels));
 
             try {
                 await saveSettingsDB(appSettings);
