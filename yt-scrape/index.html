@@ -1835,8 +1835,8 @@ const waybackCDX = (function() {
         const waybackSec = document.getElementById('wayback-section');
         if (waybackSec) waybackSec.style.display = '';
 
-        // Auto-fetch Filmot
-        filmot.lookup(vidId).then(data => filmot.render(data, vidId));
+        // Filmot public API is discontinued (403). Silenced to prevent console spam.
+        // filmot.lookup(vidId).then(data => filmot.render(data, vidId));
 
         // Wire CDX button
         const cdxBtn = document.getElementById('cdxCheckBtn');
