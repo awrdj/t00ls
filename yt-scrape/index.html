@@ -322,8 +322,8 @@ html[data-bs-theme='dark'] .progress-bar.error{background-color:#ca6f1e}
     </button>
     <button class="btn btn-sm btn-outline-secondary" id="listTracksBtn" type="button">List Available Tracks</button>
     <select id="transcriptLangSelect" class="form-select form-select-sm" style="max-width:160px">
-      <option value="">English (Auto-generated)</option>
-      <option value="en">English (Manual)</option>
+      <option value="">Auto-generated</option>
+      <option value="en" selected>English</option>
       <option value="fr">French</option>
       <option value="es">Spanish</option>
       <option value="ar">Arabic</option>
@@ -1418,20 +1418,36 @@ const shared = (function () {
             const el = document.getElementById('transcript-section');
             status.textContent = 'Fetching available tracks…';
             el.innerHTML = '';
-            try {
-                const data = await fetchTranscriptList(currentVideoId);
-                const tracks = data.tracks || [];
-                if (!tracks.length) { status.textContent = 'No transcripts available for this video.'; return; }
-                status.textContent = `${tracks.length} transcript track(s) available:`;
-                el.innerHTML = `<ul class="mt-2">${tracks.map(t =>
-                    `<li><span class="orange">${escHtml(t.language_code)}</span> — ${escHtml(t.language)}
-                     ${t.is_generated ? '<span class="badge bg-secondary ms-1">auto</span>' : '<span class="badge bg-success ms-1">manual</span>'}
-                     ${t.is_translatable ? '<span class="badge bg-info ms-1">translatable</span>' : ''}
-                     `<button class="btn btn-sm btn-outline-light ms-2" onclick="document.getElementById('transcriptLangSelect').value='${t.is_generated ? '' : escHtml(t.language_code)}';document.getElementById('loadTranscriptBtn').click()">Load</button></li>`
-                ).join('')}</ul>`;
-            } catch (e) {
-                status.textContent = 'Error: ' + e.message;
-            }
+                try {
+      const data = await fetchTranscriptList(currentVideoId);
+      const tracks = data.tracks || [];
+      if (!tracks.length) {
+        status.textContent = 'No transcripts available for this video.';
+        return;
+      }
+      
+      status.textContent = `${tracks.length} transcript track(s) available.`;
+      
+      let html = '<ul class="mt-2">';
+      tracks.forEach(t => {
+        let isAuto = t.is_generated;
+        let val = isAuto ? '' : escHtml(t.language_code);
+        let badge = isAuto 
+          ? '<span class="badge bg-secondary ms-1">auto</span>' 
+          : '<span class="badge bg-success ms-1">manual</span>';
+        let translatable = t.is_translatable 
+          ? '<span class="badge bg-info ms-1">translatable</span>' 
+          : '';
+          
+        html += `<li><span class="orange">${escHtml(t.language_code)}</span> ${escHtml(t.language)} ${badge} ${translatable} 
+          <button class="btn btn-sm btn-outline-light ms-2" onclick="document.getElementById('transcriptLangSelect').value='${val}';document.getElementById('loadTranscriptBtn').click()">Load</button></li>`;
+      });
+      html += '</ul>';
+      
+      el.innerHTML = html;
+    } catch(e) {
+      status.textContent = 'Error: ' + e.message;
+    }
         });
 
         // Auto-submit from URL
