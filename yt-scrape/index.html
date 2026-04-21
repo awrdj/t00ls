@@ -1614,11 +1614,7 @@ const filmot = (function() {
 
   async function lookup(videoId) {
     if (!videoId) return null;
-    const target = `https://filmot.com/api/getvideos?id=${videoId}&key=none`;
-    // index.html uses youtube._workerBase instead of global _workerBase
-    const url = (typeof youtube !== 'undefined' && youtube._workerBase)
-      ? `${youtube._workerBase}/proxy?target=${encodeURIComponent(target)}` 
-      : target;
+    const url = 'https://filmot.com/api/getvideos?id=' + videoId + '&key=none';
     try {
       const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
