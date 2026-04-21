@@ -6208,7 +6208,7 @@ const shared = (function () {
         console.log("Attempting to resolve vanity channel url");
 
         $.ajax({
-            url: "https://ytapi.apps.mattw.io/v1/resolve_url",
+            url: (window._corsProxy ? window._corsProxy + "/https://ytapi.apps.mattw.io/v1/resolve_url" : "https://ytapi.apps.mattw.io/v1/resolve_url"),
             dataType: "json",
             data: {url: vanityUrl}
         }).then(function(res) {
