@@ -1092,16 +1092,30 @@ function esc(s) {
 }
 
 async function filmotLookupSingle(videoId) {
+  // Stop 429 Too Many Requests: Remember if we already checked this video
+  filmotLookupSingle.cache = filmotLookupSingle.cache || new Map();
+  if (filmotLookupSingle.cache.has(videoId)) return filmotLookupSingle.cache.get(videoId);
+
   try {
     const target = `https://filmot.com/api/getvideos?id=${videoId}&key=none`;
     const url = _workerBase 
       ? `${_workerBase}/proxy?target=${encodeURIComponent(target)}` 
       : target;
+    
     const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    
     const data = await res.json();
-    return Array.isArray(data) && data.length > 0 ? data[0] : null;
-  } catch(e) { return null; }
+    const result = Array.isArray(data) && data.length > 0 ? data[0] : null;
+    
+    // Save successful result
+    filmotLookupSingle.cache.set(videoId, result);
+    return result;
+  } catch(e) { 
+    // Save failure so we don't retry and get rate limited
+    filmotLookupSingle.cache.set(videoId, null);
+    return null; 
+  }
 }
 
 async function doFilmotBulk() {
