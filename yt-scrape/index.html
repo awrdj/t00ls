@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Grab all metadata about a YouTube video, playlist, or channel from the YouTube Data API v3.">
+<title>YT Metadata</title>
+<link rel="preconnect" href="//cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="//fonts.googleapis.com">
+<link rel="preconnect" href="//fonts.gstatic.com" crossorigin>
+<link href="//cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="//cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link id="hljs-theme" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/stackoverflow-dark.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;font-size:.9rem;-webkit-font-smoothing:antialiased}
+.navbar-brand span{font-size:1.05rem;font-weight:700;letter-spacing:-.01em}
+#api-key-banner{background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);border-bottom:1px solid rgba(255,255,255,.08)}
+.section-header{display:flex;align-items:center;gap:.5rem;font-size:.92rem;font-weight:600;padding:.45rem 0;margin:1rem 0 .3rem;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer;user-select:none}
+.section-header.unknown{color:mediumpurple}
+.section-header.good{color:#4caf7d}
+.section-header.bad{color:#6c757d}
+.part-section{margin-bottom:1rem}
+.orange{color:#ff9800}.red{color:#ff4d4d}.green{color:#4caf7d}
+.good{color:#4caf7d}.bad{color:#6c757d}.gray{color:#6c757d}.unknown{color:mediumpurple}
+.tag{display:inline-block;background:rgba(255,255,255,.08);border-radius:4px;padding:1px 7px;font-size:.78rem;margin:2px 1px}
+.comma{color:#6c757d}
+#thumbnails{display:flex;flex-wrap:wrap;gap:12px}
+#thumbnails .column{text-align:center}
+#thumbnails .column img{max-width:190px;border-radius:6px;display:block}
+#thumbnails .column p{font-size:.72rem;color:#6c757d;margin-top:4px}
+.profile{width:72px;height:72px;border-radius:50%;object-fit:cover}
+#channel-banner{max-width:100%;border-radius:8px;margin-bottom:1rem}
+pre code{max-height:200px;overflow:auto;font-size:.78rem}
+.mb-15{margin-bottom:1rem!important}.mt-15{margin-top:1rem!important}.pt-15{padding-top:1rem!important}
+#shareLink{font-size:.78rem;font-family:monospace}
+footer{font-size:.78rem;color:#6c757d;text-align:center;padding:2rem 0;border-top:1px solid rgba(255,255,255,.06)}
+.cdx-link{font-size:.8rem}
+[data-bs-theme="light"] .section-header{border-bottom-color:rgba(0,0,0,.07)}
+[data-bs-theme="light"] .tag{background:rgba(0,0,0,.06)}
+[data-bs-theme="light"] footer{border-top-color:rgba(0,0,0,.07)}
+.btn-spinner{display:none}
+.btn.loading .btn-text{display:none}
+.btn.loading .btn-spinner{display:inline-block!important}
+@media(max-width:576px){#thumbnails .column img{max-width:140px}}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg mb-2" style="border-bottom:1px solid rgba(127,127,127,.1)">
+<div class="container">
+  <div class="navbar-brand d-flex align-items-center gap-2">
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:5px">
+      <rect width="26" height="26" rx="5" fill="#FF0000"/>
+      <path d="M20 13c0 .85-.05 1.7-.14 2.45-.18 1.2-1 2.05-2.1 2.22-1.5.2-3 .28-4.76.28s-3.26-.08-4.76-.28c-1.1-.17-1.92-1.02-2.1-2.22C6.05 14.7 6 13.85 6 13s.05-1.7.14-2.45c.18-1.2 1-2.05 2.1-2.22C9.74 8.13 11.24 8.05 13 8.05s3.26.08 4.76.28c1.1.17 1.92 1.02 2.1 2.22C19.95 11.3 20 12.15 20 13z" fill="white"/>
+      <path d="M11.5 10.8l3.7 2.2-3.7 2.2V10.8z" fill="#FF0000"/>
+    </svg>
+    <span>YT Metadata</span>
+  </div>
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navContent">
+    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <li class="nav-item"><a class="nav-link active" href="#">Normal</a></li>
+    </ul>
+    <div class="d-flex align-items-center gap-3">
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" role="switch" id="darkModeToggle" checked>
+        <label class="form-check-label small" for="darkModeToggle">Dark</label>
+      </div>
+      <a href="https://github.com/mattwright324/youtube-metadata" target="_blank" rel="noopener" class="text-muted" title="Original project">
+        <i class="bi bi-github fs-5"></i>
+      </a>
+    </div>
+  </div>
+</div>
+</nav>
+
+<!-- API Key Banner -->
+<div id="api-key-banner" class="py-3 mb-3">
+<div class="container">
+  <div class="row align-items-center gy-2">
+    <div class="col-auto">
+      <span class="fw-semibold small"><i class="bi bi-key-fill text-warning me-1"></i>YouTube API Key</span>
+      <span class="text-muted ms-1" style="font-size:.78rem">— stays in your browser only</span>
+    </div>
+    <div class="col-12 col-md">
+      <div class="input-group input-group-sm" style="max-width:460px">
+        <input type="password" class="form-control font-monospace" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
+        <button class="btn btn-outline-secondary" id="toggleApiKeyVis" type="button"><i class="bi bi-eye"></i></button>
+        <button class="btn btn-warning btn-sm" id="saveApiKey">Save</button>
+      </div>
+    </div>
+    <div class="col-auto">
+      <a href="https://developers.google.com/youtube/v3/getting-started" target="_blank" rel="noopener" class="text-info small">Get free API key →</a>
+    </div>
+    <div class="col-auto">
+      <span id="apiKeyStatus" class="badge bg-danger">No key</span>
+    </div>
+  </div>
+  <div class="mt-2">
+    <small class="text-muted"><i class="bi bi-shield-check me-1"></i><strong>Cloudflare Worker Proxy URL</strong> (optional — only needed if you hit CORS errors):</small>
+    <div class="input-group input-group-sm mt-1" style="max-width:500px">
+      <input type="text" class="form-control font-monospace" id="proxyUrlInput" placeholder="https://yt-scrape.awrdjmusic.workers.dev" autocomplete="off">
+      <button class="btn btn-outline-secondary" id="saveProxyUrl">Set</button>
+      <button class="btn btn-outline-danger" id="clearProxyUrl">Clear</button>
+    </div>
+    <small class="text-muted">Leave blank to call YouTube API directly. Use the included <code>cloudflare-worker.js</code> to deploy your proxy.</small>
+  </div>
+</div>
+</div>
+
+<!-- Main -->
+<div class="container">
+  <p class="text-muted mb-2 small">Submit a link or ID to a YouTube <strong>video</strong>, <strong>playlist</strong>, or <strong>channel</strong>.</p>
+  <div class="input-group mb-2">
+    <input type="text" class="form-control" placeholder="https://youtu.be/dQw4w9WgXcQ" autocomplete="off" id="value">
+    <button class="btn btn-primary" type="button" id="submit">
+      <span class="btn-text"><i class="bi bi-search me-1"></i>Submit <span class="countdown"></span></span>
+      <span class="btn-spinner spinner-border spinner-border-sm" role="status"></span>
+    </button>
+  </div>
+  <div class="mb-3" style="font-size:.78rem;color:#6c757d">
+    Accepted:
+    <span style="color:#ff9800">video_id</span> •
+    <span style="color:#ff9800">playlist_id</span> •
+    <span style="color:#ff9800">channel_id</span> •
+    youtube.com/watch?v=… • youtu.be/… • youtube.com/shorts/… •
+    youtube.com/playlist?list=… • youtube.com/channel/… • youtube.com/@handle • youtube.com/user/…
+  </div>
+</div>
+
+<!-- Export & Share -->
+<div class="container mb-3">
+  <h2 class="h6 mb-2">Export &amp; Share</h2>
+  <div class="d-flex flex-wrap gap-2 mb-2">
+    <button class="btn btn-sm btn-secondary" id="export">
+      <span class="btn-text"><i class="bi bi-download me-1"></i>Export ZIP</span>
+      <span class="btn-spinner spinner-border spinner-border-sm" role="status"></span>
+    </button>
+    <button class="btn btn-sm btn-secondary" id="import" onclick="document.getElementById('importFileChooser').click()">
+      <span class="btn-text"><i class="bi bi-upload me-1"></i>Import ZIP</span>
+      <span class="btn-spinner spinner-border spinner-border-sm" role="status"></span>
+      <input id="importFileChooser" type="file" accept=".zip" hidden>
+    </button>
+  </div>
+  <div style="max-width:340px">
+    <label class="form-label mb-1" style="font-size:.78rem;color:#6c757d">Share result:</label>
+    <div class="input-group input-group-sm">
+      <input type="text" class="form-control" id="shareLink" readonly disabled placeholder="Submit something first">
+      <button class="btn btn-outline-secondary" id="copyShareLink"><i class="bi bi-clipboard"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- Video -->
+<div class="container mb-3" id="video">
+  <h2 class="h5">Video</h2>
+  <p class="text-muted small mb-1"><a href="https://developers.google.com/youtube/v3/docs/videos#properties" target="_blank" rel="noopener">API reference →</a></p>
+  <div id="video-section"></div>
+  <div class="section-header unknown" id="thumbs-header"><i class="bi bi-question-circle-fill"></i><span>Thumbnails</span></div>
+  <p class="text-muted small mb-1">Click a thumbnail to reverse image search with Google Lens.</p>
+  <div id="thumbnails" class="mb-3"></div>
+  <div class="section-header unknown"><i class="bi bi-question-circle-fill"></i><span>More Resources</span></div>
+  <div id="video-more"></div>
+</div>
+
+<!-- Playlist -->
+<div class="container mb-3" id="playlist">
+  <h2 class="h5">Playlist</h2>
+  <p class="text-muted small mb-1"><a href="https://developers.google.com/youtube/v3/docs/playlists#properties" target="_blank" rel="noopener">API reference →</a></p>
+  <div id="playlist-section"></div>
+  <div class="section-header unknown"><i class="bi bi-question-circle-fill"></i><span>More Resources</span></div>
+  <div id="playlist-more"></div>
+</div>
+
+<!-- Channel -->
+<div class="container mb-3" id="channel">
+  <h2 class="h5">Channel</h2>
+  <p class="text-muted small mb-1"><a href="https://developers.google.com/youtube/v3/docs/channels#properties" target="_blank" rel="noopener">API reference →</a></p>
+  <div id="channel-section"></div>
+  <div class="section-header unknown"><i class="bi bi-question-circle-fill"></i><span>More Resources</span></div>
+  <div id="channel-more"></div>
+</div>
+
+<!-- Unknown -->
+<div class="container mb-3" id="unknown" style="display:none">
+  <h2 class="h5">Unknown Input</h2>
+  <p id="reason" class="mb-2"></p>
+  <div id="reason-append"></div>
+</div>
+
+<!-- Quota -->
+<div class="container mb-3" id="quota" style="display:none">
+  <h2 class="h5 text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Quota Exceeded</h2>
+  <p class="mb-2">The API quota for this key has been reached. Resets at <span class="orange">midnight PT</span>.</p>
+  <p><a href="https://developers.google.com/youtube/v3/getting-started" target="_blank" rel="noopener">Create your own API key →</a></p>
+  <div id="quota-reason-append"></div>
+</div>
+
+<!-- Filmot -->
+<div class="container mb-3" id="filmot" style="display:none">
+  <h2 class="h5">Filmot Archive</h2>
+  <p class="text-muted small mb-2">Subtitle archive data for this unavailable video.</p>
+  <div id="filmot-append"></div>
+</div>
+
+<!-- Wayback -->
+<div class="container mb-3" id="wayback" style="display:none">
+  <h2 class="h5">Wayback CDX</h2>
+  <p class="text-muted small mb-2">Thumbnail records from the Wayback Machine CDX API.</p>
+  <button class="btn btn-sm btn-secondary mb-2" id="wayback-check">Check CDX</button>
+  <div id="wayback-show-older" class="form-check mb-2" style="display:none">
+    <input class="form-check-input" type="checkbox" id="checkHideOlder" checked>
+    <label class="form-check-label small" for="checkHideOlder">
+      Hide older (<span class="older-count">0</span> hidden)
+    </label>
+  </div>
+  <div id="wayback-append"></div>
+  <button class="btn btn-sm btn-secondary mt-2" id="wayback-copy" style="display:none">Copy visible links</button>
+</div>
+
+<footer>
+  <div class="container">
+    Based on <a href="https://github.com/mattwright324/youtube-metadata" target="_blank" rel="noopener">youtube-metadata</a> by mattwright324 &nbsp;·&nbsp; Single-file GitHub Pages build
+  </div>
+</footer>
+
+<!-- Dependencies -->
+<script src="//cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/moment@2.30.1/moment.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/jszip-utils@0.1.0/dist/jszip-utils.min.js"></script>
+
+<script>
+// ── Shared utilities ──────────────────────────────────────────────────────────
+const shared=(function(){'use strict';const patterns={video_id:[/(?:http[s]?:\/\/)?(?:\w+\.)?youtube.com\/watch\?v=([\w_-]+)(?:[\/&].*)?/i,/(?:http[s]?:\/\/)?(?:\w+\.)?youtube.com\/(?:v|embed|shorts|video|watch|live)\/([\w_-]+)(?:[\/&].*)?/i,/(?:http[s]?:\/\/)?youtu.be\/([\w_-]+)(?:\?.*)?/i,/(?:http[s]?:\/\/)?filmot.com\/video\/([\w_-]+)(?:[?\/&].*)?/i,/^([\w-]{11})$/i],playlist_id:[/(?:http[s]?:\/\/)?(?:\w+\.)?youtube.com\/playlist\?list=([\w_-]+)(?:&.*)?/i,/^((UU|UUSH|PL|FL|SP|OLAK)[A-Za-z0-9_-]+)$/i],channel_id:[/(?:http[s]?:\/\/)?(?:\w+\.)?youtube.com\/channel\/([\w_-]+)(?:\?.*)?/i,/^((UC|SC)[\w-]{22})$/i],channel_user:[/(?:http[s]?:\/\/)?(?:\w+\.)?youtube.com\/user\/([\w_-]+)(?:\?.*)?/i],channel_handle:[/(?:http[s]?:\/\/)?(?:\w+\.)?youtube.com\/@([^\/?]+)(?:\?.*)?/i],channel_custom:[/(?:http[s]?:\/\/)?(?:\w+\.)?youtube.com\/c\/([^\/?]+)(?:\?.*)?/i,/(?:http[s]?:\/\/)?(?:\w+\.)?youtube.com\/([^\/?]+)(?:\?.*)?/i]};return{idx:(p,o)=>p.reduce((xs,x)=>(xs&&xs[x])?xs[x]:null,o),determineInput:function(v){v=decodeURIComponent(v);const p={type:'unknown',mayHideOthers:true,original:v};for(let t in patterns){for(let i=0;i<patterns[t].length;i++){const r=patterns[t][i].exec(v);if(r){p.type=t;p.value=r[1];return p;}}}return p;},isValidVideoId:function(id){return id!=null&&String(id).match(/[A-Za-z0-9_-]{10}[AEIMQUYcgkosw048]/);},isValidChannelId:function(id){return id!=null&&String(id).match(/[A-Za-z0-9_-]{21}[AQgw]/);},parseQuery:function(q){const r={};const p=(q[0]==='?'?q.substr(1):q).split('&');for(let i=0;i<p.length;i++){let pair=p[i].split('=');r[decodeURIComponent(pair[0])]=decodeURIComponent(pair[1]||'');}return r;},formatDuration:function(d,ms,noTime){const f=[d.years()>0?d.years()+" years":"",d.months()>0?d.months()+" months":"",d.days()>0?d.days()+" days":"",!noTime&&d.hours()>0?d.hours()+"h":"",!noTime&&d.minutes()>0?d.minutes()+"m":"",!noTime&&d.seconds()>0?d.seconds()+"s":"",ms?d.milliseconds()>0?d.milliseconds()+"ms":"":""].join(" ");return f.trim()||"0s";},sortObject:function(u,sa=false){if(!u||typeof u!=='object')return u;if(Array.isArray(u)){const a=u.map(i=>this.sortObject(i,sa));if(sa)a.sort();return a;}const o={};Object.keys(u).sort().forEach(k=>{o[k]=this.sortObject(u[k],sa);});return o;},safeFileName:function(n){return n.replace(/[<>:"\/\\|?*]+/g,'');}}; })();
+
+// ── YouTube API client ────────────────────────────────────────────────────────
+const youtube=(function($){'use strict';let baseUrl="https://www.googleapis.com/youtube/v3/",proxy="",key="";return{setKey:function(k){key=k;},getKey:function(){return key;},setProxy:function(u){proxy=u?u.replace(/\/$/,''):"";},getProxy:function(){return proxy;},ajax:function(type,data){if(!key){const e={responseJSON:{error:{message:"No API key. Enter your YouTube Data API v3 key above."}}};return $.Deferred().reject(e);}const t=baseUrl+type;const url=proxy?proxy+"/"+t:t;return $.ajax({cache:false,data:$.extend({key:key},data),dataType:"json",type:"GET",timeout:10000,url:url});}};}($));
+
+// ── ISO 639 language lookup ────────────────────────────────────────────────────
+const iso639=(function(){'use strict';
+// Minimal lookup — full list from the original translators.js
+const codes=[{a:"aa",n:"Afar"},{a:"ab",n:"Abkhazian"},{a:"af",n:"Afrikaans"},{a:"ak",n:"Akan"},{a:"am",n:"Amharic"},{a:"an",n:"Aragonese"},{a:"ar",n:"Arabic"},{a:"as",n:"Assamese"},{a:"av",n:"Avaric"},{a:"ay",n:"Aymara"},{a:"az",n:"Azerbaijani"},{a:"ba",n:"Bashkir"},{a:"be",n:"Belarusian"},{a:"bg",n:"Bulgarian"},{a:"bh",n:"Bihari"},{a:"bi",n:"Bislama"},{a:"bm",n:"Bambara"},{a:"bn",n:"Bengali"},{a:"bo",n:"Tibetan"},{a:"br",n:"Breton"},{a:"bs",n:"Bosnian"},{a:"ca",n:"Catalan"},{a:"ce",n:"Chechen"},{a:"ch",n:"Chamorro"},{a:"co",n:"Corsican"},{a:"cr",n:"Cree"},{a:"cs",n:"Czech"},{a:"cu",n:"Church Slavic"},{a:"cv",n:"Chuvash"},{a:"cy",n:"Welsh"},{a:"da",n:"Danish"},{a:"de",n:"German"},{a:"dv",n:"Divehi"},{a:"dz",n:"Dzongkha"},{a:"ee",n:"Ewe"},{a:"el",n:"Greek"},{a:"en",n:"English"},{a:"eo",n:"Esperanto"},{a:"es",n:"Spanish"},{a:"et",n:"Estonian"},{a:"eu",n:"Basque"},{a:"fa",n:"Persian"},{a:"ff",n:"Fulah"},{a:"fi",n:"Finnish"},{a:"fj",n:"Fijian"},{a:"fo",n:"Faroese"},{a:"fr",n:"French"},{a:"fy",n:"Western Frisian"},{a:"ga",n:"Irish"},{a:"gd",n:"Scottish Gaelic"},{a:"gl",n:"Galician"},{a:"gn",n:"Guaraní"},{a:"gu",n:"Gujarati"},{a:"gv",n:"Manx"},{a:"ha",n:"Hausa"},{a:"he",n:"Hebrew"},{a:"hi",n:"Hindi"},{a:"ho",n:"Hiri Motu"},{a:"hr",n:"Croatian"},{a:"ht",n:"Haitian Creole"},{a:"hu",n:"Hungarian"},{a:"hy",n:"Armenian"},{a:"hz",n:"Herero"},{a:"ia",n:"Interlingua"},{a:"id",n:"Indonesian"},{a:"ie",n:"Interlingue"},{a:"ig",n:"Igbo"},{a:"ii",n:"Sichuan Yi"},{a:"ik",n:"Inupiaq"},{a:"io",n:"Ido"},{a:"is",n:"Icelandic"},{a:"it",n:"Italian"},{a:"iu",n:"Inuktitut"},{a:"ja",n:"Japanese"},{a:"jv",n:"Javanese"},{a:"ka",n:"Georgian"},{a:"kg",n:"Kongo"},{a:"ki",n:"Kikuyu"},{a:"kj",n:"Kwanyama"},{a:"kk",n:"Kazakh"},{a:"kl",n:"Kalaallisut"},{a:"km",n:"Khmer"},{a:"kn",n:"Kannada"},{a:"ko",n:"Korean"},{a:"kr",n:"Kanuri"},{a:"ks",n:"Kashmiri"},{a:"ku",n:"Kurdish"},{a:"kv",n:"Komi"},{a:"kw",n:"Cornish"},{a:"ky",n:"Kyrgyz"},{a:"la",n:"Latin"},{a:"lb",n:"Luxembourgish"},{a:"lg",n:"Ganda"},{a:"li",n:"Limburgish"},{a:"ln",n:"Lingala"},{a:"lo",n:"Lao"},{a:"lt",n:"Lithuanian"},{a:"lu",n:"Luba-Katanga"},{a:"lv",n:"Latvian"},{a:"mg",n:"Malagasy"},{a:"mh",n:"Marshallese"},{a:"mi",n:"Māori"},{a:"mk",n:"Macedonian"},{a:"ml",n:"Malayalam"},{a:"mn",n:"Mongolian"},{a:"mr",n:"Marathi"},{a:"ms",n:"Malay"},{a:"mt",n:"Maltese"},{a:"my",n:"Burmese"},{a:"na",n:"Nauru"},{a:"nb",n:"Norwegian Bokmål"},{a:"nd",n:"North Ndebele"},{a:"ne",n:"Nepali"},{a:"ng",n:"Ndonga"},{a:"nl",n:"Dutch"},{a:"nn",n:"Norwegian Nynorsk"},{a:"no",n:"Norwegian"},{a:"nr",n:"South Ndebele"},{a:"nv",n:"Navajo"},{a:"ny",n:"Chichewa"},{a:"oc",n:"Occitan"},{a:"oj",n:"Ojibwe"},{a:"om",n:"Oromo"},{a:"or",n:"Oriya"},{a:"os",n:"Ossetian"},{a:"pa",n:"Punjabi"},{a:"pi",n:"Pāli"},{a:"pl",n:"Polish"},{a:"ps",n:"Pashto"},{a:"pt",n:"Portuguese"},{a:"qu",n:"Quechua"},{a:"rm",n:"Romansh"},{a:"rn",n:"Kirundi"},{a:"ro",n:"Romanian"},{a:"ru",n:"Russian"},{a:"rw",n:"Kinyarwanda"},{a:"sa",n:"Sanskrit"},{a:"sc",n:"Sardinian"},{a:"sd",n:"Sindhi"},{a:"se",n:"Northern Sami"},{a:"sg",n:"Sango"},{a:"si",n:"Sinhala"},{a:"sk",n:"Slovak"},{a:"sl",n:"Slovenian"},{a:"sm",n:"Samoan"},{a:"sn",n:"Shona"},{a:"so",n:"Somali"},{a:"sq",n:"Albanian"},{a:"sr",n:"Serbian"},{a:"ss",n:"Swati"},{a:"st",n:"Southern Sotho"},{a:"su",n:"Sundanese"},{a:"sv",n:"Swedish"},{a:"sw",n:"Swahili"},{a:"ta",n:"Tamil"},{a:"te",n:"Telugu"},{a:"tg",n:"Tajik"},{a:"th",n:"Thai"},{a:"ti",n:"Tigrinya"},{a:"tk",n:"Turkmen"},{a:"tl",n:"Filipino"},{a:"tn",n:"Tswana"},{a:"to",n:"Tonga"},{a:"tr",n:"Turkish"},{a:"ts",n:"Tsonga"},{a:"tt",n:"Tatar"},{a:"tw",n:"Twi"},{a:"ty",n:"Tahitian"},{a:"ug",n:"Uyghur"},{a:"uk",n:"Ukrainian"},{a:"ur",n:"Urdu"},{a:"uz",n:"Uzbek"},{a:"ve",n:"Venda"},{a:"vi",n:"Vietnamese"},{a:"vo",n:"Volapük"},{a:"wa",n:"Walloon"},{a:"wo",n:"Wolof"},{a:"xh",n:"Xhosa"},{a:"yi",n:"Yiddish"},{a:"yo",n:"Yoruba"},{a:"za",n:"Zhuang"},{a:"zh",n:"Chinese"},{a:"zu",n:"Zulu"}];
+const map={};codes.forEach(c=>{if(c.a)map[c.a]=c.n;});
+return{getLanguage:function(code){return map[code]?{name:map[code]}:null;}};
+})();
+
+// ── ISO 3166 country lookup ───────────────────────────────────────────────────
+const iso3166=(function(){'use strict';
+const codes={AD:"Andorra",AE:"United Arab Emirates",AF:"Afghanistan",AG:"Antigua and Barbuda",AI:"Anguilla",AL:"Albania",AM:"Armenia",AO:"Angola",AQ:"Antarctica",AR:"Argentina",AS:"American Samoa",AT:"Austria",AU:"Australia",AW:"Aruba",AX:"Åland Islands",AZ:"Azerbaijan",BA:"Bosnia and Herzegovina",BB:"Barbados",BD:"Bangladesh",BE:"Belgium",BF:"Burkina Faso",BG:"Bulgaria",BH:"Bahrain",BI:"Burundi",BJ:"Benin",BL:"Saint Barthélemy",BM:"Bermuda",BN:"Brunei",BO:"Bolivia",BQ:"Caribbean Netherlands",BR:"Brazil",BS:"Bahamas",BT:"Bhutan",BV:"Bouvet Island",BW:"Botswana",BY:"Belarus",BZ:"Belize",CA:"Canada",CC:"Cocos Islands",CD:"DR Congo",CF:"Central African Republic",CG:"Republic of the Congo",CH:"Switzerland",CI:"Côte d'Ivoire",CK:"Cook Islands",CL:"Chile",CM:"Cameroon",CN:"China",CO:"Colombia",CR:"Costa Rica",CU:"Cuba",CV:"Cape Verde",CW:"Curaçao",CX:"Christmas Island",CY:"Cyprus",CZ:"Czechia",DE:"Germany",DJ:"Djibouti",DK:"Denmark",DM:"Dominica",DO:"Dominican Republic",DZ:"Algeria",EC:"Ecuador",EE:"Estonia",EG:"Egypt",EH:"Western Sahara",ER:"Eritrea",ES:"Spain",ET:"Ethiopia",FI:"Finland",FJ:"Fiji",FK:"Falkland Islands",FM:"Micronesia",FO:"Faroe Islands",FR:"France",GA:"Gabon",GB:"United Kingdom",GD:"Grenada",GE:"Georgia",GF:"French Guiana",GG:"Guernsey",GH:"Ghana",GI:"Gibraltar",GL:"Greenland",GM:"Gambia",GN:"Guinea",GP:"Guadeloupe",GQ:"Equatorial Guinea",GR:"Greece",GS:"South Georgia",GT:"Guatemala",GU:"Guam",GW:"Guinea-Bissau",GY:"Guyana",HK:"Hong Kong",HM:"Heard Island",HN:"Honduras",HR:"Croatia",HT:"Haiti",HU:"Hungary",ID:"Indonesia",IE:"Ireland",IL:"Israel",IM:"Isle of Man",IN:"India",IO:"British Indian Ocean Territory",IQ:"Iraq",IR:"Iran",IS:"Iceland",IT:"Italy",JE:"Jersey",JM
