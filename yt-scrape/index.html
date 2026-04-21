@@ -322,7 +322,8 @@ html[data-bs-theme='dark'] .progress-bar.error{background-color:#ca6f1e}
     </button>
     <button class="btn btn-sm btn-outline-secondary" id="listTracksBtn" type="button">List Available Tracks</button>
     <select id="transcriptLangSelect" class="form-select form-select-sm" style="max-width:160px">
-      <option value="en">English</option>
+      <option value="">English (Auto-generated)</option>
+      <option value="en">English (Manual)</option>
       <option value="fr">French</option>
       <option value="es">Spanish</option>
       <option value="ar">Arabic</option>
@@ -1426,7 +1427,7 @@ const shared = (function () {
                     `<li><span class="orange">${escHtml(t.language_code)}</span> — ${escHtml(t.language)}
                      ${t.is_generated ? '<span class="badge bg-secondary ms-1">auto</span>' : '<span class="badge bg-success ms-1">manual</span>'}
                      ${t.is_translatable ? '<span class="badge bg-info ms-1">translatable</span>' : ''}
-                     <button class="btn btn-sm btn-outline-light ms-2" onclick="document.getElementById('transcriptLangSelect').value='${escHtml(t.language_code)}';document.getElementById('loadTranscriptBtn').click()">Load</button></li>`
+                     `<button class="btn btn-sm btn-outline-light ms-2" onclick="document.getElementById('transcriptLangSelect').value='${t.is_generated ? '' : escHtml(t.language_code)}';document.getElementById('loadTranscriptBtn').click()">Load</button></li>`
                 ).join('')}</ul>`;
             } catch (e) {
                 status.textContent = 'Error: ' + e.message;
