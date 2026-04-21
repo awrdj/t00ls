@@ -80,6 +80,23 @@ html[data-bs-theme='dark'] .progress-bar.error{background-color:#ca6f1e}
 [data-bs-theme="light"] footer{border-top-color:rgba(0,0,0,.07)}
 [data-bs-theme="light"] .transcript-line{border-bottom-color:rgba(0,0,0,.06)}
 @media(max-width:576px){#thumbnails .column img{max-width:140px}}
+
+/* ── Drag & Drop ─────────────────────────────────── */
+#dropZone{border:2px dashed rgba(255,255,255,.2);border-radius:8px;padding:1.5rem;text-align:center;color:#6c757d;font-size:.85rem;transition:all .2s;cursor:pointer}
+#dropZone.dragover{border-color:#0d6efd;background:rgba(13,110,253,.08);color:#0d6efd}
+[data-bs-theme="light"] #dropZone{border-color:rgba(0,0,0,.15)}
+[data-bs-theme="light"] #dropZone.dragover{border-color:#0d6efd;background:rgba(13,110,253,.06)}
+
+/* ── Wayback CDX ─────────────────────────────────── */
+.cdx-row{display:flex;gap:.5rem;align-items:flex-start;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.8rem}
+.cdx-row.is-older{opacity:.45}
+[data-bs-theme="light"] .cdx-row{border-bottom-color:rgba(0,0,0,.06)}
+.cdx-ts{color:orange;font-family:monospace;white-space:nowrap;min-width:140px}
+.cdx-url{word-break:break-all;flex:1}
+
+/* ── Filmot ──────────────────────────────────────── */
+.filmot-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.75rem;margin-bottom:.5rem}
+[data-bs-theme="light"] .filmot-card{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.08)}
 </style>
 </head>
 <body>
@@ -247,6 +264,42 @@ html[data-bs-theme='dark'] .progress-bar.error{background-color:#ca6f1e}
   <div class="section-header unknown"><i class="bi bi-question-circle-fill"></i><span>More Resources</span></div>
   <p class="small text-muted">Check other resources for details or archival.</p>
   <div id="video-more" style="padding-top:0"></div>
+  <!-- ═══ DRAG & DROP ZONE ════════════════════════════════════════════════════ -->
+<div class="container mb-3" id="dropZoneWrap">
+  <div id="dropZone">
+    <i class="bi bi-file-earmark-zip fs-3 d-block mb-1"></i>
+    Drag &amp; drop a previously exported <strong>.zip</strong> here to re-import
+    <div class="small text-muted mt-1">or use the Import ZIP button above</div>
+  </div>
+</div>
+
+<!-- ═══ FILMOT ══════════════════════════════════════════════════════════════ -->
+<div class="container mb-15" id="filmot-section" style="display:none">
+  <h2><i class="bi bi-film me-2 text-warning"></i>Filmot Archive</h2>
+  <p class="small text-muted">Data from Filmot — useful for deleted or private videos.</p>
+  <div id="filmot-content"></div>
+</div>
+
+<!-- ═══ WAYBACK CDX ══════════════════════════════════════════════════════════ -->
+<div class="container mb-15" id="wayback-section" style="display:none">
+  <h2><i class="bi bi-clock-history me-2 text-info"></i>Wayback Machine CDX</h2>
+  <p class="small text-muted mb-2">Internet Archive snapshots for this video URL and thumbnails.</p>
+  <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+    <button class="btn btn-sm btn-info" id="cdxCheckBtn" type="button">
+      <span class="btn-text"><i class="bi bi-search me-1"></i>Check CDX</span>
+      <span class="btn-spinner spinner-border spinner-border-sm"></span>
+    </button>
+    <div class="form-check mb-0">
+      <input class="form-check-input" type="checkbox" id="cdxHideOlder" checked>
+      <label class="form-check-label small" for="cdxHideOlder">Hide older duplicates</label>
+    </div>
+    <button class="btn btn-sm btn-outline-secondary" id="cdxCopyBtn" style="display:none">
+      <i class="bi bi-clipboard me-1"></i>Copy visible links
+    </button>
+  </div>
+  <div id="cdxStatus" class="small text-muted mb-2"></div>
+  <div id="cdxResults"></div>
+</div>
 </div>
 
 <!-- ═══ TRANSCRIPT ════════════════════════════════════════════════════════════ -->
@@ -1083,6 +1136,7 @@ const shared = (function () {
         if (parsedInput.type === 'video_id') {
             if (parsedInput.mayHideOthers) $('#playlist, #channel').hide();
             currentVideoId = parsedInput.value;
+            window._currentVideoId = parsedInput.value;
             $('#video').show();
             $('#transcript-container').hide();
             youtube.ajax('videos', {
@@ -1460,6 +1514,295 @@ const shared = (function () {
     // Clipboard
     new ClipboardJS('.clipboard');
 
+})();
+/* ══════════════════════════════════════════════════════════════════════════
+   DRAG & DROP ZIP IMPORT
+   ══════════════════════════════════════════════════════════════════════════ */
+(function initDragDrop() {
+  const zone = document.getElementById('dropZone');
+  if (!zone) return;
+
+  ['dragenter','dragover'].forEach(evt => {
+    zone.addEventListener(evt, e => { e.preventDefault(); zone.classList.add('dragover'); });
+  });
+  ['dragleave','dragend','drop'].forEach(evt => {
+    zone.addEventListener(evt, e => { e.preventDefault(); zone.classList.remove('dragover'); });
+  });
+
+  zone.addEventListener('drop', async e => {
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.zip')) {
+      alert('Please drop a .zip file exported by this tool.');
+      return;
+    }
+    // Reuse the existing import handler
+    const chooser = document.getElementById('importFileChooser');
+    if (chooser) {
+      // Trigger the existing doImport flow by dispatching to the handler
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      chooser.files = dt.files;
+      chooser.dispatchEvent(new Event('change'));
+    }
+  });
+
+  // Also make the zone clickable
+  zone.addEventListener('click', () => {
+    document.getElementById('importFileChooser')?.click();
+  });
+})();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FILMOT LOOKUP
+   ══════════════════════════════════════════════════════════════════════════ */
+const filmot = (function() {
+  'use strict';
+
+  async function lookup(videoId) {
+    if (!videoId) return null;
+    // Filmot exposes a public JSON endpoint for video metadata
+    const url = `https://filmot.com/api/getvideos?id=${videoId}&key=none`;
+    try {
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return Array.isArray(data) && data.length > 0 ? data[0] : null;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  function render(data, videoId) {
+    const sec = document.getElementById('filmot-section');
+    const el  = document.getElementById('filmot-content');
+    if (!sec || !el) return;
+
+    if (!data) {
+      el.innerHTML = `
+        <div class="filmot-card">
+          <p class="small text-muted mb-1">No Filmot data found for <code>${videoId}</code>.</p>
+          <a href="https://filmot.com/video/${videoId}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-warning">
+            <i class="bi bi-box-arrow-up-right me-1"></i>Open on Filmot
+          </a>
+        </div>`;
+      sec.style.display = '';
+      return;
+    }
+
+    const rows = [
+      ['Title',        data.title],
+      ['Channel',      data.channelname ? `<a href="https://filmot.com/channel/${data.channelid}" target="_blank">${esc(data.channelname)}</a>` : null],
+      ['Channel ID',   data.channelid ? `<code>${data.channelid}</code>` : null],
+      ['Upload Date',  data.uploaddate],
+      ['Duration',     data.duration ? data.duration + 's' : null],
+      ['Views',        data.viewcount ? Number(data.viewcount).toLocaleString() : null],
+      ['Like Count',   data.likecount ? Number(data.likecount).toLocaleString() : null],
+      ['Language',     data.language],
+      ['Category',     data.category],
+      ['Description',  data.description ? `<span style="white-space:pre-wrap;font-size:.8rem">${esc(data.description)}</span>` : null],
+    ].filter(([,v]) => v);
+
+    el.innerHTML = `
+      <div class="filmot-card">
+        <table class="table table-sm mb-2">
+          <tbody>
+            ${rows.map(([k,v]) => `<tr><td class="text-muted small fw-semibold" style="width:120px">${k}</td><td class="small">${v}</td></tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="https://filmot.com/video/${videoId}" target="_blank" rel="noopener" class="btn btn-sm btn-warning">
+            <i class="bi bi-box-arrow-up-right me-1"></i>View on Filmot
+          </a>
+          ${data.channelid ? `<a href="https://filmot.com/channel/${data.channelid}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-warning">
+            <i class="bi bi-collection-play me-1"></i>Channel on Filmot
+          </a>` : ''}
+        </div>
+      </div>`;
+    sec.style.display = '';
+  }
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  return { lookup, render };
+})();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WAYBACK CDX
+   ══════════════════════════════════════════════════════════════════════════ */
+const waybackCDX = (function() {
+  'use strict';
+
+  const CDX_BASE = 'https://web.archive.org/cdx/search/cdx';
+
+  async function query(url, options = {}) {
+    const params = new URLSearchParams({
+      url,
+      output:    'json',
+      fl:        'timestamp,original,statuscode,mimetype,length',
+      limit:     options.limit || 50,
+      collapse:  options.collapse || 'digest',
+      filter:    options.filter || 'statuscode:200',
+      ...options.extra
+    });
+    const res = await fetch(`${CDX_BASE}?${params}`);
+    if (!res.ok) throw new Error(`CDX API error: HTTP ${res.status}`);
+    const raw = await res.json();
+    if (!raw || raw.length < 2) return [];
+    const [header, ...rows] = raw;
+    return rows.map(r => Object.fromEntries(header.map((h,i) => [h, r[i]])));
+  }
+
+  async function checkVideo(videoId) {
+    const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const thumbUrls = [
+      `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      `https://img.youtube.com/vi/${videoId}/0.jpg`,
+    ];
+
+    const statusEl = document.getElementById('cdxStatus');
+    const btn = document.getElementById('cdxCheckBtn');
+    const resultsEl = document.getElementById('cdxResults');
+    if (!statusEl || !btn || !resultsEl) return;
+
+    btn.classList.add('loading');
+    statusEl.textContent = 'Querying Wayback CDX…';
+    resultsEl.innerHTML = '';
+
+    let allResults = [];
+
+    try {
+      // Check watch URL
+      statusEl.textContent = 'Checking watch URL…';
+      const watchResults = await query(watchUrl, { limit: 30 }).catch(() => []);
+      watchResults.forEach(r => { r._label = 'watch page'; r._type = 'watch'; });
+      allResults.push(...watchResults);
+
+      // Check thumbnails
+      for (const turl of thumbUrls) {
+        statusEl.textContent = `Checking thumbnail: ${turl.split('/').pop()}…`;
+        const tResults = await query(turl, { limit: 10, collapse: 'timestamp:8' }).catch(() => []);
+        tResults.forEach(r => { r._label = turl.split('/').pop(); r._type = 'thumb'; });
+        allResults.push(...tResults);
+      }
+
+      allResults.sort((a,b) => b.timestamp.localeCompare(a.timestamp));
+
+      if (allResults.length === 0) {
+        statusEl.textContent = 'No Wayback captures found for this video.';
+        btn.classList.remove('loading');
+        return;
+      }
+
+      statusEl.textContent = `Found ${allResults.length} capture(s).`;
+      renderCDX(allResults, videoId);
+      document.getElementById('cdxCopyBtn').style.display = '';
+
+    } catch(e) {
+      statusEl.textContent = 'CDX error: ' + e.message;
+    }
+    btn.classList.remove('loading');
+  }
+
+  function renderCDX(results, videoId) {
+    const el = document.getElementById('cdxResults');
+    const hideOlder = document.getElementById('cdxHideOlder')?.checked;
+
+    // Mark older duplicates (same URL, only keep newest)
+    const seenUrls = new Set();
+    results.forEach(r => {
+      const key = r.original;
+      if (seenUrls.has(key)) { r._isDuplicate = true; }
+      else { seenUrls.add(key); r._isDuplicate = false; }
+    });
+
+    const visible = hideOlder ? results.filter(r => !r._isDuplicate) : results;
+
+    el.innerHTML = visible.map(r => {
+      const archiveUrl = `https://web.archive.org/web/${r.timestamp}/${r.original}`;
+      const date = r.timestamp
+        ? `${r.timestamp.slice(0,4)}-${r.timestamp.slice(4,6)}-${r.timestamp.slice(6,8)} ${r.timestamp.slice(8,10)}:${r.timestamp.slice(10,12)}`
+        : '';
+      const badge = r._type === 'thumb'
+        ? `<span class="badge bg-warning text-dark ms-1">thumb</span>`
+        : `<span class="badge bg-info text-dark ms-1">watch</span>`;
+      const size = r.length ? ` · ${(parseInt(r.length)/1024).toFixed(1)} KB` : '';
+      return `<div class="cdx-row${r._isDuplicate ? ' is-older' : ''}">
+        <span class="cdx-ts">${date}</span>
+        <span class="cdx-url">
+          <a href="${archiveUrl}" target="_blank" rel="noopener">${esc(r.original)}</a>
+          ${badge}
+          <span class="text-muted">${size}</span>
+        </span>
+      </div>`;
+    }).join('') || '<p class="text-muted small">No visible captures.</p>';
+  }
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Copy visible links
+  document.addEventListener('click', e => {
+    if (e.target.closest('#cdxCopyBtn')) {
+      const links = [...document.querySelectorAll('#cdxResults .cdx-row:not(.is-older) a')]
+        .map(a => a.href).join('\n');
+      navigator.clipboard.writeText(links).then(() => {
+        const btn = document.getElementById('cdxCopyBtn');
+        if (btn) { btn.innerHTML = '<i class="bi bi-check me-1"></i>Copied!'; setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy visible links'; }, 2000); }
+      });
+    }
+  });
+
+  // Toggle hide older
+  document.addEventListener('change', e => {
+    if (e.target.id === 'cdxHideOlder') {
+      const rows = document.querySelectorAll('#cdxResults .cdx-row');
+      rows.forEach(row => {
+        if (row.classList.contains('is-older')) row.style.display = e.target.checked ? 'none' : '';
+      });
+    }
+  });
+
+  return { checkVideo };
+})();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WIRE UP — add these calls inside your existing submit() flow
+   ══════════════════════════════════════════════════════════════════════════ */
+
+// After a video loads successfully, auto-trigger Filmot + show Wayback section.
+// Patch the existing youtube.ajax .done() for videos by hooking into parseType.
+// We override the global parseType to add our hooks after it finishes.
+(function patchParseType() {
+  // We listen for when #video-section gets content and then fire our extras
+  const observer = new MutationObserver(mutations => {
+    for (const m of mutations) {
+      if (m.target.id === 'video-section' && m.addedNodes.length > 0) {
+        const vidId = window._currentVideoId;
+        if (!vidId) return;
+
+        // Show Wayback section (user clicks to check)
+        const waybackSec = document.getElementById('wayback-section');
+        if (waybackSec) waybackSec.style.display = '';
+
+        // Auto-fetch Filmot
+        filmot.lookup(vidId).then(data => filmot.render(data, vidId));
+
+        // Wire CDX button
+        const cdxBtn = document.getElementById('cdxCheckBtn');
+        if (cdxBtn) {
+          cdxBtn._wired = true;
+          cdxBtn.onclick = () => waybackCDX.checkVideo(vidId);
+        }
+      }
+    }
+  });
+  const videoSection = document.getElementById('video-section');
+  if (videoSection) observer.observe(videoSection, { childList: true, subtree: false });
 })();
 </script>
 </body>
