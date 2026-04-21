@@ -1614,13 +1614,33 @@ const filmot = (function() {
 
   async function lookup(videoId) {
     if (!videoId) return null;
-    const url = 'https://filmot.com/api/getvideos?id=' + videoId + '&key=none';
+    
+    // Stop 429 Too Many Requests: Remember if we already checked this video
+    lookup.cache = lookup.cache || new Map();
+    if (lookup.cache.has(videoId)) return lookup.cache.get(videoId);
+
+    const target = 'https://filmot.com/api/getvideos?id=' + videoId + '&key=none';
+    
+    // Fix CORS: Route through your Cloudflare worker if one is set in the UI
+    let url = target;
+    if (typeof youtube !== 'undefined' && youtube.workerBase) {
+      url = youtube.workerBase + '/proxy?target=' + encodeURIComponent(target);
+    } else if (typeof workerBase !== 'undefined' && workerBase) {
+      url = workerBase + '/proxy?target=' + encodeURIComponent(target);
+    }
+
     try {
       const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      return Array.isArray(data) && data.length > 0 ? data[0] : null;
+      const result = Array.isArray(data) && data.length > 0 ? data[0] : null;
+      
+      // Save successful result so we don't ask Filmot again
+      lookup.cache.set(videoId, result);
+      return result;
     } catch(e) {
+      // Save failure so we don't infinitely retry and get blocked
+      lookup.cache.set(videoId, null);
       return null;
     }
   }
