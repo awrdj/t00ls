@@ -1595,10 +1595,13 @@ const shared = (function () {
 const filmot = (function() {
   'use strict';
 
-  async function lookup(videoId) {
+   async function lookup(videoId) {
     if (!videoId) return null;
-    // Filmot exposes a public JSON endpoint for video metadata
-    const url = `https://filmot.com/api/getvideos?id=${videoId}&key=none`;
+    // Route through worker proxy to bypass CORS
+    const target = `https://filmot.com/api/getvideos?id=${videoId}&key=none`;
+    const url = _workerBase 
+      ? `${_workerBase}/proxy?target=${encodeURIComponent(target)}` 
+      : target;
     try {
       const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
