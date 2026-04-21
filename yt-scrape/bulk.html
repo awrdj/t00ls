@@ -38,6 +38,22 @@ footer{font-size:.78rem;color:#6c757d;text-align:center;padding:2rem 0;border-to
 .btn-spinner{display:none}
 .btn.loading .btn-text{display:none}
 .btn.loading .btn-spinner{display:inline-block!important}
+/* ── Drag & Drop ─────────────────────────────────── */
+#dropZone{border:2px dashed rgba(255,255,255,.2);border-radius:8px;padding:1.2rem;text-align:center;color:#6c757d;font-size:.85rem;transition:all .2s;cursor:pointer;margin-bottom:1rem}
+#dropZone.dragover{border-color:#0d6efd;background:rgba(13,110,253,.08);color:#0d6efd}
+[data-bs-theme="light"] #dropZone{border-color:rgba(0,0,0,.15)}
+[data-bs-theme="light"] #dropZone.dragover{border-color:#0d6efd;background:rgba(13,110,253,.06)}
+
+/* ── Filmot ──────────────────────────────────────── */
+.filmot-row{font-size:.8rem;border-bottom:1px solid rgba(255,255,255,.05);padding:.25rem 0}
+[data-bs-theme="light"] .filmot-row{border-color:rgba(0,0,0,.06)}
+
+/* ── CDX ─────────────────────────────────────────── */
+.cdx-row{display:flex;gap:.5rem;align-items:flex-start;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.8rem}
+.cdx-row.is-older{opacity:.4}
+[data-bs-theme="light"] .cdx-row{border-color:rgba(0,0,0,.06)}
+.cdx-ts{color:orange;font-family:monospace;white-space:nowrap;min-width:140px}
+.cdx-url{word-break:break-all;flex:1}
 </style>
 </head>
 <body>
@@ -105,6 +121,11 @@ footer{font-size:.78rem;color:#6c757d;text-align:center;padding:2rem 0;border-to
   <p class="text-muted small mb-2">
     Grab metadata about <strong>multiple</strong> YouTube videos, a playlist's videos, or a channel's public uploads. Paste comma/whitespace-separated URLs or IDs.
   </p>
+  <div id="dropZone">
+    <i class="bi bi-file-earmark-zip fs-3 d-block mb-1"></i>
+    Drag &amp; drop a previously exported <strong>.zip</strong> to re-import
+    <div class="small text-muted mt-1">or use the Export/Import ZIP flow</div>
+  </div>
   <div class="row g-2 mb-2">
     <div class="col">
       <textarea class="form-control font-monospace" id="bulkInput" rows="4"
@@ -234,6 +255,52 @@ footer{font-size:.78rem;color:#6c757d;text-align:center;padding:2rem 0;border-to
   <div class="section-card">
     <h5 class="mb-2"><i class="bi bi-bar-chart me-2"></i>Other Stats</h5>
     <div id="otherStats"></div>
+  </div>
+</div>
+
+<!-- DRAG & DROP ZONE (add above the textarea in the main form) -->
+<!-- Find the textarea section and ADD this ABOVE it: -->
+<!-- 
+<div id="dropZone">
+  <i class="bi bi-file-earmark-zip fs-3 d-block mb-1"></i>
+  Drag &amp; drop a previously exported <strong>.zip</strong> to re-import
+</div>
+-->
+
+<!-- FILMOT BULK SECTION -->
+<div class="container-fluid mb-3" id="filmotSection" style="display:none">
+  <div class="section-card">
+    <h5 class="mb-2"><i class="bi bi-film me-2 text-warning"></i>Filmot Archive Lookup <span id="filmotCount" class="badge bg-secondary">0</span></h5>
+    <p class="small text-muted mb-2">Filmot archive data for videos that may be deleted or private.</p>
+    <button class="btn btn-sm btn-warning" id="filmotBulkBtn" type="button">
+      <span class="btn-text"><i class="bi bi-search me-1"></i>Lookup Unavailable Videos on Filmot</span>
+      <span class="btn-spinner spinner-border spinner-border-sm"></span>
+    </button>
+    <div id="filmotStatus" class="small text-muted mt-2"></div>
+    <div id="filmotResults" class="mt-2"></div>
+  </div>
+</div>
+
+<!-- WAYBACK CDX BULK SECTION -->
+<div class="container-fluid mb-3" id="cdxSection" style="display:none">
+  <div class="section-card">
+    <h5 class="mb-2"><i class="bi bi-clock-history me-2 text-info"></i>Wayback CDX <span id="cdxCount" class="badge bg-secondary">0</span></h5>
+    <p class="small text-muted mb-2">Check Internet Archive for snapshots of all loaded video watch pages.</p>
+    <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+      <button class="btn btn-sm btn-info" id="cdxBulkBtn" type="button">
+        <span class="btn-text"><i class="bi bi-search me-1"></i>Check All Videos on Wayback</span>
+        <span class="btn-spinner spinner-border spinner-border-sm"></span>
+      </button>
+      <div class="form-check mb-0">
+        <input class="form-check-input" type="checkbox" id="cdxHideOlder" checked>
+        <label class="form-check-label small" for="cdxHideOlder">Hide older duplicates</label>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary" id="cdxCopyBtn" style="display:none">
+        <i class="bi bi-clipboard me-1"></i>Copy all visible links
+      </button>
+    </div>
+    <div id="cdxBulkStatus" class="small text-muted"></div>
+    <div id="cdxResults" class="mt-2"></div>
   </div>
 </div>
 
@@ -736,6 +803,7 @@ async function doSubmit() {
 
     document.getElementById('exportBtn').style.display = '';
     updateStatus(`Done — ${allVideos.length} video(s) loaded.`);
+    showExtraSections();
     setProgress(100);
 
     // Share link
@@ -870,6 +938,295 @@ $(function () {
     document.getElementById('bulkInput').value = qs.get('q');
     doSubmit();
   }
+});
+/* ══════════════════════════════════════════════════════════════════════════
+   BULK — DRAG & DROP ZIP
+   ══════════════════════════════════════════════════════════════════════════ */
+(function initBulkDrop() {
+  const zone = document.getElementById('dropZone');
+  if (!zone) return;
+
+  ['dragenter','dragover'].forEach(e => {
+    zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.add('dragover'); });
+  });
+  ['dragleave','dragend','drop'].forEach(e => {
+    zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.remove('dragover'); });
+  });
+
+  zone.addEventListener('drop', async ev => {
+    const file = ev.dataTransfer?.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.zip')) { alert('Please drop a .zip file.'); return; }
+    await importZip(file);
+  });
+
+  zone.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.zip';
+    input.onchange = async () => { if (input.files[0]) await importZip(input.files[0]); };
+    input.click();
+  });
+
+  async function importZip(file) {
+    try {
+      const zip = await JSZip.loadAsync(file);
+      // Reset
+      allVideos = [];
+      unavailableVideos = [];
+      if (dt) { dt.destroy(); dt = null; }
+
+      for (const [fname, entry] of Object.entries(zip.files)) {
+        if (fname === 'videos.json') {
+          const raw = JSON.parse(await entry.async('text'));
+          allVideos = Array.isArray(raw) ? raw : [raw];
+        }
+        if (fname === 'unavailable.json') {
+          const raw = JSON.parse(await entry.async('text'));
+          unavailableVideos = Array.isArray(raw) ? raw : [];
+        }
+      }
+
+      if (allVideos.length) {
+        rebuildTable();
+        rebuildTags();
+        rebuildGeotags();
+        rebuildLinks();
+        rebuildHeatmap('all');
+        rebuildUnavail();
+        rebuildOther();
+        document.getElementById('exportBtn').style.display = '';
+        updateStatus(`Imported ${allVideos.length} video(s) from ZIP.`);
+        // Show extra sections
+        showExtraSections();
+      } else {
+        updateStatus('ZIP imported but no videos.json found.');
+      }
+    } catch(e) {
+      alert('Import failed: ' + e.message);
+    }
+  }
+})();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BULK — FILMOT LOOKUP (for unavailable videos)
+   ══════════════════════════════════════════════════════════════════════════ */
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function filmotLookupSingle(videoId) {
+  try {
+    const res = await fetch(`https://filmot.com/api/getvideos?id=${videoId}&key=none`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return Array.isArray(data) && data.length > 0 ? data[0] : null;
+  } catch(e) { return null; }
+}
+
+async function doFilmotBulk() {
+  const btn = document.getElementById('filmotBulkBtn');
+  const statusEl = document.getElementById('filmotStatus');
+  const resultsEl = document.getElementById('filmotResults');
+  btn.classList.add('loading');
+
+  // Look up all unavailable + all loaded videos that have limited data
+  const targets = [...new Set([...unavailableVideos])];
+
+  if (!targets.length) {
+    statusEl.textContent = 'No unavailable videos to look up.';
+    btn.classList.remove('loading');
+    return;
+  }
+
+  statusEl.textContent = `Looking up ${targets.length} video(s) on Filmot…`;
+  resultsEl.innerHTML = '';
+
+  const found = [];
+  for (let i = 0; i < targets.length; i++) {
+    statusEl.textContent = `Filmot lookup ${i+1}/${targets.length}…`;
+    const data = await filmotLookupSingle(targets[i]);
+    found.push({ id: targets[i], data });
+  }
+
+  document.getElementById('filmotCount').textContent = found.filter(f => f.data).length;
+
+  if (found.length === 0) {
+    resultsEl.innerHTML = '<p class="small text-muted">No Filmot data found.</p>';
+    btn.classList.remove('loading');
+    return;
+  }
+
+  resultsEl.innerHTML = `
+    <div class="table-responsive">
+      <table class="table table-sm">
+        <thead><tr>
+          <th>Video ID</th><th>Title</th><th>Channel</th>
+          <th>Upload Date</th><th>Views</th><th>Links</th>
+        </tr></thead>
+        <tbody>
+          ${found.map(({id, data}) => `
+            <tr class="filmot-row">
+              <td><code>${id}</code></td>
+              <td>${data ? esc(data.title||'') : '<span class="text-muted">Not found</span>'}</td>
+              <td>${data && data.channelname ? esc(data.channelname) : '–'}</td>
+              <td>${data ? (data.uploaddate||'–') : '–'}</td>
+              <td>${data && data.viewcount ? Number(data.viewcount).toLocaleString() : '–'}</td>
+              <td>
+                <a href="https://filmot.com/video/${id}" target="_blank" rel="noopener" class="btn btn-xs btn-outline-warning btn-sm py-0 px-1" style="font-size:.72rem">Filmot</a>
+                <a href="https://web.archive.org/web/https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener" class="btn btn-xs btn-outline-info btn-sm py-0 px-1 ms-1" style="font-size:.72rem">Archive</a>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  btn.classList.remove('loading');
+  statusEl.textContent = `Done — ${found.filter(f=>f.data).length} of ${found.length} found on Filmot.`;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BULK — WAYBACK CDX (batch all loaded video IDs)
+   ══════════════════════════════════════════════════════════════════════════ */
+async function doCDXBulk() {
+  const btn = document.getElementById('cdxBulkBtn');
+  const statusEl = document.getElementById('cdxBulkStatus');
+  const resultsEl = document.getElementById('cdxResults');
+  btn.classList.add('loading');
+  resultsEl.innerHTML = '';
+
+  const ids = allVideos.map(v => v.id).filter(Boolean);
+  if (!ids.length) {
+    statusEl.textContent = 'No videos loaded.';
+    btn.classList.remove('loading');
+    return;
+  }
+
+  const CDX_BASE = 'https://web.archive.org/cdx/search/cdx';
+  const allResults = [];
+
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
+    statusEl.textContent = `Checking CDX for video ${i+1}/${ids.length}: ${id}`;
+    const watchUrl = `https://www.youtube.com/watch?v=${id}`;
+    try {
+      const params = new URLSearchParams({
+        url: watchUrl,
+        output: 'json',
+        fl: 'timestamp,original,statuscode,length',
+        limit: 5,
+        collapse: 'digest',
+        filter: 'statuscode:200'
+      });
+      const res = await fetch(`${CDX_BASE}?${params}`);
+      if (!res.ok) continue;
+      const raw = await res.json();
+      if (!raw || raw.length < 2) continue;
+      const [header, ...rows] = raw;
+      rows.forEach(r => {
+        const obj = Object.fromEntries(header.map((h,hi) => [h, r[hi]]));
+        obj._videoId = id;
+        obj._title = allVideos.find(v=>v.id===id)?.snippet?.title || id;
+        allResults.push(obj);
+      });
+    } catch(e) { /* skip */ }
+  }
+
+  document.getElementById('cdxCount').textContent = allResults.length;
+
+  if (!allResults.length) {
+    statusEl.textContent = 'No Wayback captures found for any loaded video.';
+    btn.classList.remove('loading');
+    return;
+  }
+
+  allResults.sort((a,b) => b.timestamp.localeCompare(a.timestamp));
+
+  // Group by videoId
+  const grouped = {};
+  allResults.forEach(r => {
+    if (!grouped[r._videoId]) grouped[r._videoId] = [];
+    grouped[r._videoId].push(r);
+  });
+
+  const hideOlder = document.getElementById('cdxHideOlder')?.checked;
+
+  resultsEl.innerHTML = Object.entries(grouped).map(([id, rows]) => {
+    const title = rows[0]._title;
+    const rowsHtml = rows.map((r, i) => {
+      const archiveUrl = `https://web.archive.org/web/${r.timestamp}/${r.original}`;
+      const date = r.timestamp
+        ? `${r.timestamp.slice(0,4)}-${r.timestamp.slice(4,6)}-${r.timestamp.slice(6,8)}`
+        : '';
+      const isOlder = i > 0;
+      const size = r.length ? ` · ${(parseInt(r.length)/1024).toFixed(1)}KB` : '';
+      return `<div class="cdx-row${isOlder ? ' is-older' : ''}" ${isOlder && hideOlder ? 'style="display:none"' : ''}>
+        <span class="cdx-ts">${date}</span>
+        <span class="cdx-url">
+          <a href="${archiveUrl}" target="_blank" rel="noopener">${esc(r.original)}</a>
+          <span class="text-muted">${size}</span>
+        </span>
+      </div>`;
+    }).join('');
+    return `<div class="mb-3">
+      <div class="small fw-semibold mb-1">
+        <a href="https://youtu.be/${id}" target="_blank" rel="noopener">${esc(title)}</a>
+        <code class="ms-1 text-muted">${id}</code>
+      </div>
+      ${rowsHtml}
+    </div>`;
+  }).join('');
+
+  document.getElementById('cdxCopyBtn').style.display = '';
+  statusEl.textContent = `Found ${allResults.length} capture(s) across ${Object.keys(grouped).length} video(s).`;
+  btn.classList.remove('loading');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SHOW/HIDE extra sections after bulk load
+   ══════════════════════════════════════════════════════════════════════════ */
+function showExtraSections() {
+  if (unavailableVideos.length > 0) {
+    document.getElementById('filmotSection').style.display = '';
+  }
+  if (allVideos.length > 0) {
+    document.getElementById('cdxSection').style.display = '';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CDX copy + hide older toggle
+   ══════════════════════════════════════════════════════════════════════════ */
+document.addEventListener('click', e => {
+  if (e.target.closest('#cdxCopyBtn')) {
+    const links = [...document.querySelectorAll('#cdxResults .cdx-row:not(.is-older) a')]
+      .map(a => a.href).join('\n');
+    navigator.clipboard.writeText(links).then(() => {
+      const btn = document.getElementById('cdxCopyBtn');
+      if (btn) {
+        btn.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+        setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy all visible links'; }, 2000);
+      }
+    });
+  }
+});
+
+document.addEventListener('change', e => {
+  if (e.target.id === 'cdxHideOlder') {
+    document.querySelectorAll('#cdxResults .cdx-row.is-older').forEach(row => {
+      row.style.display = e.target.checked ? 'none' : '';
+    });
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WIRE BUTTONS on DOM ready
+   ══════════════════════════════════════════════════════════════════════════ */
+$(function() {
+  document.getElementById('filmotBulkBtn')?.addEventListener('click', doFilmotBulk);
+  document.getElementById('cdxBulkBtn')?.addEventListener('click', doCDXBulk);
 });
 </script>
 </body>
