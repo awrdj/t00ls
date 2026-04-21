@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YT Metadata – Bulk</title>
+<link rel="preconnect" href="//cdn.jsdelivr.net" crossorigin>
+<link href="//cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="//cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="//cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<link href="//cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;font-size:.9rem;-webkit-font-smoothing:antialiased}
+.navbar-brand span{font-size:1.05rem;font-weight:700}
+#api-key-banner{background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);border-bottom:1px solid rgba(255,255,255,.08)}
+footer{font-size:.78rem;color:#6c757d;text-align:center;padding:2rem 0;border-top:1px solid rgba(255,255,255,.06)}
+.section-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:1rem;margin-bottom:1rem}
+[data-bs-theme="light"] .section-card{background:rgba(0,0,0,.02);border-color:rgba(0,0,0,.08)}
+[data-bs-theme="light"] footer{border-top-color:rgba(0,0,0,.08)}
+.tag-badge{display:inline-block;background:rgba(65,105,225,.25);border-radius:4px;padding:1px 7px;font-size:.78rem;margin:2px}
+.progress-wrap{margin:8px 0}
+#videoTable_wrapper .dataTables_filter input{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:inherit;border-radius:4px;padding:4px 8px}
+[data-bs-theme="light"] #videoTable_wrapper .dataTables_filter input{background:#fff;border-color:#ccc;color:#000}
+.select2-container--default .select2-selection--multiple{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.2)!important}
+[data-bs-theme="light"] .select2-container--default .select2-selection--multiple{background:#fff!important;border-color:#ccc!important}
+.select2-container--default .select2-selection--multiple .select2-selection__choice{background:#0d6efd;color:#fff;border:none}
+.select2-dropdown{background:#1a1f2e;border:1px solid rgba(255,255,255,.15)}
+[data-bs-theme="light"] .select2-dropdown{background:#fff;border-color:#ccc}
+.heatmap-wrap{overflow-x:auto}
+#uploadChart{min-height:220px}
+.status-bar{font-size:.8rem;color:#aaa;margin:4px 0}
+.unavail-item{font-size:.82rem;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.link-item{font-size:.82rem;word-break:break-all}
+[data-bs-theme="light"] .unavail-item{border-color:rgba(0,0,0,.07)}
+.geotag-item{font-size:.82rem}
+.btn-spinner{display:none}
+.btn.loading .btn-text{display:none}
+.btn.loading .btn-spinner{display:inline-block!important}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg mb-2" style="border-bottom:1px solid rgba(127,127,127,.1)">
+<div class="container-fluid">
+  <div class="navbar-brand d-flex align-items-center gap-2">
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+      <rect width="26" height="26" rx="5" fill="#FF0000"/>
+      <path d="M20 13c0 .85-.05 1.7-.14 2.45-.18 1.2-1 2.05-2.1 2.22-1.5.2-3 .28-4.76.28s-3.26-.08-4.76-.28c-1.1-.17-1.92-1.02-2.1-2.22C6.05 14.7 6 13.85 6 13s.05-1.7.14-2.45c.18-1.2 1-2.05 2.1-2.22C9.74 8.13 11.24 8.05 13 8.05s3.26.08 4.76.28c1.1.17 1.92 1.02 2.1 2.22C19.95 11.3 20 12.15 20 13z" fill="white"/>
+      <path d="M11.5 10.8l3.7 2.2-3.7 2.2V10.8z" fill="#FF0000"/>
+    </svg>
+    <span>YT Metadata</span>
+  </div>
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navContent">
+    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <li class="nav-item"><a class="nav-link" href="index.html">Normal</a></li>
+      <li class="nav-item"><a class="nav-link active" href="bulk.html">Bulk</a></li>
+      <li class="nav-item"><a class="nav-link" href="search.html">Search</a></li>
+    </ul>
+    <div class="d-flex align-items-center gap-3">
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" id="darkMode" checked>
+        <label class="form-check-label small" for="darkMode">Dark</label>
+      </div>
+    </div>
+  </div>
+</div>
+</nav>
+
+<!-- API KEY BANNER -->
+<div id="api-key-banner" class="py-3 mb-3">
+<div class="container-fluid">
+  <div class="row align-items-center gy-2">
+    <div class="col-auto">
+      <span class="fw-semibold small"><i class="bi bi-key-fill text-warning me-1"></i>YouTube API Key</span>
+    </div>
+    <div class="col-12 col-md">
+      <div class="input-group input-group-sm" style="max-width:500px">
+        <input type="password" class="form-control font-monospace" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
+        <button class="btn btn-outline-secondary" id="toggleKeyVis" type="button"><i class="bi bi-eye"></i></button>
+        <button class="btn btn-warning" id="saveApiKey" type="button">Save Key</button>
+      </div>
+    </div>
+    <div class="col-auto"><span id="apiKeyStatus" class="badge bg-danger">No key</span></div>
+  </div>
+  <div class="mt-2 pt-2" style="border-top:1px solid rgba(255,255,255,.06)">
+    <div class="input-group input-group-sm" style="max-width:560px">
+      <span class="input-group-text"><i class="bi bi-shield-check text-info"></i></span>
+      <input type="text" class="form-control font-monospace" id="workerUrlInput" placeholder="https://yt-meta.YOUR-SUBDOMAIN.workers.dev" autocomplete="off">
+      <button class="btn btn-outline-info" id="saveWorker" type="button">Set Worker</button>
+      <button class="btn btn-outline-danger" id="clearWorker" type="button">Clear</button>
+    </div>
+    <small id="workerStatus" class="text-muted mt-1 d-block">Worker: <em>not set</em></small>
+  </div>
+</div>
+</div>
+
+<!-- MAIN FORM -->
+<div class="container-fluid">
+  <p class="text-muted small mb-2">
+    Grab metadata about <strong>multiple</strong> YouTube videos, a playlist's videos, or a channel's public uploads. Paste comma/whitespace-separated URLs or IDs.
+  </p>
+  <div class="row g-2 mb-2">
+    <div class="col">
+      <textarea class="form-control font-monospace" id="bulkInput" rows="4"
+        placeholder="https://youtu.be/dQw4w9WgXcQ, UCuAXFkgsw1L7xaCfnd5JJOw, PLbpi6ZahtOH6Ar_3GPy3workplacevideos..."></textarea>
+    </div>
+  </div>
+  <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+    <button class="btn btn-primary" id="submitBtn" type="button">
+      <span class="btn-text"><i class="bi bi-search me-1"></i>Submit</span>
+      <span class="btn-spinner spinner-border spinner-border-sm"></span>
+    </button>
+    <button class="btn btn-outline-secondary btn-sm" id="clearBtn" type="button">Clear</button>
+    <div class="ms-2">
+      <label class="form-label small mb-0 me-1">Max videos per channel/playlist:</label>
+      <select class="form-select form-select-sm d-inline-block w-auto" id="maxVideos">
+        <option value="50">50</option>
+        <option value="200">200</option>
+        <option value="500">500</option>
+        <option value="0" selected>All</option>
+      </select>
+    </div>
+  </div>
+  <div id="statusBar" class="status-bar"></div>
+  <div class="progress mb-3" style="height:6px;display:none" id="progressBar">
+    <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressFill" style="width:0%"></div>
+  </div>
+</div>
+
+<!-- EXPORT/SHARE -->
+<div class="container-fluid mb-3">
+  <div class="d-flex flex-wrap gap-2 mb-2">
+    <button class="btn btn-sm btn-secondary" id="exportBtn" style="display:none">
+      <span class="btn-text"><i class="bi bi-download me-1"></i>Export ZIP</span>
+      <span class="btn-spinner spinner-border spinner-border-sm"></span>
+    </button>
+  </div>
+  <div style="max-width:300px">
+    <div class="input-group input-group-sm">
+      <input type="text" class="form-control font-monospace" id="shareLink" disabled placeholder="Submit something first">
+      <button class="btn btn-sm btn-primary" id="copyShare" type="button"><i class="bi bi-clipboard"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- VIDEOS TABLE -->
+<div class="container-fluid mb-3">
+  <div class="section-card">
+    <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+      <h5 class="mb-0"><i class="bi bi-play-btn me-2 text-danger"></i>Videos <span id="videoCount" class="badge bg-secondary">0</span></h5>
+      <div style="max-width:400px;width:100%">
+        <select id="columnSelector" class="form-select form-select-sm" multiple>
+          <option value="thumb" selected>Thumbnail</option>
+          <option value="title" selected>Title</option>
+          <option value="channel" selected>Channel</option>
+          <option value="published" selected>Published</option>
+          <option value="duration" selected>Duration</option>
+          <option value="views" selected>Views</option>
+          <option value="likes">Likes</option>
+          <option value="comments">Comments</option>
+          <option value="tags">Tags</option>
+          <option value="description">Description</option>
+          <option value="id">Video ID</option>
+          <option value="category">Category</option>
+          <option value="lang">Language</option>
+          <option value="license">License</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table id="videoTable" class="table table-sm table-hover" style="width:100%">
+        <thead id="videoThead"></thead>
+        <tbody id="videoTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TAGS -->
+<div class="container-fluid mb-3">
+  <div class="section-card">
+    <h5 class="mb-2"><i class="bi bi-tags me-2 text-warning"></i>Tags <span id="tagCount" class="badge bg-secondary">0</span></h5>
+    <div id="tagCloud"></div>
+  </div>
+</div>
+
+<!-- GEOTAGS -->
+<div class="container-fluid mb-3">
+  <div class="section-card">
+    <h5 class="mb-2"><i class="bi bi-geo-alt me-2 text-success"></i>Geotags <span id="geotagCount" class="badge bg-secondary">0</span></h5>
+    <div id="geotagList"></div>
+  </div>
+</div>
+
+<!-- LINKS -->
+<div class="container-fluid mb-3">
+  <div class="section-card">
+    <h5 class="mb-2"><i class="bi bi-link-45deg me-2 text-info"></i>Description Links <span id="linkCount" class="badge bg-secondary">0</span></h5>
+    <div id="linkList"></div>
+  </div>
+</div>
+
+<!-- UPLOAD FREQUENCY -->
+<div class="container-fluid mb-3">
+  <div class="section-card">
+    <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+      <h5 class="mb-0"><i class="bi bi-calendar-week me-2 text-primary"></i>Upload Frequency</h5>
+      <select class="form-select form-select-sm w-auto" id="freqYear">
+        <option value="all">All years</option>
+      </select>
+    </div>
+    <div class="heatmap-wrap">
+      <div id="uploadChart"></div>
+    </div>
+  </div>
+</div>
+
+<!-- UNAVAILABLE -->
+<div class="container-fluid mb-3">
+  <div class="section-card">
+    <h5 class="mb-2"><i class="bi bi-slash-circle me-2 text-danger"></i>Unavailable Videos <span id="unavailCount" class="badge bg-secondary">0</span></h5>
+    <div id="unavailList"></div>
+  </div>
+</div>
+
+<!-- OTHER -->
+<div class="container-fluid mb-3">
+  <div class="section-card">
+    <h5 class="mb-2"><i class="bi bi-bar-chart me-2"></i>Other Stats</h5>
+    <div id="otherStats"></div>
+  </div>
+</div>
+
+<footer>
+  <div class="container-fluid">
+    YT Metadata by <a href="https://github.com/wahidsandoussi" target="_blank" rel="noopener">Wahid Sandoussi</a>
+    &nbsp;&bull;&nbsp; Inspired by <a href="https://mattw.io/youtube-metadata/" target="_blank">mattwright324</a>
+  </div>
+</footer>
+
+<!-- JS DEPS -->
+<script src="//cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/moment@2.30.1/moment.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/moment-timezone@0.5.45/builds/moment-timezone-with-data.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/jszip-utils@0.1.0/dist/jszip-utils.min.js"></script>
+<script src="//cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="//cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/apexcharts@3.45.2/dist/apexcharts.min.js"></script>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════════
+   YT Metadata – Bulk
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Shared helpers ─────────────────────────────────────────────────────── */
+const YT_API = 'https://www.googleapis.com/youtube/v3/';
+let _workerBase = '';
+let _apiKey = '';
+
+function ytAjax(endpoint, params) {
+  if (!_apiKey) return Promise.reject(new Error('No API key set.'));
+  const target = YT_API + endpoint;
+  const url = _workerBase
+    ? _workerBase + '/proxy?target=' + encodeURIComponent(target)
+    : target;
+  return $.ajax({ url, data: Object.assign({ key: _apiKey }, params), dataType: 'json', cache: false });
+}
+
+function loadSettings() {
+  try { _apiKey = localStorage.getItem('yt-meta-api-key') || ''; } catch(e){}
+  try { _workerBase = (localStorage.getItem('yt-meta-worker') || '').replace(/\/$/, ''); } catch(e){}
+}
+
+/* ── URL/ID parser (mirrors shared.js from original) ─────────────────────── */
+const patterns = {
+  video_id: [
+    /(?:https?:\/\/)?(?:\w+\.)?youtube\.com\/watch\?v=([\w_-]+)/i,
+    /(?:https?:\/\/)?(?:\w+\.)?youtube\.com\/(?:v|embed|shorts|video|watch|live)\/([\w_-]+)/i,
+    /(?:https?:\/\/)?youtu\.be\/([\w_-]+)/i,
+    /^([\w-]{11})$/
+  ],
+  playlist_id: [
+    /(?:https?:\/\/)?(?:\w+\.)?youtube\.com\/playlist\?list=([\w_-]+)/i,
+    /^((UU|PL|FL|SP|OLAK)[A-Za-z0-9_-]+)$/
+  ],
+  channel_id: [
+    /(?:https?:\/\/)?(?:\w+\.)?youtube\.com\/channel\/([\w_-]+)/i,
+    /^((UC|SC)[\w-]{22})$/
+  ],
+  channel_vanity: [
+    /(?:https?:\/\/)?(?:\w+\.)?youtube\.com\/@([^/?]+)/i,
+    /(?:https?:\/\/)?(?:\w+\.)?youtube\.com\/user\/([\w_-]+)/i,
+    /(?:https?:\/\/)?(?:\w+\.)?youtube\.com\/c\/([^/?]+)/i,
+    /(?:https?:\/\/)?(?:\w+\.)?youtube\.com\/([^/?@]+)/i
+  ]
+};
+
+function parseInput(raw) {
+  const value = raw.trim();
+  for (const [type, pats] of Object.entries(patterns)) {
+    for (const pat of pats) {
+      const m = pat.exec(value);
+      if (m) return { type, value: m[1], original: value };
+    }
+  }
+  return { type: 'unknown', value, original: value };
+}
+
+function splitInputs(text) {
+  return text.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
+}
+
+/* ── Duration formatter ──────────────────────────────────────────────────── */
+function fmtDuration(iso) {
+  if (!iso) return '';
+  const d = moment.duration(iso);
+  const h = d.hours(), m = d.minutes(), s = d.seconds();
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function fmtNum(n) {
+  if (n === undefined || n === null) return '–';
+  return Number(n).toLocaleString();
+}
+
+/* ── Category map ─────────────────────────────────────────────────────────── */
+const CAT = {"1":"Film & Animation","2":"Autos & Vehicles","10":"Music","15":"Pets & Animals","17":"Sports","20":"Gaming","22":"People & Blogs","23":"Comedy","24":"Entertainment","25":"News & Politics","26":"Howto & Style","27":"Education","28":"Science & Technology","29":"Nonprofits & Activism"};
+
+/* ── State ─────────────────────────────────────────────────────────────────── */
+let allVideos = [];
+let allChannels = {};
+let allPlaylists = {};
+let unavailableVideos = [];
+let dt = null;
+let apexChart = null;
+let activeColumns = ['thumb','title','channel','published','duration','views'];
+
+/* ── DataTable setup ─────────────────────────────────────────────────────── */
+const COL_DEFS = {
+  thumb:       { label: 'Thumb',       render: v => v ? `<img src="${v}" style="width:80px;border-radius:4px">` : '' },
+  title:       { label: 'Title',       render: (v,_,row) => `<a href="https://youtu.be/${row.id}" target="_blank" rel="noopener">${esc(v)}</a>` },
+  channel:     { label: 'Channel',     render: (v,_,row) => `<a href="https://www.youtube.com/channel/${row.channelId}" target="_blank" rel="noopener">${esc(v)}</a>` },
+  published:   { label: 'Published',   render: v => v ? moment(v).format('YYYY-MM-DD') : '' },
+  duration:    { label: 'Duration',    render: v => fmtDuration(v) },
+  views:       { label: 'Views',       render: v => fmtNum(v) },
+  likes:       { label: 'Likes',       render: v => fmtNum(v) },
+  comments:    { label: 'Comments',    render: v => fmtNum(v) },
+  tags:        { label: 'Tags',        render: v => v ? String(v).split('|').map(t => `<span class="tag-badge">${esc(t)}</span>`).join('') : '' },
+  description: { label: 'Description', render: v => `<span style="font-size:.75rem;white-space:pre-wrap">${esc((v||'').slice(0,200))}${(v||'').length>200?'…':''}</span>` },
+  id:          { label: 'Video ID',    render: v => `<code>${v}</code>` },
+  category:    { label: 'Category',    render: v => CAT[v] || v || '' },
+  lang:        { label: 'Language',    render: v => v || '' },
+  license:     { label: 'License',     render: v => v || '' },
+};
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function rebuildTable() {
+  if (dt) { dt.destroy(); dt = null; }
+
+  const thead = document.getElementById('videoThead');
+  const tbody = document.getElementById('videoTbody');
+
+  const cols = activeColumns.filter(c => COL_DEFS[c]);
+  thead.innerHTML = '<tr>' + cols.map(c => `<th>${COL_DEFS[c].label}</th>`).join('') + '</tr>';
+  tbody.innerHTML = '';
+
+  allVideos.forEach(video => {
+    const sn = video.snippet || {};
+    const st = video.statistics || {};
+    const cd = video.contentDetails || {};
+    const rowData = {
+      id:          video.id,
+      thumb:       (sn.thumbnails?.medium || sn.thumbnails?.default || {}).url || '',
+      title:       sn.title || '',
+      channelId:   sn.channelId || '',
+      channel:     sn.channelTitle || '',
+      published:   sn.publishedAt || '',
+      duration:    cd.duration || '',
+      views:       st.viewCount,
+      likes:       st.likeCount,
+      comments:    st.commentCount,
+      tags:        (sn.tags || []).join('|'),
+      description: sn.description || '',
+      category:    sn.categoryId || '',
+      lang:        sn.defaultLanguage || '',
+      license:     cd.licensedContent ? 'Licensed' : ''
+    };
+    const tr = document.createElement('tr');
+    tr.innerHTML = cols.map(c => {
+      const val = rowData[c];
+      const rendered = COL_DEFS[c].render(val, c, rowData);
+      return `<td>${rendered}</td>`;
+    }).join('');
+    tbody.appendChild(tr);
+  });
+
+  dt = $('#videoTable').DataTable({
+    pageLength: 25,
+    order: [],
+    columnDefs: [{ orderable: false, targets: cols.indexOf('thumb') }],
+    language: { search: 'Filter:' }
+  });
+
+  document.getElementById('videoCount').textContent = allVideos.length;
+}
+
+/* ── Tag aggregation ─────────────────────────────────────────────────────── */
+function rebuildTags() {
+  const counts = {};
+  allVideos.forEach(v => {
+    const tags = v.snippet?.tags || [];
+    tags.forEach(t => { counts[t] = (counts[t]||0) + 1; });
+  });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 200);
+  const el = document.getElementById('tagCloud');
+  document.getElementById('tagCount').textContent = sorted.length;
+  el.innerHTML = sorted.map(([t,n]) =>
+    `<span class="tag-badge" title="${n} videos">${esc(t)} <strong>${n}</strong></span>`
+  ).join('');
+}
+
+/* ── Geotag aggregation ──────────────────────────────────────────────────── */
+function rebuildGeotags() {
+  const counts = {};
+  allVideos.forEach(v => {
+    const loc = v.recordingDetails?.locationDescription;
+    if (loc) counts[loc] = (counts[loc]||0) + 1;
+  });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const el = document.getElementById('geotagList');
+  document.getElementById('geotagCount').textContent = sorted.length;
+  el.innerHTML = sorted.length
+    ? `<ul class="list-unstyled mb-0">${sorted.map(([g,n]) => `<li class="geotag-item"><span class="text-success">${esc(g)}</span> — ${n} video${n>1?'s':''}</li>`).join('')}</ul>`
+    : '<span class="text-muted small">No geotags found.</span>';
+}
+
+/* ── Link aggregation ────────────────────────────────────────────────────── */
+function rebuildLinks() {
+  const counts = {};
+  const urlRe = /https?:\/\/[^\s"<>)]+/g;
+  allVideos.forEach(v => {
+    const desc = v.snippet?.description || '';
+    const found = desc.match(urlRe) || [];
+    found.forEach(u => {
+      try {
+        const clean = new URL(u).hostname;
+        counts[clean] = (counts[clean]||0) + 1;
+      } catch(e){}
+    });
+  });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,100);
+  const el = document.getElementById('linkList');
+  document.getElementById('linkCount').textContent = sorted.length;
+  el.innerHTML = sorted.length
+    ? `<ul class="list-unstyled mb-0">${sorted.map(([h,n]) => `<li class="link-item text-info">${esc(h)} <span class="text-muted">×${n}</span></li>`).join('')}</ul>`
+    : '<span class="text-muted small">No links found in descriptions.</span>';
+}
+
+/* ── Upload Frequency Heatmap ─────────────────────────────────────────────── */
+function rebuildHeatmap(yearFilter) {
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const hours = Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}:00`);
+
+  const grid = Array.from({length:7}, () => new Array(24).fill(0));
+
+  allVideos.forEach(v => {
+    const pub = v.snippet?.publishedAt;
+    if (!pub) return;
+    const m = moment(pub).utc();
+    if (yearFilter !== 'all' && String(m.year()) !== String(yearFilter)) return;
+    const day = m.day();
+    const hour = m.hour();
+    grid[day][hour]++;
+  });
+
+  const series = days.map((d, di) => ({
+    name: d,
+    data: hours.map((h, hi) => ({ x: h, y: grid[di][hi] }))
+  }));
+
+  if (apexChart) { apexChart.destroy(); apexChart = null; }
+
+  if (allVideos.length === 0) return;
+
+  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+  apexChart = new ApexCharts(document.getElementById('uploadChart'), {
+    chart: { type: 'heatmap', height: 220, toolbar: { show: false }, background: 'transparent' },
+    dataLabels: { enabled: false },
+    colors: ['#0d6efd'],
+    series,
+    xaxis: { type: 'category', labels: { style: { colors: isDark ? '#aaa' : '#333', fontSize: '10px' } } },
+    yaxis: { labels: { style: { colors: isDark ? '#aaa' : '#333', fontSize: '11px' } } },
+    theme: { mode: isDark ? 'dark' : 'light' },
+    tooltip: { theme: isDark ? 'dark' : 'light' }
+  });
+  apexChart.render();
+
+  // Populate year dropdown
+  const years = [...new Set(allVideos.map(v => {
+    const p = v.snippet?.publishedAt;
+    return p ? String(moment(p).utc().year()) : null;
+  }).filter(Boolean))].sort().reverse();
+  const sel = document.getElementById('freqYear');
+  sel.innerHTML = '<option value="all">All years</option>' +
+    years.map(y => `<option value="${y}">${y}</option>`).join('');
+  sel.value = yearFilter;
+}
+
+/* ── Other Stats ─────────────────────────────────────────────────────────── */
+function rebuildOther() {
+  const el = document.getElementById('otherStats');
+  if (!allVideos.length) { el.innerHTML = '<span class="text-muted small">No data.</span>'; return; }
+  const total = allVideos.length;
+  const totalViews = allVideos.reduce((s,v) => s + Number(v.statistics?.viewCount||0), 0);
+  const totalLikes = allVideos.reduce((s,v) => s + Number(v.statistics?.likeCount||0), 0);
+  const durations = allVideos.map(v => moment.duration(v.contentDetails?.duration||'PT0S').asSeconds()).filter(s=>s>0);
+  const totalSecs = durations.reduce((a,b)=>a+b,0);
+  const avgSecs = durations.length ? Math.round(totalSecs / durations.length) : 0;
+  const avgDur = moment.duration(avgSecs, 'seconds');
+  const langs = {};
+  allVideos.forEach(v => { const l = v.snippet?.defaultLanguage || 'unknown'; langs[l]=(langs[l]||0)+1; });
+  const topLang = Object.entries(langs).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  el.innerHTML = `
+    <div class="row g-3">
+      <div class="col-6 col-md-3"><div class="p-2 rounded" style="background:rgba(255,255,255,.05)">
+        <div class="small text-muted">Total Videos</div><div class="fs-5 fw-bold">${fmtNum(total)}</div>
+      </div></div>
+      <div class="col-6 col-md-3"><div class="p-2 rounded" style="background:rgba(255,255,255,.05)">
+        <div class="small text-muted">Total Views</div><div class="fs-5 fw-bold">${fmtNum(totalViews)}</div>
+      </div></div>
+      <div class="col-6 col-md-3"><div class="p-2 rounded" style="background:rgba(255,255,255,.05)">
+        <div class="small text-muted">Total Likes</div><div class="fs-5 fw-bold">${fmtNum(totalLikes)}</div>
+      </div></div>
+      <div class="col-6 col-md-3"><div class="p-2 rounded" style="background:rgba(255,255,255,.05)">
+        <div class="small text-muted">Avg Duration</div><div class="fs-5 fw-bold">${fmtDuration('PT'+avgDur.hours()+'H'+avgDur.minutes()+'M'+avgDur.seconds()+'S')}</div>
+      </div></div>
+    </div>
+    <div class="mt-3 small">
+      <strong>Top languages:</strong> ${topLang.map(([l,n])=>`<span class="tag-badge">${esc(l)} ${n}</span>`).join('')}
+    </div>
+    <div class="mt-2 small">
+      <strong>Unavailable from this batch:</strong> ${unavailableVideos.length}
+    </div>`;
+}
+
+/* ── Unavailable ─────────────────────────────────────────────────────────── */
+function rebuildUnavail() {
+  const el = document.getElementById('unavailList');
+  document.getElementById('unavailCount').textContent = unavailableVideos.length;
+  el.innerHTML = unavailableVideos.length
+    ? unavailableVideos.map(id =>
+        `<div class="unavail-item">
+          <code>${id}</code>
+          <a href="https://filmot.com/video/${id}" target="_blank" class="ms-2 small">Filmot</a>
+          <a href="https://web.archive.org/web/https://www.youtube.com/watch?v=${id}" target="_blank" class="ms-2 small">Archive.org</a>
+        </div>`
+      ).join('')
+    : '<span class="text-muted small">None found.</span>';
+}
+
+/* ── Fetch all videos for a channel ─────────────────────────────────────── */
+async function getChannelUploads(channelId, maxVids) {
+  // Get uploads playlist id
+  const chanRes = await ytAjax('channels', { part:'contentDetails,snippet', id: channelId });
+  const uploadsId = chanRes?.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+  const chanTitle = chanRes?.items?.[0]?.snippet?.title || channelId;
+  if (!uploadsId) return [];
+  allChannels[channelId] = chanRes.items[0];
+
+  const videoIds = [];
+  let pageToken = '';
+  do {
+    const params = { part:'snippet', playlistId: uploadsId, maxResults: 50 };
+    if (pageToken) params.pageToken = pageToken;
+    const res = await ytAjax('playlistItems', params);
+    if (!res?.items) break;
+    res.items.forEach(item => {
+      const id = item.snippet?.resourceId?.videoId;
+      if (id) videoIds.push(id);
+      // Track unavailable
+      if (item.snippet?.title === 'Deleted video' || item.snippet?.title === 'Private video') {
+        unavailableVideos.push(id || item.id);
+      }
+    });
+    pageToken = res.nextPageToken || '';
+    updateStatus(`Fetching ${chanTitle} uploads… ${videoIds.length} so far`);
+    if (maxVids > 0 && videoIds.length >= maxVids) break;
+  } while (pageToken);
+
+  return maxVids > 0 ? videoIds.slice(0, maxVids) : videoIds;
+}
+
+/* ── Fetch playlist videos ──────────────────────────────────────────────── */
+async function getPlaylistVideos(playlistId, maxVids) {
+  const videoIds = [];
+  let pageToken = '';
+  do {
+    const params = { part:'snippet', playlistId, maxResults: 50 };
+    if (pageToken) params.pageToken = pageToken;
+    const res = await ytAjax('playlistItems', params);
+    if (!res?.items) break;
+    res.items.forEach(item => {
+      const id = item.snippet?.resourceId?.videoId;
+      if (id) videoIds.push(id);
+      if (item.snippet?.title === 'Deleted video' || item.snippet?.title === 'Private video') {
+        unavailableVideos.push(id || item.id);
+      }
+    });
+    pageToken = res.nextPageToken || '';
+    updateStatus(`Fetching playlist videos… ${videoIds.length} so far`);
+    if (maxVids > 0 && videoIds.length >= maxVids) break;
+  } while (pageToken);
+
+  // Also get playlist metadata
+  const plRes = await ytAjax('playlists', { part:'snippet,contentDetails,status', id: playlistId });
+  if (plRes?.items?.[0]) allPlaylists[playlistId] = plRes.items[0];
+
+  return maxVids > 0 ? videoIds.slice(0, maxVids) : videoIds;
+}
+
+/* ── Fetch video details in batches of 50 ───────────────────────────────── */
+async function fetchVideoDetails(ids) {
+  const results = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const batch = ids.slice(i, i + 50);
+    updateStatus(`Fetching video details ${i+1}–${Math.min(i+50,ids.length)} of ${ids.length}…`);
+    setProgress((i / ids.length) * 100);
+    const res = await ytAjax('videos', {
+      part: 'snippet,statistics,contentDetails,status,recordingDetails,topicDetails,localizations',
+      id: batch.join(',')
+    });
+    if (res?.items) results.push(...res.items);
+  }
+  return results;
+}
+
+/* ── Resolve vanity URL via Worker ──────────────────────────────────────── */
+async function resolveVanity(originalUrl) {
+  if (!_workerBase) throw new Error('Worker URL required to resolve vanity/handle URLs.');
+  const res = await fetch(`${_workerBase}/resolveurl?url=${encodeURIComponent(originalUrl)}`);
+  if (!res.ok) throw new Error(`Resolve failed: HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data.channelId) throw new Error('Could not resolve channel ID from vanity URL.');
+  return data.channelId;
+}
+
+/* ── Main submit logic ──────────────────────────────────────────────────── */
+async function doSubmit() {
+  loadSettings();
+  if (!_apiKey) { alert('Please set your YouTube API key in the banner.'); return; }
+
+  const raw = document.getElementById('bulkInput').value.trim();
+  if (!raw) { alert('Please enter at least one URL or ID.'); return; }
+
+  const maxVids = parseInt(document.getElementById('maxVideos').value) || 0;
+  const inputs = splitInputs(raw);
+
+  // Reset state
+  allVideos = [];
+  allChannels = {};
+  allPlaylists = {};
+  unavailableVideos = [];
+  if (dt) { dt.destroy(); dt = null; }
+  document.getElementById('videoThead').innerHTML = '';
+  document.getElementById('videoTbody').innerHTML = '';
+  document.getElementById('tagCloud').innerHTML = '';
+  document.getElementById('geotagList').innerHTML = '';
+  document.getElementById('linkList').innerHTML = '';
+  document.getElementById('unavailList').innerHTML = '';
+  document.getElementById('otherStats').innerHTML = '';
+  document.getElementById('uploadChart').innerHTML = '';
+  document.getElementById('exportBtn').style.display = 'none';
+
+  document.getElementById('progressBar').style.display = '';
+  const btn = document.getElementById('submitBtn');
+  btn.classList.add('loading');
+
+  const allVideoIds = [];
+
+  try {
+    for (let i = 0; i < inputs.length; i++) {
+      const parsed = parseInput(inputs[i]);
+      updateStatus(`Processing input ${i+1}/${inputs.length}: ${parsed.type}`);
+
+      if (parsed.type === 'video_id') {
+        allVideoIds.push(parsed.value);
+      } else if (parsed.type === 'playlist_id') {
+        const ids = await getPlaylistVideos(parsed.value, maxVids);
+        allVideoIds.push(...ids);
+      } else if (parsed.type === 'channel_id') {
+        const ids = await getChannelUploads(parsed.value, maxVids);
+        allVideoIds.push(...ids);
+      } else if (parsed.type === 'channel_vanity') {
+        updateStatus(`Resolving channel URL: ${parsed.original}`);
+        const channelId = await resolveVanity(parsed.original);
+        const ids = await getChannelUploads(channelId, maxVids);
+        allVideoIds.push(...ids);
+      } else {
+        updateStatus(`Unknown input: ${inputs[i]}`);
+      }
+    }
+
+    // Deduplicate
+    const unique = [...new Set(allVideoIds)];
+    updateStatus(`Fetching details for ${unique.length} video(s)…`);
+
+    const videos = await fetchVideoDetails(unique);
+    allVideos = videos;
+
+    // Find any IDs that returned no data (deleted/private)
+    const foundIds = new Set(videos.map(v => v.id));
+    unique.forEach(id => { if (!foundIds.has(id) && !unavailableVideos.includes(id)) unavailableVideos.push(id); });
+
+    rebuildTable();
+    rebuildTags();
+    rebuildGeotags();
+    rebuildLinks();
+    rebuildHeatmap('all');
+    rebuildUnavail();
+    rebuildOther();
+
+    document.getElementById('exportBtn').style.display = '';
+    updateStatus(`Done — ${allVideos.length} video(s) loaded.`);
+    setProgress(100);
+
+    // Share link
+    const base = location.origin + location.pathname;
+    document.getElementById('shareLink').value = base + '?q=' + encodeURIComponent(raw.slice(0,300));
+    document.getElementById('shareLink').disabled = false;
+
+  } catch(e) {
+    updateStatus(`Error: ${e.message}`);
+    console.error(e);
+  }
+
+  btn.classList.remove('loading');
+}
+
+/* ── Export ZIP ─────────────────────────────────────────────────────────── */
+async function doExport() {
+  const btn = document.getElementById('exportBtn');
+  btn.classList.add('loading');
+  try {
+    const zip = new JSZip();
+    zip.file('about.txt', `Generated: ${new Date().toUTCString()}\nTool: YT Metadata Bulk\nURL: ${location.href}`);
+    if (allVideos.length) zip.file('videos.json', JSON.stringify(allVideos, null, 2));
+    if (Object.keys(allChannels).length) zip.file('channels.json', JSON.stringify(Object.values(allChannels), null, 2));
+    if (Object.keys(allPlaylists).length) zip.file('playlists.json', JSON.stringify(Object.values(allPlaylists), null, 2));
+    if (unavailableVideos.length) zip.file('unavailable.json', JSON.stringify(unavailableVideos, null, 2));
+
+    // CSV
+    const csvHeader = 'id,title,channel,published,duration,views,likes,comments\n';
+    const csvRows = allVideos.map(v => {
+      const s = v.snippet||{}, st = v.statistics||{}, cd = v.contentDetails||{};
+      return [v.id, `"${(s.title||'').replace(/"/g,'""')}"`, `"${(s.channelTitle||'').replace(/"/g,'""')}"`,
+        s.publishedAt||'', cd.duration||'', st.viewCount||'', st.likeCount||'', st.commentCount||''].join(',');
+    }).join('\n');
+    zip.file('videos.csv', csvHeader + csvRows);
+
+    const blob = await zip.generateAsync({ type:'blob' });
+    saveAs(blob, `yt-bulk-${Date.now()}.zip`);
+  } catch(e) { alert('Export failed: ' + e.message); }
+  btn.classList.remove('loading');
+}
+
+/* ── UI helpers ─────────────────────────────────────────────────────────── */
+function updateStatus(msg) {
+  document.getElementById('statusBar').textContent = msg;
+}
+function setProgress(pct) {
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+/* ── Theme & Settings ─────────────────────────────────────────────────────── */
+function applyTheme(dark) {
+  document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+  document.getElementById('darkMode').checked = dark;
+  try { localStorage.setItem('yt-meta-theme', dark ? 'dark' : 'light'); } catch(e){}
+}
+
+function initSettings() {
+  // Theme
+  let theme = 'dark';
+  try { theme = localStorage.getItem('yt-meta-theme') || 'dark'; } catch(e){}
+  applyTheme(theme === 'dark');
+  document.getElementById('darkMode').addEventListener('change', e => applyTheme(e.target.checked));
+
+  // API Key
+  const keyInput = document.getElementById('apiKeyInput');
+  const keyStatus = document.getElementById('apiKeyStatus');
+  function setKey(k) {
+    _apiKey = k || '';
+    keyStatus.textContent = k ? 'Key set ✓' : 'No key';
+    keyStatus.className = 'badge ' + (k ? 'bg-success' : 'bg-danger');
+    if (k) keyInput.value = k;
+    try { localStorage.setItem('yt-meta-api-key', k || ''); } catch(e){}
+  }
+  let sk = '';
+  try { sk = localStorage.getItem('yt-meta-api-key') || ''; } catch(e){}
+  if (sk) setKey(sk);
+  document.getElementById('saveApiKey').addEventListener('click', () => setKey(keyInput.value.trim()));
+  document.getElementById('toggleKeyVis').addEventListener('click', () => {
+    keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
+    document.querySelector('#toggleKeyVis i').className = keyInput.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+  });
+
+  // Worker
+  const workerInput = document.getElementById('workerUrlInput');
+  const workerStatus = document.getElementById('workerStatus');
+  function setWorker(url) {
+    _workerBase = url ? url.replace(/\/$/, '') : '';
+    workerStatus.innerHTML = url
+      ? `Worker: <strong class="text-info">${url}</strong>`
+      : 'Worker: <em>not set</em>';
+    if (url) workerInput.value = url;
+    try { localStorage.setItem('yt-meta-worker', url || ''); } catch(e){}
+  }
+  let sw = '';
+  try { sw = localStorage.getItem('yt-meta-worker') || ''; } catch(e){}
+  if (sw) setWorker(sw);
+  document.getElementById('saveWorker').addEventListener('click', () => setWorker(workerInput.value.trim()));
+  document.getElementById('clearWorker').addEventListener('click', () => { workerInput.value=''; setWorker(''); });
+}
+
+/* ── Boot ─────────────────────────────────────────────────────────────────── */
+$(function () {
+  initSettings();
+
+  // Select2 for columns
+  $('#columnSelector').select2({ placeholder: 'Choose columns…', width: '100%' });
+  activeColumns = $('#columnSelector').val() || activeColumns;
+  $('#columnSelector').on('change', function() {
+    activeColumns = $(this).val() || [];
+    if (allVideos.length) rebuildTable();
+  });
+
+  document.getElementById('submitBtn').addEventListener('click', doSubmit);
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    document.getElementById('bulkInput').value = '';
+  });
+  document.getElementById('exportBtn').addEventListener('click', doExport);
+
+  document.getElementById('freqYear').addEventListener('change', function() {
+    rebuildHeatmap(this.value);
+  });
+
+  document.getElementById('copyShare').addEventListener('click', () => {
+    const sl = document.getElementById('shareLink');
+    if (sl.value) navigator.clipboard.writeText(sl.value).catch(()=>{});
+  });
+
+  // Auto-submit from URL param
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('q')) {
+    document.getElementById('bulkInput').value = qs.get('q');
+    doSubmit();
+  }
+});
+</script>
+</body>
+</html>
