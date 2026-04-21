@@ -1093,9 +1093,11 @@ function esc(s) {
 
 async function filmotLookupSingle(videoId) {
   try {
-    const res = await fetch(`https://filmot.com/api/getvideos?id=${videoId}&key=none`, {
-      headers: { 'Accept': 'application/json' }
-    });
+    const target = `https://filmot.com/api/getvideos?id=${videoId}&key=none`;
+    const url = _workerBase 
+      ? `${_workerBase}/proxy?target=${encodeURIComponent(target)}` 
+      : target;
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
     if (!res.ok) return null;
     const data = await res.json();
     return Array.isArray(data) && data.length > 0 ? data[0] : null;
