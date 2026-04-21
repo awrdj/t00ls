@@ -1621,12 +1621,13 @@ const filmot = (function() {
 
     const target = 'https://filmot.com/api/getvideos?id=' + videoId + '&key=none';
     
-    // Fix CORS: Route through your Cloudflare worker if one is set in the UI
+    // FORCE proxy through your worker. Read it directly from the input box.
+    const workerInput = document.getElementById('workerUrlInput');
     let url = target;
-    if (typeof youtube !== 'undefined' && youtube.workerBase) {
-      url = youtube.workerBase + '/proxy?target=' + encodeURIComponent(target);
-    } else if (typeof workerBase !== 'undefined' && workerBase) {
-      url = workerBase + '/proxy?target=' + encodeURIComponent(target);
+    
+    if (workerInput && workerInput.value) {
+      const base = workerInput.value.replace(/\/$/, '');
+      url = base + '/proxy?target=' + encodeURIComponent(target);
     }
 
     try {
@@ -1635,15 +1636,13 @@ const filmot = (function() {
       const data = await res.json();
       const result = Array.isArray(data) && data.length > 0 ? data[0] : null;
       
-      // Save successful result so we don't ask Filmot again
       lookup.cache.set(videoId, result);
       return result;
     } catch(e) {
-      // Save failure so we don't infinitely retry and get blocked
       lookup.cache.set(videoId, null);
       return null;
     }
-  }
+}
 
   function render(data, videoId) {
     const sec = document.getElementById('filmot-section');
