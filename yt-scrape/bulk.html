@@ -54,7 +54,16 @@ footer{font-size:.78rem;color:#6c757d;text-align:center;padding:2rem 0;border-to
 [data-bs-theme="light"] .cdx-row{border-color:rgba(0,0,0,.06)}
 .cdx-ts{color:orange;font-family:monospace;white-space:nowrap;min-width:140px}
 .cdx-url{word-break:break-all;flex:1}
+/* ── Map ─────────────────────────────────────────── */
+#geotagMap { height: 400px; width: 100%; border-radius: 8px; z-index: 1; margin-top: 1rem; }
+.leaflet-popup-content { font-family: 'Inter', system-ui, sans-serif; font-size: .85rem; margin: 10px; }
+[data-bs-theme="dark"] .leaflet-container { background: #1a1f2e; }
+[data-bs-theme="dark"] .leaflet-layer,
+[data-bs-theme="dark"] .leaflet-control-zoom-in,
+[data-bs-theme="dark"] .leaflet-control-zoom-out,
+[data-bs-theme="dark"] .leaflet-control-attribution { filter: invert(1) hue-rotate(180deg) brightness(95%) contrast(90%); }
 </style>
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
 
@@ -215,7 +224,8 @@ footer{font-size:.78rem;color:#6c757d;text-align:center;padding:2rem 0;border-to
 <div class="container-fluid mb-3">
   <div class="section-card">
     <h5 class="mb-2"><i class="bi bi-geo-alt me-2 text-success"></i>Geotags <span id="geotagCount" class="badge bg-secondary">0</span></h5>
-    <div id="geotagList"></div>
+    <div id="geotagList" class="mb-2"></div>
+    <div id="geotagMap" style="display:none"></div>
   </div>
 </div>
 
@@ -323,6 +333,8 @@ footer{font-size:.78rem;color:#6c757d;text-align:center;padding:2rem 0;border-to
 <script src="//cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/apexcharts@3.45.2/dist/apexcharts.min.js"></script>
+
+<script src="//cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 /* ════════════════════════════════════════════════════════════════════════════
@@ -501,18 +513,82 @@ function rebuildTags() {
 }
 
 /* ── Geotag aggregation ──────────────────────────────────────────────────── */
+let leafletMap = null;
+let mapMarkers = [];
+
 function rebuildGeotags() {
   const counts = {};
+  const locations = [];
+
   allVideos.forEach(v => {
-    const loc = v.recordingDetails?.locationDescription;
-    if (loc) counts[loc] = (counts[loc]||0) + 1;
+    const locDesc = v.recordingDetails?.locationDescription;
+    const loc = v.recordingDetails?.location;
+    if (locDesc) {
+      counts[locDesc] = (counts[locDesc] || 0) + 1;
+    }
+    if (loc && loc.latitude && loc.longitude) {
+      locations.push({
+        lat: loc.latitude,
+        lng: loc.longitude,
+        title: v.snippet?.title || v.id,
+        id: v.id,
+        desc: locDesc || 'Unknown location'
+      });
+    }
   });
+
   const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
   const el = document.getElementById('geotagList');
+  const mapEl = document.getElementById('geotagMap');
+  
   document.getElementById('geotagCount').textContent = sorted.length;
+  
   el.innerHTML = sorted.length
     ? `<ul class="list-unstyled mb-0">${sorted.map(([g,n]) => `<li class="geotag-item"><span class="text-success">${esc(g)}</span> — ${n} video${n>1?'s':''}</li>`).join('')}</ul>`
     : '<span class="text-muted small">No geotags found.</span>';
+
+  // Build the Map
+  if (locations.length > 0) {
+    mapEl.style.display = 'block';
+    
+    // Initialize map once
+    if (!leafletMap) {
+      leafletMap = L.map('geotagMap').setView([0, 0], 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 18
+      }).addTo(leafletMap);
+    }
+
+    // Clear old markers
+    mapMarkers.forEach(m => leafletMap.removeLayer(m));
+    mapMarkers = [];
+
+    // Add new markers
+    const bounds = L.latLngBounds();
+    locations.forEach(l => {
+      const marker = L.marker([l.lat, l.lng]).addTo(leafletMap);
+      marker.bindPopup(`
+        <strong>${esc(l.desc)}</strong><br>
+        <a href="https://youtu.be/${l.id}" target="_blank">${esc(l.title)}</a>
+      `);
+      mapMarkers.push(marker);
+      bounds.extend([l.lat, l.lng]);
+    });
+
+    // Fit map to markers
+    setTimeout(() => {
+      leafletMap.invalidateSize();
+      if (locations.length === 1) {
+        leafletMap.setView([locations[0].lat, locations[0].lng], 12);
+      } else {
+        leafletMap.fitBounds(bounds, { padding: [30, 30] });
+      }
+    }, 100);
+
+  } else {
+    mapEl.style.display = 'none';
+  }
 }
 
 /* ── Link aggregation ────────────────────────────────────────────────────── */
