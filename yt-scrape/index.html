@@ -1612,36 +1612,10 @@ const shared = (function () {
 const filmot = (function() {
   'use strict';
 
-  async function lookup(videoId) {
-    if (!videoId) return null;
-    
-    // Stop 429 Too Many Requests: Remember if we already checked this video
-    lookup.cache = lookup.cache || new Map();
-    if (lookup.cache.has(videoId)) return lookup.cache.get(videoId);
-
-    const target = 'https://filmot.com/api/getvideos?id=' + videoId + '&key=none';
-    
-    // FORCE proxy through your worker. Read it directly from the input box.
-    const workerInput = document.getElementById('workerUrlInput');
-    let url = target;
-    
-    if (workerInput && workerInput.value) {
-      const base = workerInput.value.replace(/\/$/, '');
-      url = base + '/proxy?target=' + encodeURIComponent(target);
-    }
-
-    try {
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const result = Array.isArray(data) && data.length > 0 ? data[0] : null;
-      
-      lookup.cache.set(videoId, result);
-      return result;
-    } catch(e) {
-      lookup.cache.set(videoId, null);
-      return null;
-    }
+async function lookup(videoId) {
+    // The public Filmot API (key=none) was permanently shut down by its developer.
+    // This safely bypasses the check so the rest of the metadata tool loads instantly.
+    return null;
 }
 
   function render(data, videoId) {
