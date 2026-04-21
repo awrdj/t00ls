@@ -1595,12 +1595,12 @@ const shared = (function () {
 const filmot = (function() {
   'use strict';
 
-   async function lookup(videoId) {
+  async function lookup(videoId) {
     if (!videoId) return null;
-    // Route through worker proxy to bypass CORS
     const target = `https://filmot.com/api/getvideos?id=${videoId}&key=none`;
-    const url = _workerBase 
-      ? `${_workerBase}/proxy?target=${encodeURIComponent(target)}` 
+    // index.html uses youtube._workerBase instead of global _workerBase
+    const url = (typeof youtube !== 'undefined' && youtube._workerBase)
+      ? `${youtube._workerBase}/proxy?target=${encodeURIComponent(target)}` 
       : target;
     try {
       const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
