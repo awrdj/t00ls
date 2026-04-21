@@ -12,8 +12,8 @@
 <link href="//cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link id="hljs-theme" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/stackoverflow-dark.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF0000'/><polygon points='38,28 38,72 72,50' fill='white'/></svg>">
-<style>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF0000'/><polygon points='38,28 38,72 72,50' fill='white'/></svg>">
+  <style>
 *,*::before,*::after{box-sizing:border-box}
 body{font-family:'Inter',system-ui,sans-serif;font-size:.9rem;-webkit-font-smoothing:antialiased;font-weight:350!important;background-repeat:repeat}
 a[href]{text-decoration:none}
@@ -1232,10 +1232,12 @@ const shared = (function () {
     }
 
     async function fetchTranscript(videoId, lang) {
-        const base = transcriptApiBase();
-        if (!base) throw new Error('Transcript API not configured. Set it in the banner above.');
-        const url = `${base}/api/transcript?videoId=${encodeURIComponent(videoId)}&languages=${encodeURIComponent(lang)}`;
-        const res = await fetch(url);
+    const base = transcriptApiBase();
+    if (!base) throw new Error('Transcript API not configured. Set it in the banner above.');
+    // Send empty string for Auto-generated so worker picks the 'asr' track
+    const langValue = (lang === 'Auto-generated') ? '' : (lang || '');
+    const url = `${base}/api/transcript?videoId=${encodeURIComponent(videoId)}&languages=${encodeURIComponent(langValue)}`;
+    const res = await fetch(url);
         if (!res.ok) {
             let msg = `HTTP ${res.status}`;
             try { const d = await res.json(); msg = d.error || msg; } catch (e) {}
