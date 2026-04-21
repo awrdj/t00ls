@@ -97,7 +97,16 @@ html[data-bs-theme='dark'] .progress-bar.error{background-color:#ca6f1e}
 /* ── Filmot ──────────────────────────────────────── */
 .filmot-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.75rem;margin-bottom:.5rem}
 [data-bs-theme="light"] .filmot-card{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.08)}
+
+#videoMap { height: 300px; width: 100%; border-radius: 8px; z-index: 1; margin-top: 1rem; }
+.leaflet-popup-content { font-family: 'Inter', system-ui, sans-serif; font-size: .85rem; margin: 10px; }
+[data-bs-theme="dark"] .leaflet-container { background: #1a1f2e; }
+[data-bs-theme="dark"] .leaflet-layer,
+[data-bs-theme="dark"] .leaflet-control-zoom-in,
+[data-bs-theme="dark"] .leaflet-control-zoom-out,
+[data-bs-theme="dark"] .leaflet-control-attribution { filter: invert(1) hue-rotate(180deg) brightness(95%) contrast(90%); }
 </style>
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
 
@@ -401,6 +410,8 @@ html[data-bs-theme='dark'] .progress-bar.error{background-color:#ca6f1e}
 <script src="//cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/jszip-utils@0.1.0/dist/jszip-utils.min.js"></script>
+
+<script src="//cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 /* ── iso639 / bcp47 translators (abbreviated – full list kept intact) ─────── */
@@ -859,12 +870,37 @@ const shared = (function () {
         },
         recordingDetails: {
             title: 'Recording Details',
-            postProcess: function (partJson) {
+            postProcess: function (partJson, fullJson) {
                 const partDiv = $('<div class="part-section"></div>');
                 $('#video-section').append(addSectionHeader('recordingDetails', 'Recording Details', 'geo-alt-fill'));
                 $('#video-section').append(partDiv);
+                
+                // Text details
                 for (const key in partJson) {
+                    if (key === 'location') continue; // Handled separately below
                     partDiv.append(`<p class="mb-15"><span class="orange">${escHtml(key)}</span>: ${escHtml(String(partJson[key]))}</p>`);
+                }
+
+                // Map
+                if (partJson.location && partJson.location.latitude && partJson.location.longitude) {
+                    const lat = partJson.location.latitude;
+                    const lng = partJson.location.longitude;
+                    const locDesc = partJson.locationDescription || 'Video Location';
+                    
+                    partDiv.append(`<p class="mb-15"><span class="orange">Coordinates</span>: ${lat}, ${lng}</p>`);
+                    partDiv.append('<div id="videoMap"></div>');
+                    
+                    // Initialize Leaflet slightly delayed so the div has dimensions
+                    setTimeout(() => {
+                        const map = L.map('videoMap').setView([lat, lng], 12);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap contributors'
+                        }).addTo(map);
+                        
+                        L.marker([lat, lng]).addTo(map)
+                            .bindPopup(`<strong>${escHtml(locDesc)}</strong>`)
+                            .openPopup();
+                    }, 200);
                 }
             }
         }
