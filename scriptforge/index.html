@@ -85,16 +85,29 @@
         <!-- The View Toggle -->
         <div class="flex bg-slate-900 rounded-full p-1 border border-slate-700 shadow-inner">
             <button id="nav-v1" class="px-6 py-1.5 rounded-full text-sm font-semibold transition-all bg-blue-600 text-white shadow">
-                ✍️ Script Engine
+                ✍️ Script Writer
             </button>
             <button id="nav-v2" class="px-6 py-1.5 rounded-full text-sm font-semibold transition-all text-slate-400 hover:text-white">
                 🎬 B-Roll Director
             </button>
+            <button id="nav-v3" class="px-6 py-1.5 rounded-full text-sm font-semibold transition-all text-slate-400 hover:text-white">
+                📦 SEO Packager
+            </button>
         </div>
 
-        <button id="btn-settings" class="text-slate-400 hover:text-white transition-colors p-2" title="API Settings">
-            <i data-lucide="settings" class="w-5 h-5"></i>
-        </button>
+        <div class="flex items-center gap-2">
+            <button id="btn-new-project-header" class="text-slate-400 hover:text-white transition-colors p-2 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full px-4 shadow" title="New Project / Clear Workspace">
+                <i data-lucide="plus" class="w-4 h-4 text-blue-400"></i>
+                <span class="text-[0.65rem] font-semibold uppercase tracking-wider">New</span>
+            </button>
+            <button id="btn-projects" class="text-slate-400 hover:text-white transition-colors p-2 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full px-4 shadow" title="Projects Manager">
+                <i data-lucide="folder-open" class="w-4 h-4 text-amber-400"></i>
+                <span class="text-[0.65rem] font-semibold uppercase tracking-wider">Projects</span>
+            </button>
+            <button id="btn-settings" class="text-slate-400 hover:text-white transition-colors p-2" title="API Settings">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+            </button>
+        </div>
     </header>
 
     <!-- ========================================== -->
@@ -164,7 +177,7 @@
             <!-- Transcript Input -->
             <div class="p-6 border-b border-slate-700 flex-1 flex flex-col">
                 <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-4">
-                    <i data-lucide="file-text" class="w-4 h-4"></i> Interview Transcript
+                    <i data-lucide="file-text" class="w-4 h-4"></i> Idea Transcript
                 </h2>
                 <textarea id="transcript-content" placeholder="Paste the raw interview transcript here. E.g. Dr. Jeffrey Sachs..." class="w-full flex-1 bg-slate-800 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-none"></textarea>
             </div>
@@ -196,6 +209,18 @@
                         <option value="standard">Standard (Fast - Word Count Enforcer)</option>
                         <option value="chunking" selected>Deep Dive (Auto-Chunking - Maximum Length)</option>
                     </select>
+                </div>
+
+                <!-- NEW: Deep Research Toggle -->
+                <div class="mb-6 flex items-center justify-between bg-slate-900/50 p-3 rounded border border-slate-700">
+                    <div>
+                        <label class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2"><i data-lucide="globe" class="w-4 h-4 text-blue-400"></i> Deep Research</label>
+                        <p class="text-[10px] text-slate-500 mt-1">Uses Web Search to expand transcript facts.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="deep-research-toggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
                 </div>
 
                 <button id="btn-generate" class="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-4 font-bold text-lg tracking-wide transition-all shadow-lg flex items-center justify-center gap-3">
@@ -258,6 +283,18 @@
                 <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-4">
                     <i data-lucide="file-check" class="w-4 h-4"></i> Final Approved Script
                 </h2>
+                
+                <!-- Smart Auto-Format Banner -->
+                <div id="v2-format-banner" class="hidden mb-3 bg-blue-900/40 border border-blue-500/50 rounded-lg p-3 flex flex-col gap-2 shadow-inner">
+                    <div class="flex items-start gap-2 text-blue-300 text-xs">
+                        <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                        <p><strong>Long paragraphs detected!</strong> CapCut chunking requires short blocks (separated by double line breaks) to pace visuals correctly.</p>
+                    </div>
+                    <button id="btn-auto-format" class="self-end bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors shadow flex items-center gap-2">
+                        <i data-lucide="wand-2" class="w-3 h-3"></i> Auto-Format with AI
+                    </button>
+                </div>
+
                 <textarea id="v2-script" placeholder="Paste the final text script here to generate the visual timeline..." class="w-full flex-1 bg-slate-800 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors resize-none"></textarea>
             </div>
 
@@ -291,6 +328,14 @@
 
             <!-- Image Generation Settings -->
             <div class="p-6 bg-slate-800/50">
+                <div class="mb-6">
+                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">Director Mode</h2>
+                    <select id="v2-director-mode" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+                        <option value="smart" selected>Smart Director (Mix of A-Roll & B-Roll)</option>
+                        <option value="full">Full Coverage (Wall-to-Wall B-Roll)</option>
+                    </select>
+                </div>
+
                 <div class="mb-6">
                     <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">Image Aspect Ratio</h2>
                     <select id="v2-image-aspect-ratio" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
@@ -338,7 +383,22 @@
                 </div>
 
                 <!-- Bulk Exports -->
-                <div class="pt-8 border-t border-slate-700 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="pt-8 border-t border-slate-700">
+                    <!-- Master Shot List Box -->
+                    <div class="bg-slate-800/50 rounded-lg border border-slate-700 p-4 flex flex-col">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="clipboard-list"></i> Master Shot List
+                            </h3>
+                            <button onclick="copyToClipboard(document.getElementById('v2-bulk-master').value, 'Master Shot List')" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy All
+                            </button>
+                        </div>
+                        <textarea id="v2-bulk-master" readonly class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-300 font-mono resize-none focus:outline-none min-h-[150px]"></textarea>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     
                     <!-- Image Prompts -->
                     <div class="bg-slate-800/50 rounded-lg border border-slate-700 p-4 flex flex-col">
@@ -372,6 +432,187 @@
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- VIEW 3: THE PACKAGER (SEO & Thumbnails)    -->
+    <!-- ========================================== -->
+    <div id="view-3" class="view-section flex-1 overflow-hidden bg-[#0f172a]">
+        
+        <!-- Left Panel: Inputs -->
+        <div class="w-1/3 min-w-[400px] glass-panel border-r border-slate-700 flex flex-col overflow-y-auto z-10 shadow-xl">
+            
+            <div class="p-6 border-b border-slate-700 flex flex-col h-1/3 min-h-[200px]">
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-3">
+                    <i data-lucide="file-check" class="w-4 h-4 text-emerald-400"></i> 1. Final Script (Auto-Synced)
+                </h2>
+                <textarea id="v3-script" class="w-full flex-1 bg-slate-800 border border-slate-600 rounded p-3 text-xs text-slate-400 focus:outline-none focus:border-purple-500 transition-colors resize-none" placeholder="Your final script from View 2 will appear here, or you can paste one directly..."></textarea>
+            </div>
+
+            <div class="p-6 border-b border-slate-700">
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-3">
+                    <i data-lucide="search" class="w-4 h-4 text-purple-400"></i> 2. Competitor DNA
+                </h2>
+                <textarea id="v3-comp-titles" rows="3" placeholder="Paste 3 to 5 viral competitor TITLES here (one per line)..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-none mb-3"></textarea>
+                <textarea id="v3-comp-desc" rows="3" placeholder="Paste a competitor's DESCRIPTION here to map their formatting and keyword layout..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-none mb-3"></textarea>
+                
+                <div class="bg-slate-900 border border-slate-600 rounded p-3">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2 flex items-center gap-2"><i data-lucide="image" class="w-3 h-3"></i> Competitor Thumbnail</label>
+                    <input type="file" id="v3-comp-thumb" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-900/30 file:text-purple-400 hover:file:bg-purple-900/50 transition-colors">
+                    <p class="text-[10px] text-slate-500 mt-2">Gemini Vision will reverse-engineer this image to steal its psychological composition.</p>
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-800/50">
+                <button id="btn-generate-packager" class="w-full bg-purple-600 hover:bg-purple-500 text-white rounded-lg py-4 font-bold text-lg tracking-wide transition-all shadow-lg flex items-center justify-center gap-3">
+                    <i data-lucide="package" class="w-5 h-5"></i>
+                    <span>GENERATE METADATA</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Panel: Output -->
+        <div class="flex-1 overflow-y-auto p-8 relative flex flex-col" id="v3-output-container">
+            <!-- V3 Empty State -->
+            <div id="v3-empty-state" class="flex-1 flex flex-col items-center justify-center text-slate-500 opacity-70">
+                <i data-lucide="package-open" class="w-24 h-24 mb-6 text-slate-600"></i>
+                <h2 class="text-2xl font-bold text-slate-400 mb-2">The Packager is Empty</h2>
+                <p class="text-sm max-w-md text-center">Paste your competitor references and generate the ultimate upload package.</p>
+            </div>
+
+            <!-- V3 Loading State -->
+            <div id="v3-loading-state" class="hidden flex-1 flex flex-col items-center justify-center text-purple-400">
+                <div class="loader mb-6 !w-12 !h-12 !border-4 !border-t-purple-500"></div>
+                <h2 id="v3-loading-text" class="text-xl font-bold mb-2 animate-pulse">Analyzing Psychology...</h2>
+            </div>
+
+            <!-- V3 Results State -->
+            <div id="v3-results-state" class="hidden max-w-5xl mx-auto w-full pb-10 flex flex-col gap-8">
+                
+                <!-- Thumbnail Box (Top, Wide) -->
+                <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-4 border-b border-slate-700 pb-2">
+                        <i data-lucide="image" class="text-emerald-400"></i> Thumbnail Engine
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-3">Extracted from competitor psychology and adapted to your script.</p>
+                    <textarea id="v3-out-thumb-prompt" class="w-full min-h-[100px] bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none focus:border-emerald-500 mb-4 transition-colors"></textarea>
+                    
+                    <button id="btn-v3-gen-thumb" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded py-3 font-bold text-sm tracking-wide transition-all shadow flex items-center justify-center gap-2">
+                        <i data-lucide="wand-2" class="w-4 h-4"></i> Generate with Nano Banana 🍌
+                    </button>
+
+                    <div id="v3-thumb-preview" class="mt-4 hidden rounded overflow-hidden border border-slate-700 w-full min-h-[200px] bg-slate-900 flex items-center justify-center"></div>
+                </div>
+
+                <!-- Titles Box (Middle, Dynamic Split) -->
+                <div id="v3-titles-wrapper" class="grid grid-cols-1 gap-8">
+                    <!-- Formula Titles (Auto-synced from V1, hidden if none) -->
+                    <div id="v3-formula-titles-box" class="hidden bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex-col">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-4 border-b border-slate-700 pb-2">
+                            <i data-lucide="dna" class="text-blue-400"></i> Formula Titles (From View 1)
+                        </h3>
+                        <div id="v3-formula-titles-list" class="flex flex-col gap-3"></div>
+                    </div>
+
+                    <!-- Engineered Titles (Generated in V3) -->
+                    <div id="v3-engineered-titles-box" class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-4 border-b border-slate-700 pb-2">
+                            <i data-lucide="flame" class="text-orange-400"></i> Viral Engineered Titles
+                        </h3>
+                        <div id="v3-out-titles" class="flex flex-col gap-3"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <!-- Description Box (Bottom Left) -->
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col">
+                        <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                            <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="align-left" class="text-blue-400"></i> YouTube Description
+                            </h3>
+                            <button onclick="copyToClipboard(document.getElementById('v3-out-desc').value, 'Description')" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                            </button>
+                        </div>
+                        <textarea id="v3-out-desc" class="w-full flex-1 min-h-[400px] bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none resize-none" readonly></textarea>
+                    </div>
+
+                    <!-- Hashtags Box (Bottom Right) -->
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col">
+                        <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                            <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="hash" class="text-pink-400"></i> Optimized Hashtags
+                            </h3>
+                            <button onclick="copyToClipboard(document.getElementById('v3-out-hashtags').value, 'Hashtags')" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                            </button>
+                        </div>
+                        <textarea id="v3-out-hashtags" class="w-full flex-1 bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none resize-none min-h-[150px] xl:min-h-[400px]" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Modal -->
+    <div id="projects-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6 shrink-0 border-b border-slate-700 pb-4">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i data-lucide="folder-open" class="w-6 h-6 text-amber-400"></i> Projects Manager
+                </h2>
+                <button id="btn-close-projects" class="text-slate-400 hover:text-white bg-slate-900 rounded p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <!-- Content -->
+            <div class="flex gap-8 overflow-hidden flex-1">
+                
+                <!-- Left Column: Saved Projects List -->
+                <div class="w-1/2 flex flex-col border-r border-slate-700 pr-6">
+                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <i data-lucide="archive" class="w-4 h-4"></i> Your Archive
+                    </h3>
+                    <div id="projects-list" class="overflow-y-auto flex-1 space-y-3 pr-2 custom-scrollbar">
+                        <!-- Dynamic Project Items will populate here via JS -->
+                        <div class="text-center p-8 text-slate-500 italic border border-dashed border-slate-700 rounded-lg">
+                            No projects saved yet.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Save Actions & Current Status -->
+                <div class="w-1/2 flex flex-col pl-2">
+                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i> Save Workspace
+                    </h3>
+                    
+                    <div class="flex flex-col gap-3 mb-6 bg-slate-900/50 p-5 rounded-lg border border-slate-700 shadow-inner">
+                        <label class="text-xs text-slate-400 font-medium">Save current state as a brand new project:</label>
+                        <input type="text" id="new-project-name" placeholder="e.g., Tesla Stock Analysis Pt 2..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors">
+                        <button id="btn-save-new-project" class="w-full bg-amber-600 hover:bg-amber-500 text-white rounded-lg py-3 text-sm font-bold transition-all shadow flex items-center justify-center gap-2 mt-2">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i> Create New Project
+                        </button>
+                    </div>
+                    
+                    <!-- Active Project Status -->
+                    <div id="active-project-banner" class="hidden bg-slate-900 border border-emerald-900/50 p-5 rounded-lg shadow-inner flex flex-col justify-center flex-1 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl"></div>
+                        <h4 class="text-xs text-emerald-400 uppercase tracking-widest font-bold mb-2 flex items-center gap-2">
+                            <i data-lucide="radio" class="w-4 h-4 animate-pulse"></i> Currently Active
+                        </h4>
+                        <p id="active-project-name" class="text-xl font-bold text-white truncate mb-2">Project Name Here</p>
+                        <p class="text-xs text-slate-400 flex items-center gap-1">
+                            <i data-lucide="refresh-cw" class="w-3 h-3 text-emerald-500"></i> Auto-saving as you type...
+                        </p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
     <!-- Settings Modal -->
     <div id="settings-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
@@ -398,6 +639,13 @@
         <i data-lucide="eye" id="icon-api-key-visibility" class="w-4 h-4"></i>
     </button>
 </div>
+                </div>
+
+                <!-- API Rate Limit / Cooldown -->
+                <div class="border-t border-slate-700 pt-6 mt-6">
+                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="timer" class="w-4 h-4 text-orange-400"></i> API Cooldown (Rate Limiting)</h3>
+                    <p class="text-xs text-slate-400 mb-2">Set the delay (in milliseconds) between API requests during "Deep Dive" mode. Increase this if you get quota errors on shorter videos.</p>
+                    <input type="number" id="api-cooldown-input" min="0" step="500" placeholder="4000" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors">
                 </div>
 
                 <!-- Model Configuration Section -->
@@ -482,6 +730,16 @@
                         <p class="text-[10px] text-slate-500 mb-2 font-mono">Variables: None</p>
                         <textarea id="prompt-broll" rows="6" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-xs text-slate-300 font-mono resize-y focus:outline-none focus:border-emerald-500"></textarea>
                     </div>
+
+                    <!-- Prompt: Packager -->
+                    <div class="mb-2 bg-slate-900/50 p-4 rounded border border-slate-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-bold text-purple-400">View 3: The Packager</label>
+                            <button onclick="restorePrompt('packager')" class="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"><i data-lucide="rotate-ccw" class="w-3 h-3"></i> Restore Default</button>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mb-2 font-mono">Variables: None</p>
+                        <textarea id="prompt-packager" rows="6" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-xs text-slate-300 font-mono resize-y focus:outline-none focus:border-purple-500"></textarea>
+                    </div>
                 </div>
             </div>
 
@@ -507,10 +765,18 @@
         // --- State ---
         let appFormulas = [];
         let appChannels = [];
+        let appProjects = []; // NEW: Stores all projects
+        let activeProjectId = null; // NEW: Tracks what you are currently editing
+        let editingProjectId = null; // NEW: Tracks which project is being renamed
+        let deletingProjectId = null; // NEW: Tracks which project is awaiting delete confirmation
+        let autoSaveTimeout = null; // NEW: Controls the 3-second delay
+        let resetConfirmationTimeout = null; // NEW: Controls the "Double-Tap" New button
+        let view1Titles = []; // Stores V1 titles to mirror into V3
         // Instant load backup to prevent "lost data" race conditions on refresh
         let appSettings = { 
             id: 'main', 
             apiKey: localStorage.getItem('fast_cache_api') || '', 
+            cooldown: parseInt(localStorage.getItem('fast_cache_cooldown') || '4000', 10),
             prompts: JSON.parse(localStorage.getItem('fast_cache_prompts') || 'null'),
             models: JSON.parse(localStorage.getItem('fast_cache_models') || '{"text":"gemini-2.5-flash-preview-09-2025", "image":"gemini-2.5-flash-image-preview"}')
         };
@@ -548,11 +814,16 @@
                         appChannels = snapshot.docs.map(doc => doc.data());
                         updateChannelDropdown();
                     });
+                    onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'projects'), (snapshot) => {
+                        appProjects = snapshot.docs.map(doc => doc.data());
+                        if (typeof updateProjectsList === 'function') updateProjectsList();
+                    });
                     onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'main'), (snapshot) => {
                         if (snapshot.exists()) {
                             appSettings = snapshot.data();
                             // Keep the fast-cache synced with the permanent database
                             localStorage.setItem('fast_cache_api', appSettings.apiKey || '');
+                            localStorage.setItem('fast_cache_cooldown', appSettings.cooldown || '4000');
                             if (appSettings.prompts) localStorage.setItem('fast_cache_prompts', JSON.stringify(appSettings.prompts));
                             if (appSettings.models) localStorage.setItem('fast_cache_models', JSON.stringify(appSettings.models));
                         }
@@ -599,6 +870,7 @@
             btnSaveChannel: document.getElementById('btn-save-channel'),
             btnDeleteChannel: document.getElementById('btn-delete-channel'),
             generationMode: document.getElementById('generation-mode'),
+            deepResearchToggle: document.getElementById('deep-research-toggle'),
 
             transcriptContent: document.getElementById('transcript-content'),
             scriptLength: document.getElementById('script-length'),
@@ -616,6 +888,8 @@
 
             // View 2
             v2Script: document.getElementById('v2-script'),
+            v2FormatBanner: document.getElementById('v2-format-banner'),
+            btnAutoFormat: document.getElementById('btn-auto-format'),
             v2Min: document.getElementById('v2-min'),
             v2Sec: document.getElementById('v2-sec'),
             v2StatWords: document.getElementById('v2-stat-words'),
@@ -630,12 +904,47 @@
             v2BulkVid: document.getElementById('v2-bulk-vid'),
             v2CountImg: document.getElementById('v2-count-img'),
             v2CountVid: document.getElementById('v2-count-vid'),
+            v2DirectorMode: document.getElementById('v2-director-mode'),
+
+            // View 3
+            navV3: document.getElementById('nav-v3'),
+            view3: document.getElementById('view-3'),
+            v3Script: document.getElementById('v3-script'),
+            v3CompTitles: document.getElementById('v3-comp-titles'),
+            v3CompDesc: document.getElementById('v3-comp-desc'),
+            v3CompThumb: document.getElementById('v3-comp-thumb'),
+            btnGeneratePackager: document.getElementById('btn-generate-packager'),
+            v3EmptyState: document.getElementById('v3-empty-state'),
+            v3LoadingState: document.getElementById('v3-loading-state'),
+            v3LoadingText: document.getElementById('v3-loading-text'),
+            v3ResultsState: document.getElementById('v3-results-state'),
+            v3TitlesWrapper: document.getElementById('v3-titles-wrapper'),
+            v3FormulaTitlesBox: document.getElementById('v3-formula-titles-box'),
+            v3FormulaTitlesList: document.getElementById('v3-formula-titles-list'),
+            v3OutTitles: document.getElementById('v3-out-titles'),
+            v3OutDesc: document.getElementById('v3-out-desc'),
+            v3OutThumbPrompt: document.getElementById('v3-out-thumb-prompt'),
+            v3OutHashtags: document.getElementById('v3-out-hashtags'),
+            btnV3GenThumb: document.getElementById('btn-v3-gen-thumb'),
+            v3ThumbPreview: document.getElementById('v3-thumb-preview'),
+
+            // Projects
+            btnNewProjectHeader: document.getElementById('btn-new-project-header'),
+            btnProjects: document.getElementById('btn-projects'),
+            projectsModal: document.getElementById('projects-modal'),
+            btnCloseProjects: document.getElementById('btn-close-projects'),
+            projectsList: document.getElementById('projects-list'),
+            newProjectName: document.getElementById('new-project-name'),
+            btnSaveNewProject: document.getElementById('btn-save-new-project'),
+            activeProjectBanner: document.getElementById('active-project-banner'),
+            activeProjectName: document.getElementById('active-project-name'),
 
             // Settings
             btnSettings: document.getElementById('btn-settings'),
             settingsModal: document.getElementById('settings-modal'),
             btnCloseSettings: document.getElementById('btn-close-settings'),
             apiKeyInput: document.getElementById('api-key-input'),
+            apiCooldownInput: document.getElementById('api-cooldown-input'),
             btnToggleApiKey: document.getElementById('btn-toggle-api-key'),
             iconApiKeyVisibility: document.getElementById('icon-api-key-visibility'),
             btnSaveSettings: document.getElementById('btn-save-settings'),
@@ -647,10 +956,11 @@
 
         // --- System Prompts Engine ---
         const DEFAULT_PROMPTS = {
-            standard: `You are an elite YouTube Scriptwriter. Identity Rule: This script is for a channel named "{{CHANNEL_NAME}}". Strictly apply the STYLE, TONE, and FORMATTING of the Channel Formula. \n\nCRITICAL FIREWALL RULE: The Formula may contain generic examples of hooks, topics, or names. DO NOT copy facts, specific names, or example hooks directly from the Formula. ALL facts, quotes, subjects, and adapted hooks MUST be drawn entirely from the provided Transcript.\n\nTARGET LENGTH: EXACTLY {{TARGET_WORDS}} words. {{PACING_INSTRUCTION}} Pace the script to hit this word count.\nRULE: Output strictly the narrative text. DO NOT write B-roll descriptions or visual markers.`,
-            outline: `You are the Lead Architect for the YouTube channel "{{CHANNEL_NAME}}". Break this transcript down into exactly {{NUM_CHAPTERS}} sequential chapters for a {{MINUTES}}-minute video using the STRUCTURE and TONE of the Channel Formula. \n\nCRITICAL: Do not use example topics or names from the Formula. Base the outline entirely on the factual information in the Transcript. Ensure the focus for each chapter is clear. Also provide 3 distinct potential titles.`,
-            chapter: `You are writing Chapter {{CURRENT_CHAPTER}} of {{TOTAL_CHAPTERS}} for the YouTube channel "{{CHANNEL_NAME}}". \nStrict Rules: \n- Apply the tone of the Channel Formula, but DO NOT copy example facts, names, or example hooks from the Formula. Rely 100% on the Transcript for information.\n- ONLY write the narrative text for this specific chapter. DO NOT write B-roll descriptions or visual markers.\n- TARGET LENGTH: EXACTLY {{WORDS_PER_CHAPTER}} words for this chapter. {{PACING_INSTRUCTION}} \n{{HOOK_INSTRUCTION}} (If writing a hook, adapt it to the Transcript's facts. Do not copy formula examples literally.)\n{{OUTRO_INSTRUCTION}}`,
-            broll: `Role: You are an elite Geopolitical News Producer and AI B-Roll Director. Your job is to take a user's script and generate highly realistic, physically accurate image and video prompts for military and political news b-roll.\n\nCore Rules for Visuals:\n1. Journalistic & Military Realism: All prompts must dictate authentic, documentary-style footage (e.g., press briefings, satellite imagery, tactical troop movements, diplomatic summits). For videos, include camera styles typical of news media (e.g., telephoto zoom, drone reconnaissance shot, handheld combat camera).\n2. Ban on Hollywood Buzzwords & Tropes: DO NOT use words like "cinematic", "epic", "blockbuster", or "movie-like". Absolutely no sci-fi weapons or impossible physics. Instead, force realism by using terms like "raw footage", "C-SPAN style", "AP news broadcast", "archival footage", or "documentary realism".\n3. Direct Subject References: Use the exact names of politicians, generals, military assets, and contested locations mentioned in the script (e.g., F-35 fighter jet, Pentagon briefing room, Strait of Taiwan, Vladimir Putin).\n4. PACING & DENSITY: You must generate a steady stream of B-roll. Aim for at least one visual asset per paragraph, or roughly every 20 to 30 seconds of spoken dialogue. Generate B-roll markers to introduce new subjects, emphasize key statistics, cover geographical shifts, or simply maintain viewer retention during long explanations. Do not leave long, multi-minute gaps without visuals.\n\nOutput strictly in the defined JSON schema. Do not calculate timecodes or format into lists; the frontend engine will handle all math and text extraction automatically.`
+            standard: `You are an elite YouTube Scriptwriter performing a perfect STYLE TRANSFER for the channel "{{CHANNEL_NAME}}".\n\nCRITICAL DIRECTIVE: You will receive two inputs enclosed in XML tags.\n1. <STYLE_GUIDE>: Extract ONLY the tone, pacing, structural beats, and emotional hooks from this. IGNORE all specific names, dates, and events mentioned here—they are just examples.\n2. <SOURCE_MATERIAL>: This is your ONLY source of truth. Every name, location, statistic, and core event in the final script MUST originate from here.\n\n- THE NARRATOR RULE: YOU are writing for a SOLO NARRATOR speaking directly to the camera/audience for "{{CHANNEL_NAME}}". Adapt the vibe of the style guide to a direct-to-camera format. DO NOT use the original channel name from the STYLE_GUIDE.\n\n- STORYBOARD BLOCK RULE: You MUST output the script as short "Storyboard Blocks". Every single distinct sentence, concept, or phrase MUST be its own block (separated by double line breaks). Do NOT write long paragraphs. This is for a CapCut 1:1 integration.\n\nTARGET LENGTH: EXACTLY {{TARGET_WORDS}} words. {{PACING_INSTRUCTION}} Pace the script to hit this word count.\nRULE: Output strictly the spoken narrative text. DO NOT write B-roll descriptions or stage directions.`,
+            outline: `You are the Lead Architect for the YouTube channel "{{CHANNEL_NAME}}". Break the provided <SOURCE_MATERIAL> down into exactly {{NUM_CHAPTERS}} chapters for a {{MINUTES}}-minute video.\n\nCRITICAL DIRECTIVE:\n- Apply the Niche, Structure, and Tone from the <STYLE_GUIDE>.\n- The <SOURCE_MATERIAL> is your ONLY source of truth. Do not use example names or quotes from the <STYLE_GUIDE>.\n- Outline for a SOLO video essay/commentary. Do NOT create outlines involving fake interviews or invented characters. DO NOT use the original channel name from the STYLE_GUIDE.\n\nProvide 3 distinct potential titles based on the <STYLE_GUIDE>'s Title Format.`,
+            chapter: `You are writing Chapter {{CURRENT_CHAPTER}} of {{TOTAL_CHAPTERS}} for the YouTube channel "{{CHANNEL_NAME}}".\n\nCRITICAL DIRECTIVE:\n- Apply the Tone and Structure from the <STYLE_GUIDE>.\n- Use ONLY facts from the <SOURCE_MATERIAL>.\n- Write for a SOLO NARRATOR speaking to the audience.\n- ONLY write the spoken narrative text. DO NOT write B-roll descriptions.\n- DO NOT use the original channel name from the STYLE_GUIDE. Always refer to your channel as "{{CHANNEL_NAME}}".\n\nSTORYBOARD BLOCK RULE: You MUST output the script as short "Storyboard Blocks". Every single distinct sentence, concept, or phrase MUST be its own block (separated by double line breaks). Do NOT write long paragraphs. This is for a CapCut 1:1 integration.\n\nTARGET LENGTH: EXACTLY {{WORDS_PER_CHAPTER}} words. {{PACING_INSTRUCTION}}\n{{HOOK_INSTRUCTION}}\n{{OUTRO_INSTRUCTION}}`,
+            broll: `Role: You are an elite Master Video Producer and AI B-Roll Director.\nYou will receive a script broken down into an array of numbered "Storyboard Blocks". \nYOUR FIRST TASK is to analyze the provided script, determine its specific niche (e.g., Tech Review, True Crime, Geopolitics, Finance, Gaming, History), and generate highly realistic, physically accurate image and video prompts perfectly tailored to that genre's visual aesthetic.\n\nDIRECTOR MODE: {{DIRECTOR_MODE}}.\n\nYOUR SECOND TASK:\nYou MUST output an exact 1:1 mapping. If there are 45 blocks, you must output an array of EXACTLY 45 directorial decisions, one for each block in chronological order.\n\nIf Director Mode is 'smart': Evaluate the block. If it is a personal hook, an emotional statement, or a transition, label it "A-Roll" (Narrator face time) and leave prompts blank. If it mentions a location, object, or statistic, label it "Image" or "Video" and generate a hyper-realistic B-Roll prompt.\nIf Director Mode is 'full': EVERY single block MUST be labeled "Image" or "Video" with a generated prompt. Do not use A-Roll.\n\nCore Rules for Visuals:\n1. Niche Adaptation & Realism: First, identify the script's subject matter. You must match the visual style to the topic. For Tech, use clean macro product shots, studio lighting, or screen captures. For True Crime, use archival police footage, grainy evidence photos, or moody interrogations. For Geopolitics, use documentary-style press briefings or raw news footage. For Finance, use Bloomberg-style terminal screens, trading floors, or clean infographics.\n2. Ban on Hollywood Buzzwords & Tropes: DO NOT use words like "cinematic", "epic", "blockbuster", or "movie-like". Instead, use professional camera terms specific to the niche (e.g., "macro probe lens", "raw C-SPAN footage", "CCTV security camera style", "AP news broadcast", "high-contrast studio lighting").\n3. Direct Subject References: Use the exact names of people, specific products, locations, or historical events mentioned in the script (e.g., "iPhone 15 Pro Max titanium frame", "Pentagon briefing room", "Bitcoin chart", "1990s desktop computer"). Do not use generic placeholders.\n4. PACING & DENSITY: You must generate a steady stream of B-roll. Aim for at least one visual asset per paragraph, or roughly every 20 to 30 seconds of spoken dialogue. Generate B-roll markers to introduce new subjects, emphasize key statistics, cover geographical shifts, or simply maintain viewer retention. Do not leave long, multi-minute gaps without visuals.`,
+            packager: `You are an elite YouTube SEO Strategist performing a PERFECT FORMAT CLONE.\n\nCRITICAL DIRECTIVES:\n1. FACTUAL QUARANTINE: The 'Competitor Titles' and 'Competitor Description' might contain specific names (e.g., "Morning Joe", specific anchors), dates, and brands. YOU MUST NEVER output these specific competitor words. They are radioactive placeholders. ONLY use facts, names, and entities explicitly found in the FINAL SCRIPT.\n2. THE CLONE PROTOCOL: You must clone the EXACT FORMATTING SHELL of the Competitor Description. If they put 3 hashtags on the first line, YOU put 3 hashtags on the first line (but make them relevant to the script). If they use specific line breaks, ALL CAPS, or emojis, YOU replicate that exact visual layout line-by-line.\n3. TITLES: Copy the exact psychological structure and punctuation of the competitor titles (e.g., if they use "Topic | Breaking News Today [Date]", you do the same using the script's topic and script's dates).\n4. THUMBNAIL: Reverse-engineer the competitor's visual composition (split screens, color contrast, text blocks) but replace their subjects with the literal subjects of the Final Script.\n5. SEPARATE HASHTAGS: Generate a standalone block of 10-15 highly optimized, comma-separated SEO hashtags relevant to the script.\n\nOUTPUT REQUIRED (JSON):\n- "titles": Array of 5 titles perfectly mimicking the competitor's format but using ONLY script facts.\n- "description": A YouTube description matching the competitor's EXACT layout, line-by-line structure, and hashtag placement, populated exclusively with script facts.\n- "thumbnailPrompt": A highly detailed prompt for an AI image generator applying the competitor's visual psychology to the script's subjects.\n- "hashtags": A string of 10-15 optimized hashtags (e.g. "#Tag1, #Tag2, #Tag3").`
         };
 
         function getPrompts() {
@@ -678,13 +988,17 @@
         }
 
         async function fetchWithRetry(url, options, retries = 5) {
-            const delays = [1000, 2000, 4000, 8000, 16000];
+            const delays = [2000, 4000, 8000, 15000, 20000]; // Longer delays to bypass proxy limits
             for (let i = 0; i < retries; i++) {
                 try {
                     const res = await fetch(url, options);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+                    if (!res.ok) {
+                        const errText = await res.text();
+                        throw new Error(`HTTP ${res.status}: ${errText}`);
+                    }
                     return await res.json();
                 } catch (err) {
+                    console.warn(`API Attempt ${i + 1} failed:`, err.message);
                     if (i === retries - 1) throw err;
                     await new Promise(r => setTimeout(r, delays[i]));
                 }
@@ -709,26 +1023,69 @@
             window.copyToClipboard(fullText.trim(), "Full Script");
         }
 
+        window.updateBulkExports = function() {
+            const inputs = document.querySelectorAll('.timeline-prompt-input');
+            let master = [], imgs = [], vids = [];
+            
+            inputs.forEach(input => {
+                const val = input.value.trim();
+                if (!val) return;
+                
+                master.push(val);
+                if (input.dataset.assetType === 'image') imgs.push(val);
+                else vids.push(val);
+            });
+            
+            const elMaster = document.getElementById('v2-bulk-master');
+            const elImg = document.getElementById('v2-bulk-img');
+            const elVid = document.getElementById('v2-bulk-vid');
+            
+            if (elMaster) elMaster.value = master.join('\n\n');
+            if (elImg) elImg.value = imgs.join('\n\n');
+            if (elVid) elVid.value = vids.join('\n\n');
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+
         function switchView(viewId) {
+            // Reset all
+            ui.view1?.classList.remove('active');
+            ui.view2?.classList.remove('active');
+            ui.view3?.classList.remove('active');
+            
+            const inactiveClass = "px-6 py-1.5 rounded-full text-sm font-semibold transition-all text-slate-400 hover:text-white";
+            if(ui.navV1) ui.navV1.className = inactiveClass;
+            if(ui.navV2) ui.navV2.className = inactiveClass;
+            if(ui.navV3) ui.navV3.className = inactiveClass;
+
             if (viewId === 'v1') {
                 ui.view1?.classList.add('active');
-                ui.view2?.classList.remove('active');
                 if(ui.navV1) ui.navV1.className = "px-6 py-1.5 rounded-full text-sm font-semibold transition-all bg-blue-600 text-white shadow";
-                if(ui.navV2) ui.navV2.className = "px-6 py-1.5 rounded-full text-sm font-semibold transition-all text-slate-400 hover:text-white";
-            } else {
+            } else if (viewId === 'v2') {
                 ui.view2?.classList.add('active');
-                ui.view1?.classList.remove('active');
                 if(ui.navV2) ui.navV2.className = "px-6 py-1.5 rounded-full text-sm font-semibold transition-all bg-emerald-600 text-white shadow";
-                if(ui.navV1) ui.navV1.className = "px-6 py-1.5 rounded-full text-sm font-semibold transition-all text-slate-400 hover:text-white";
                 calculateV2Stats(); 
+            } else if (viewId === 'v3') {
+                ui.view3?.classList.add('active');
+                if(ui.navV3) ui.navV3.className = "px-6 py-1.5 rounded-full text-sm font-semibold transition-all bg-purple-600 text-white shadow";
+                // Auto-sync script from V2
+                if(ui.v3Script && ui.v2Script) ui.v3Script.value = ui.v2Script.value;
             }
         }
 
         ui.navV1?.addEventListener('click', () => switchView('v1'));
         ui.navV2?.addEventListener('click', () => switchView('v2'));
+        ui.navV3?.addEventListener('click', () => switchView('v3'));
 
-        // --- IndexedDB for Formulas & Channels ---
-        const DB_NAME = 'ScriptMasterDB', DB_VERSION = 3, STORE_NAME = 'formulas', STORE_CHANNELS = 'channels', STORE_SETTINGS = 'settings';
+        // --- IndexedDB for Data ---
+        const DB_NAME = 'ScriptMasterDB', DB_VERSION = 4, STORE_NAME = 'formulas', STORE_CHANNELS = 'channels', STORE_SETTINGS = 'settings', STORE_PROJECTS = 'projects';
         let localDb;
 
         function initLocalDB() {
@@ -741,6 +1098,7 @@
                     if (!dbObj.objectStoreNames.contains(STORE_NAME)) dbObj.createObjectStore(STORE_NAME, { keyPath: 'id' });
                     if (!dbObj.objectStoreNames.contains(STORE_CHANNELS)) dbObj.createObjectStore(STORE_CHANNELS, { keyPath: 'id' });
                     if (!dbObj.objectStoreNames.contains(STORE_SETTINGS)) dbObj.createObjectStore(STORE_SETTINGS, { keyPath: 'id' });
+                    if (!dbObj.objectStoreNames.contains(STORE_PROJECTS)) dbObj.createObjectStore(STORE_PROJECTS, { keyPath: 'id' });
                 };
             });
         }
@@ -806,6 +1164,30 @@
             if (!localDb) return;
             return new Promise((res, rej) => {
                 const req = localDb.transaction([STORE_CHANNELS], 'readwrite').objectStore(STORE_CHANNELS).delete(id);
+                req.onsuccess = () => res(); req.onerror = () => rej(req.error);
+            });
+        }
+
+        async function loadProjectsIndexedDB() {
+            if (!localDb) return [];
+            return new Promise((res, rej) => {
+                const req = localDb.transaction([STORE_PROJECTS], 'readonly').objectStore(STORE_PROJECTS).getAll();
+                req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+            });
+        }
+        async function saveProjectDB(project) {
+            if (isFirebaseEnabled && currentUser) return setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'projects', project.id), project);
+            if (!localDb) return;
+            return new Promise((res, rej) => {
+                const req = localDb.transaction([STORE_PROJECTS], 'readwrite').objectStore(STORE_PROJECTS).put(project);
+                req.onsuccess = () => res(); req.onerror = () => rej(req.error);
+            });
+        }
+        async function deleteProjectDB(id) {
+            if (isFirebaseEnabled && currentUser) return deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'projects', id));
+            if (!localDb) return;
+            return new Promise((res, rej) => {
+                const req = localDb.transaction([STORE_PROJECTS], 'readwrite').objectStore(STORE_PROJECTS).delete(id);
                 req.onsuccess = () => res(); req.onerror = () => rej(req.error);
             });
         }
@@ -887,7 +1269,18 @@
 
 
         // Sliders & Settings
-        ui.scriptLength?.addEventListener('input', e => { if(ui.lengthVal) ui.lengthVal.innerText = `${e.target.value} Minutes`; });
+        ui.scriptLength?.addEventListener('input', e => { 
+            if(ui.lengthVal) ui.lengthVal.innerText = `${e.target.value} Minutes`; 
+            
+            // Auto-switch engine based on length threshold
+            if(ui.generationMode) {
+                if (e.target.value < 12) {
+                    ui.generationMode.value = "standard";
+                } else {
+                    ui.generationMode.value = "chunking";
+                }
+            }
+        });
         ui.scriptPacing?.addEventListener('input', e => { if(ui.pacingVal) ui.pacingVal.innerText = `${e.target.value} WPM`; });
         
         ui.selectTextModel?.addEventListener('change', (e) => {
@@ -918,6 +1311,10 @@
                 ui.iconApiKeyVisibility?.setAttribute('data-lucide', 'eye');
                 lucide.createIcons();
             }
+
+            if(ui.apiCooldownInput) {
+                ui.apiCooldownInput.value = appSettings.cooldown || 4000;
+            }
             
             // Load custom prompts into textareas
             const prompts = getPrompts();
@@ -925,10 +1322,12 @@
             const elOut = document.getElementById('prompt-outline');
             const elChap = document.getElementById('prompt-chapter');
             const elBroll = document.getElementById('prompt-broll');
+            const elPackager = document.getElementById('prompt-packager');
             if(elStd) elStd.value = prompts.standard;
             if(elOut) elOut.value = prompts.outline;
             if(elChap) elChap.value = prompts.chapter;
             if(elBroll) elBroll.value = prompts.broll;
+            if(elPackager) elPackager.value = prompts.packager;
 
             // Load saved models into dropdowns
             const savedText = appSettings.models?.text || "gemini-2.5-flash-preview-09-2025";
@@ -957,13 +1356,15 @@
         ui.btnCloseSettings?.addEventListener('click', () => ui.settingsModal?.classList.add('hidden'));
         ui.btnSaveSettings?.addEventListener('click', async () => { 
             const k = ui.apiKeyInput?.value.trim() || ''; 
+            const cd = parseInt(ui.apiCooldownInput?.value || "4000", 10);
             
             // Save custom prompts
             const newPrompts = {
                 standard: document.getElementById('prompt-standard')?.value || DEFAULT_PROMPTS.standard,
                 outline: document.getElementById('prompt-outline')?.value || DEFAULT_PROMPTS.outline,
                 chapter: document.getElementById('prompt-chapter')?.value || DEFAULT_PROMPTS.chapter,
-                broll: document.getElementById('prompt-broll')?.value || DEFAULT_PROMPTS.broll
+                broll: document.getElementById('prompt-broll')?.value || DEFAULT_PROMPTS.broll,
+                packager: document.getElementById('prompt-packager')?.value || DEFAULT_PROMPTS.packager
             };
 
             // Save Models
@@ -971,10 +1372,11 @@
             const finalImgModel = ui.selectImageModel?.value === 'custom' ? ui.customImageModel?.value.trim() : ui.selectImageModel?.value;
             const newModels = { text: finalTxtModel || "gemini-2.5-flash-preview-09-2025", image: finalImgModel || "gemini-2.5-flash-image-preview" };
             
-            appSettings = { id: 'main', apiKey: k, prompts: newPrompts, models: newModels };
+            appSettings = { id: 'main', apiKey: k, cooldown: cd, prompts: newPrompts, models: newModels };
 
             // Save to the instant fast-cache
             localStorage.setItem('fast_cache_api', k);
+            localStorage.setItem('fast_cache_cooldown', cd.toString());
             localStorage.setItem('fast_cache_prompts', JSON.stringify(newPrompts));
             localStorage.setItem('fast_cache_models', JSON.stringify(newModels));
 
@@ -987,13 +1389,38 @@
             }
         });
 
-        async function executeGeminiCall(systemInstruction, userPrompt, schema) {
-            const payload = { contents: [{ parts: [{ text: userPrompt }] }], systemInstruction: { parts: [{ text: systemInstruction }] }, generationConfig: { responseMimeType: "application/json", responseSchema: schema } };
+        async function executeGeminiCall(systemInstruction, userPrompt, schema, enableSearch = false, imageData = null) {
+            const parts = [{ text: userPrompt }];
+            if (imageData) {
+                // Determine rough mime type, defaults to jpeg if unknown
+                parts.push({ inlineData: { mimeType: "image/jpeg", data: imageData } });
+            }
+
+            const payload = { 
+                contents: [{ parts: parts }], 
+                systemInstruction: { parts: [{ text: systemInstruction }] } 
+            };
+            
+            if (enableSearch) { 
+                // Fix for HTTP 400: Gemini API prohibits mixing Tools (Search) with JSON MimeType
+                payload.tools = [{ "google_search": {} }]; 
+            } else if (schema) {
+                payload.generationConfig = { responseMimeType: "application/json", responseSchema: schema };
+            }
+
             const result = await fetchWithRetry(getTextModelUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            return JSON.parse(result.candidates[0].content.parts[0].text.replace(/```json\n?|Identity|```/g, '').trim());
+            const rawText = result.candidates[0].content.parts[0].text;
+            
+            if (enableSearch) {
+                // If searching, return plain text wrapped in the expected factSheet object
+                return { factSheet: rawText };
+            }
+            
+            return JSON.parse(rawText.replace(/```json\n?|Identity|```/g, '').trim());
         }
 
         function renderScript(data) {
+            view1Titles = data.titles || []; // Store globally for View 3 to mirror
             if(ui.outTitlesContainer) ui.outTitlesContainer.innerHTML = '';
             (data.titles || []).forEach((t, i) => {
                 if(ui.outTitlesContainer) {
@@ -1017,16 +1444,22 @@
 
             if(ui.outScript) ui.outScript.innerHTML = '';
             (data.sections || []).forEach(sec => {
-                const el = document.createElement('div');
-                el.className = "pl-4 border-l-2 border-slate-700 relative group pr-10 mb-6";
-                el.innerHTML = `
-                    <p class="pure-script-text text-slate-300 leading-relaxed text-lg font-light">${sec.content}</p>
-                    <button class="absolute top-0 right-0 p-2 text-slate-500 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-600 rounded opacity-0 group-hover:opacity-100 transition-all shadow-md btn-copy-block" title="Copy Text">
-                        <i data-lucide="copy" class="w-4 h-4"></i>
-                    </button>
-                `;
-                el.querySelector('.btn-copy-block').onclick = () => window.copyToClipboard(sec.content, 'Paragraph');
-                if(ui.outScript) ui.outScript.appendChild(el);
+                // FIX: Sanitize literal '\n' characters from the AI and forcefully split into CapCut blocks
+                const cleanContent = sec.content.replace(/\\n/g, '\n');
+                const subBlocks = cleanContent.split(/\n\s*\n/).map(b => b.trim()).filter(b => b.length > 0);
+                
+                subBlocks.forEach(blockText => {
+                    const el = document.createElement('div');
+                    el.className = "pl-4 border-l-2 border-slate-700 relative group pr-10 mb-6";
+                    el.innerHTML = `
+                        <p class="pure-script-text text-slate-300 leading-relaxed text-lg font-light">${blockText}</p>
+                        <button class="absolute top-0 right-0 p-2 text-slate-500 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-600 rounded opacity-0 group-hover:opacity-100 transition-all shadow-md btn-copy-block" title="Copy Text">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                    el.querySelector('.btn-copy-block').onclick = () => window.copyToClipboard(blockText, 'Paragraph');
+                    if(ui.outScript) ui.outScript.appendChild(el);
+                });
             });
             lucide.createIcons();
             ui.loadingState?.classList.add('hidden'); ui.resultsState?.classList.remove('hidden');
@@ -1060,6 +1493,20 @@
             if(ui.btnGenerate) { ui.btnGenerate.disabled = true; ui.btnGenerate.classList.add('opacity-50'); }
 
             try {
+                const useSearch = ui.deepResearchToggle?.checked || false;
+                let processedSourceMaterial = transcript;
+
+                if (useSearch) {
+                    if(ui.loadingText) ui.loadingText.innerText = "Phase 0: Deep Researching & Fact-Checking...";
+                    const researchInstruction = "You are a Master Researcher. Analyze the provided transcript/idea. Search the web for the latest updates, missing context, and corroborating facts about this specific topic. Generate a comprehensive 'Master Fact Sheet' combining the transcript and your findings.";
+                    const researchSchema = { type: "OBJECT", properties: { factSheet: { type: "STRING" } }, required: ["factSheet"] };
+                    const researchData = await executeGeminiCall(researchInstruction, transcript, researchSchema, true);
+                    processedSourceMaterial = researchData.factSheet;
+                    
+                    if(ui.loadingText) ui.loadingText.innerText = "Cooling down API...";
+                    await new Promise(r => setTimeout(r, (appSettings.cooldown || 4000) + Math.random() * 500));
+                }
+
                 const targetWords = minutes * wpm;
                 const pacingInstruction = wpm >= 165 ? "Write fast, punchy, high-energy sentences." : wpm <= 130 ? "Write slow, deliberate, dramatic paragraphs." : "Maintain standard engaging pace.";
                 const activePrompts = getPrompts();
@@ -1092,7 +1539,7 @@
                         .replace(/{{TARGET_WORDS}}/g, targetWords)
                         .replace(/{{PACING_INSTRUCTION}}/g, pacingInstruction);
 
-                    finalScriptData = await executeGeminiCall(systemInstruction, `FORMULA:\n${formula}\n\nTRANSCRIPT:\n${transcript}\n\nGenerate script (${targetWords} words).`, schema);
+                    finalScriptData = await executeGeminiCall(systemInstruction, `<STYLE_GUIDE>\n${formula}\n</STYLE_GUIDE>\n\n<SOURCE_MATERIAL>\n${processedSourceMaterial}\n</SOURCE_MATERIAL>\n\nGenerate script (${targetWords} words).`, schema);
                 
                 } else {
                     // Deep Dive: Auto-Chunking Engine (Restored logic, text-only output)
@@ -1117,12 +1564,15 @@
                         .replace(/{{NUM_CHAPTERS}}/g, numChapters)
                         .replace(/{{MINUTES}}/g, minutes);
 
-                    const outlineData = await executeGeminiCall(outlineInstruction, `CHANNEL FORMULA:\n${formula}\n\nTRANSCRIPT:\n${transcript}`, outlineSchema);
+                    const outlineData = await executeGeminiCall(outlineInstruction, `<STYLE_GUIDE>\n${formula}\n</STYLE_GUIDE>\n\n<SOURCE_MATERIAL>\n${processedSourceMaterial}\n</SOURCE_MATERIAL>`, outlineSchema);
                     finalScriptData.titles = outlineData.titles;
 
                     const chapterSchema = { type: "OBJECT", properties: { sections: sectionsArraySchema }, required: ["sections"] };
 
                     for (let i = 0; i < outlineData.chapters.length; i++) {
+                        if(ui.loadingText) ui.loadingText.innerText = "Cooling down API...";
+                        await new Promise(r => setTimeout(r, (appSettings.cooldown || 4000) + Math.random() * 500));
+                        
                         const chapter = outlineData.chapters[i];
                         if(ui.loadingText) ui.loadingText.innerText = `Phase 2: Writing Chapter ${i + 1} of ${outlineData.chapters.length}...`;
                         const isFirst = i === 0;
@@ -1140,7 +1590,7 @@
                             .replace(/{{HOOK_INSTRUCTION}}/g, hookInstruction)
                             .replace(/{{OUTRO_INSTRUCTION}}/g, outroInstruction);
 
-                        const chapterData = await executeGeminiCall(chapterInstruction, `FORMULA:\n${formula}\n\nENTIRE TRANSCRIPT FOR CONTEXT:\n${transcript}\n\nYOUR TASK NOW:\nWrite script sections exclusively for Chapter ${i + 1}. Focus: ${chapter.focus}`, chapterSchema);
+                        const chapterData = await executeGeminiCall(chapterInstruction, `<STYLE_GUIDE>\n${formula}\n</STYLE_GUIDE>\n\n<SOURCE_MATERIAL>\n${processedSourceMaterial}\n</SOURCE_MATERIAL>\n\nYOUR TASK NOW:\nWrite script sections exclusively for Chapter ${i + 1}. Focus: ${chapter.focus}`, chapterSchema);
                         finalScriptData.sections = finalScriptData.sections.concat(chapterData.sections);
                     }
                     if(ui.loadingText) ui.loadingText.innerText = "Phase 3: Finalizing Assembly...";
@@ -1171,6 +1621,7 @@
             
             // Switch & Calculate
             switchView('v2');
+            if (typeof checkScriptFormatting === 'function') checkScriptFormatting();
             showToast("Script transferred to B-Roll Director.");
         });
 
@@ -1190,9 +1641,90 @@
             return { words, totalMin, wpm: totalMin > 0 ? (words / totalMin) : 0 };
         }
 
-        ui.v2Script?.addEventListener('input', calculateV2Stats);
+        function checkScriptFormatting() {
+            const text = ui.v2Script?.value.trim() || '';
+            if (!text) {
+                ui.v2FormatBanner?.classList.add('hidden');
+                return;
+            }
+            // Split by double line break and check if any block has > 40 words
+            const blocks = text.split(/\n\s*\n/);
+            const hasLongParagraphs = blocks.some(block => block.split(/\s+/).length > 40);
+            
+            if (hasLongParagraphs) {
+                ui.v2FormatBanner?.classList.remove('hidden');
+            } else {
+                ui.v2FormatBanner?.classList.add('hidden');
+            }
+        }
+
+        ui.v2Script?.addEventListener('input', () => {
+            calculateV2Stats();
+            checkScriptFormatting();
+        });
         ui.v2Min?.addEventListener('input', calculateV2Stats);
         ui.v2Sec?.addEventListener('input', calculateV2Stats);
+
+        // Auto-Format AI Call
+        ui.btnAutoFormat?.addEventListener('click', async () => {
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) { ui.settingsModal?.classList.remove('hidden'); return showToast("API Key needed!"); }
+
+            const script = ui.v2Script?.value.trim();
+            if (!script) return;
+
+            const originalBtnContent = ui.btnAutoFormat.innerHTML;
+            ui.btnAutoFormat.disabled = true;
+
+            try {
+                const systemPrompt = "DO NOT rewrite, summarize, or change a single word of this script. Your ONLY job is to analyze the natural pauses, topic shifts, and breathing room, and insert double line breaks (\\n\\n) to chop it into short, punchy storyboard blocks. Each block should ideally be 1 to 3 sentences max. Output ONLY the perfectly formatted text.";
+                const schema = { type: "OBJECT", properties: { formattedScript: { type: "STRING" } }, required: ["formattedScript"] };
+                
+                // Smart Chunking Algorithm (Safe limit ~800 words)
+                const words = script.split(/\s+/).filter(w => w.length > 0);
+                const chunks = [];
+                let currentChunk = [];
+                
+                for (let i = 0; i < words.length; i++) {
+                    currentChunk.push(words[i]);
+                    // Once we hit 800 words, wait for the end of a sentence to split safely. Force cut at 950.
+                    if (currentChunk.length >= 800) {
+                        if (/[.?!]$/.test(words[i]) || currentChunk.length > 950) {
+                            chunks.push(currentChunk.join(" "));
+                            currentChunk = [];
+                        }
+                    }
+                }
+                if (currentChunk.length > 0) chunks.push(currentChunk.join(" "));
+
+                let finalScript = "";
+
+                // Process chunks sequentially
+                for (let i = 0; i < chunks.length; i++) {
+                    ui.btnAutoFormat.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div> Part ${i + 1} of ${chunks.length}...`;
+                    
+                    const data = await executeGeminiCall(systemPrompt, chunks[i], schema);
+                    finalScript += data.formattedScript.replace(/\\n/g, '\n') + "\n\n";
+                    
+                    if (i < chunks.length - 1) {
+                        // Cooldown between chunks to prevent API quota limits
+                        await new Promise(r => setTimeout(r, (appSettings.cooldown || 4000)));
+                    }
+                }
+                
+                ui.v2Script.value = finalScript.trim();
+                ui.v2FormatBanner?.classList.add('hidden');
+                calculateV2Stats();
+                showToast("Script formatted successfully!");
+                lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+                showToast("Error formatting script.");
+            } finally {
+                ui.btnAutoFormat.innerHTML = originalBtnContent;
+                ui.btnAutoFormat.disabled = false;
+            }
+        });
 
         function formatTimecode(seconds) {
             if (isNaN(seconds) || !isFinite(seconds)) return "00:00";
@@ -1319,6 +1851,10 @@
             const stats = calculateV2Stats();
             if (stats.wpm <= 0) return showToast("Audio track length must be greater than 0.");
 
+            // Split script into array of distinct CapCut blocks based on double line breaks
+            const blocks = script.split(/\n\s*\n/).map(b => b.trim()).filter(b => b.length > 0);
+            if (blocks.length === 0) return showToast("Script must have double line breaks to form blocks.");
+
             ui.v2EmptyState?.classList.add('hidden'); ui.v2ResultsState?.classList.add('hidden'); ui.v2LoadingState?.classList.remove('hidden');
             if(ui.btnGenerateBroll) { ui.btnGenerateBroll.disabled = true; ui.btnGenerateBroll.classList.add('opacity-50'); }
 
@@ -1331,183 +1867,152 @@
                             items: {
                                 type: "OBJECT",
                                 properties: {
-                                    anchor: { type: "STRING", description: "Exact 5-7 word quote from the script where this b-roll triggers." },
-                                    type: { type: "STRING", description: "Must be exactly 'Image' or 'Video'" },
-                                    prompt: { type: "STRING", description: "Hyper-realistic prompt." },
-                                    searchQuery: { type: "STRING", description: "Optimized stock footage search query." }
-                                }, required: ["anchor", "type", "prompt", "searchQuery"]
+                                    type: { type: "STRING", description: "Must be exactly 'A-Roll', 'Image', or 'Video'" },
+                                    prompt: { type: "STRING", description: "Visual prompt (leave empty for A-Roll)" },
+                                    searchQuery: { type: "STRING", description: "Search query (leave empty for A-Roll)" }
+                                }, required: ["type", "prompt", "searchQuery"]
                             }
                         }
                     }, required: ["assets"]
                 };
 
-                const systemInstruction = getPrompts().broll;
-
-                const data = await executeGeminiCall(systemInstruction, `SCRIPT TO ANALYZE:\n\n${script}`, schema);
+                const modeStr = ui.v2DirectorMode?.value === 'full' ? 'full (wall-to-wall visuals)' : 'smart (mix of narrator and visuals)';
+                const systemInstruction = getPrompts().broll.replace(/{{DIRECTOR_MODE}}/g, modeStr);
                 
-                // --- Perform the JavaScript Timestamp Math ---
-                const fullTextLower = script.toLowerCase();
-                let imagesList = [];
-                let videosList = [];
+                // Present the AI with a numbered list of blocks so it maps them 1:1
+                const formattedScript = blocks.map((b, i) => `[BLOCK ${i+1}]:\n${b}`).join('\n\n');
 
+                const data = await executeGeminiCall(systemInstruction, `I have ${blocks.length} Storyboard Blocks. Provide EXACTLY ${blocks.length} asset decisions mapped 1:1 to these blocks.\n\n${formattedScript}`, schema);
+                
                 if(ui.v2TimelineFeed) {
                     ui.v2TimelineFeed.innerHTML = data.assets && data.assets.length > 0 
-                        ? `<div class="mb-4 text-sm font-semibold text-slate-400 border-b border-slate-700/50 pb-2">Total Visuals Generated: <span class="text-emerald-400">${data.assets.length}</span></div>` 
+                        ? `<div class="mb-4 text-sm font-semibold text-slate-400 border-b border-slate-700/50 pb-2">Director Mode: ${modeStr.toUpperCase()} | Storyboard Blocks Mapped: <span class="text-emerald-400">${blocks.length}</span></div>` 
                         : '';
                 }
                 
                 if(!data.assets || data.assets.length === 0) {
                     if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML = '<p class="text-red-400">Error: No assets generated.</p>';
                 } else {
-                    // --- Pass 1: Calculate Start Times with Fuzzy Matching ---
-                    let lastStartSec = 0;
-                    const cleanScript = fullTextLower.replace(/[^\w\s]/gi, '');
-
-                    data.assets.forEach(asset => {
-                        let anchorLower = asset.anchor.toLowerCase();
-                        let anchorIndex = fullTextLower.indexOf(anchorLower);
+                    let currentSec = 0;
+                    
+                    blocks.forEach((blockText, index) => {
+                        // Fallback to A-Roll if AI skips a block to preserve sequential integrity
+                        const asset = data.assets[index] || { type: 'A-Roll', prompt: '', searchQuery: '' };
                         
-                        // Fuzzy Match 1: Punctuation stripped
-                        if (anchorIndex === -1) {
-                            const cleanAnchor = anchorLower.replace(/[^\w\s]/gi, '');
-                            if (cleanAnchor.trim().length > 0) {
-                                const cleanIndex = cleanScript.indexOf(cleanAnchor);
-                                if (cleanIndex !== -1) {
-                                    anchorIndex = Math.floor((cleanIndex / cleanScript.length) * fullTextLower.length);
-                                }
-                            }
-                        }
+                        // Exact 1:1 sequential timecode math!
+                        const blockWords = blockText.split(/\s+/).length;
+                        const duration = (blockWords / stats.wpm) * 60;
+                        const endSec = currentSec + duration;
+                        const timeStr = `[${formatTimecode(currentSec)} - ${formatTimecode(endSec)}]`;
+                        currentSec = endSec; // pass baton to next clip
 
-                        // Fuzzy Match 2: First 3 words
-                        if (anchorIndex === -1) {
-                            const words = anchorLower.split(/\s+/).filter(w => w.length > 0);
-                            if (words.length >= 3) {
-                                const partial = words.slice(0, 3).join(' ');
-                                anchorIndex = fullTextLower.indexOf(partial);
-                            }
-                        }
+                        const isAroll = asset.type.toLowerCase().includes('a-roll') || asset.type.toLowerCase().includes('narrator');
                         
-                        let startSec = 0;
-                        if (anchorIndex !== -1) {
-                            const textUpToAnchor = script.substring(0, anchorIndex);
-                            const wordsUpToAnchor = textUpToAnchor.trim() === "" ? 0 : textUpToAnchor.trim().split(/\s+/).length;
-                            startSec = (wordsUpToAnchor / stats.wpm) * 60;
-                            
-                            // Ensure chronological sequence
-                            if (startSec < lastStartSec) startSec = lastStartSec + 0.5;
-                        } else {
-                            // Fallback: maintain chronological order
-                            startSec = lastStartSec + 2; 
-                        }
-
-                        asset._startSec = startSec;
-                        lastStartSec = startSec;
-                    });
-
-                    // --- Pass 2: Calculate End Times and Render ---
-                    data.assets.forEach((asset, index) => {
-                        const startSec = asset._startSec;
-                        let endSec = startSec + 5; // default 5 seconds max
-
-                        // Prevent overlap by checking next clip's start time
-                        if (index < data.assets.length - 1) {
-                            const nextStartSec = data.assets[index + 1]._startSec;
-                            endSec = Math.min(startSec + 5, nextStartSec);
-                            if (endSec <= startSec) endSec = startSec + 1; // minimum 1s duration
-                        }
-
-                        const timeStr = `[${formatTimecode(startSec)} - ${formatTimecode(endSec)}]`;
-
-                        // Categorize for bulk exports
-                        if (asset.type.toLowerCase() === 'image') imagesList.push(asset.prompt);
-                        else videosList.push(asset.prompt);
-
-                        const safeQuery = asset.searchQuery.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-                        const encodedQuery = encodeURIComponent(asset.searchQuery);
-                        const safePrompt = asset.prompt.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-                        const assetId = `v2-asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                        const promptId = `${assetId}-prompt`;
-                        const queryId = `${assetId}-query`;
-
-                        // Render Card
-                        const isImg = asset.type.toLowerCase() === 'image';
-                        const icon = isImg ? 'image' : 'video';
-                        const colorStr = isImg ? 'text-purple-400' : 'text-emerald-400';
-                        const focusColor = isImg ? 'focus:border-purple-500' : 'focus:border-emerald-500';
-                        
-                        const pixabayBase = isImg ? 'https://pixabay.com/images/search/' : 'https://pixabay.com/videos/search/';
-                        const pexelsBase = isImg ? 'https://www.pexels.com/search/' : 'https://www.pexels.com/search/videos/';
-                        const unsplashBase = 'https://unsplash.com/s/photos/'; // Unsplash uses this URL universally
-
-                        let actionButtons = `
-                            <div class="flex flex-wrap gap-2 mt-2 pt-3 border-t border-slate-700">
-                                <button onclick="window.open('https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
-                                    <i data-lucide="external-link" class="w-3 h-3"></i> Google
-                                </button>
-                                <button onclick="window.open('https://yandex.com/images/search?text=' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
-                                    <i data-lucide="external-link" class="w-3 h-3"></i> Yandex
-                                </button>
-                                <button onclick="window.open('${pixabayBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
-                                    <i data-lucide="external-link" class="w-3 h-3"></i> Pixabay
-                                </button>
-                                <button onclick="window.open('${pexelsBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
-                                    <i data-lucide="external-link" class="w-3 h-3"></i> Pexels
-                                </button>
-                                <button onclick="window.open('${unsplashBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
-                                    <i data-lucide="external-link" class="w-3 h-3"></i> Unsplash
-                                </button>
-                                <button onclick="triggerImageGen(document.getElementById('${promptId}').value, '${assetId}-img', '${index + 1}', '${timeStr}', document.getElementById('${queryId}').value)" class="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1">
-                                    <i data-lucide="wand-2" class="w-3 h-3"></i> Nano Banana Gen
-                                </button>
-                            </div>
-                        `;
-                        
-                        let imageContainer = `<div id="${assetId}-img" class="mt-3 hidden rounded overflow-hidden border border-slate-700 w-full max-w-lg"></div>`;
-
-                        if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML += `
-                            <div class="bg-slate-800 border border-slate-700 rounded-lg p-5 flex flex-col lg:flex-row gap-4 hover:border-slate-500 transition-colors">
-                                <div class="lg:w-1/4 border-r border-slate-700 pr-4">
-                                    <p class="font-mono text-emerald-300 font-bold mb-2">${timeStr}</p>
-                                    <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Anchor</p>
-                                    <p class="text-sm text-slate-300 italic">"...${asset.anchor}..."</p>
-                                </div>
-                                <div class="lg:w-3/4 flex flex-col gap-2">
-                                    <p class="text-xs font-bold ${colorStr} uppercase tracking-widest flex items-center gap-2 mb-1">
-                                        <span class="bg-slate-700 text-white px-2 py-0.5 rounded-md shadow-sm">#${index + 1}</span>
-                                        <i data-lucide="${icon}" class="w-4 h-4"></i> ${asset.type} Asset
-                                    </p>
-                                    
-                                    <div class="bg-slate-900 rounded p-3 border border-slate-700 flex flex-col gap-3">
-                                        <div>
-                                            <div class="flex justify-between items-center mb-1">
-                                                <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Generated Prompt</label>
-                                                <button onclick="copyToClipboard(document.getElementById('${promptId}').value, 'Prompt')" class="text-[10px] text-slate-400 hover:text-white transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
-                                            </div>
-                                            <textarea id="${promptId}" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-slate-200 focus:outline-none ${focusColor} transition-colors resize-y min-h-[70px] leading-relaxed">${safePrompt}</textarea>
-                                        </div>
-                                        <div>
-                                            <div class="flex justify-between items-center mb-1">
-                                                <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Search Query</label>
-                                                <button onclick="copyToClipboard(document.getElementById('${queryId}').value, 'Search Query')" class="text-[10px] text-slate-400 hover:text-white transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
-                                            </div>
-                                            <input type="text" id="${queryId}" value="${safeQuery}" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm font-mono text-blue-300 focus:outline-none focus:border-blue-500 transition-colors">
-                                        </div>
-                                        ${actionButtons}
+                        if (isAroll) {
+                            // Render a ghosted "A-Roll" Block
+                            if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML += `
+                                <div class="bg-slate-800/40 border border-slate-700/50 rounded-lg p-5 flex flex-col lg:flex-row gap-4 opacity-70 mb-4 hover:opacity-100 transition-opacity">
+                                    <div class="lg:w-1/4 border-r border-slate-700/50 pr-4">
+                                        <p class="font-mono text-slate-400 font-bold mb-2">${timeStr}</p>
+                                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> A-Roll (Narrator)</p>
                                     </div>
-                                    ${imageContainer}
+                                    <div class="lg:w-3/4">
+                                        <p class="text-sm text-slate-300 italic leading-relaxed">"${blockText}"</p>
+                                    </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
+                        } else {
+                            // Render standard Image/Video block mapped to script
+                            const safeQuery = asset.searchQuery ? asset.searchQuery.replace(/'/g, "\\'").replace(/"/g, "&quot;") : '';
+                            const safePrompt = asset.prompt ? asset.prompt.replace(/'/g, "\\'").replace(/"/g, "&quot;") : '';
+                            const assetId = `v2-asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                            const promptId = `${assetId}-prompt`;
+                            const queryId = `${assetId}-query`;
+
+                            const isImg = asset.type.toLowerCase().trim().includes('image');
+                            const icon = isImg ? 'image' : 'video';
+                            const colorStr = isImg ? 'text-purple-400' : 'text-emerald-400';
+                            const focusColor = isImg ? 'focus:border-purple-500' : 'focus:border-emerald-500';
+                            
+                            const googleBase = isImg ? 'https://www.google.com/search?tbm=isch&q=' : 'https://www.google.com/search?tbm=vid&q=';
+                            const yandexBase = isImg ? 'https://yandex.com/images/search?text=' : 'https://yandex.com/video/search?text=';
+                            const dvidsBase = isImg ? 'https://www.dvidshub.net/search/2.0?q=' : 'https://www.dvidshub.net/search/2.0?type=video&q=';
+                            const pixabayBase = isImg ? 'https://pixabay.com/images/search/' : 'https://pixabay.com/videos/search/';
+                            const pexelsBase = isImg ? 'https://www.pexels.com/search/' : 'https://www.pexels.com/search/videos/';
+                            const unsplashBase = 'https://unsplash.com/s/photos/';
+
+                            let actionButtons = `
+                               <div class="flex flex-wrap gap-2 mt-2 pt-3 border-t border-slate-700">
+                                    <button onclick="window.open('${googleBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                        <i data-lucide="external-link" class="w-3 h-3"></i> Google
+                                    </button>
+                                    <button onclick="window.open('${yandexBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                        <i data-lucide="external-link" class="w-3 h-3"></i> Yandex
+                                    </button>
+                                    <button onclick="window.open('${dvidsBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                        <i data-lucide="external-link" class="w-3 h-3"></i> DVIDS
+                                    </button>
+                                    <button onclick="window.open('${pixabayBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                        <i data-lucide="external-link" class="w-3 h-3"></i> Pixabay
+                                    </button>
+                                    <button onclick="window.open('${pexelsBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                        <i data-lucide="external-link" class="w-3 h-3"></i> Pexels
+                                    </button>
+                                    <button onclick="window.open('${unsplashBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                        <i data-lucide="external-link" class="w-3 h-3"></i> Unsplash
+                                    </button>
+                                    <button onclick="triggerImageGen(document.getElementById('${promptId}').value, '${assetId}-img', '${index + 1}', '${timeStr}', document.getElementById('${queryId}').value)" class="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                        <i data-lucide="wand-2" class="w-3 h-3"></i> Nano Banana Gen
+                                    </button>
+                                </div>
+                            `;
+                            
+                            let imageContainer = `<div id="${assetId}-img" class="mt-3 hidden rounded overflow-hidden border border-slate-700 w-full"></div>`;
+
+                            if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML += `
+                                <div class="bg-slate-800 border border-slate-700 rounded-lg p-5 flex flex-col lg:flex-row gap-4 hover:border-slate-500 transition-colors mb-4">
+                                    <div class="lg:w-1/4 border-r border-slate-700 pr-4">
+                                        <p class="font-mono text-emerald-300 font-bold mb-2">${timeStr}</p>
+                                        <p class="text-xs font-bold ${colorStr} uppercase tracking-widest flex items-center gap-2 mb-2">
+                                            <span class="bg-slate-700 text-white px-2 py-0.5 rounded-md shadow-sm">#${index + 1}</span>
+                                            <i data-lucide="${icon}" class="w-4 h-4"></i> ${asset.type}
+                                        </p>
+                                        <p class="text-xs text-slate-400 leading-relaxed italic border-t border-slate-700/50 pt-2">"${blockText}"</p>
+                                    </div>
+                                    <div class="lg:w-3/4 flex flex-col gap-2">
+                                        <div class="bg-slate-900 rounded p-3 border border-slate-700 flex flex-col gap-3">
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Generated Prompt</label>
+                                                    <button onclick="copyToClipboard(document.getElementById('${promptId}').value, 'Prompt')" class="text-[10px] text-slate-400 hover:text-white transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                                                </div>
+                                                <textarea id="${promptId}" data-asset-type="${isImg ? 'image' : 'video'}" oninput="updateBulkExports()" class="timeline-prompt-input w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-slate-200 focus:outline-none ${focusColor} transition-colors resize-y min-h-[70px] leading-relaxed">${safePrompt}</textarea>
+                                            </div>
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Search Query</label>
+                                                    <button onclick="copyToClipboard(document.getElementById('${queryId}').value, 'Search Query')" class="text-[10px] text-slate-400 hover:text-white transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                                                </div>
+                                                <input type="text" id="${queryId}" value="${safeQuery}" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm font-mono text-blue-300 focus:outline-none focus:border-blue-500 transition-colors">
+                                            </div>
+                                            ${actionButtons}
+                                        </div>
+                                        ${imageContainer}
+                                    </div>
+                                </div>
+                            `;
+                        }
                     });
                 }
 
-                // Populate Bulk Textareas
-                if(ui.v2BulkImg) ui.v2BulkImg.value = imagesList.join('\n\n');
-                if(ui.v2BulkVid) ui.v2BulkVid.value = videosList.join('\n\n');
+                // Populate Bulk Textareas dynamically via Live Sync
+                window.updateBulkExports();
                 
-                // Update the counters
-                if(ui.v2CountImg) ui.v2CountImg.innerText = imagesList.length;
-                if(ui.v2CountVid) ui.v2CountVid.innerText = videosList.length;
+                // Update the counters based on the data directly
+                const imgCount = data.assets.filter(a => a.type.toLowerCase().includes('image')).length;
+                const vidCount = data.assets.filter(a => a.type.toLowerCase().includes('video')).length;
+                if(ui.v2CountImg) ui.v2CountImg.innerText = imgCount;
+                if(ui.v2CountVid) ui.v2CountVid.innerText = vidCount;
 
                 lucide.createIcons();
                 ui.v2LoadingState?.classList.add('hidden'); ui.v2ResultsState?.classList.remove('hidden');
@@ -1520,6 +2025,468 @@
             }
         });
 
+        // ==========================================
+        // VIEW 3 LOGIC (The Packager)
+        // ==========================================
+        ui.btnGeneratePackager?.addEventListener('click', async () => {
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) { ui.settingsModal?.classList.remove('hidden'); return showToast("API Key needed!"); }
+
+            const script = ui.v3Script?.value.trim();
+            const compTitles = ui.v3CompTitles?.value.trim();
+            const compDesc = ui.v3CompDesc?.value.trim();
+            
+            if (!script) return showToast("Please ensure a script is provided.");
+            if (!compTitles && !compDesc) return showToast("Please provide at least some Competitor DNA (Titles or Description).");
+
+            ui.v3EmptyState?.classList.add('hidden'); ui.v3ResultsState?.classList.add('hidden'); ui.v3LoadingState?.classList.remove('hidden');
+            if(ui.btnGeneratePackager) { ui.btnGeneratePackager.disabled = true; ui.btnGeneratePackager.classList.add('opacity-50'); }
+
+            try {
+                let base64Image = null;
+                const fileInput = ui.v3CompThumb;
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    if(ui.v3LoadingText) ui.v3LoadingText.innerText = "Analyzing Competitor Thumbnail...";
+                    base64Image = await fileToBase64(fileInput.files[0]);
+                }
+
+                if(ui.v3LoadingText) ui.v3LoadingText.innerText = "Engineering Viral Metadata...";
+
+                const schema = {
+                    type: "OBJECT",
+                    properties: {
+                        titles: { type: "ARRAY", items: { type: "STRING" } },
+                        description: { type: "STRING" },
+                        thumbnailPrompt: { type: "STRING" },
+                        hashtags: { type: "STRING" }
+                    }, required: ["titles", "description", "thumbnailPrompt", "hashtags"]
+                };
+
+                const userPrompt = `FINAL SCRIPT:\n${script}\n\nCOMPETITOR TITLES:\n${compTitles}\n\nCOMPETITOR DESCRIPTION:\n${compDesc}\n\n${base64Image ? "COMPETITOR THUMBNAIL PROVIDED AS IMAGE ATTACHMENT." : ""}`;
+                
+                const data = await executeGeminiCall(getPrompts().packager, userPrompt, schema, false, base64Image);
+
+                // Render Engineered Titles
+                if(ui.v3OutTitles) {
+                    ui.v3OutTitles.innerHTML = '';
+                    data.titles.forEach(t => {
+                        const safeT = t.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                        ui.v3OutTitles.innerHTML += `
+                            <div class="flex justify-between items-center bg-slate-900 border border-orange-900/50 rounded p-3 hover:border-orange-500 transition-colors group">
+                                <p class="text-sm text-white font-medium flex-1 mr-4">${t}</p>
+                                <button onclick="copyToClipboard('${safeT}', 'Title')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded transition-colors opacity-0 group-hover:opacity-100 flex items-center gap-1 shrink-0"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Handle Formula Titles Mirroring (Split View if exist)
+                if (view1Titles && view1Titles.length > 0) {
+                    if (ui.v3TitlesWrapper) {
+                        ui.v3TitlesWrapper.classList.remove('grid-cols-1');
+                        ui.v3TitlesWrapper.classList.add('xl:grid-cols-2');
+                    }
+                    if (ui.v3FormulaTitlesBox) ui.v3FormulaTitlesBox.classList.remove('hidden');
+                    if (ui.v3FormulaTitlesBox) ui.v3FormulaTitlesBox.classList.add('flex');
+                    if (ui.v3FormulaTitlesList) {
+                        ui.v3FormulaTitlesList.innerHTML = '';
+                        view1Titles.forEach(t => {
+                            const safeT = t.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                            ui.v3FormulaTitlesList.innerHTML += `
+                                <div class="flex justify-between items-center bg-slate-900 border border-blue-900/50 rounded p-3 hover:border-blue-500 transition-colors group">
+                                    <p class="text-sm text-white font-medium flex-1 mr-4">${t}</p>
+                                    <button onclick="copyToClipboard('${safeT}', 'Formula Title')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded transition-colors opacity-0 group-hover:opacity-100 flex items-center gap-1 shrink-0"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                                </div>
+                            `;
+                        });
+                    }
+                } else {
+                    if (ui.v3TitlesWrapper) {
+                        ui.v3TitlesWrapper.classList.remove('xl:grid-cols-2');
+                        ui.v3TitlesWrapper.classList.add('grid-cols-1');
+                    }
+                    if (ui.v3FormulaTitlesBox) ui.v3FormulaTitlesBox.classList.add('hidden');
+                    if (ui.v3FormulaTitlesBox) ui.v3FormulaTitlesBox.classList.remove('flex');
+                }
+                
+                if(ui.v3OutDesc) ui.v3OutDesc.value = data.description;
+                if(ui.v3OutThumbPrompt) ui.v3OutThumbPrompt.value = data.thumbnailPrompt;
+                if(ui.v3OutHashtags) ui.v3OutHashtags.value = data.hashtags;
+
+                lucide.createIcons();
+                ui.v3LoadingState?.classList.add('hidden'); ui.v3ResultsState?.classList.remove('hidden');
+
+            } catch (err) {
+                console.error(err); showToast("Error generating metadata.");
+                ui.v3EmptyState?.classList.remove('hidden'); ui.v3LoadingState?.classList.add('hidden');
+            } finally {
+                if(ui.btnGeneratePackager) { ui.btnGeneratePackager.disabled = false; ui.btnGeneratePackager.classList.remove('opacity-50'); }
+            }
+        });
+
+        // Trigger Nano Banana for View 3
+        ui.btnV3GenThumb?.addEventListener('click', () => {
+            const prompt = ui.v3OutThumbPrompt?.value.trim();
+            if(!prompt) return showToast("No thumbnail prompt available.");
+            triggerImageGen(prompt, 'v3-thumb-preview', 'V3', 'Thumb', 'Thumbnail');
+        });
+
+        // ==========================================
+        // PROJECTS MANAGER LOGIC (Save/Load/Auto-save)
+        // ==========================================
+        function getWorkspaceData() {
+            return {
+                // View 1
+                formulaId: ui.formulaSelect?.value || '',
+                channelId: ui.channelSelect?.value || '',
+                transcript: ui.transcriptContent?.value || '',
+                length: ui.scriptLength?.value || '30',
+                pacing: ui.scriptPacing?.value || '150',
+                mode: ui.generationMode?.value || 'chunking',
+                scriptContent: document.getElementById('out-script')?.innerHTML || '',
+                scriptTitles: document.getElementById('out-titles-container')?.innerHTML || '',
+                // View 2
+                v2Script: ui.v2Script?.value || '',
+                v2Min: ui.v2Min?.value || '10',
+                v2Sec: ui.v2Sec?.value || '0',
+                v2DirectorMode: ui.v2DirectorMode?.value || 'smart',
+                v2Aspect: ui.v2ImageAspectRatio?.value || '16:9',
+                v2Timeline: ui.v2TimelineFeed?.innerHTML || '',
+                // View 3
+                v3Script: ui.v3Script?.value || '',
+                v3CompTitles: ui.v3CompTitles?.value || '',
+                v3CompDesc: ui.v3CompDesc?.value || '',
+                v3OutDesc: ui.v3OutDesc?.value || '',
+                v3OutThumbPrompt: ui.v3OutThumbPrompt?.value || '',
+                v3OutHashtags: ui.v3OutHashtags?.value || '',
+                v3Titles: document.getElementById('v3-out-titles')?.innerHTML || '',
+                updatedAt: Date.now()
+            };
+        }
+
+        function loadWorkspaceData(data) {
+            // View 1
+            if(ui.formulaSelect) ui.formulaSelect.value = data.formulaId || '';
+            if(ui.channelSelect) ui.channelSelect.value = data.channelId || '';
+            if(ui.transcriptContent) ui.transcriptContent.value = data.transcript || '';
+            if(ui.scriptLength) { ui.scriptLength.value = data.length || '30'; if(ui.lengthVal) ui.lengthVal.innerText = ui.scriptLength.value + " Minutes"; }
+            if(ui.scriptPacing) { ui.scriptPacing.value = data.pacing || '150'; if(ui.pacingVal) ui.pacingVal.innerText = ui.scriptPacing.value + " WPM"; }
+            if(ui.generationMode) ui.generationMode.value = data.mode || 'chunking';
+            
+            const outScript = document.getElementById('out-script');
+            const outTitles = document.getElementById('out-titles-container');
+            if(outScript) outScript.innerHTML = data.scriptContent || '';
+            if(outTitles) outTitles.innerHTML = data.scriptTitles || '';
+            if(data.scriptContent) { ui.emptyState?.classList.add('hidden'); ui.resultsState?.classList.remove('hidden'); }
+            
+            // View 2
+            if(ui.v2Script) ui.v2Script.value = data.v2Script || '';
+            if(ui.v2Min) ui.v2Min.value = data.v2Min || '10';
+            if(ui.v2Sec) ui.v2Sec.value = data.v2Sec || '0';
+            if(ui.v2DirectorMode) ui.v2DirectorMode.value = data.v2DirectorMode || 'smart';
+            if(ui.v2ImageAspectRatio) ui.v2ImageAspectRatio.value = data.v2Aspect || '16:9';
+            if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML = data.v2Timeline || '';
+            if(data.v2Timeline) { ui.v2EmptyState?.classList.add('hidden'); ui.v2ResultsState?.classList.remove('hidden'); window.updateBulkExports(); }
+            calculateV2Stats();
+
+            // View 3
+            if(ui.v3Script) ui.v3Script.value = data.v3Script || '';
+            if(ui.v3CompTitles) ui.v3CompTitles.value = data.v3CompTitles || '';
+            if(ui.v3CompDesc) ui.v3CompDesc.value = data.v3CompDesc || '';
+            if(ui.v3OutDesc) ui.v3OutDesc.value = data.v3OutDesc || '';
+            if(ui.v3OutThumbPrompt) ui.v3OutThumbPrompt.value = data.v3OutThumbPrompt || '';
+            if(ui.v3OutHashtags) ui.v3OutHashtags.value = data.v3OutHashtags || '';
+            const v3Titles = document.getElementById('v3-out-titles');
+            if(v3Titles) v3Titles.innerHTML = data.v3Titles || '';
+            if(data.v3OutDesc) { ui.v3EmptyState?.classList.add('hidden'); ui.v3ResultsState?.classList.remove('hidden'); }
+        }
+
+        window.updateProjectsList = function() {
+            if(!ui.projectsList) return;
+            ui.projectsList.innerHTML = '';
+            
+            if(appProjects.length === 0) {
+                ui.projectsList.innerHTML = '<div class="text-center p-8 text-slate-500 italic border border-dashed border-slate-700 rounded-lg">No projects saved yet.</div>';
+                return;
+            }
+
+            appProjects.sort((a, b) => b.updatedAt - a.updatedAt).forEach(proj => {
+                const isActive = proj.id === activeProjectId;
+                const isEditing = proj.id === editingProjectId;
+                const isDeleting = proj.id === deletingProjectId;
+                const d = new Date(proj.updatedAt).toLocaleString();
+                
+                const card = document.createElement('div');
+                card.className = `bg-slate-900 border ${isActive ? 'border-emerald-500' : 'border-slate-700'} rounded-lg p-4 transition-all`;
+                
+                if (isEditing) {
+                    // RENAME MODE
+                    card.innerHTML = `
+                        <div class="flex flex-col gap-2">
+                            <input type="text" id="rename-input-${proj.id}" value="${proj.name}" class="w-full bg-slate-800 border border-blue-500 rounded p-2 text-sm text-white focus:outline-none">
+                            <div class="flex gap-2">
+                                <button class="btn-save-rename flex-1 bg-blue-600 text-white py-1.5 rounded text-xs font-bold">Save Name</button>
+                                <button class="btn-cancel-rename flex-1 bg-slate-700 text-slate-300 py-1.5 rounded text-xs">Cancel</button>
+                            </div>
+                        </div>
+                    `;
+                    card.querySelector('.btn-save-rename').onclick = () => {
+                        const newName = document.getElementById(`rename-input-${proj.id}`).value;
+                        window.confirmRename(proj.id, newName);
+                    };
+                    card.querySelector('.btn-cancel-rename').onclick = () => { editingProjectId = null; updateProjectsList(); };
+                } else if (isDeleting) {
+                    // DELETE CONFIRMATION MODE
+                    card.innerHTML = `
+                        <div class="flex flex-col gap-2 text-center">
+                            <p class="text-xs text-red-400 font-bold">Delete "${proj.name}"?</p>
+                            <div class="flex gap-2">
+                                <button class="btn-confirm-delete flex-1 bg-red-600 text-white py-1.5 rounded text-xs font-bold">Yes, Delete</button>
+                                <button class="btn-cancel-delete flex-1 bg-slate-700 text-slate-300 py-1.5 rounded text-xs">No, Keep It</button>
+                            </div>
+                        </div>
+                    `;
+                    card.querySelector('.btn-confirm-delete').onclick = () => window.confirmDelete(proj.id);
+                    card.querySelector('.btn-cancel-delete').onclick = () => { deletingProjectId = null; updateProjectsList(); };
+                } else {
+                    // NORMAL MODE
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="text-white font-bold truncate pr-2 ${isActive ? 'text-emerald-400' : ''}">${proj.name}</h4>
+                            <div class="flex gap-2 shrink-0">
+                                <button class="btn-load-proj text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded transition-colors" title="Load Project">
+                                    <i data-lucide="folder-output" class="w-3 h-3"></i>
+                                </button>
+                                <button class="btn-rename-proj text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors" title="Rename Project">
+                                    <i data-lucide="edit-3" class="w-3 h-3"></i>
+                                </button>
+                                <button class="btn-delete-proj text-xs bg-red-900/50 hover:bg-red-800 text-red-200 px-2 py-1 rounded transition-colors" title="Delete Project">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-slate-500">Last saved: ${d}</p>
+                    `;
+                    card.querySelector('.btn-load-proj').onclick = () => window.loadProject(proj.id);
+                    card.querySelector('.btn-rename-proj').onclick = () => { editingProjectId = proj.id; deletingProjectId = null; updateProjectsList(); };
+                    card.querySelector('.btn-delete-proj').onclick = () => { deletingProjectId = proj.id; editingProjectId = null; updateProjectsList(); };
+                }
+
+                ui.projectsList.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        window.resetWorkspace = function() {
+            // Stop auto-save by clearing active ID
+            activeProjectId = null;
+            
+            // View 1 Resets
+            if(ui.formulaSelect) ui.formulaSelect.value = '';
+            if(ui.channelSelect) ui.channelSelect.value = '';
+            if(ui.transcriptContent) ui.transcriptContent.value = '';
+            if(ui.scriptLength) { ui.scriptLength.value = '30'; if(ui.lengthVal) ui.lengthVal.innerText = "30 Minutes"; }
+            if(ui.scriptPacing) { ui.scriptPacing.value = '150'; if(ui.pacingVal) ui.pacingVal.innerText = "150 WPM"; }
+            if(ui.outScript) ui.outScript.innerHTML = '';
+            if(ui.outTitlesContainer) ui.outTitlesContainer.innerHTML = '';
+            ui.resultsState?.classList.add('hidden');
+            ui.emptyState?.classList.remove('hidden');
+
+            // View 2 Resets
+            if(ui.v2Script) ui.v2Script.value = '';
+            if(ui.v2Min) ui.v2Min.value = '10';
+            if(ui.v2Sec) ui.v2Sec.value = '0';
+            if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML = '';
+            if(ui.v2BulkImg) ui.v2BulkImg.value = '';
+            if(ui.v2BulkVid) ui.v2BulkVid.value = '';
+            ui.v2ResultsState?.classList.add('hidden');
+            ui.v2EmptyState?.classList.remove('hidden');
+            calculateV2Stats();
+
+            // View 3 Resets
+            if(ui.v3Script) ui.v3Script.value = '';
+            if(ui.v3CompTitles) ui.v3CompTitles.value = '';
+            if(ui.v3CompDesc) ui.v3CompDesc.value = '';
+            if(ui.v3OutDesc) ui.v3OutDesc.value = '';
+            if(ui.v3OutThumbPrompt) ui.v3OutThumbPrompt.value = '';
+            if(ui.v3OutHashtags) ui.v3OutHashtags.value = '';
+            if(ui.v3OutTitles) ui.v3OutTitles.innerHTML = '';
+            ui.v3ResultsState?.classList.add('hidden');
+            ui.v3EmptyState?.classList.remove('hidden');
+
+            // UI Cleanup
+            updateActiveProjectUI();
+            showToast("Workspace cleared. Ready for a new project!");
+        }
+
+        window.loadProject = function(id) {
+            const proj = appProjects.find(p => p.id === id);
+            if(!proj) return;
+            
+            loadWorkspaceData(proj.data);
+            activeProjectId = id;
+            ui.projectsModal?.classList.add('hidden');
+            showToast("Project Loaded: " + proj.name);
+            updateActiveProjectUI();
+        }
+
+        window.confirmDelete = async function(id) {
+            try {
+                await deleteProjectDB(id);
+                if(activeProjectId === id) {
+                    activeProjectId = null;
+                }
+                deletingProjectId = null;
+                if(!isFirebaseEnabled) { 
+                    appProjects = await loadProjectsIndexedDB(); 
+                }
+                updateActiveProjectUI();
+                showToast("Project deleted.");
+            } catch(e) { 
+                console.error(e);
+                showToast("Error deleting project."); 
+            }
+        }
+
+        window.confirmRename = async function(id, newName) {
+            const proj = appProjects.find(p => p.id === id);
+            if(!proj || !newName || newName.trim() === "") {
+                editingProjectId = null;
+                updateProjectsList();
+                return;
+            }
+
+            try {
+                proj.name = newName.trim();
+                proj.updatedAt = Date.now();
+                await saveProjectDB(proj);
+                editingProjectId = null;
+                
+                if(!isFirebaseEnabled) { 
+                    appProjects = await loadProjectsIndexedDB(); 
+                }
+                updateActiveProjectUI();
+                showToast("Project renamed!");
+            } catch(e) {
+                console.error(e);
+                showToast("Error renaming project.");
+            }
+        }
+
+        function updateActiveProjectUI() {
+            if(activeProjectId) {
+                const proj = appProjects.find(p => p.id === activeProjectId);
+                ui.activeProjectBanner?.classList.remove('hidden');
+                if(ui.activeProjectName) ui.activeProjectName.innerText = proj ? proj.name : "Unknown Project";
+            } else {
+                ui.activeProjectBanner?.classList.add('hidden');
+            }
+            updateProjectsList();
+        }
+
+        ui.btnNewProjectHeader?.addEventListener('click', () => {
+            const btn = ui.btnNewProjectHeader;
+            // Target the SVG since Lucide already converted the <i> tag
+            const icon = btn.querySelector('svg') || btn.querySelector('i');
+            const span = btn.querySelector('span');
+
+            // If we are already in the 3-second window, this is the SECOND click
+            if (resetConfirmationTimeout) {
+                clearTimeout(resetConfirmationTimeout);
+                resetConfirmationTimeout = null;
+                
+                // 1. Wipe the slate
+                window.resetWorkspace();
+                
+                // 2. Immediately revert button visuals
+                btn.className = "text-slate-400 hover:text-white transition-colors p-2 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full px-4 shadow";
+                span.innerText = "New";
+                if(icon) {
+                    icon.setAttribute('class', 'lucide lucide-plus w-4 h-4 text-blue-400');
+                }
+            } else {
+                // This is the FIRST click
+                // 1. Change appearance to "Warning Mode"
+                btn.className = "text-white transition-colors p-2 flex items-center gap-2 bg-red-600 border border-red-500 rounded-full px-4 shadow animate-pulse";
+                span.innerText = "Confirm?";
+                if(icon) {
+                    icon.setAttribute('class', 'lucide lucide-plus w-4 h-4 text-white');
+                }
+
+                // 2. Start the 3-second window to click again
+                resetConfirmationTimeout = setTimeout(() => {
+                    resetConfirmationTimeout = null;
+                    // Revert visuals back to normal if they didn't click again
+                    btn.className = "text-slate-400 hover:text-white transition-colors p-2 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full px-4 shadow";
+                    span.innerText = "New";
+                    if(icon) {
+                        icon.setAttribute('class', 'lucide lucide-plus w-4 h-4 text-blue-400');
+                    }
+                }, 3000);
+            }
+        });
+
+        ui.btnProjects?.addEventListener('click', () => {
+            updateProjectsList();
+            ui.projectsModal?.classList.remove('hidden');
+        });
+        ui.btnCloseProjects?.addEventListener('click', () => ui.projectsModal?.classList.add('hidden'));
+
+        ui.btnSaveNewProject?.addEventListener('click', async () => {
+            const name = ui.newProjectName?.value.trim();
+            if(!name) return showToast("Please give your project a name.");
+            
+            const newId = 'proj_' + Date.now();
+            const projectObj = {
+                id: newId,
+                name: name,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                data: getWorkspaceData()
+            };
+
+            try {
+                ui.btnSaveNewProject.innerText = "Saving...";
+                await saveProjectDB(projectObj);
+                activeProjectId = newId;
+                if(ui.newProjectName) ui.newProjectName.value = '';
+                
+                if(!isFirebaseEnabled) { appProjects = await loadProjectsIndexedDB(); updateProjectsList(); }
+                updateActiveProjectUI();
+                showToast("New project created & active!");
+            } catch (e) {
+                showToast("Error saving project.");
+                console.error(e);
+            } finally {
+                ui.btnSaveNewProject.innerHTML = '<i data-lucide="plus-circle" class="w-4 h-4"></i> Create New Project';
+                lucide.createIcons();
+            }
+        });
+
+        // The Auto-Save Debouncer (Triggered on any typing or clicks)
+        document.body.addEventListener('input', () => {
+            if(!activeProjectId) return;
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(async () => {
+                const proj = appProjects.find(p => p.id === activeProjectId);
+                if(!proj) return;
+                
+                proj.data = getWorkspaceData();
+                proj.updatedAt = Date.now();
+                
+                try {
+                    await saveProjectDB(proj);
+                    // Minimal subtle visual feedback so user knows it's saving without annoying toast
+                    const icon = document.querySelector('#active-project-banner .lucide-refresh-cw');
+                    if(icon) {
+                        icon.classList.add('animate-spin', 'text-emerald-300');
+                        setTimeout(() => icon.classList.remove('animate-spin', 'text-emerald-300'), 1000);
+                    }
+                    if(!isFirebaseEnabled) appProjects = await loadProjectsIndexedDB();
+                } catch(e) { console.warn("Auto-save failed", e); }
+            }, 3000); // Saves 3 seconds after you stop typing
+        });
+
         // Initialize local db on load
         window.addEventListener('DOMContentLoaded', async () => {
             try { 
@@ -1529,6 +2496,8 @@
                     updateFormulaDropdown(); 
                     appChannels = await loadChannelsIndexedDB(); 
                     updateChannelDropdown(); 
+                    appProjects = await loadProjectsIndexedDB();
+                    if(typeof updateProjectsList === 'function') updateProjectsList();
                     const savedSettings = await loadSettingsIndexedDB();
                     if (savedSettings) appSettings = savedSettings;
                 } 
