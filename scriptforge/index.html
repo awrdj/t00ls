@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Script Forge - 2-View Architecture</title>
+    <title>Script Forge</title>
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 15c6.667-6 13.333 0 20-6'/%3E%3Cpath d='M9 22c1.798-1.998 2.518-3.285 2.807-5.022'/%3E%3Cpath d='M14 14.94c.144-.45.34-1.026.59-1.748'/%3E%3Cpath d='M3 15c3.12 1.48 5.668 1.446 8.356-.16'/%3E%3Cpath d='M13.626 9.423c2.618-1.503 5.09-1.517 8.374.007'/%3E%3Cpath d='M15 2c-1.798 1.998-2.518 3.285-2.807 5.022'/%3E%3Cpath d='M10 9.06c-.144.45-.34 1.026-.59 1.748'/%3E%3Cpath d='M2 9c6.667 6 13.333 0 20 6'/%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230f172a'/%3E%3Ctext y='70' font-size='65' x='50' text-anchor='middle'%3E🧬%3C/text%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -137,7 +138,7 @@
 
                 <input type="text" id="formula-name" placeholder="Formula Name (e.g., Hidden Archive)" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 mb-3 hidden transition-all">
                 
-                <textarea id="formula-content" rows="6" placeholder="Paste the channel DNA, rules, tone, and formatting constraints here..." class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-none mb-3"></textarea>
+                <textarea id="formula-content" rows="4" placeholder="Paste the channel DNA, rules, tone, and formatting constraints here..." class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-y mb-3"></textarea>
                 
                 <div class="flex gap-2">
                     <button id="btn-new-formula" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white rounded py-2 text-sm transition-colors font-medium">New</button>
@@ -164,7 +165,12 @@
                     </button>
                 </div>
 
-                <input type="text" id="channel-name-input" placeholder="Channel Name (e.g., The Global Truth)" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-white focus:outline-none focus:border-blue-500 mb-3 hidden transition-all">
+                <div id="channel-name-container" class="relative mb-3 hidden transition-all">
+                    <input type="text" id="channel-name-input" placeholder="Channel Name (e.g., The Global Truth)" class="w-full bg-slate-900 border border-slate-600 rounded p-3 pr-10 text-sm text-white focus:outline-none focus:border-blue-500">
+                    <button id="btn-generate-channel-name" class="absolute inset-y-0 right-0 pr-3 flex items-center text-amber-400 hover:text-amber-300 hidden transition-colors" title="Generate Channel Names">
+                        <i data-lucide="sparkles" id="icon-generate-channel-name" class="w-4 h-4"></i>
+                    </button>
+                </div>
                 
                 <div class="flex gap-2">
                     <button id="btn-new-channel" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white rounded py-2 text-sm transition-colors font-medium">New</button>
@@ -174,12 +180,39 @@
                 </div>
             </div>
 
+            <!-- Script Format Selector (Moved Here) -->
+            <div class="p-6 border-b border-slate-700 bg-slate-800/50">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="layout-template" class="w-4 h-4 text-blue-400"></i> Script Format
+                    </h2>
+                </div>
+                <select id="script-format" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                    <option value="faceless" selected>Faceless Storyboard (Default - CapCut Optimized)</option>
+                    <option value="cinematic">Multi-Character Skit / Cinematic</option>
+                    <option value="flowing">Flowing / Long-Form (Podcast/Doc)</option>
+                    <option value="formula">Channel Formula Format (Strictly Follow Formula)</option>
+                    <option value="custom">Custom Format Rules...</option>
+                </select>
+
+                <!-- Custom Format Input -->
+                <div id="custom-format-container" class="hidden mt-3 relative">
+                    <textarea id="custom-format-input" rows="4" placeholder="Describe the format (e.g. 'Write it as a breaking news report with 2 anchors')..." class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-xs text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-y pr-10"></textarea>
+                    <div class="absolute bottom-3 right-3 group flex items-center">
+                        <button id="btn-magic-format" class="text-amber-400 hover:text-amber-300 transition-colors p-1 bg-amber-900/30 hover:bg-amber-900/50 border border-amber-500/30 rounded" title="AI Magic Formatter">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        </button>
+                        <div class="absolute hidden group-hover:block bottom-full mb-2 right-0 w-48 bg-slate-900 border border-slate-600 text-[10px] text-slate-300 p-2 rounded shadow-xl z-50 pointer-events-none text-center">Type a brief idea, click the sparkle, and AI will build strict scriptwriting rules!</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Transcript Input -->
             <div class="p-6 border-b border-slate-700 flex-1 flex flex-col">
                 <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-4">
                     <i data-lucide="file-text" class="w-4 h-4"></i> Idea Transcript
                 </h2>
-                <textarea id="transcript-content" placeholder="Paste the raw interview transcript here. E.g. Dr. Jeffrey Sachs..." class="w-full flex-1 bg-slate-800 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-none"></textarea>
+                <textarea id="transcript-content" rows="4" placeholder="Paste the raw interview transcript here. E.g. Dr. Jeffrey Sachs..." class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-y"></textarea>
             </div>
 
             <!-- Generation Settings & Action -->
@@ -218,7 +251,7 @@
                         <p class="text-[10px] text-slate-500 mt-1">Uses Web Search to expand transcript facts.</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="deep-research-toggle" class="sr-only peer">
+                        <input type="checkbox" id="deep-research-toggle" class="sr-only peer" checked>
                         <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
@@ -247,25 +280,33 @@
 
             <!-- Results State -->
             <div id="results-state" class="hidden max-w-3xl mx-auto pb-20">
-                <div class="flex flex-col gap-6 mb-8 border-b border-slate-700 pb-8">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Alternative Titles</h2>
+                <div class="flex justify-between items-center mb-8 border-b border-slate-700 pb-4">
+                    <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Generated Narrative</h2>
+                    <div class="flex gap-2">
+                        <button id="btn-view-research" class="hidden bg-slate-800 hover:bg-slate-700 border border-slate-600 text-blue-400 px-4 py-2 rounded flex items-center gap-2 transition-colors text-sm font-bold whitespace-nowrap shadow-lg">
+                            <i data-lucide="globe" class="w-4 h-4"></i> View Fact Sheet
+                        </button>
                         <button onclick="copyFullScript()" class="bg-blue-600 hover:bg-blue-500 border border-blue-500 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors text-sm font-medium whitespace-nowrap shadow-lg">
                             <i data-lucide="copy" class="w-4 h-4"></i> Copy Full Script
                         </button>
                     </div>
-                    <div id="out-titles-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
                 </div>
                 
                 <div id="out-script" class="space-y-6 text-slate-300 leading-relaxed text-lg font-light">
                     <!-- Dynamic Content Populated Here -->
                 </div>
 
-                <!-- HANDOFF BUTTON -->
-                <button id="btn-handoff" class="mt-12 w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg py-5 font-bold text-xl tracking-wide transition-all shadow-lg flex items-center justify-center gap-3 group">
-                    <i data-lucide="clapperboard" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
-                    <span>SEND TO B-ROLL DIRECTOR 🎬</span>
-                </button>
+                <!-- HANDOFF BUTTONS -->
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button id="btn-handoff-v2" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg py-5 font-bold text-lg tracking-wide transition-all shadow-lg flex items-center justify-center gap-3 group">
+                        <i data-lucide="clapperboard" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
+                        <span>TO B-ROLL DIRECTOR 🎬</span>
+                    </button>
+                    <button id="btn-handoff-v3" class="w-full bg-purple-600 hover:bg-purple-500 text-white rounded-lg py-5 font-bold text-lg tracking-wide transition-all shadow-lg flex items-center justify-center gap-3 group">
+                        <i data-lucide="package" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
+                        <span>TO SEO PACKAGER 📦</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -295,7 +336,17 @@
                     </button>
                 </div>
 
-                <textarea id="v2-script" placeholder="Paste the final text script here to generate the visual timeline..." class="w-full flex-1 bg-slate-800 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors resize-none"></textarea>
+                <textarea id="v2-script" rows="4" placeholder="Paste the final text script here to generate the visual timeline..." class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors resize-y mb-3"></textarea>
+                
+                <!-- Import Toolbar -->
+                <div class="flex gap-2 shrink-0">
+                    <button id="btn-v2-pull-v1" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white border border-slate-600 rounded py-2 text-xs font-bold transition-all shadow flex items-center justify-center gap-2">
+                        <i data-lucide="arrow-down-to-line" class="w-3 h-3"></i> Pull from Script Writer
+                    </button>
+                    <button id="btn-v2-pull-v3" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white border border-slate-600 rounded py-2 text-xs font-bold transition-all shadow flex items-center justify-center gap-2">
+                        <i data-lucide="arrow-down-to-line" class="w-3 h-3"></i> Pull from Packager
+                    </button>
+                </div>
             </div>
 
             <!-- Math & Generation Settings -->
@@ -370,36 +421,10 @@
             </div>
 
             <!-- V2 Results State -->
-            <div id="v2-results-state" class="hidden max-w-5xl mx-auto w-full pb-10 flex flex-col gap-8">
+            <div id="v2-results-state" class="hidden max-w-5xl mx-auto w-full pb-8 flex flex-col gap-8">
                 
-                <!-- The Timeline Feed -->
-                <div>
-                    <h2 class="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-6 border-b border-slate-700 pb-3">
-                        <i data-lucide="list-video" class="text-emerald-400"></i> Editing Timeline
-                    </h2>
-                    <div id="v2-timeline-feed" class="space-y-4">
-                        <!-- Rendered Asset Cards -->
-                    </div>
-                </div>
-
-                <!-- Bulk Exports -->
-                <div class="pt-8 border-t border-slate-700">
-                    <!-- Master Shot List Box -->
-                    <div class="bg-slate-800/50 rounded-lg border border-slate-700 p-4 flex flex-col">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                                <i data-lucide="clipboard-list"></i> Master Shot List
-                            </h3>
-                            <button onclick="copyToClipboard(document.getElementById('v2-bulk-master').value, 'Master Shot List')" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1">
-                                <i data-lucide="copy" class="w-3 h-3"></i> Copy All
-                            </button>
-                        </div>
-                        <textarea id="v2-bulk-master" readonly class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-300 font-mono resize-none focus:outline-none min-h-[150px]"></textarea>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    
+                <!-- Image & Video Prompts (Moved Above Timeline) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8 border-b border-slate-700">
                     <!-- Image Prompts -->
                     <div class="bg-slate-800/50 rounded-lg border border-slate-700 p-4 flex flex-col">
                         <div class="flex justify-between items-center mb-3">
@@ -425,8 +450,34 @@
                         </div>
                         <textarea id="v2-bulk-vid" readonly class="w-full flex-1 bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-300 font-mono resize-none focus:outline-none min-h-[250px]"></textarea>
                     </div>
-
                 </div>
+
+                <!-- The Timeline Feed -->
+                <div>
+                    <h2 class="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-6 border-b border-slate-700 pb-3">
+                        <i data-lucide="list-video" class="text-emerald-400"></i> Editing Timeline
+                    </h2>
+                    <div id="v2-timeline-feed" class="space-y-4">
+                        <!-- Rendered Asset Cards -->
+                    </div>
+                </div>
+
+                <!-- Bulk Exports (Master Shot List) -->
+                <div class="pt-8 border-t border-slate-700">
+                    <!-- Master Shot List Box -->
+                    <div class="bg-slate-800/50 rounded-lg border border-slate-700 p-4 flex flex-col">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="clipboard-list"></i> Master Shot List
+                            </h3>
+                            <button onclick="copyToClipboard(document.getElementById('v2-bulk-master').value, 'Master Shot List')" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy All
+                            </button>
+                        </div>
+                        <textarea id="v2-bulk-master" readonly class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-300 font-mono resize-none focus:outline-none min-h-[150px]"></textarea>
+                    </div>
+                </div>
+
             </div>
 
         </div>
@@ -440,31 +491,62 @@
         <!-- Left Panel: Inputs -->
         <div class="w-1/3 min-w-[400px] glass-panel border-r border-slate-700 flex flex-col overflow-y-auto z-10 shadow-xl">
             
-            <div class="p-6 border-b border-slate-700 flex flex-col h-1/3 min-h-[200px]">
-                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-3">
-                    <i data-lucide="file-check" class="w-4 h-4 text-emerald-400"></i> 1. Final Script (Auto-Synced)
-                </h2>
-                <textarea id="v3-script" class="w-full flex-1 bg-slate-800 border border-slate-600 rounded p-3 text-xs text-slate-400 focus:outline-none focus:border-purple-500 transition-colors resize-none" placeholder="Your final script from View 2 will appear here, or you can paste one directly..."></textarea>
+            <!-- 1. Channel Formula (Synced or Manual) -->
+            <div class="p-6 border-b border-slate-700 bg-slate-800/30">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="database" class="w-4 h-4 text-blue-400"></i> 1. Channel Formula
+                    </h2>
+                </div>
+                <select id="v3-formula-select" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors mb-3">
+                    <option value="">-- Select Saved Formula --</option>
+                </select>
+                <textarea id="v3-formula-content" rows="2" placeholder="Paste the channel DNA, rules, tone, and formatting constraints here..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-y"></textarea>
             </div>
 
+            <!-- 2. Final Script -->
+            <div class="p-6 border-b border-slate-700 flex flex-col flex-1">
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-3">
+                    <i data-lucide="file-check" class="w-4 h-4 text-emerald-400"></i> 2. Final Script
+                </h2>
+                <textarea id="v3-script" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-y mb-3" rows="2" placeholder="Paste script here or pull from another view..."></textarea>
+                
+                <!-- Import Toolbar -->
+                <div class="flex gap-2 shrink-0">
+                    <button id="btn-v3-pull-v1" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white border border-slate-600 rounded py-2 text-xs font-bold transition-all shadow flex items-center justify-center gap-2">
+                        <i data-lucide="arrow-down-to-line" class="w-3 h-3"></i> Pull from Script Writer
+                    </button>
+                    <button id="btn-v3-pull-v2" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white border border-slate-600 rounded py-2 text-xs font-bold transition-all shadow flex items-center justify-center gap-2">
+                        <i data-lucide="arrow-down-to-line" class="w-3 h-3"></i> Pull from B-Roll
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. Visual DNA -->
             <div class="p-6 border-b border-slate-700">
                 <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-3">
-                    <i data-lucide="search" class="w-4 h-4 text-purple-400"></i> 2. Competitor DNA
+                    <i data-lucide="image" class="w-4 h-4 text-purple-400"></i> 3. Visual DNA (Optional)
                 </h2>
-                <textarea id="v3-comp-titles" rows="3" placeholder="Paste 3 to 5 viral competitor TITLES here (one per line)..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-none mb-3"></textarea>
-                <textarea id="v3-comp-desc" rows="3" placeholder="Paste a competitor's DESCRIPTION here to map their formatting and keyword layout..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-none mb-3"></textarea>
-                
+                <div class="bg-slate-900 border border-slate-600 rounded p-3 mb-4">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Competitor Thumbnails</label>
+                    <!-- 'multiple' allows selecting multiple files -->
+                    <input type="file" id="v3-comp-thumb" accept="image/*" multiple class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-900/30 file:text-purple-400 hover:file:bg-purple-900/50 transition-colors">
+                    <p class="text-[10px] text-slate-500 mt-2">Upload reference thumbnails. Gemini Vision will reverse-engineer their visual psychology.</p>
+                </div>
                 <div class="bg-slate-900 border border-slate-600 rounded p-3">
-                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2 flex items-center gap-2"><i data-lucide="image" class="w-3 h-3"></i> Competitor Thumbnail</label>
-                    <input type="file" id="v3-comp-thumb" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-900/30 file:text-purple-400 hover:file:bg-purple-900/50 transition-colors">
-                    <p class="text-[10px] text-slate-500 mt-2">Gemini Vision will reverse-engineer this image to steal its psychological composition.</p>
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Thumbnail Aspect Ratio</label>
+                    <select id="v3-image-aspect-ratio" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors">
+                        <option value="16:9" selected>16:9 (Standard YouTube)</option>
+                        <option value="9:16">9:16 (Shorts/TikTok)</option>
+                        <option value="1:1">1:1 (Square)</option>
+                    </select>
                 </div>
             </div>
 
             <div class="p-6 bg-slate-800/50">
                 <button id="btn-generate-packager" class="w-full bg-purple-600 hover:bg-purple-500 text-white rounded-lg py-4 font-bold text-lg tracking-wide transition-all shadow-lg flex items-center justify-center gap-3">
                     <i data-lucide="package" class="w-5 h-5"></i>
-                    <span>GENERATE METADATA</span>
+                    <span>GENERATE MASTER PACKAGE</span>
                 </button>
             </div>
         </div>
@@ -474,85 +556,137 @@
             <!-- V3 Empty State -->
             <div id="v3-empty-state" class="flex-1 flex flex-col items-center justify-center text-slate-500 opacity-70">
                 <i data-lucide="package-open" class="w-24 h-24 mb-6 text-slate-600"></i>
-                <h2 class="text-2xl font-bold text-slate-400 mb-2">The Packager is Empty</h2>
-                <p class="text-sm max-w-md text-center">Paste your competitor references and generate the ultimate upload package.</p>
+                <h2 class="text-2xl font-bold text-slate-400 mb-2">The Brand Packager is Empty</h2>
+                <p class="text-sm max-w-md text-center">Set your formula and script to generate the ultimate upload package.</p>
             </div>
 
             <!-- V3 Loading State -->
             <div id="v3-loading-state" class="hidden flex-1 flex flex-col items-center justify-center text-purple-400">
                 <div class="loader mb-6 !w-12 !h-12 !border-4 !border-t-purple-500"></div>
-                <h2 id="v3-loading-text" class="text-xl font-bold mb-2 animate-pulse">Analyzing Psychology...</h2>
+                <h2 id="v3-loading-text" class="text-xl font-bold mb-2 animate-pulse">Engineering Brand Identity...</h2>
             </div>
 
             <!-- V3 Results State -->
             <div id="v3-results-state" class="hidden max-w-5xl mx-auto w-full pb-10 flex flex-col gap-8">
                 
-                <!-- Thumbnail Box (Top, Wide) -->
-                <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-4 border-b border-slate-700 pb-2">
-                        <i data-lucide="image" class="text-emerald-400"></i> Thumbnail Engine
-                    </h3>
-                    <p class="text-xs text-slate-400 mb-3">Extracted from competitor psychology and adapted to your script.</p>
-                    <textarea id="v3-out-thumb-prompt" class="w-full min-h-[100px] bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none focus:border-emerald-500 mb-4 transition-colors"></textarea>
-                    
-                    <button id="btn-v3-gen-thumb" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded py-3 font-bold text-sm tracking-wide transition-all shadow flex items-center justify-center gap-2">
-                        <i data-lucide="wand-2" class="w-4 h-4"></i> Generate with Nano Banana 🍌
-                    </button>
-
-                    <div id="v3-thumb-preview" class="mt-4 hidden rounded overflow-hidden border border-slate-700 w-full min-h-[200px] bg-slate-900 flex items-center justify-center"></div>
-                </div>
-
-                <!-- Titles Box (Middle, Dynamic Split) -->
-                <div id="v3-titles-wrapper" class="grid grid-cols-1 gap-8">
-                    <!-- Formula Titles (Auto-synced from V1, hidden if none) -->
-                    <div id="v3-formula-titles-box" class="hidden bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex-col">
-                        <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-4 border-b border-slate-700 pb-2">
-                            <i data-lucide="dna" class="text-blue-400"></i> Formula Titles (From View 1)
+                <!-- Titles Block -->
+                <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col relative">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                            <i data-lucide="type" class="text-orange-400"></i> Engineered Titles
                         </h3>
-                        <div id="v3-formula-titles-list" class="flex flex-col gap-3"></div>
+                        <div class="flex gap-2">
+                            <button class="btn-v3-inject text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" data-target="titles"><i data-lucide="dna" class="w-3 h-3 text-purple-400"></i> Inject Competitor</button>
+                            <button class="btn-v3-regen-all text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" data-target="titles"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen All</button>
+                        </div>
                     </div>
-
-                    <!-- Engineered Titles (Generated in V3) -->
-                    <div id="v3-engineered-titles-box" class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col">
-                        <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-4 border-b border-slate-700 pb-2">
-                            <i data-lucide="flame" class="text-orange-400"></i> Viral Engineered Titles
-                        </h3>
-                        <div id="v3-out-titles" class="flex flex-col gap-3"></div>
+                    <!-- Injector Panel (Hidden by default) -->
+                    <div id="v3-inject-titles" class="hidden mb-4 bg-slate-900 border border-purple-500/50 rounded p-3 shadow-inner">
+                        <label class="text-[10px] uppercase font-bold text-purple-400 mb-2 block">Targeted Injection: Competitor Titles</label>
+                        <div class="flex flex-col gap-2">
+                            <textarea id="v3-inject-titles-input" rows="3" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-purple-500 resize-y" placeholder="Paste up to 5 viral competitor titles here (one per line)..."></textarea>
+                            <button class="btn-execute-inject bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors self-end" data-target="titles">Extract & Generate</button>
+                        </div>
+                    </div>
+                    <div id="v3-out-titles" class="flex flex-col gap-3 mb-4">
+                        <!-- Dynamic Titles -->
+                    </div>
+                    <!-- More Buttons -->
+                    <div class="flex gap-2 pt-2 border-t border-slate-700/50">
+                        <button id="btn-more-formula-titles" class="hidden flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white px-3 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2"><i data-lucide="plus" class="w-3 h-3"></i> More Formula Titles</button>
+                        <button id="btn-more-comp-titles" class="hidden flex-1 bg-purple-900/40 hover:bg-purple-900/60 border border-purple-500/50 text-purple-300 hover:text-purple-200 px-3 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2"><i data-lucide="plus" class="w-3 h-3"></i> More Competitor Titles</button>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    <!-- Description Box (Bottom Left) -->
-                    <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col">
+                    <!-- Description Block -->
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col relative">
                         <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
                             <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
                                 <i data-lucide="align-left" class="text-blue-400"></i> YouTube Description
                             </h3>
-                            <button onclick="copyToClipboard(document.getElementById('v3-out-desc').value, 'Description')" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1">
-                                <i data-lucide="copy" class="w-3 h-3"></i> Copy
-                            </button>
+                            <div class="flex gap-2">
+                                <button class="btn-v3-inject text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors" data-target="description" title="Inject Competitor"><i data-lucide="dna" class="w-3 h-3 text-purple-400"></i></button>
+                                <button class="btn-v3-regen-all text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors" data-target="description" title="Regenerate"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button>
+                                <button onclick="copyToClipboard(document.getElementById('v3-out-desc').value, 'Description')" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                            </div>
                         </div>
-                        <textarea id="v3-out-desc" class="w-full flex-1 min-h-[400px] bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none resize-none" readonly></textarea>
+                        <!-- Injector Panel -->
+                        <div id="v3-inject-description" class="hidden mb-4 bg-slate-900 border border-purple-500/50 rounded p-3 shadow-inner">
+                            <textarea id="v3-inject-description-input" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-white focus:outline-none focus:border-purple-500 resize-y mb-2" rows="3" placeholder="Paste competitor description as it is..."></textarea>
+                            <button class="btn-execute-inject w-full bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors" data-target="description">Adapt Description</button>
+                        </div>
+                        <textarea id="v3-out-desc" class="w-full flex-1 min-h-[300px] bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none resize-y"></textarea>
                     </div>
 
-                    <!-- Hashtags Box (Bottom Right) -->
-                    <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col">
+                    <!-- Keywords Block -->
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col relative">
                         <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
                             <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                                <i data-lucide="hash" class="text-pink-400"></i> Optimized Hashtags
+                                <i data-lucide="tags" class="text-pink-400"></i> Internal Tags
                             </h3>
-                            <button onclick="copyToClipboard(document.getElementById('v3-out-hashtags').value, 'Hashtags')" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1">
-                                <i data-lucide="copy" class="w-3 h-3"></i> Copy
-                            </button>
+                            <div class="flex gap-2">
+                                <button class="btn-v3-inject text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors" data-target="tags" title="Inject Competitor"><i data-lucide="dna" class="w-3 h-3 text-purple-400"></i></button>
+                                <button class="btn-v3-regen-all text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors" data-target="tags" title="Regenerate"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button>
+                                <button onclick="copyToClipboard(document.getElementById('v3-out-hashtags').value, 'Tags')" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                            </div>
                         </div>
-                        <textarea id="v3-out-hashtags" class="w-full flex-1 bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none resize-none min-h-[150px] xl:min-h-[400px]" readonly></textarea>
+                        <!-- Injector Panel -->
+                        <div id="v3-inject-tags" class="hidden mb-4 bg-slate-900 border border-purple-500/50 rounded p-3 shadow-inner">
+                            <textarea id="v3-inject-tags-input" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-white focus:outline-none focus:border-purple-500 mb-2 resize-y" rows="2" placeholder="Paste competitor raw tags..."></textarea>
+                            <button class="btn-execute-inject w-full bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors" data-target="tags">Adapt Tags</button>
+                        </div>
+                        <textarea id="v3-out-hashtags" class="w-full flex-1 bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none resize-y min-h-[150px] xl:min-h-[300px]"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Thumbnail Prompts Block (Moved to Bottom) -->
+                <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col relative">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                            <i data-lucide="image" class="text-emerald-400"></i> Thumbnail Prompts
+                        </h3>
+                        <div class="flex gap-2">
+                            <!-- Removed Inject Competitor button -->
+                            <button class="btn-v3-regen-all text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" data-target="thumbnails"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen All</button>
+                        </div>
+                    </div>
+                    <div id="v3-out-thumbnails" class="flex flex-col gap-4">
+                        <!-- Dynamic Thumbnails -->
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Projects Modal -->
+    <!-- Deep Research Sidebar -->
+    <div id="research-overlay" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity opacity-0"></div>
+    <div id="research-sidebar" class="fixed top-0 right-0 w-full max-w-lg h-full bg-slate-800 border-l border-slate-700 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 shrink-0 border-b border-slate-700 bg-slate-900/50">
+            <div>
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="globe" class="w-5 h-5 text-blue-400"></i> AI Master Fact Sheet
+                </h2>
+                <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">Live Web Research</p>
+            </div>
+            <button id="btn-close-research" class="text-slate-400 hover:text-white bg-slate-800 border border-slate-600 rounded p-1.5 transition-colors" title="Close Sidebar">
+                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <!-- Formatted Display Content -->
+        <div id="research-display" class="flex-1 overflow-y-auto p-6 text-sm text-slate-300 leading-relaxed custom-scrollbar"></div>
+        <!-- Hidden raw text for copying -->
+        <textarea id="research-content" class="hidden"></textarea> 
+        <!-- Footer -->
+        <div class="p-4 border-t border-slate-700 bg-slate-900/50 shrink-0 flex justify-end">
+            <button onclick="copyToClipboard(document.getElementById('research-content').value, 'Fact Sheet')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm transition-colors flex items-center gap-2 shadow-lg font-bold">
+                <i data-lucide="copy" class="w-4 h-4"></i> Copy Raw Notes
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
     <div id="projects-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col">
             
@@ -641,11 +775,44 @@
 </div>
                 </div>
 
-                <!-- API Rate Limit / Cooldown -->
+                <!-- API & Engine Fine-Tuning -->
                 <div class="border-t border-slate-700 pt-6 mt-6">
-                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="timer" class="w-4 h-4 text-orange-400"></i> API Cooldown (Rate Limiting)</h3>
-                    <p class="text-xs text-slate-400 mb-2">Set the delay (in milliseconds) between API requests during "Deep Dive" mode. Increase this if you get quota errors on shorter videos.</p>
-                    <input type="number" id="api-cooldown-input" min="0" step="500" placeholder="4000" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Cooldown -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2"><i data-lucide="timer" class="w-4 h-4 text-orange-400"></i> API Cooldown</h3>
+                                <div class="relative group flex items-center">
+                                    <i data-lucide="help-circle" class="w-3 h-3 text-slate-500 cursor-help"></i>
+                                    <div class="absolute hidden group-hover:block bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 bg-slate-900 border border-slate-600 text-[10px] text-slate-300 p-2 rounded shadow-xl z-50 pointer-events-none">Delay (ms) between API requests. Increase if getting quota errors.</div>
+                                </div>
+                            </div>
+                            <input type="number" id="api-cooldown-input" min="0" step="500" placeholder="4000" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors">
+                        </div>
+                        <!-- Chunk Size -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2"><i data-lucide="scissors" class="w-4 h-4 text-orange-400"></i> AI Chunk Size</h3>
+                                <div class="relative group flex items-center">
+                                    <i data-lucide="help-circle" class="w-3 h-3 text-slate-500 cursor-help"></i>
+                                    <div class="absolute hidden group-hover:block bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 bg-slate-900 border border-slate-600 text-[10px] text-slate-300 p-2 rounded shadow-xl z-50 pointer-events-none">Target words per chunk when auto-formatting to prevent Gemini context drops.</div>
+                                </div>
+                            </div>
+                            <input type="number" id="api-chunk-size-input" min="100" step="50" placeholder="800" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors">
+                        </div>
+                        <!-- Warning Limit -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 text-orange-400"></i> Warning Limit</h3>
+                                <div class="relative group flex items-center">
+                                    <i data-lucide="help-circle" class="w-3 h-3 text-slate-500 cursor-help"></i>
+                                    <!-- BUG FIX: Changed from 'left-1/2 -translate-x-1/2' to 'right-0' to prevent horizontal scrollbar overflow -->
+                                    <div class="absolute hidden group-hover:block bottom-full mb-2 right-0 w-48 bg-slate-900 border border-slate-600 text-[10px] text-slate-300 p-2 rounded shadow-xl z-50 pointer-events-none">Word count limit for a single paragraph before triggering the CapCut format warning banner.</div>
+                                </div>
+                            </div>
+                            <input type="number" id="api-warning-threshold-input" min="10" step="5" placeholder="65" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Model Configuration Section -->
@@ -675,9 +842,9 @@
                         <!-- Image Model -->
                         <div class="flex flex-col gap-2">
                             <div>
-                                <label class="text-[10px] uppercase font-bold text-slate-500 mb-1 block tracking-wider">Image Generation Model (Nano Banana)</label>
+                                <label class="text-[10px] uppercase font-bold text-slate-500 mb-1 block tracking-wider">Image Generation Model</label>
                                 <select id="select-image-model" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
-                                    <option value="gemini-2.5-flash-image-preview">gemini-2.5-flash-image-preview (Default)</option>
+                                    <option value="gemini-2.5-flash-image-preview">gemini-2.5-flash-image-preview (Nano Banana - Default)</option>
                                     <option value="custom">Custom...</option>
                                 </select>
                             </div>
@@ -772,11 +939,15 @@
         let autoSaveTimeout = null; // NEW: Controls the 3-second delay
         let resetConfirmationTimeout = null; // NEW: Controls the "Double-Tap" New button
         let view1Titles = []; // Stores V1 titles to mirror into V3
+        let cachedChannelNames = []; // Stores 10 generated channel names
+        let currentChannelNameIndex = 0; // Tracks which generated name we are showing
         // Instant load backup to prevent "lost data" race conditions on refresh
         let appSettings = { 
             id: 'main', 
             apiKey: localStorage.getItem('fast_cache_api') || '', 
             cooldown: parseInt(localStorage.getItem('fast_cache_cooldown') || '4000', 10),
+            chunkSize: parseInt(localStorage.getItem('fast_cache_chunk_size') || '800', 10),
+            warningThreshold: parseInt(localStorage.getItem('fast_cache_warning_threshold') || '65', 10),
             prompts: JSON.parse(localStorage.getItem('fast_cache_prompts') || 'null'),
             models: JSON.parse(localStorage.getItem('fast_cache_models') || '{"text":"gemini-2.5-flash-preview-09-2025", "image":"gemini-2.5-flash-image-preview"}')
         };
@@ -824,6 +995,8 @@
                             // Keep the fast-cache synced with the permanent database
                             localStorage.setItem('fast_cache_api', appSettings.apiKey || '');
                             localStorage.setItem('fast_cache_cooldown', appSettings.cooldown || '4000');
+                            localStorage.setItem('fast_cache_chunk_size', appSettings.chunkSize || '800');
+                            localStorage.setItem('fast_cache_warning_threshold', appSettings.warningThreshold || '65');
                             if (appSettings.prompts) localStorage.setItem('fast_cache_prompts', JSON.stringify(appSettings.prompts));
                             if (appSettings.models) localStorage.setItem('fast_cache_models', JSON.stringify(appSettings.models));
                         }
@@ -865,12 +1038,19 @@
             
             // Restored View 1 Elements
             channelSelect: document.getElementById('channel-select'),
+            channelNameContainer: document.getElementById('channel-name-container'),
             channelNameInput: document.getElementById('channel-name-input'),
+            btnGenerateChannelName: document.getElementById('btn-generate-channel-name'),
+            iconGenerateChannelName: document.getElementById('icon-generate-channel-name'),
             btnNewChannel: document.getElementById('btn-new-channel'),
             btnSaveChannel: document.getElementById('btn-save-channel'),
             btnDeleteChannel: document.getElementById('btn-delete-channel'),
             generationMode: document.getElementById('generation-mode'),
             deepResearchToggle: document.getElementById('deep-research-toggle'),
+            scriptFormat: document.getElementById('script-format'),
+            customFormatContainer: document.getElementById('custom-format-container'),
+            customFormatInput: document.getElementById('custom-format-input'),
+            btnMagicFormat: document.getElementById('btn-magic-format'),
 
             transcriptContent: document.getElementById('transcript-content'),
             scriptLength: document.getElementById('script-length'),
@@ -884,7 +1064,14 @@
             resultsState: document.getElementById('results-state'),
             outTitlesContainer: document.getElementById('out-titles-container'),
             outScript: document.getElementById('out-script'),
-            btnHandoff: document.getElementById('btn-handoff'),
+            btnHandoffV2: document.getElementById('btn-handoff-v2'),
+            btnHandoffV3: document.getElementById('btn-handoff-v3'),
+            btnViewResearch: document.getElementById('btn-view-research'),
+            researchSidebar: document.getElementById('research-sidebar'),
+            researchOverlay: document.getElementById('research-overlay'),
+            researchDisplay: document.getElementById('research-display'),
+            btnCloseResearch: document.getElementById('btn-close-research'),
+            researchContent: document.getElementById('research-content'),
 
             // View 2
             v2Script: document.getElementById('v2-script'),
@@ -905,6 +1092,8 @@
             v2CountImg: document.getElementById('v2-count-img'),
             v2CountVid: document.getElementById('v2-count-vid'),
             v2DirectorMode: document.getElementById('v2-director-mode'),
+            btnV2PullV1: document.getElementById('btn-v2-pull-v1'),
+            btnV2PullV3: document.getElementById('btn-v2-pull-v3'),
 
             // View 3
             navV3: document.getElementById('nav-v3'),
@@ -927,6 +1116,11 @@
             v3OutHashtags: document.getElementById('v3-out-hashtags'),
             btnV3GenThumb: document.getElementById('btn-v3-gen-thumb'),
             v3ThumbPreview: document.getElementById('v3-thumb-preview'),
+            btnV3PullV1: document.getElementById('btn-v3-pull-v1'),
+            btnV3PullV2: document.getElementById('btn-v3-pull-v2'),
+            v3FormulaSelect: document.getElementById('v3-formula-select'),
+            v3FormulaContent: document.getElementById('v3-formula-content'),
+            v3ImageAspectRatio: document.getElementById('v3-image-aspect-ratio'),
 
             // Projects
             btnNewProjectHeader: document.getElementById('btn-new-project-header'),
@@ -947,6 +1141,8 @@
             apiCooldownInput: document.getElementById('api-cooldown-input'),
             btnToggleApiKey: document.getElementById('btn-toggle-api-key'),
             iconApiKeyVisibility: document.getElementById('icon-api-key-visibility'),
+            apiChunkSizeInput: document.getElementById('api-chunk-size-input'),
+            apiWarningThresholdInput: document.getElementById('api-warning-threshold-input'),
             btnSaveSettings: document.getElementById('btn-save-settings'),
             selectTextModel: document.getElementById('select-text-model'),
             customTextModel: document.getElementById('custom-text-model'),
@@ -956,11 +1152,11 @@
 
         // --- System Prompts Engine ---
         const DEFAULT_PROMPTS = {
-            standard: `You are an elite YouTube Scriptwriter performing a perfect STYLE TRANSFER for the channel "{{CHANNEL_NAME}}".\n\nCRITICAL DIRECTIVE: You will receive two inputs enclosed in XML tags.\n1. <STYLE_GUIDE>: Extract ONLY the tone, pacing, structural beats, and emotional hooks from this. IGNORE all specific names, dates, and events mentioned here—they are just examples.\n2. <SOURCE_MATERIAL>: This is your ONLY source of truth. Every name, location, statistic, and core event in the final script MUST originate from here.\n\n- THE NARRATOR RULE: YOU are writing for a SOLO NARRATOR speaking directly to the camera/audience for "{{CHANNEL_NAME}}". Adapt the vibe of the style guide to a direct-to-camera format. DO NOT use the original channel name from the STYLE_GUIDE.\n\n- STORYBOARD BLOCK RULE: You MUST output the script as short "Storyboard Blocks". Every single distinct sentence, concept, or phrase MUST be its own block (separated by double line breaks). Do NOT write long paragraphs. This is for a CapCut 1:1 integration.\n\nTARGET LENGTH: EXACTLY {{TARGET_WORDS}} words. {{PACING_INSTRUCTION}} Pace the script to hit this word count.\nRULE: Output strictly the spoken narrative text. DO NOT write B-roll descriptions or stage directions.`,
-            outline: `You are the Lead Architect for the YouTube channel "{{CHANNEL_NAME}}". Break the provided <SOURCE_MATERIAL> down into exactly {{NUM_CHAPTERS}} chapters for a {{MINUTES}}-minute video.\n\nCRITICAL DIRECTIVE:\n- Apply the Niche, Structure, and Tone from the <STYLE_GUIDE>.\n- The <SOURCE_MATERIAL> is your ONLY source of truth. Do not use example names or quotes from the <STYLE_GUIDE>.\n- Outline for a SOLO video essay/commentary. Do NOT create outlines involving fake interviews or invented characters. DO NOT use the original channel name from the STYLE_GUIDE.\n\nProvide 3 distinct potential titles based on the <STYLE_GUIDE>'s Title Format.`,
-            chapter: `You are writing Chapter {{CURRENT_CHAPTER}} of {{TOTAL_CHAPTERS}} for the YouTube channel "{{CHANNEL_NAME}}".\n\nCRITICAL DIRECTIVE:\n- Apply the Tone and Structure from the <STYLE_GUIDE>.\n- Use ONLY facts from the <SOURCE_MATERIAL>.\n- Write for a SOLO NARRATOR speaking to the audience.\n- ONLY write the spoken narrative text. DO NOT write B-roll descriptions.\n- DO NOT use the original channel name from the STYLE_GUIDE. Always refer to your channel as "{{CHANNEL_NAME}}".\n\nSTORYBOARD BLOCK RULE: You MUST output the script as short "Storyboard Blocks". Every single distinct sentence, concept, or phrase MUST be its own block (separated by double line breaks). Do NOT write long paragraphs. This is for a CapCut 1:1 integration.\n\nTARGET LENGTH: EXACTLY {{WORDS_PER_CHAPTER}} words. {{PACING_INSTRUCTION}}\n{{HOOK_INSTRUCTION}}\n{{OUTRO_INSTRUCTION}}`,
-            broll: `Role: You are an elite Master Video Producer and AI B-Roll Director.\nYou will receive a script broken down into an array of numbered "Storyboard Blocks". \nYOUR FIRST TASK is to analyze the provided script, determine its specific niche (e.g., Tech Review, True Crime, Geopolitics, Finance, Gaming, History), and generate highly realistic, physically accurate image and video prompts perfectly tailored to that genre's visual aesthetic.\n\nDIRECTOR MODE: {{DIRECTOR_MODE}}.\n\nYOUR SECOND TASK:\nYou MUST output an exact 1:1 mapping. If there are 45 blocks, you must output an array of EXACTLY 45 directorial decisions, one for each block in chronological order.\n\nIf Director Mode is 'smart': Evaluate the block. If it is a personal hook, an emotional statement, or a transition, label it "A-Roll" (Narrator face time) and leave prompts blank. If it mentions a location, object, or statistic, label it "Image" or "Video" and generate a hyper-realistic B-Roll prompt.\nIf Director Mode is 'full': EVERY single block MUST be labeled "Image" or "Video" with a generated prompt. Do not use A-Roll.\n\nCore Rules for Visuals:\n1. Niche Adaptation & Realism: First, identify the script's subject matter. You must match the visual style to the topic. For Tech, use clean macro product shots, studio lighting, or screen captures. For True Crime, use archival police footage, grainy evidence photos, or moody interrogations. For Geopolitics, use documentary-style press briefings or raw news footage. For Finance, use Bloomberg-style terminal screens, trading floors, or clean infographics.\n2. Ban on Hollywood Buzzwords & Tropes: DO NOT use words like "cinematic", "epic", "blockbuster", or "movie-like". Instead, use professional camera terms specific to the niche (e.g., "macro probe lens", "raw C-SPAN footage", "CCTV security camera style", "AP news broadcast", "high-contrast studio lighting").\n3. Direct Subject References: Use the exact names of people, specific products, locations, or historical events mentioned in the script (e.g., "iPhone 15 Pro Max titanium frame", "Pentagon briefing room", "Bitcoin chart", "1990s desktop computer"). Do not use generic placeholders.\n4. PACING & DENSITY: You must generate a steady stream of B-roll. Aim for at least one visual asset per paragraph, or roughly every 20 to 30 seconds of spoken dialogue. Generate B-roll markers to introduce new subjects, emphasize key statistics, cover geographical shifts, or simply maintain viewer retention. Do not leave long, multi-minute gaps without visuals.`,
-            packager: `You are an elite YouTube SEO Strategist performing a PERFECT FORMAT CLONE.\n\nCRITICAL DIRECTIVES:\n1. FACTUAL QUARANTINE: The 'Competitor Titles' and 'Competitor Description' might contain specific names (e.g., "Morning Joe", specific anchors), dates, and brands. YOU MUST NEVER output these specific competitor words. They are radioactive placeholders. ONLY use facts, names, and entities explicitly found in the FINAL SCRIPT.\n2. THE CLONE PROTOCOL: You must clone the EXACT FORMATTING SHELL of the Competitor Description. If they put 3 hashtags on the first line, YOU put 3 hashtags on the first line (but make them relevant to the script). If they use specific line breaks, ALL CAPS, or emojis, YOU replicate that exact visual layout line-by-line.\n3. TITLES: Copy the exact psychological structure and punctuation of the competitor titles (e.g., if they use "Topic | Breaking News Today [Date]", you do the same using the script's topic and script's dates).\n4. THUMBNAIL: Reverse-engineer the competitor's visual composition (split screens, color contrast, text blocks) but replace their subjects with the literal subjects of the Final Script.\n5. SEPARATE HASHTAGS: Generate a standalone block of 10-15 highly optimized, comma-separated SEO hashtags relevant to the script.\n\nOUTPUT REQUIRED (JSON):\n- "titles": Array of 5 titles perfectly mimicking the competitor's format but using ONLY script facts.\n- "description": A YouTube description matching the competitor's EXACT layout, line-by-line structure, and hashtag placement, populated exclusively with script facts.\n- "thumbnailPrompt": A highly detailed prompt for an AI image generator applying the competitor's visual psychology to the script's subjects.\n- "hashtags": A string of 10-15 optimized hashtags (e.g. "#Tag1, #Tag2, #Tag3").`
+            standard: `You are an elite YouTube Scriptwriter performing a perfect STYLE TRANSFER for the channel "{{CHANNEL_NAME}}".\n\nCRITICAL DIRECTIVE: You will receive two inputs enclosed in XML tags.\n1. <STYLE_GUIDE>: Extract ONLY the tone, pacing, structural beats, and emotional hooks from this. IGNORE all specific names, dates, and events mentioned here—they are just examples.\n2. <SOURCE_MATERIAL>: This is your ONLY source of truth. Every name, location, statistic, and core event in the final script MUST originate from here.\n\n{{FORMAT_INSTRUCTION}}\n\nTARGET LENGTH: EXACTLY {{TARGET_WORDS}} words. {{PACING_INSTRUCTION}} Pace the script to hit this word count.\nRULE: Output strictly the spoken narrative text. DO NOT write B-roll descriptions or stage directions.`,
+            outline: `You are the Lead Architect for the YouTube channel "{{CHANNEL_NAME}}". Break the provided <SOURCE_MATERIAL> down into exactly {{NUM_CHAPTERS}} chapters for a {{MINUTES}}-minute video.\n\nCRITICAL DIRECTIVE:\n- Apply the Niche, Structure, and Tone from the <STYLE_GUIDE>.\n- The <SOURCE_MATERIAL> is your ONLY source of truth. Do not use example names or quotes from the <STYLE_GUIDE>.\n- Outline according to the required format (e.g., Solo video essay, skit, podcast.. etc). DO NOT use the original channel name from the STYLE_GUIDE.\n\nProvide 3 distinct potential titles based on the <STYLE_GUIDE>'s Title Format.`,
+            chapter: `You are writing Chapter {{CURRENT_CHAPTER}} of {{TOTAL_CHAPTERS}} for the YouTube channel "{{CHANNEL_NAME}}".\n\nCRITICAL DIRECTIVE:\n- Apply the Tone and Structure from the <STYLE_GUIDE>.\n- Use ONLY facts from the <SOURCE_MATERIAL>.\n- DO NOT use the original channel name from the STYLE_GUIDE. Always refer to your channel as "{{CHANNEL_NAME}}".\n\n{{FORMAT_INSTRUCTION}}\n\nTARGET LENGTH: EXACTLY {{WORDS_PER_CHAPTER}} words. {{PACING_INSTRUCTION}}\n{{HOOK_INSTRUCTION}}\n{{OUTRO_INSTRUCTION}}`,
+            broll: `Role: You are an elite Master Video Producer and AI B-Roll Director.\nYou will receive a script broken down into an array of numbered "Storyboard Blocks". \nYOUR FIRST TASK is to analyze the provided script, determine its specific niche (e.g., Tech Review, True Crime, Geopolitics, Finance, Gaming, History, Philosophy, Psychology.. etc), and generate highly realistic, physically accurate image and video prompts perfectly tailored to that genre's visual aesthetic.\n\nDIRECTOR MODE: {{DIRECTOR_MODE}}.\n\nYOUR SECOND TASK:\nYou MUST output an exact 1:1 mapping. If there are 45 blocks, you must output an array of EXACTLY 45 directorial decisions, one for each block in chronological order.\n\nIf Director Mode is 'smart': Default to "A-Roll" (Narrator face time, leave prompts blank) for connective tissue, transitions, personal opinions, and setups. ONLY label a block "Image" or "Video" if it requires specific visual evidence (charts, historical photos, explicit locations) OR if it is a core thematic beat that demands a strong atmospheric/metaphorical visualization (e.g., a foggy landscape for doubt, a bustling intersection for chaos.. etc). Let the narrator breathe during setups, but do not leave deep concepts without visual metaphors.\nIf Director Mode is 'full': EVERY single block MUST be labeled "Image" or "Video". Do not use A-Roll. VISUAL CONTINUITY: If consecutive blocks discuss the exact same scene or subject, output the EXACT SAME prompt and search query for them. This allows a single visual to stretch across multiple blocks without jarring jump cuts.\n\nCore Rules for Visuals:\n1. Niche Adaptation & Realism: First, identify the script's subject matter. You must match the visual style to the topic. For Tech, use clean macro product shots, studio lighting, or screen captures. For True Crime, use archival police footage, grainy evidence photos, or moody interrogations. For Geopolitics, use documentary-style press briefings or raw news footage. For Finance, use Bloomberg-style terminal screens, trading floors, or clean infographics.\n2. Ban on Hollywood Buzzwords & Tropes: DO NOT use words like "cinematic", "epic", "blockbuster", or "movie-like". Instead, use professional camera terms specific to the niche (e.g., "macro probe lens", "raw C-SPAN footage", "CCTV security camera style", "AP news broadcast", "high-contrast studio lighting".. etc).\n3. Direct Subject References: Use the exact names of people, specific products, locations, or historical events mentioned in the script (e.g., "iPhone 15 Pro Max titanium frame", "Pentagon briefing room", "Bitcoin chart", "1990s desktop computer".. etc). Do not use generic placeholders.\n4. PACING & DENSITY: Maintain viewer retention based on the Director Mode. In Full mode, ensure wall-to-wall visual coverage, but use Visual Continuity to hold onto strong visuals rather than forcing a new cut every single sentence. In Smart mode, use visuals strategically to emphasize key evidence or core atmospheric themes, but intentionally leave gaps during narrative setups to let the speaker connect directly with the audience.`,
+            packager: `You are an elite YouTube SEO Strategist performing a PERFECT FORMAT CLONE.\n\nCRITICAL DIRECTIVES:\n1. FACTUAL QUARANTINE: The 'Competitor Titles' and 'Competitor Description' might contain specific names (e.g., "Morning Joe", specific anchors.. etc), dates, and brands. YOU MUST NEVER output these specific competitor words. They are radioactive placeholders. ONLY use facts, names, and entities explicitly found in the FINAL SCRIPT.\n2. THE CLONE PROTOCOL: You must clone the EXACT FORMATTING SHELL of the Competitor Description. If they put 3 hashtags on the first line, YOU put 3 hashtags on the first line (but make them relevant to the script). If they use specific line breaks, ALL CAPS, or emojis, YOU replicate that exact visual layout line-by-line.\n3. TITLES: Copy the exact psychological structure and punctuation of the competitor titles (e.g., if they use "Topic | Breaking News Today [Date]", you do the same using the script's topic and script's dates.. etc).\n4. THUMBNAIL GENERATION: First, deeply analyze the Final Script to understand its overarching narrative, core theme, and main emotional hook. If images are attached, ACT AS A DIRECT PHOTOCOPIER for the visual style (exact layout, text placement, color scheme, split screens). However, substitute the competitor's original subjects and visual metaphors with new ones that perfectly represent your script's core narrative. If multiple images are provided, extract their shared visual DNA to create 3 thematic variations. Entirely IGNORE the Channel Formula's thumbnail rules. If NO images are attached, base the thumbnails purely on the Channel Formula guidelines and Final Script.\n5. INTERNAL SEARCH TAGS: Generate a standalone block of 10-15 highly optimized, comma-separated YouTube backend search tags (phrases). DO NOT remove spaces between words. DO NOT use the '#' symbol.\n\nOUTPUT REQUIRED (JSON):\n- "titles": Array of 3 titles perfectly mimicking the competitor's format but using ONLY script facts.\n- "description": A YouTube description matching the competitor's EXACT layout, line-by-line structure, and hashtag placement, populated exclusively with script facts.\n- "thumbnailPrompts": Array of 3 highly detailed prompts for an AI image generator applying the competitor's visual psychology to the script's subjects.\n- "hashtags": A string of 10-15 optimized search tags with normal spaces (e.g. "Drone Force, Military Strategy, US Military".. etc).`
         };
 
         function getPrompts() {
@@ -976,6 +1172,37 @@
         };
 
         // --- Utils ---
+        function formatResearchText(rawText) {
+            if (!rawText) return "";
+            let formattedHtml = rawText
+                .replace(/^####\s(.*$)/gim, '<h4 class="text-md font-bold text-emerald-400 mt-6 mb-2">$1</h4>')
+                .replace(/^###\s(.*$)/gim, '<h3 class="text-lg font-bold text-white mt-6 mb-2 border-b border-slate-700 pb-1">$1</h3>')
+                .replace(/^##\s(.*$)/gim, '<h2 class="text-xl font-bold text-blue-400 mt-8 mb-3">$1</h2>')
+                .replace(/^#\s(.*$)/gim, '<h1 class="text-2xl font-bold text-blue-500 mt-8 mb-4">$1</h1>')
+                // Indented bullet points (looks for spaces before the * or -)
+                .replace(/^\s+[\*\-]\s+(.*$)/gim, '<li class="ml-10 list-[circle] marker:text-slate-500 text-slate-400 mb-1">$1</li>')
+                // Top-level bullet points
+                .replace(/^[\*\-]\s+(.*$)/gim, '<li class="ml-4 list-disc marker:text-blue-500 mb-1 text-slate-200">$1</li>')
+                .replace(/\*\*(.*?)\*\*/gim, '<strong class="text-emerald-300 font-bold">$1</strong>')
+                .replace(/\*(.*?)\*/gim, '<em class="text-slate-400 italic">$1</em>')
+                .replace(/^(---|====)/gim, '<hr class="border-slate-700 my-6">')
+                .replace(/\[(.*?)\]\((https?:\/\/[^\s]+)\)/gim, '<a href="$2" target="_blank" class="text-blue-400 hover:text-blue-300 underline flex items-center gap-1 inline-flex"><i data-lucide="external-link" class="w-3 h-3"></i> $1</a>')
+                .replace(/\n/gim, '<br>');
+            
+            // Cleanup double line-breaks caused by lists
+            formattedHtml = formattedHtml.replace(/<\/li><br>/g, '</li>');
+            formattedHtml = formattedHtml.replace(/<hr class="border-slate-700 my-6"><br>/g, '<hr class="border-slate-700 my-6">');
+            
+            // Prevent massive gaps by removing extra <br> tags around headers
+            formattedHtml = formattedHtml.replace(/(<\/h[1-4]>)\s*(<br>)+/gi, '$1');
+            formattedHtml = formattedHtml.replace(/(<br>)+\s*(<h[1-4])/gi, '$2');
+            
+            // Condense any remaining multiple line breaks into a standard paragraph break
+            formattedHtml = formattedHtml.replace(/(<br>\s*){2,}/gi, '<br><br>');
+            
+            return formattedHtml;
+        }
+
         function showToast(message) {
             const toast = document.createElement('div');
             toast.className = 'toast text-sm text-white font-medium';
@@ -1043,6 +1270,12 @@
             if (elMaster) elMaster.value = master.join('\n\n');
             if (elImg) elImg.value = imgs.join('\n\n');
             if (elVid) elVid.value = vids.join('\n\n');
+
+            // Also update the count badges so they stay in sync on load and edit!
+            const countImgEl = document.getElementById('v2-count-img');
+            const countVidEl = document.getElementById('v2-count-vid');
+            if (countImgEl) countImgEl.innerText = imgs.length;
+            if (countVidEl) countVidEl.innerText = vids.length;
         }
 
         function fileToBase64(file) {
@@ -1075,8 +1308,41 @@
             } else if (viewId === 'v3') {
                 ui.view3?.classList.add('active');
                 if(ui.navV3) ui.navV3.className = "px-6 py-1.5 rounded-full text-sm font-semibold transition-all bg-purple-600 text-white shadow";
-                // Auto-sync script from V2
-                if(ui.v3Script && ui.v2Script) ui.v3Script.value = ui.v2Script.value;
+            }
+            
+            updateImportButtons();
+        }
+
+        function getV1FullText() {
+            const blocks = document.querySelectorAll('.pure-script-text');
+            let fullText = "";
+            blocks.forEach(b => fullText += b.innerText.trim() + "\n\n");
+            return fullText.trim();
+        }
+
+        function updateImportButtons() {
+            const v1Text = getV1FullText();
+            const v2Text = ui.v2Script?.value.trim() || '';
+            const v3Text = ui.v3Script?.value.trim() || '';
+
+            // V2 Buttons Dynamic Logic
+            if (ui.btnV2PullV1) {
+                ui.btnV2PullV1.disabled = !v1Text;
+                ui.btnV2PullV1.className = v1Text ? "flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white border border-slate-600 rounded py-2 text-xs font-bold transition-all shadow flex items-center justify-center gap-2" : "flex-1 bg-slate-800/50 text-slate-600 border border-slate-700 rounded py-2 text-xs font-bold shadow flex items-center justify-center gap-2 cursor-not-allowed";
+            }
+            if (ui.btnV2PullV3) {
+                ui.btnV2PullV3.disabled = !v3Text;
+                ui.btnV2PullV3.className = v3Text ? "flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white border border-slate-600 rounded py-2 text-xs font-bold transition-all shadow flex items-center justify-center gap-2" : "flex-1 bg-slate-800/50 text-slate-600 border border-slate-700 rounded py-2 text-xs font-bold shadow flex items-center justify-center gap-2 cursor-not-allowed";
+            }
+
+            // V3 Buttons Dynamic Logic
+            if (ui.btnV3PullV1) {
+                ui.btnV3PullV1.disabled = !v1Text;
+                ui.btnV3PullV1.className = v1Text ? "flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white border border-slate-600 rounded py-2 text-xs font-bold transition-all shadow flex items-center justify-center gap-2" : "flex-1 bg-slate-800/50 text-slate-600 border border-slate-700 rounded py-2 text-xs font-bold shadow flex items-center justify-center gap-2 cursor-not-allowed";
+            }
+            if (ui.btnV3PullV2) {
+                ui.btnV3PullV2.disabled = !v2Text;
+                ui.btnV3PullV2.className = v2Text ? "flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white border border-slate-600 rounded py-2 text-xs font-bold transition-all shadow flex items-center justify-center gap-2" : "flex-1 bg-slate-800/50 text-slate-600 border border-slate-700 rounded py-2 text-xs font-bold shadow flex items-center justify-center gap-2 cursor-not-allowed";
             }
         }
 
@@ -1176,10 +1442,20 @@
             });
         }
         async function saveProjectDB(project) {
-            if (isFirebaseEnabled && currentUser) return setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'projects', project.id), project);
+            const pureProject = JSON.parse(JSON.stringify(project));
+
+            // COMPRESSION: Convert the massive data object into a highly compressed UTF-16 string.
+            // BUG FIX: Check if it's an object first to prevent "Double Compression" if we are just renaming an inactive project.
+            if (typeof pureProject.data !== 'string') {
+                pureProject.data = LZString.compressToUTF16(JSON.stringify(pureProject.data));
+            }
+
+            if (isFirebaseEnabled && currentUser) {
+                return setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'projects', pureProject.id), pureProject);
+            }
             if (!localDb) return;
             return new Promise((res, rej) => {
-                const req = localDb.transaction([STORE_PROJECTS], 'readwrite').objectStore(STORE_PROJECTS).put(project);
+                const req = localDb.transaction([STORE_PROJECTS], 'readwrite').objectStore(STORE_PROJECTS).put(pureProject);
                 req.onsuccess = () => res(); req.onerror = () => rej(req.error);
             });
         }
@@ -1195,22 +1471,59 @@
         // Dropdowns Updates
         function updateFormulaDropdown() {
             let targetSelection = ui.formulaSelect?.value || localStorage.getItem('last_selected_formula');
-            if(!ui.formulaSelect) return;
-            ui.formulaSelect.innerHTML = '<option value="">-- Select Saved Formula --</option>';
-            appFormulas.forEach(f => {
-                const opt = document.createElement('option'); opt.value = f.id; opt.textContent = f.name;
-                ui.formulaSelect.appendChild(opt);
-            });
-            if (targetSelection && appFormulas.some(f => f.id === targetSelection)) {
-                ui.formulaSelect.value = targetSelection;
-                if (ui.formulaContent && ui.formulaContent.value.trim() === '') {
-                    ui.formulaContent.value = appFormulas.find(f => f.id === targetSelection).content;
-                    ui.formulaName?.classList.add('hidden');
+            
+            // Update V1 Select
+            if(ui.formulaSelect) {
+                ui.formulaSelect.innerHTML = '<option value="">-- Select Saved Formula --</option>';
+                appFormulas.forEach(f => {
+                    const opt = document.createElement('option'); opt.value = f.id; opt.textContent = f.name;
+                    ui.formulaSelect.appendChild(opt);
+                });
+                if (targetSelection && appFormulas.some(f => f.id === targetSelection)) {
+                    ui.formulaSelect.value = targetSelection;
+                    if (ui.formulaContent && ui.formulaContent.value.trim() === '') {
+                        ui.formulaContent.value = appFormulas.find(f => f.id === targetSelection).content;
+                        ui.formulaName?.classList.add('hidden');
+                    }
+                } else {
+                    ui.formulaName?.classList.remove('hidden');
                 }
-            } else {
-                ui.formulaName?.classList.remove('hidden');
+            }
+
+            // Update V3 Select
+            if(ui.v3FormulaSelect) {
+                ui.v3FormulaSelect.innerHTML = '<option value="">-- Select Saved Formula --</option>';
+                appFormulas.forEach(f => {
+                    const opt = document.createElement('option'); opt.value = f.id; opt.textContent = f.name;
+                    ui.v3FormulaSelect.appendChild(opt);
+                });
+                if (targetSelection && appFormulas.some(f => f.id === targetSelection)) {
+                    ui.v3FormulaSelect.value = targetSelection;
+                    if (ui.v3FormulaContent && ui.v3FormulaContent.value.trim() === '') {
+                        ui.v3FormulaContent.value = appFormulas.find(f => f.id === targetSelection).content;
+                    }
+                }
             }
         }
+
+        // Add Listener for V3 Formula changes
+        ui.v3FormulaSelect?.addEventListener('change', (e) => {
+            const id = e.target.value;
+            if (id) { 
+                localStorage.setItem('last_selected_formula', id); 
+                if(ui.v3FormulaContent) ui.v3FormulaContent.value = appFormulas.find(f => f.id === id).content;
+                // Keep V1 in sync
+                if(ui.formulaSelect) ui.formulaSelect.value = id;
+                if(ui.formulaContent) ui.formulaContent.value = appFormulas.find(f => f.id === id).content;
+                if(ui.formulaName) ui.formulaName.classList.add('hidden');
+            } else { 
+                localStorage.removeItem('last_selected_formula'); 
+                if(ui.v3FormulaContent) ui.v3FormulaContent.value = ''; 
+                if(ui.formulaSelect) ui.formulaSelect.value = '';
+                if(ui.formulaContent) ui.formulaContent.value = '';
+                if(ui.formulaName) ui.formulaName.classList.remove('hidden');
+            }
+        });
 
         function updateChannelDropdown() {
             let targetSelection = ui.channelSelect?.value || localStorage.getItem('last_selected_channel');
@@ -1222,10 +1535,10 @@
             });
             if (targetSelection && appChannels.some(c => c.id === targetSelection)) {
                 ui.channelSelect.value = targetSelection;
-                ui.channelNameInput?.classList.add('hidden');
+                ui.channelNameContainer?.classList.add('hidden');
                 if(ui.channelNameInput) ui.channelNameInput.value = '';
             } else {
-                ui.channelNameInput?.classList.remove('hidden');
+                ui.channelNameContainer?.classList.remove('hidden');
             }
         }
 
@@ -1249,22 +1562,103 @@
             try { localStorage.removeItem('last_selected_formula'); if(ui.formulaContent) ui.formulaContent.value = ''; await deleteFormulaDB(id); showToast("Deleted."); if(!isFirebaseEnabled){ appFormulas = await loadFormulasIndexedDB(); updateFormulaDropdown(); } } catch(err) { showToast("Error: "+err.message); }
         });
 
+        // --- Channel Name Generator Logic ---
+        window.checkChannelNameGeneratorVisibility = function() {
+            if (!ui.btnGenerateChannelName) return;
+            const hasFormula = ui.formulaContent?.value.trim().length > 0;
+            const hasNoChannelInput = ui.channelNameInput?.value.trim().length === 0;
+            
+            // Show Sparkle if formula exists and input is empty, OR if we currently have a cached list active
+            if ((hasFormula && hasNoChannelInput) || cachedChannelNames.length > 0) {
+                ui.btnGenerateChannelName.classList.remove('hidden');
+                
+                if (cachedChannelNames.length > 0) {
+                    ui.btnGenerateChannelName.innerHTML = '<i data-lucide="dices" class="w-4 h-4"></i>';
+                    ui.btnGenerateChannelName.classList.remove('text-amber-400', 'hover:text-amber-300');
+                    ui.btnGenerateChannelName.classList.add('text-blue-400', 'hover:text-blue-300');
+                } else {
+                    ui.btnGenerateChannelName.innerHTML = '<i data-lucide="sparkles" class="w-4 h-4"></i>';
+                    ui.btnGenerateChannelName.classList.remove('text-blue-400', 'hover:text-blue-300');
+                    ui.btnGenerateChannelName.classList.add('text-amber-400', 'hover:text-amber-300');
+                }
+                lucide.createIcons();
+            } else {
+                ui.btnGenerateChannelName.classList.add('hidden');
+                // Reset to sparkle in background just in case it was loading when hidden
+                ui.btnGenerateChannelName.innerHTML = '<i data-lucide="sparkles" class="w-4 h-4"></i>';
+                lucide.createIcons();
+            }
+        };
+
+        ui.formulaContent?.addEventListener('input', checkChannelNameGeneratorVisibility);
+        ui.channelNameInput?.addEventListener('input', (e) => {
+            // Lock-in: If user manually types, clear the cache.
+            if (cachedChannelNames.length > 0 && !cachedChannelNames.includes(e.target.value.trim())) {
+                cachedChannelNames = [];
+            }
+            checkChannelNameGeneratorVisibility();
+        });
+
+        ui.btnGenerateChannelName?.addEventListener('click', async () => {
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) { ui.settingsModal?.classList.remove('hidden'); return showToast("API Key needed to generate names!"); }
+
+            // Phase 3: Cycling (Dice)
+            if (cachedChannelNames.length > 0) {
+                currentChannelNameIndex = (currentChannelNameIndex + 1) % cachedChannelNames.length;
+                ui.channelNameInput.value = cachedChannelNames[currentChannelNameIndex];
+                return;
+            }
+
+            // Phase 2: Generation (Sparkle)
+            const formula = ui.formulaContent?.value.trim();
+            if (!formula) return;
+
+            const originalHTML = ui.btnGenerateChannelName.innerHTML;
+            ui.btnGenerateChannelName.disabled = true;
+            ui.btnGenerateChannelName.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-amber-400"></div>`;
+
+            try {
+                const schema = { type: "OBJECT", properties: { names: { type: "ARRAY", items: { type: "STRING" } } }, required: ["names"] };
+                const systemPrompt = "Based on the channel formula provided, generate 10 YouTube channel name ideas. Each name MUST be no more than 3 words. Make them easy to remember, highly relevant to the niche, and have a strong premium brand feel without breaching copyright or IP laws. Return ONLY the 10 names in the JSON array.";
+                
+                const data = await executeGeminiCall(systemPrompt, `Formula: ${formula}`, schema);
+                
+                if (data && data.names && data.names.length > 0) {
+                    cachedChannelNames = data.names;
+                    currentChannelNameIndex = 0;
+                    ui.channelNameInput.value = cachedChannelNames[0];
+                    showToast("10 Names Generated! Click dice to cycle.");
+                } else {
+                    throw new Error("Invalid format returned.");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Error generating names.");
+            } finally {
+                ui.btnGenerateChannelName.disabled = false;
+                // Our visibility check now fully redraws the innerHTML (the icon),
+                // so we don't need to restore originalHTML or re-link the ID!
+                checkChannelNameGeneratorVisibility(); 
+            }
+        });
+
         // Setup channel UI listeners...
-        ui.btnNewChannel?.addEventListener('click', () => { ui.channelSelect.value = ''; localStorage.removeItem('last_selected_channel'); ui.channelNameInput?.classList.remove('hidden'); if(ui.channelNameInput) ui.channelNameInput.value = ''; ui.channelNameInput?.focus(); });
+        ui.btnNewChannel?.addEventListener('click', () => { ui.channelSelect.value = ''; localStorage.removeItem('last_selected_channel'); ui.channelNameContainer?.classList.remove('hidden'); if(ui.channelNameInput) ui.channelNameInput.value = ''; ui.channelNameInput?.focus(); checkChannelNameGeneratorVisibility(); });
         ui.channelSelect?.addEventListener('change', (e) => {
             const id = e.target.value;
-            if (id) { localStorage.setItem('last_selected_channel', id); ui.channelNameInput?.classList.add('hidden'); if(ui.channelNameInput) ui.channelNameInput.value = ''; }
-            else { localStorage.removeItem('last_selected_channel'); ui.channelNameInput?.classList.remove('hidden'); }
+            if (id) { localStorage.setItem('last_selected_channel', id); ui.channelNameContainer?.classList.add('hidden'); if(ui.channelNameInput) ui.channelNameInput.value = ''; }
+            else { localStorage.removeItem('last_selected_channel'); ui.channelNameContainer?.classList.remove('hidden'); checkChannelNameGeneratorVisibility(); }
         });
         ui.btnSaveChannel?.addEventListener('click', async () => {
             let id, name;
             if (ui.channelSelect?.value) return showToast("Channel is already saved!");
             else { name = ui.channelNameInput?.value.trim(); if (!name) return showToast("Please type a channel name."); id = 'chan_' + Date.now(); }
-            try { localStorage.setItem('last_selected_channel', id); await saveChannelDB({ id, name }); showToast("Channel saved successfully!"); ui.channelNameInput?.classList.add('hidden'); if (!isFirebaseEnabled) { appChannels = await loadChannelsIndexedDB(); updateChannelDropdown(); } } catch (err) { showToast("Error saving: " + err.message); }
+            try { localStorage.setItem('last_selected_channel', id); await saveChannelDB({ id, name }); showToast("Channel saved successfully!"); ui.channelNameContainer?.classList.add('hidden'); cachedChannelNames = []; checkChannelNameGeneratorVisibility(); if (!isFirebaseEnabled) { appChannels = await loadChannelsIndexedDB(); updateChannelDropdown(); } } catch (err) { showToast("Error saving: " + err.message); }
         });
         ui.btnDeleteChannel?.addEventListener('click', async () => {
             const id = ui.channelSelect?.value; if (!id) return showToast("Select a channel to delete.");
-            try { localStorage.removeItem('last_selected_channel'); if(ui.channelNameInput) ui.channelNameInput.value = ''; ui.channelNameInput?.classList.remove('hidden'); await deleteChannelDB(id); showToast("Channel deleted."); if (!isFirebaseEnabled) { appChannels = await loadChannelsIndexedDB(); updateChannelDropdown(); } } catch (err) { showToast("Error deleting: " + err.message); }
+            try { localStorage.removeItem('last_selected_channel'); if(ui.channelNameInput) ui.channelNameInput.value = ''; ui.channelNameContainer?.classList.remove('hidden'); await deleteChannelDB(id); showToast("Channel deleted."); if (!isFirebaseEnabled) { appChannels = await loadChannelsIndexedDB(); updateChannelDropdown(); } checkChannelNameGeneratorVisibility(); } catch (err) { showToast("Error deleting: " + err.message); }
         });
 
 
@@ -1282,6 +1676,43 @@
             }
         });
         ui.scriptPacing?.addEventListener('input', e => { if(ui.pacingVal) ui.pacingVal.innerText = `${e.target.value} WPM`; });
+
+        // Format Dropdown & Sparkle Listeners
+        ui.scriptFormat?.addEventListener('change', (e) => {
+            if(e.target.value === 'custom') ui.customFormatContainer?.classList.remove('hidden');
+            else ui.customFormatContainer?.classList.add('hidden');
+        });
+
+        ui.btnMagicFormat?.addEventListener('click', async () => {
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) return showToast("API Key needed for magic formatter!");
+            
+            const userInput = ui.customFormatInput?.value.trim();
+            if (!userInput) return showToast("Please type a brief format idea first!");
+
+            const originalHTML = ui.btnMagicFormat.innerHTML;
+            ui.btnMagicFormat.disabled = true;
+            ui.btnMagicFormat.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-amber-400"></div>`;
+            showToast("Generating strict formatting rules...");
+
+            try {
+                const schema = { type: "OBJECT", properties: { generatedRules: { type: "STRING" } }, required: ["generatedRules"] };
+                const systemPrompt = "You are an expert AI Prompt Engineer. Convert the user's rough script format idea into a strict, bulleted set of formatting rules for an AI scriptwriter. Clearly dictate narrative style, dialogue tags, stage direction format, and paragraph pacing/limits. Output ONLY the strict rules block starting with '- THE FORMAT RULE:'.";
+                
+                const data = await executeGeminiCall(systemPrompt, `User idea: "${userInput}"`, schema);
+                if (data && data.generatedRules) {
+                    ui.customFormatInput.value = data.generatedRules;
+                    showToast("Custom formatting rules generated!");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Error generating format rules.");
+            } finally {
+                ui.btnMagicFormat.disabled = false;
+                ui.btnMagicFormat.innerHTML = originalHTML;
+                lucide.createIcons();
+            }
+        });
         
         ui.selectTextModel?.addEventListener('change', (e) => {
             if(e.target.value === 'custom') ui.customTextModel?.classList.remove('hidden');
@@ -1314,6 +1745,12 @@
 
             if(ui.apiCooldownInput) {
                 ui.apiCooldownInput.value = appSettings.cooldown || 4000;
+            }
+            if(ui.apiChunkSizeInput) {
+                ui.apiChunkSizeInput.value = appSettings.chunkSize || 800;
+            }
+            if(ui.apiWarningThresholdInput) {
+                ui.apiWarningThresholdInput.value = appSettings.warningThreshold || 65;
             }
             
             // Load custom prompts into textareas
@@ -1357,6 +1794,8 @@
         ui.btnSaveSettings?.addEventListener('click', async () => { 
             const k = ui.apiKeyInput?.value.trim() || ''; 
             const cd = parseInt(ui.apiCooldownInput?.value || "4000", 10);
+            const cs = parseInt(ui.apiChunkSizeInput?.value || "800", 10);
+            const wt = parseInt(ui.apiWarningThresholdInput?.value || "65", 10);
             
             // Save custom prompts
             const newPrompts = {
@@ -1372,11 +1811,13 @@
             const finalImgModel = ui.selectImageModel?.value === 'custom' ? ui.customImageModel?.value.trim() : ui.selectImageModel?.value;
             const newModels = { text: finalTxtModel || "gemini-2.5-flash-preview-09-2025", image: finalImgModel || "gemini-2.5-flash-image-preview" };
             
-            appSettings = { id: 'main', apiKey: k, cooldown: cd, prompts: newPrompts, models: newModels };
+            appSettings = { id: 'main', apiKey: k, cooldown: cd, chunkSize: cs, warningThreshold: wt, prompts: newPrompts, models: newModels };
 
             // Save to the instant fast-cache
             localStorage.setItem('fast_cache_api', k);
             localStorage.setItem('fast_cache_cooldown', cd.toString());
+            localStorage.setItem('fast_cache_chunk_size', cs.toString());
+            localStorage.setItem('fast_cache_warning_threshold', wt.toString());
             localStorage.setItem('fast_cache_prompts', JSON.stringify(newPrompts));
             localStorage.setItem('fast_cache_models', JSON.stringify(newModels));
 
@@ -1409,10 +1850,26 @@
             }
 
             const result = await fetchWithRetry(getTextModelUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            const rawText = result.candidates[0].content.parts[0].text;
+            let rawText = result.candidates[0].content.parts[0].text;
             
             if (enableSearch) {
-                // If searching, return plain text wrapped in the expected factSheet object
+                // Extract actual Web Search links if Gemini used them
+                const meta = result.candidates[0]?.groundingMetadata;
+                // The API primarily uses groundingChunks now, but we check both to be safe
+                const grounding = meta?.groundingChunks || meta?.groundingAttributions; 
+                
+                if (grounding && grounding.length > 0) {
+                    rawText += "\n\n### 🔗 Live Search Sources\n";
+                    const uniqueUrls = new Set();
+                    grounding.forEach(chunk => {
+                        const uri = chunk.web?.uri;
+                        const title = chunk.web?.title || uri;
+                        if (uri && !uniqueUrls.has(uri)) {
+                            uniqueUrls.add(uri);
+                            rawText += `- [${title}](${uri})\n`;
+                        }
+                    });
+                }
                 return { factSheet: rawText };
             }
             
@@ -1463,6 +1920,7 @@
             });
             lucide.createIcons();
             ui.loadingState?.classList.add('hidden'); ui.resultsState?.classList.remove('hidden');
+            if (typeof updateImportButtons === 'function') updateImportButtons();
         }
 
         // ==========================================
@@ -1491,6 +1949,10 @@
 
             ui.emptyState?.classList.add('hidden'); ui.resultsState?.classList.add('hidden'); ui.loadingState?.classList.remove('hidden');
             if(ui.btnGenerate) { ui.btnGenerate.disabled = true; ui.btnGenerate.classList.add('opacity-50'); }
+            
+            // Hide the research button by default on new runs
+            ui.btnViewResearch?.classList.add('hidden');
+            if(ui.researchContent) ui.researchContent.value = "";
 
             try {
                 const useSearch = ui.deepResearchToggle?.checked || false;
@@ -1501,7 +1963,21 @@
                     const researchInstruction = "You are a Master Researcher. Analyze the provided transcript/idea. Search the web for the latest updates, missing context, and corroborating facts about this specific topic. Generate a comprehensive 'Master Fact Sheet' combining the transcript and your findings.";
                     const researchSchema = { type: "OBJECT", properties: { factSheet: { type: "STRING" } }, required: ["factSheet"] };
                     const researchData = await executeGeminiCall(researchInstruction, transcript, researchSchema, true);
-                    processedSourceMaterial = researchData.factSheet;
+                    
+                    // BUG FIX: Fallback to original transcript if search fails to return factSheet.
+                    processedSourceMaterial = researchData.factSheet || transcript;
+                    
+                    // Populate the sidebar and reveal the button
+                    if (researchData.factSheet && ui.researchContent) {
+                        ui.researchContent.value = researchData.factSheet; // Keep raw for copying
+                        
+                        // Use the global markdown parser for beautiful UI
+                        if (ui.researchDisplay) {
+                            ui.researchDisplay.innerHTML = formatResearchText(researchData.factSheet);
+                        }
+                        
+                        ui.btnViewResearch?.classList.remove('hidden');
+                    }
                     
                     if(ui.loadingText) ui.loadingText.innerText = "Cooling down API...";
                     await new Promise(r => setTimeout(r, (appSettings.cooldown || 4000) + Math.random() * 500));
@@ -1509,6 +1985,22 @@
 
                 const targetWords = minutes * wpm;
                 const pacingInstruction = wpm >= 165 ? "Write fast, punchy, high-energy sentences." : wpm <= 130 ? "Write slow, deliberate, dramatic paragraphs." : "Maintain standard engaging pace.";
+                
+                // --- Resolve Format Instruction ---
+                const formatMode = ui.scriptFormat?.value || 'faceless';
+                let resolvedFormatRules = "";
+                if (formatMode === 'custom') {
+                    resolvedFormatRules = ui.customFormatInput?.value.trim() || "- THE FORMAT RULE: Write standard paragraphs.";
+                } else if (formatMode === 'cinematic') {
+                    resolvedFormatRules = `- THE FORMAT RULE: Write this as a cinematic script or multi-character skit. Use Character Dialogue Tags (e.g., Character A: ...). Include brief stage directions and visual actions in brackets [like this]. Ignore strict block length limits; structure it like a screenplay.`;
+                } else if (formatMode === 'flowing') {
+                    resolvedFormatRules = `- THE FORMAT RULE: Write this as a flowing, long-form documentary or podcast. Ignore the 45-word storyboard limit. Write in natural, sweeping paragraphs. If multiple hosts are defined in the formula, use dialogue tags.`;
+                } else if (formatMode === 'formula') {
+                    resolvedFormatRules = `- THE FORMAT RULE: Ignore all default formatting rules. Look EXACTLY at the <STYLE_GUIDE> (Channel Formula) to determine how to format the text (e.g., Solo vs. Interview, block lengths, stage directions.. etc). If the formula says to write in bullet points, do it.`;
+                } else {
+                    resolvedFormatRules = `- THE NARRATOR RULE: YOU are writing for a SOLO NARRATOR speaking directly to the camera/audience for "{{CHANNEL_NAME}}". Adapt the vibe of the style guide to a direct-to-camera format. DO NOT use the original channel name from the STYLE_GUIDE.\n\n- STRICT STORYBOARD BLOCK RULE: You MUST output the script in bite-sized "Storyboard Blocks" separated by double line breaks.\n  * RULE 1: Each block represents ONE visual cut (approx 5-10 seconds of speech).\n  * RULE 2: HARD LIMIT of 1 to 3 sentences per block. Absolutely no exceptions.\n  * RULE 3: NEVER write a paragraph longer than 45 words. If a narrative thought is long, force a double line break to create a new visual cut.\n  * RULE 4: Do not artificially chop a single grammatical sentence in half.\nThis is critical for CapCut 1:1 integration.`;
+                }
+
                 const activePrompts = getPrompts();
 
                 // Shared schema - purely narrative
@@ -1537,7 +2029,8 @@
                     const systemInstruction = activePrompts.standard
                         .replace(/{{CHANNEL_NAME}}/g, myChannel)
                         .replace(/{{TARGET_WORDS}}/g, targetWords)
-                        .replace(/{{PACING_INSTRUCTION}}/g, pacingInstruction);
+                        .replace(/{{PACING_INSTRUCTION}}/g, pacingInstruction)
+                        .replace(/{{FORMAT_INSTRUCTION}}/g, resolvedFormatRules);
 
                     finalScriptData = await executeGeminiCall(systemInstruction, `<STYLE_GUIDE>\n${formula}\n</STYLE_GUIDE>\n\n<SOURCE_MATERIAL>\n${processedSourceMaterial}\n</SOURCE_MATERIAL>\n\nGenerate script (${targetWords} words).`, schema);
                 
@@ -1588,7 +2081,8 @@
                             .replace(/{{WORDS_PER_CHAPTER}}/g, wordsPerChapter)
                             .replace(/{{PACING_INSTRUCTION}}/g, pacingInstruction)
                             .replace(/{{HOOK_INSTRUCTION}}/g, hookInstruction)
-                            .replace(/{{OUTRO_INSTRUCTION}}/g, outroInstruction);
+                            .replace(/{{OUTRO_INSTRUCTION}}/g, outroInstruction)
+                            .replace(/{{FORMAT_INSTRUCTION}}/g, resolvedFormatRules);
 
                         const chapterData = await executeGeminiCall(chapterInstruction, `<STYLE_GUIDE>\n${formula}\n</STYLE_GUIDE>\n\n<SOURCE_MATERIAL>\n${processedSourceMaterial}\n</SOURCE_MATERIAL>\n\nYOUR TASK NOW:\nWrite script sections exclusively for Chapter ${i + 1}. Focus: ${chapter.focus}`, chapterSchema);
                         finalScriptData.sections = finalScriptData.sections.concat(chapterData.sections);
@@ -1607,23 +2101,63 @@
         });
 
         // ==========================================
-        // HANDOFF LOGIC (V1 -> V2)
+        // HANDOFF & PULL LOGIC (Between Views)
         // ==========================================
-        ui.btnHandoff?.addEventListener('click', () => {
-            const blocks = document.querySelectorAll('.pure-script-text');
-            let fullText = "";
-            blocks.forEach(b => fullText += b.innerText.trim() + "\n\n");
-            
-            // Populate V2
-            if(ui.v2Script) ui.v2Script.value = fullText.trim();
+        
+        // V1 Push to V2
+        ui.btnHandoffV2?.addEventListener('click', () => {
+            const fullText = getV1FullText();
+            if(ui.v2Script) ui.v2Script.value = fullText;
             if(ui.v2Min) ui.v2Min.value = ui.scriptLength?.value || "10";
             if(ui.v2Sec) ui.v2Sec.value = "0";
-            
-            // Switch & Calculate
             switchView('v2');
             if (typeof checkScriptFormatting === 'function') checkScriptFormatting();
-            showToast("Script transferred to B-Roll Director.");
+            showToast("Script pushed to B-Roll Director.");
         });
+
+        // V1 Push to V3
+        ui.btnHandoffV3?.addEventListener('click', () => {
+            const fullText = getV1FullText();
+            if(ui.v3Script) ui.v3Script.value = fullText;
+            switchView('v3');
+            showToast("Script pushed to SEO Packager.");
+        });
+
+        // V2 Pull Buttons
+        ui.btnV2PullV1?.addEventListener('click', () => {
+            if(ui.v2Script) ui.v2Script.value = getV1FullText();
+            if(ui.v2Min) ui.v2Min.value = ui.scriptLength?.value || "10";
+            if(ui.v2Sec) ui.v2Sec.value = "0";
+            if (typeof checkScriptFormatting === 'function') checkScriptFormatting();
+            calculateV2Stats(); // BUG FIX: Update words and WPM when pulling script
+            updateImportButtons();
+            showToast("Script pulled from Script Writer.");
+        });
+
+        ui.btnV2PullV3?.addEventListener('click', () => {
+            if(ui.v2Script) ui.v2Script.value = ui.v3Script?.value.trim() || '';
+            if (typeof checkScriptFormatting === 'function') checkScriptFormatting();
+            calculateV2Stats(); // BUG FIX: Update words and WPM when pulling script
+            updateImportButtons();
+            showToast("Script pulled from SEO Packager.");
+        });
+
+        // V3 Pull Buttons
+        ui.btnV3PullV1?.addEventListener('click', () => {
+            if(ui.v3Script) ui.v3Script.value = getV1FullText();
+            updateImportButtons();
+            showToast("Script pulled from Script Writer.");
+        });
+
+        ui.btnV3PullV2?.addEventListener('click', () => {
+            if(ui.v3Script) ui.v3Script.value = ui.v2Script?.value.trim() || '';
+            updateImportButtons();
+            showToast("Script pulled from B-Roll Director.");
+        });
+
+        // Attach text input listeners to dynamically enable/disable buttons
+        ui.v2Script?.addEventListener('input', updateImportButtons);
+        ui.v3Script?.addEventListener('input', updateImportButtons);
 
         // ==========================================
         // VIEW 2 LOGIC & MATH
@@ -1647,9 +2181,12 @@
                 ui.v2FormatBanner?.classList.add('hidden');
                 return;
             }
-            // Split by double line break and check if any block has > 40 words
+            // Use the user's custom warning threshold (default 65)
+            const threshold = appSettings.warningThreshold || 65;
+            
+            // Split by double line break and check if any block has > threshold words
             const blocks = text.split(/\n\s*\n/);
-            const hasLongParagraphs = blocks.some(block => block.split(/\s+/).length > 40);
+            const hasLongParagraphs = blocks.some(block => block.split(/\s+/).length > threshold);
             
             if (hasLongParagraphs) {
                 ui.v2FormatBanner?.classList.remove('hidden');
@@ -1677,19 +2214,22 @@
             ui.btnAutoFormat.disabled = true;
 
             try {
-                const systemPrompt = "DO NOT rewrite, summarize, or change a single word of this script. Your ONLY job is to analyze the natural pauses, topic shifts, and breathing room, and insert double line breaks (\\n\\n) to chop it into short, punchy storyboard blocks. Each block should ideally be 1 to 3 sentences max. Output ONLY the perfectly formatted text.";
+                const systemPrompt = "DO NOT rewrite, summarize, or change a single word of this script. Your ONLY job is to analyze the natural pauses and topic shifts, and insert double line breaks (\\n\\n) to group the text into smart 'Storyboard Blocks'. Each block MUST contain a natural 1-to-3 sentence phrase representing a single cohesive visual thought. Do NOT leave massive paragraphs, but critically: do NOT artificially chop single sentences in half. Output ONLY the perfectly formatted text.";
                 const schema = { type: "OBJECT", properties: { formattedScript: { type: "STRING" } }, required: ["formattedScript"] };
                 
-                // Smart Chunking Algorithm (Safe limit ~800 words)
+                // Smart Chunking Algorithm using user-defined limits
+                const targetChunkWords = appSettings.chunkSize || 800;
+                const maxChunkWords = targetChunkWords + 150; // Give it 150 words of leeway to find a sentence end
+                
                 const words = script.split(/\s+/).filter(w => w.length > 0);
                 const chunks = [];
                 let currentChunk = [];
                 
                 for (let i = 0; i < words.length; i++) {
                     currentChunk.push(words[i]);
-                    // Once we hit 800 words, wait for the end of a sentence to split safely. Force cut at 950.
-                    if (currentChunk.length >= 800) {
-                        if (/[.?!]$/.test(words[i]) || currentChunk.length > 950) {
+                    // Wait for the end of a sentence to split safely. Force cut if it exceeds max.
+                    if (currentChunk.length >= targetChunkWords) {
+                        if (/[.?!]$/.test(words[i]) || currentChunk.length > maxChunkWords) {
                             chunks.push(currentChunk.join(" "));
                             currentChunk = [];
                         }
@@ -1704,7 +2244,9 @@
                     ui.btnAutoFormat.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div> Part ${i + 1} of ${chunks.length}...`;
                     
                     const data = await executeGeminiCall(systemPrompt, chunks[i], schema);
-                    finalScript += data.formattedScript.replace(/\\n/g, '\n') + "\n\n";
+                    // BUG FIX: Fallback to the original chunk if AI misses the key, preventing a fatal crash.
+                    const safeScript = data.formattedScript || chunks[i];
+                    finalScript += safeScript.replace(/\\n/g, '\n') + "\n\n";
                     
                     if (i < chunks.length - 1) {
                         // Cooldown between chunks to prevent API quota limits
@@ -1733,44 +2275,8 @@
             return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
-        // True Aspect Ratio Cropper
-        function cropImageToRatio(base64Str, ratioStr) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    const [ratioW, ratioH] = ratioStr.split(':').map(Number);
-                    const targetRatio = ratioW / ratioH;
-                    const sourceRatio = img.width / img.height;
-                    
-                    let drawWidth = img.width;
-                    let drawHeight = img.height;
-                    let offsetX = 0;
-                    let offsetY = 0;
-                    
-                    if (sourceRatio > targetRatio) {
-                        drawWidth = img.height * targetRatio;
-                        offsetX = (img.width - drawWidth) / 2;
-                    } else {
-                        drawHeight = img.width / targetRatio;
-                        offsetY = (img.height - drawHeight) / 2;
-                    }
-                    
-                    canvas.width = drawWidth;
-                    canvas.height = drawHeight;
-                    
-                    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight, 0, 0, drawWidth, drawHeight);
-                    resolve(canvas.toDataURL('image/png'));
-                };
-                img.onerror = reject;
-                img.src = "data:image/png;base64," + base64Str;
-            });
-        }
-
         // Nano Banana Image Generator
-        window.triggerImageGen = async function(prompt, containerId, cardNumber, timeStr, searchQuery) {
+        window.triggerImageGen = async function(prompt, containerId, cardNumber, timeStr, searchQuery, customRatio = null) {
             const currentKey = getActiveApiKey();
             if (!currentKey && !isFirebaseEnabled) {
                 ui.settingsModal?.classList.remove('hidden');
@@ -1779,21 +2285,24 @@
 
             const container = document.getElementById(containerId);
             if(!container) return;
+            
             container.classList.remove('hidden');
-            container.innerHTML = `
+            container.innerHTML = `<!--NANO_START-->
                 <div class="p-8 flex flex-col items-center justify-center text-purple-400 bg-slate-900 border border-slate-700 rounded shadow-inner">
                     <div class="loader mb-3 !w-8 !h-8 !border-2 !border-t-purple-500"></div>
                     <span class="text-xs font-semibold uppercase tracking-wider">Nano Banana 🍌 Rendering...</span>
                 </div>
-            `;
+            <!--NANO_END-->`;
 
             try {
-                const selectedRatio = ui.v2ImageAspectRatio?.value || "16:9";
-                const finalPrompt = `[CRITICAL COMPOSITION: Keep the main subject perfectly centered in the middle of the frame. Do not place essential details on the far edges. This image will be cropped to a ${selectedRatio} aspect ratio.] ${prompt}`;
+                const selectedRatio = customRatio || ui.v2ImageAspectRatio?.value || "16:9";
                 
                 const payload = {
-                    contents: [{parts: [{ text: finalPrompt }]}],
-                    generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+                    contents: [{parts: [{ text: prompt }]}],
+                    generationConfig: { 
+                        responseModalities: ['TEXT', 'IMAGE'],
+                        imageConfig: { aspectRatio: selectedRatio }
+                    }
                 };
 
                 const result = await fetchWithRetry(getImageModelUrl(), {
@@ -1805,39 +2314,35 @@
                 let b64 = null;
                 if (result.candidates && result.candidates[0]?.content?.parts) {
                     const imagePart = result.candidates[0].content.parts.find(p => p.inlineData);
-                    if (imagePart) {
-                        b64 = imagePart.inlineData.data;
-                    }
+                    if (imagePart) b64 = imagePart.inlineData.data;
                 }
 
                 if (b64) {
-                    const finalImageB64 = await cropImageToRatio(b64, selectedRatio);
-                    
-                    // Create a clean, organized filename
+                    const finalImageB64 = "data:image/png;base64," + b64;
                     const cleanTime = timeStr ? timeStr.replace(/[^0-9:-]/g, '').replace(/:/g, '') : 'time';
                     const cleanQuery = searchQuery ? searchQuery.replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/ /g, '_').substring(0, 30) : 'image';
                     const fileName = `Asset_${cardNumber}_${cleanTime}_${cleanQuery}.png`;
 
-                    container.innerHTML = `
+                    container.innerHTML = `<!--NANO_START-->
                         <div class="relative group w-full">
                             <img src="${finalImageB64}" class="w-full h-auto rounded shadow-lg border border-slate-700" alt="Generated Asset">
                             <a href="${finalImageB64}" download="${fileName}" class="absolute top-2 right-2 bg-slate-900/90 hover:bg-slate-800 text-white px-3 py-2 rounded opacity-0 group-hover:opacity-100 transition-opacity border border-slate-600 shadow-lg flex items-center gap-2 text-xs font-bold" title="Download Image">
                                 <i data-lucide="download" class="w-4 h-4"></i> Download Image
                             </a>
                         </div>
-                    `;
+                    <!--NANO_END-->`;
                     lucide.createIcons();
                 } else {
-                    throw new Error("No image data returned.");
+                    throw new Error("No image data returned from Nano Banana.");
                 }
 
             } catch (error) {
                 console.error(error);
-                container.innerHTML = `
+                container.innerHTML = `<!--NANO_START-->
                     <div class="p-4 bg-red-900/30 text-red-400 text-xs border-t border-red-900/50 break-words">
                         Failed to generate image. Error: ${error.message}
                     </div>
-                `;
+                <!--NANO_END-->`;
             }
         }
 
@@ -1884,52 +2389,91 @@
 
                 const data = await executeGeminiCall(systemInstruction, `I have ${blocks.length} Storyboard Blocks. Provide EXACTLY ${blocks.length} asset decisions mapped 1:1 to these blocks.\n\n${formattedScript}`, schema);
                 
+                // BUG FIX: Fallback to empty array if AI hallucinates and skips the 'assets' key
+                const safeAssets = data.assets || [];
+
                 if(ui.v2TimelineFeed) {
-                    ui.v2TimelineFeed.innerHTML = data.assets && data.assets.length > 0 
-                        ? `<div class="mb-4 text-sm font-semibold text-slate-400 border-b border-slate-700/50 pb-2">Director Mode: ${modeStr.toUpperCase()} | Storyboard Blocks Mapped: <span class="text-emerald-400">${blocks.length}</span></div>` 
+                    // Calculate actual visuals vs A-Roll mapped perfectly to the blocks
+                    const visualCount = blocks.reduce((count, _, i) => {
+                        const asset = safeAssets[i] || { type: 'A-Roll', prompt: '', searchQuery: '' };
+                        const isVisual = asset.type.toLowerCase().includes('image') || asset.type.toLowerCase().includes('video');
+                        return count + (isVisual ? 1 : 0);
+                    }, 0);
+
+                    ui.v2TimelineFeed.innerHTML = safeAssets.length > 0 
+                        ? `<div class="mb-4 text-sm font-semibold text-slate-400 border-b border-slate-700/50 pb-2 flex justify-between items-center">
+                            <span>Director Mode: ${modeStr.toUpperCase()}</span>
+                            <span>Visual Coverage: <span class="text-emerald-400 font-bold bg-emerald-900/30 px-2 py-0.5 rounded ml-1">${visualCount} / ${blocks.length} Blocks</span></span>
+                           </div>` 
                         : '';
                 }
                 
-                if(!data.assets || data.assets.length === 0) {
-                    if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML = '<p class="text-red-400">Error: No assets generated.</p>';
+                if(safeAssets.length === 0) {
+                    if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML = '<p class="text-red-400">Error: No assets generated. Try again.</p>';
                 } else {
+                    // 1. Grouping Logic
+                    let groups = [];
                     let currentSec = 0;
-                    
+
                     blocks.forEach((blockText, index) => {
-                        // Fallback to A-Roll if AI skips a block to preserve sequential integrity
-                        const asset = data.assets[index] || { type: 'A-Roll', prompt: '', searchQuery: '' };
+                        const asset = safeAssets[index] || { type: 'A-Roll', prompt: '', searchQuery: '' };
                         
-                        // Exact 1:1 sequential timecode math!
+                        // Timecode math
                         const blockWords = blockText.split(/\s+/).length;
                         const duration = (blockWords / stats.wpm) * 60;
                         const endSec = currentSec + duration;
                         const timeStr = `[${formatTimecode(currentSec)} - ${formatTimecode(endSec)}]`;
-                        currentSec = endSec; // pass baton to next clip
+                        currentSec = endSec; 
 
                         const isAroll = asset.type.toLowerCase().includes('a-roll') || asset.type.toLowerCase().includes('narrator');
+                        const type = isAroll ? 'A-Roll' : asset.type;
+                        const prompt = asset.prompt || '';
+                        const query = asset.searchQuery || '';
                         
-                        if (isAroll) {
-                            // Render a ghosted "A-Roll" Block
+                        const blockData = { index: index + 1, text: blockText, timeStr };
+
+                        if (groups.length > 0) {
+                            const lastGroup = groups[groups.length - 1];
+                            // Merge if NOT A-Roll and exactly same prompt & type
+                            if (!isAroll && lastGroup.type === type && lastGroup.prompt === prompt && prompt.trim() !== '') {
+                                lastGroup.blocks.push(blockData);
+                                return; // Skip creating a new group
+                            }
+                        }
+
+                        // Create a new group
+                        groups.push({
+                            type, prompt, query,
+                            blocks: [blockData]
+                        });
+                    });
+
+                    // 2. Rendering Logic
+                    groups.forEach((group) => {
+                        if (group.type === 'A-Roll') {
+                            // A-Roll cards are not grouped, always 1 block
+                            const b = group.blocks[0];
                             if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML += `
                                 <div class="bg-slate-800/40 border border-slate-700/50 rounded-lg p-5 flex flex-col lg:flex-row gap-4 opacity-70 mb-4 hover:opacity-100 transition-opacity">
                                     <div class="lg:w-1/4 border-r border-slate-700/50 pr-4">
-                                        <p class="font-mono text-slate-400 font-bold mb-2">${timeStr}</p>
+                                        <p class="font-mono text-slate-400 font-bold mb-2">${b.timeStr}</p>
                                         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> A-Roll (Narrator)</p>
                                     </div>
                                     <div class="lg:w-3/4">
-                                        <p class="text-sm text-slate-300 italic leading-relaxed">"${blockText}"</p>
+                                        <p class="text-sm text-slate-300 italic leading-relaxed">"${b.text}"</p>
                                     </div>
                                 </div>
                             `;
                         } else {
-                            // Render standard Image/Video block mapped to script
-                            const safeQuery = asset.searchQuery ? asset.searchQuery.replace(/'/g, "\\'").replace(/"/g, "&quot;") : '';
-                            const safePrompt = asset.prompt ? asset.prompt.replace(/'/g, "\\'").replace(/"/g, "&quot;") : '';
+                            // Render Parent/Child Image/Video block
+                            // BUG FIX: Use HTML entity &#39; instead of JS escape \\' so backslashes don't show up in the text boxes
+                            const safeQuery = group.query ? group.query.replace(/'/g, "&#39;").replace(/"/g, "&quot;") : '';
+                            const safePrompt = group.prompt ? group.prompt.replace(/'/g, "&#39;").replace(/"/g, "&quot;") : '';
                             const assetId = `v2-asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                             const promptId = `${assetId}-prompt`;
                             const queryId = `${assetId}-query`;
 
-                            const isImg = asset.type.toLowerCase().trim().includes('image');
+                            const isImg = group.type.toLowerCase().trim().includes('image');
                             const icon = isImg ? 'image' : 'video';
                             const colorStr = isImg ? 'text-purple-400' : 'text-emerald-400';
                             const focusColor = isImg ? 'focus:border-purple-500' : 'focus:border-emerald-500';
@@ -1940,6 +2484,9 @@
                             const pixabayBase = isImg ? 'https://pixabay.com/images/search/' : 'https://pixabay.com/videos/search/';
                             const pexelsBase = isImg ? 'https://www.pexels.com/search/' : 'https://www.pexels.com/search/videos/';
                             const unsplashBase = 'https://unsplash.com/s/photos/';
+
+                            const firstTimeStr = group.blocks[0].timeStr;
+                            const firstIndex = group.blocks[0].index;
 
                             let actionButtons = `
                                <div class="flex flex-wrap gap-2 mt-2 pt-3 border-t border-slate-700">
@@ -1961,23 +2508,30 @@
                                     <button onclick="window.open('${unsplashBase}' + encodeURIComponent(document.getElementById('${queryId}').value), '_blank')" class="text-xs bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-600/50 hover:border-blue-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
                                         <i data-lucide="external-link" class="w-3 h-3"></i> Unsplash
                                     </button>
-                                    <button onclick="triggerImageGen(document.getElementById('${promptId}').value, '${assetId}-img', '${index + 1}', '${timeStr}', document.getElementById('${queryId}').value)" class="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1">
-                                        <i data-lucide="wand-2" class="w-3 h-3"></i> Nano Banana Gen
+                                    <button onclick="triggerImageGen(document.getElementById('${promptId}').value, '${assetId}-img', '${firstIndex}', '${firstTimeStr}', document.getElementById('${queryId}').value)" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                                        <i data-lucide="wand-2" class="w-3 h-3"></i> AI Render
                                     </button>
                                 </div>
                             `;
                             
                             let imageContainer = `<div id="${assetId}-img" class="mt-3 hidden rounded overflow-hidden border border-slate-700 w-full"></div>`;
 
+                            // List grouped script blocks distinctly
+                            let scriptsHtml = group.blocks.map((b, i) => `
+                                <div class="${i > 0 ? 'mt-4 pt-4 border-t border-slate-700/50' : ''}">
+                                    <p class="font-mono text-emerald-300 font-bold mb-2 text-sm">${b.timeStr}</p>
+                                    <p class="text-xs font-bold ${colorStr} uppercase tracking-widest flex items-center gap-2 mb-2">
+                                        <span class="bg-slate-700 text-white px-2 py-0.5 rounded-md shadow-sm">#${b.index}</span>
+                                        ${i === 0 ? `<i data-lucide="${icon}" class="w-4 h-4"></i> ${group.type}` : `<span class="opacity-50 flex items-center gap-1"><i data-lucide="link" class="w-3 h-3"></i> Continued</span>`}
+                                    </p>
+                                    <p class="text-xs text-slate-400 leading-relaxed italic border-t border-slate-700/50 pt-2">"${b.text}"</p>
+                                </div>
+                            `).join('');
+
                             if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML += `
                                 <div class="bg-slate-800 border border-slate-700 rounded-lg p-5 flex flex-col lg:flex-row gap-4 hover:border-slate-500 transition-colors mb-4">
-                                    <div class="lg:w-1/4 border-r border-slate-700 pr-4">
-                                        <p class="font-mono text-emerald-300 font-bold mb-2">${timeStr}</p>
-                                        <p class="text-xs font-bold ${colorStr} uppercase tracking-widest flex items-center gap-2 mb-2">
-                                            <span class="bg-slate-700 text-white px-2 py-0.5 rounded-md shadow-sm">#${index + 1}</span>
-                                            <i data-lucide="${icon}" class="w-4 h-4"></i> ${asset.type}
-                                        </p>
-                                        <p class="text-xs text-slate-400 leading-relaxed italic border-t border-slate-700/50 pt-2">"${blockText}"</p>
+                                    <div class="lg:w-1/4 border-r border-slate-700 pr-4 flex flex-col gap-2">
+                                        ${scriptsHtml}
                                     </div>
                                     <div class="lg:w-3/4 flex flex-col gap-2">
                                         <div class="bg-slate-900 rounded p-3 border border-slate-700 flex flex-col gap-3">
@@ -2003,16 +2557,16 @@
                             `;
                         }
                     });
+
+                    // Update the counters based on the final grouped cards rendered (Moved INSIDE the else block)
+                    const imgCount = groups.filter(g => g.type.toLowerCase().includes('image')).length;
+                    const vidCount = groups.filter(g => g.type.toLowerCase().includes('video')).length;
+                    if(ui.v2CountImg) ui.v2CountImg.innerText = imgCount;
+                    if(ui.v2CountVid) ui.v2CountVid.innerText = vidCount;
                 }
 
                 // Populate Bulk Textareas dynamically via Live Sync
                 window.updateBulkExports();
-                
-                // Update the counters based on the data directly
-                const imgCount = data.assets.filter(a => a.type.toLowerCase().includes('image')).length;
-                const vidCount = data.assets.filter(a => a.type.toLowerCase().includes('video')).length;
-                if(ui.v2CountImg) ui.v2CountImg.innerText = imgCount;
-                if(ui.v2CountVid) ui.v2CountVid.innerText = vidCount;
 
                 lucide.createIcons();
                 ui.v2LoadingState?.classList.add('hidden'); ui.v2ResultsState?.classList.remove('hidden');
@@ -2028,90 +2582,91 @@
         // ==========================================
         // VIEW 3 LOGIC (The Packager)
         // ==========================================
+        
+        // Notify user to sync thumbnails when new images are uploaded
+        ui.v3CompThumb?.addEventListener('change', () => {
+            const thumbsContainer = document.getElementById('v3-out-thumbnails');
+            // If generated thumbnails actually exist on the screen (ignore HTML comments)
+            if (thumbsContainer && thumbsContainer.querySelectorAll('.v3-item-row').length > 0) {
+                const regenBtn = document.querySelector('.btn-v3-regen-all[data-target="thumbnails"]');
+                if (regenBtn) {
+                    regenBtn.classList.remove('bg-slate-700', 'hover:bg-slate-600');
+                    regenBtn.classList.add('bg-orange-600', 'hover:bg-orange-500', 'animate-pulse');
+                    regenBtn.innerHTML = `<i data-lucide="refresh-cw" class="w-3 h-3"></i> Sync New Images`;
+                    lucide.createIcons();
+                    showToast("New images detected. Click 'Sync New Images' to update prompts.");
+                }
+            }
+        });
+
         ui.btnGeneratePackager?.addEventListener('click', async () => {
             const currentKey = getActiveApiKey();
             if (!currentKey && !isFirebaseEnabled) { ui.settingsModal?.classList.remove('hidden'); return showToast("API Key needed!"); }
 
             const script = ui.v3Script?.value.trim();
-            const compTitles = ui.v3CompTitles?.value.trim();
-            const compDesc = ui.v3CompDesc?.value.trim();
+            const formula = ui.v3FormulaContent?.value.trim();
             
             if (!script) return showToast("Please ensure a script is provided.");
-            if (!compTitles && !compDesc) return showToast("Please provide at least some Competitor DNA (Titles or Description).");
+            if (!formula) return showToast("Please select or paste a Channel Formula.");
 
             ui.v3EmptyState?.classList.add('hidden'); ui.v3ResultsState?.classList.add('hidden'); ui.v3LoadingState?.classList.remove('hidden');
             if(ui.btnGeneratePackager) { ui.btnGeneratePackager.disabled = true; ui.btnGeneratePackager.classList.add('opacity-50'); }
 
             try {
-                let base64Image = null;
+                let base64Images = [];
                 const fileInput = ui.v3CompThumb;
                 if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                    if(ui.v3LoadingText) ui.v3LoadingText.innerText = "Analyzing Competitor Thumbnail...";
-                    base64Image = await fileToBase64(fileInput.files[0]);
+                    if(ui.v3LoadingText) ui.v3LoadingText.innerText = "Analyzing Visual DNA...";
+                    // Handle multiple images (limit to 3 to prevent payload limits)
+                    for(let i=0; i<fileInput.files.length; i++) {
+                        if(i > 2) break; 
+                        const b64 = await fileToBase64(fileInput.files[i]);
+                        base64Images.push(b64);
+                    }
                 }
 
-                if(ui.v3LoadingText) ui.v3LoadingText.innerText = "Engineering Viral Metadata...";
+                if(ui.v3LoadingText) ui.v3LoadingText.innerText = "Engineering Master Package...";
 
+                // NEW SCHEMA: Output exactly 3 thumbnail prompts as an array
                 const schema = {
                     type: "OBJECT",
                     properties: {
-                        titles: { type: "ARRAY", items: { type: "STRING" } },
+                        titles: { type: "ARRAY", items: { type: "STRING" }, description: "Generate exactly 3 viral titles." },
+                        thumbnailPrompts: { type: "ARRAY", items: { type: "STRING" }, description: "Generate exactly 3 diverse thumbnail visual prompts based on the visual DNA or formula." },
                         description: { type: "STRING" },
-                        thumbnailPrompt: { type: "STRING" },
                         hashtags: { type: "STRING" }
-                    }, required: ["titles", "description", "thumbnailPrompt", "hashtags"]
+                    }, required: ["titles", "thumbnailPrompts", "description", "hashtags"]
                 };
 
-                const userPrompt = `FINAL SCRIPT:\n${script}\n\nCOMPETITOR TITLES:\n${compTitles}\n\nCOMPETITOR DESCRIPTION:\n${compDesc}\n\n${base64Image ? "COMPETITOR THUMBNAIL PROVIDED AS IMAGE ATTACHMENT." : ""}`;
+                const basePrompt = getPrompts().packager;
                 
-                const data = await executeGeminiCall(getPrompts().packager, userPrompt, schema, false, base64Image);
+                // Dynamic Thumbnail Routing Logic
+                const thumbnailInstruction = base64Images.length > 0 
+                    ? "IMAGE REFERENCES PROVIDED: First, deeply analyze the Final Script to extract its core narrative, overarching theme, and main hook. Act as a direct photocopier for the attached image(s)'s visual style. Describe the layout, lighting, text placement, and color scheme with extreme precision so an image generator will clone the format 1:1. However, substitute the original subjects and visual metaphors with ones that perfectly illustrate the core narrative of the Final Script. Apply this copied style across all 3 concepts, adapting the visual story for each. Strictly ignore any thumbnail rules in the Channel Formula." 
+                    : "NO IMAGE REFERENCES PROVIDED: Read the Channel Formula. If it contains specific thumbnail instructions, follow them. If it does not, invent the most clickable, high-CTR thumbnail concepts based purely on the Formula's vibe and the Final Script.";
 
-                // Render Engineered Titles
-                if(ui.v3OutTitles) {
-                    ui.v3OutTitles.innerHTML = '';
-                    data.titles.forEach(t => {
-                        const safeT = t.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-                        ui.v3OutTitles.innerHTML += `
-                            <div class="flex justify-between items-center bg-slate-900 border border-orange-900/50 rounded p-3 hover:border-orange-500 transition-colors group">
-                                <p class="text-sm text-white font-medium flex-1 mr-4">${t}</p>
-                                <button onclick="copyToClipboard('${safeT}', 'Title')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded transition-colors opacity-0 group-hover:opacity-100 flex items-center gap-1 shrink-0"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
-                            </div>
-                        `;
-                    });
-                }
-
-                // Handle Formula Titles Mirroring (Split View if exist)
-                if (view1Titles && view1Titles.length > 0) {
-                    if (ui.v3TitlesWrapper) {
-                        ui.v3TitlesWrapper.classList.remove('grid-cols-1');
-                        ui.v3TitlesWrapper.classList.add('xl:grid-cols-2');
-                    }
-                    if (ui.v3FormulaTitlesBox) ui.v3FormulaTitlesBox.classList.remove('hidden');
-                    if (ui.v3FormulaTitlesBox) ui.v3FormulaTitlesBox.classList.add('flex');
-                    if (ui.v3FormulaTitlesList) {
-                        ui.v3FormulaTitlesList.innerHTML = '';
-                        view1Titles.forEach(t => {
-                            const safeT = t.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-                            ui.v3FormulaTitlesList.innerHTML += `
-                                <div class="flex justify-between items-center bg-slate-900 border border-blue-900/50 rounded p-3 hover:border-blue-500 transition-colors group">
-                                    <p class="text-sm text-white font-medium flex-1 mr-4">${t}</p>
-                                    <button onclick="copyToClipboard('${safeT}', 'Formula Title')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded transition-colors opacity-0 group-hover:opacity-100 flex items-center gap-1 shrink-0"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
-                                </div>
-                            `;
-                        });
-                    }
-                } else {
-                    if (ui.v3TitlesWrapper) {
-                        ui.v3TitlesWrapper.classList.remove('xl:grid-cols-2');
-                        ui.v3TitlesWrapper.classList.add('grid-cols-1');
-                    }
-                    if (ui.v3FormulaTitlesBox) ui.v3FormulaTitlesBox.classList.add('hidden');
-                    if (ui.v3FormulaTitlesBox) ui.v3FormulaTitlesBox.classList.remove('flex');
-                }
+                const userPrompt = `CHANNEL FORMULA:\n${formula}\n\nFINAL SCRIPT:\n${script}\n\nINSTRUCTION: Output 3 titles, 3 thumbnail prompts, a YouTube description, and internal tags. Base the titles, description, and tags on the Channel Formula tone and the Script facts. Ensure internal tags are comma-separated without # symbols.\n\nTHUMBNAIL SPECIFICS: ${thumbnailInstruction}`;
                 
-                if(ui.v3OutDesc) ui.v3OutDesc.value = data.description;
-                if(ui.v3OutThumbPrompt) ui.v3OutThumbPrompt.value = data.thumbnailPrompt;
-                if(ui.v3OutHashtags) ui.v3OutHashtags.value = data.hashtags;
+                // Build multi-part request for Gemini to support multiple images
+                const parts = [{ text: userPrompt }];
+                base64Images.forEach(img => {
+                    parts.push({ inlineData: { mimeType: "image/jpeg", data: img } });
+                });
+                
+                const payload = { 
+                    contents: [{ parts: parts }], 
+                    systemInstruction: { parts: [{ text: basePrompt }] },
+                    generationConfig: { responseMimeType: "application/json", responseSchema: schema }
+                };
+
+                const result = await fetchWithRetry(getTextModelUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = JSON.parse(result.candidates[0].content.parts[0].text.replace(/```json\n?|```/g, '').trim());
+
+                // Render Results using Helper Functions
+                renderV3Titles(data.titles || [], false, 'formula');
+                renderV3Thumbnails(data.thumbnailPrompts || []);
+                if(ui.v3OutDesc) { ui.v3OutDesc.value = data.description || ''; ui.v3OutDesc.classList.remove('border-purple-500'); ui.v3OutDesc.classList.add('border-slate-600'); }
+                if(ui.v3OutHashtags) { ui.v3OutHashtags.value = data.hashtags || ''; ui.v3OutHashtags.classList.remove('border-purple-500'); ui.v3OutHashtags.classList.add('border-slate-600'); }
 
                 lucide.createIcons();
                 ui.v3LoadingState?.classList.add('hidden'); ui.v3ResultsState?.classList.remove('hidden');
@@ -2124,44 +2679,365 @@
             }
         });
 
-        // Trigger Nano Banana for View 3
-        ui.btnV3GenThumb?.addEventListener('click', () => {
-            const prompt = ui.v3OutThumbPrompt?.value.trim();
-            if(!prompt) return showToast("No thumbnail prompt available.");
-            triggerImageGen(prompt, 'v3-thumb-preview', 'V3', 'Thumb', 'Thumbnail');
+        let lastCompetitorTitles = ""; // Store for 'More Competitor Titles' button
+
+        // --- View 3 Rendering Helpers ---
+        function renderV3Titles(titlesArr, append = false, type = 'formula') {
+            const container = document.getElementById('v3-out-titles');
+            if(!container) return;
+            if (!append) container.innerHTML = '';
+            
+            // Adjust index to prevent duplicate DOM IDs
+            const startIndex = append ? container.children.length : 0;
+            
+            // Setup dynamic colors based on origin
+            const borderColorClass = type === 'competitor' ? 'border-purple-900/50 hover:border-purple-500' : 'border-orange-900/50 hover:border-orange-500';
+            const btnColorClass = type === 'competitor' ? 'text-purple-400' : 'text-orange-400';
+            
+            titlesArr.forEach((t, i) => {
+                const idx = startIndex + i;
+                const safeT = t.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-900 border ${borderColorClass} rounded p-3 transition-colors group v3-item-row" data-index="${idx}" data-type="${type}">
+                        <p class="text-sm text-white font-medium flex-1 mr-4 item-text">${t}</p>
+                        <div class="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="copyToClipboard('${safeT}', 'Title')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1.5 rounded transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                            <button class="btn-regen-single-title text-[10px] bg-slate-800 hover:bg-slate-700 ${btnColorClass} px-2 py-1.5 rounded transition-colors flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen</button>
+                        </div>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+
+            // Ensure "More Formula Titles" is visible once populated
+            document.getElementById('btn-more-formula-titles')?.classList.remove('hidden');
+        }
+
+        function renderV3Thumbnails(promptsArr) {
+            const container = document.getElementById('v3-out-thumbnails');
+            if(!container) return;
+            container.innerHTML = '';
+            promptsArr.forEach((p, i) => {
+                const safeP = p.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                const previewId = `v3-thumb-preview-${Date.now()}-${i}`;
+                container.innerHTML += `
+                    <div class="bg-slate-900 border border-emerald-900/50 rounded p-4 flex flex-col gap-3 group v3-item-row" data-index="${i}">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-emerald-500 uppercase tracking-widest">Concept ${i+1}</span>
+                            <div class="flex gap-1">
+                                <button onclick="copyToClipboard(this.closest('.v3-item-row').querySelector('textarea').value, 'Thumbnail Prompt')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                                <button class="btn-regen-single-thumb text-[10px] bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-1 rounded transition-colors flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen</button>
+                            </div>
+                        </div>
+                        <textarea class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-sm text-slate-300 focus:outline-none focus:border-emerald-500 resize-y min-h-[80px] item-text">${safeP}</textarea>
+                        <button onclick="triggerImageGen(this.parentElement.querySelector('textarea').value, '${previewId}', 'Thumb_${i+1}', '', '', document.getElementById('v3-image-aspect-ratio').value)" class="w-full bg-blue-900/40 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-800 hover:border-blue-500 rounded py-2 text-xs font-bold transition-colors shadow flex items-center justify-center gap-2 mt-1">
+                            <i data-lucide="wand-2" class="w-3 h-3"></i> Render Concept Art
+                        </button>
+                        <div id="${previewId}" class="hidden rounded overflow-hidden border border-slate-700 w-full min-h-[150px] bg-slate-950 flex items-center justify-center mt-2"></div>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        // --- Surgical Injection & Regeneration Logic ---
+        document.getElementById('v3-results-state')?.addEventListener('click', async (e) => {
+            
+            // Toggle Inject Panels
+            const btnInject = e.target.closest('.btn-v3-inject');
+            if (btnInject) {
+                const target = btnInject.dataset.target;
+                const panel = document.getElementById(`v3-inject-${target}`);
+                if (panel) panel.classList.toggle('hidden');
+                return;
+            }
+
+            // Centralized AI Call Wrapper for Surgical Edits
+            const runSurgicalCall = async (btnElement, loadingMsg, schema, targetInstruction, attachedImages = []) => {
+                const currentKey = getActiveApiKey();
+                if (!currentKey && !isFirebaseEnabled) { showToast("API Key needed!"); return null; }
+                
+                const originalHTML = btnElement.innerHTML;
+                btnElement.disabled = true;
+                btnElement.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div>`;
+                showToast(loadingMsg);
+
+                try {
+                    const script = ui.v3Script?.value.trim();
+                    const formula = ui.v3FormulaContent?.value.trim();
+                    const basePrompt = getPrompts().packager;
+                    
+                    const userPrompt = `CHANNEL FORMULA:\n${formula}\n\nFINAL SCRIPT:\n${script}\n\nSURGICAL TARGET INSTRUCTION:\n${targetInstruction}`;
+                    
+                    // Bundle text and images together
+                    const parts = [{ text: userPrompt }];
+                    attachedImages.forEach(img => {
+                        parts.push({ inlineData: { mimeType: "image/jpeg", data: img } });
+                    });
+
+                    const payload = { 
+                        contents: [{ parts: parts }], 
+                        systemInstruction: { parts: [{ text: basePrompt }] },
+                        generationConfig: { responseMimeType: "application/json", responseSchema: schema }
+                    };
+
+                    const result = await fetchWithRetry(getTextModelUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    return JSON.parse(result.candidates[0].content.parts[0].text.replace(/```json\n?|```/g, '').trim());
+                } catch (err) {
+                    console.error(err);
+                    showToast("Error during surgical update.");
+                    return null;
+                } finally {
+                    btnElement.disabled = false;
+                    btnElement.innerHTML = originalHTML;
+                    lucide.createIcons();
+                    // Trigger a delayed input event to force the auto-save debouncer to catch these DOM changes
+                    setTimeout(() => document.body.dispatchEvent(new Event('input', { bubbles: true })), 100);
+                }
+            };
+
+            // Execute Clone/Inject (The 🧬 Button Logic)
+            const btnExecute = e.target.closest('.btn-execute-inject');
+            if (btnExecute) {
+                const target = btnExecute.dataset.target;
+                const inputVal = document.getElementById(`v3-inject-${target}-input`)?.value.trim();
+                if (!inputVal) return showToast("Provide competitor data to adapt.");
+
+                if (target === 'titles') {
+                    const schema = { type: "OBJECT", properties: { titles: { type: "ARRAY", items: { type: "STRING" } } }, required: ["titles"] };
+                    const data = await runSurgicalCall(btnExecute, "Extracting & Engineering...", schema, `Analyze these Competitor Titles: "${inputVal}". Generate 3 NEW titles for the Final Script that perfectly clone their psychological structure, capitalization, and punctuation.`);
+                    if(data && data.titles) {
+                        lastCompetitorTitles = inputVal;
+                        renderV3Titles(data.titles, true, 'competitor'); // Append to list
+                        document.getElementById('btn-more-comp-titles')?.classList.remove('hidden');
+                    }
+                } 
+                else if (target === 'description') {
+                    const schema = { type: "OBJECT", properties: { description: { type: "STRING" } }, required: ["description"] };
+                    const data = await runSurgicalCall(btnExecute, "Adapting Description...", schema, `Analyze this competitor description: "${inputVal}". Adapt its style, layout, and tone, but rewrite it entirely using ONLY facts and subjects from the Final Script.`);
+                    if(data && data.description) {
+                        const el = document.getElementById('v3-out-desc');
+                        el.value = data.description;
+                        el.classList.remove('border-slate-600');
+                        el.classList.add('border-purple-500');
+                    }
+                }
+                else if (target === 'tags') {
+                    const schema = { type: "OBJECT", properties: { hashtags: { type: "STRING" } }, required: ["hashtags"] };
+                    const data = await runSurgicalCall(btnExecute, "Adapting Tags...", schema, `Analyze these competitor tags: "${inputVal}". Generate 10-15 highly optimized internal YouTube tags for the Final Script. IMPORTANT: Output as a comma-separated list of normal phrases with spaces (e.g. "Drone Force, Military Strategy".. etc). DO NOT squish words together and DO NOT use hash (#) symbols.`);
+                    if(data && data.hashtags) {
+                        const el = document.getElementById('v3-out-hashtags');
+                        el.value = data.hashtags;
+                        el.classList.remove('border-slate-600');
+                        el.classList.add('border-purple-500');
+                    }
+                }
+                return;
+            }
+
+            // More Formula Titles
+            const btnMoreFormula = e.target.closest('#btn-more-formula-titles');
+            if (btnMoreFormula) {
+                const schema = { type: "OBJECT", properties: { titles: { type: "ARRAY", items: { type: "STRING" } } }, required: ["titles"] };
+                const data = await runSurgicalCall(btnMoreFormula, "Generating More...", schema, `Generate 3 brand new viral titles based on the Channel Formula and Script. Ensure they are completely distinct from previous attempts.`);
+                if(data && data.titles) renderV3Titles(data.titles, true, 'formula'); // Append
+                return;
+            }
+
+            // More Competitor Titles
+            const btnMoreComp = e.target.closest('#btn-more-comp-titles');
+            if (btnMoreComp) {
+                if (!lastCompetitorTitles) return showToast("No competitor titles stored.");
+                const schema = { type: "OBJECT", properties: { titles: { type: "ARRAY", items: { type: "STRING" } } }, required: ["titles"] };
+                const data = await runSurgicalCall(btnMoreComp, "Extracting More...", schema, `Analyze these Competitor Titles: "${lastCompetitorTitles}". Generate 3 NEW titles for the Final Script that perfectly clone their psychological structure. Ensure they are distinct from previous attempts.`);
+                if(data && data.titles) renderV3Titles(data.titles, true, 'competitor'); // Append
+                return;
+            }
+
+            // Regenerate All (The Block 🔄 Button Logic)
+            const btnRegenAll = e.target.closest('.btn-v3-regen-all');
+            if (btnRegenAll) {
+                const target = btnRegenAll.dataset.target;
+                if (target === 'titles') {
+                    const schema = { type: "OBJECT", properties: { titles: { type: "ARRAY", items: { type: "STRING" } } }, required: ["titles"] };
+                    const data = await runSurgicalCall(btnRegenAll, "Regenerating Titles...", schema, `Generate 3 brand new viral titles based on the Channel Formula and Script. Ensure they are completely distinct from previous attempts.`);
+                    if(data && data.titles) renderV3Titles(data.titles, false, 'formula'); // Wipe and replace
+                }
+                else if (target === 'thumbnails') {
+                    let base64Images = [];
+                    const fileInput = ui.v3CompThumb;
+                    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                        for(let i=0; i<fileInput.files.length; i++) {
+                            if(i > 2) break; 
+                            base64Images.push(await fileToBase64(fileInput.files[i]));
+                        }
+                    }
+                    
+                    // Route instruction based on whether files were synced
+                    const dynamicInstruction = base64Images.length > 0
+                        ? "IMAGE REFERENCES PROVIDED: Deeply analyze the Final Script to extract its core narrative. Act as a direct photocopier for the attached image(s)'s visual style (layout, lighting, text placement, color scheme). Substitute the original subjects with ones that illustrate the core narrative of the Final Script. Create 3 distinct thematic variations using this exact cloned format."
+                        : "NO IMAGE REFERENCES PROVIDED: Generate 3 brand new thumbnail generation prompts based purely on the Channel Formula and Script. Make them visually distinct from prior attempts.";
+
+                    const schema = { type: "OBJECT", properties: { thumbnailPrompts: { type: "ARRAY", items: { type: "STRING" } } }, required: ["thumbnailPrompts"] };
+                    const data = await runSurgicalCall(btnRegenAll, "Syncing & Regenerating...", schema, dynamicInstruction, base64Images);
+                    
+                    if(data && data.thumbnailPrompts) {
+                        renderV3Thumbnails(data.thumbnailPrompts);
+                        // Reset sync UI back to standard state
+                        btnRegenAll.classList.remove('bg-orange-600', 'hover:bg-orange-500', 'animate-pulse');
+                        btnRegenAll.classList.add('bg-slate-700', 'hover:bg-slate-600');
+                        btnRegenAll.innerHTML = `<i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen All`;
+                        lucide.createIcons();
+                    }
+                }
+                else if (target === 'description') {
+                    const schema = { type: "OBJECT", properties: { description: { type: "STRING" } }, required: ["description"] };
+                    const data = await runSurgicalCall(btnRegenAll, "Regenerating Description...", schema, `Rewrite the YouTube description entirely. Follow the Channel Formula guidelines strictly.`);
+                    if(data && data.description) {
+                        const el = document.getElementById('v3-out-desc');
+                        el.value = data.description;
+                        el.classList.remove('border-purple-500');
+                        el.classList.add('border-slate-600');
+                    }
+                }
+                else if (target === 'tags') {
+                    const schema = { type: "OBJECT", properties: { hashtags: { type: "STRING" } }, required: ["hashtags"] };
+                    const data = await runSurgicalCall(btnRegenAll, "Regenerating Tags...", schema, `Generate a new, hyper-optimized set of 10-15 internal YouTube tags based on the script. IMPORTANT: Output as a comma-separated list of normal phrases with spaces (e.g. "Drone Force, Military Strategy".. etc). DO NOT squish words together and DO NOT use hash (#) symbols.`);
+                    if(data && data.hashtags) {
+                        const el = document.getElementById('v3-out-hashtags');
+                        el.value = data.hashtags;
+                        el.classList.remove('border-purple-500');
+                        el.classList.add('border-slate-600');
+                    }
+                }
+                return;
+            }
+
+            // Regenerate Single Items (Titles / Thumbnails 🔄 Buttons)
+            const btnRegenSingleTitle = e.target.closest('.btn-regen-single-title');
+            if (btnRegenSingleTitle) {
+                const row = btnRegenSingleTitle.closest('.v3-item-row');
+                const textEl = row.querySelector('.item-text');
+                const oldText = textEl.innerText;
+                const type = row.dataset.type || 'formula';
+                const schema = { type: "OBJECT", properties: { newTitle: { type: "STRING" } }, required: ["newTitle"] };
+                
+                let prompt = type === 'competitor' && lastCompetitorTitles 
+                    ? `Analyze these Competitor Titles: "${lastCompetitorTitles}". Generate exactly ONE new title for the Final Script that clones their psychological structure but is highly distinct from this rejected title: "${oldText}".`
+                    : `Generate exactly ONE new title based on the Channel Formula and Script that is highly distinct from this rejected title: "${oldText}".`;
+                
+                const data = await runSurgicalCall(btnRegenSingleTitle, "Rerolling Title...", schema, prompt);
+                if(data && data.newTitle) textEl.innerText = data.newTitle;
+                return;
+            }
+
+            const btnRegenSingleThumb = e.target.closest('.btn-regen-single-thumb');
+            if (btnRegenSingleThumb) {
+                const row = btnRegenSingleThumb.closest('.v3-item-row');
+                const textEl = row.querySelector('.item-text');
+                const oldText = textEl.value;
+                const schema = { type: "OBJECT", properties: { newPrompt: { type: "STRING" } }, required: ["newPrompt"] };
+                const data = await runSurgicalCall(btnRegenSingleThumb, "Rerolling Visual Prompt...", schema, `Generate exactly ONE new thumbnail prompt that explores a completely different visual concept than this rejected prompt: "${oldText}".`);
+                if(data && data.newPrompt) textEl.value = data.newPrompt;
+                return;
+            }
         });
 
         // ==========================================
         // PROJECTS MANAGER LOGIC (Save/Load/Auto-save)
         // ==========================================
+        function stripBase64FromHTML(html) {
+            if (!html) return '';
+            return html
+                // Clean Slate Option 1: Completely wipe any generated image blocks
+                .replace(/<!--NANO_START-->[\s\S]*?<!--NANO_END-->/g, '')
+                // Re-hide the empty asset containers so they don't show up as weird blank boxes
+                .replace(/(<div[^>]*id="(?:v2-asset-[^"]*-img|v3-thumb-preview-[^"]*)"[^>]*)>/gi, (match) => {
+                    if (match.includes('class="')) {
+                        return match.replace(/class="([^"]*)"/, (classMatch, classes) => {
+                            return classes.includes('hidden') ? classMatch : `class="${classes} hidden"`;
+                        });
+                    }
+                    return match.replace(/>$/, ' class="hidden">');
+                })
+                // Strip quoted Base64 in src/href/data attributes (Backup safety net)
+                .replace(/\s(src|href|data-[a-z-]+)\s*=\s*"data:[^"]{20,}"/gi, ' $1=""')
+                .replace(/\s(src|href|data-[a-z-]+)\s*=\s*'data:[^']{20,}'/gi, " $1=''")
+                // Strip unquoted Base64 (edge case)
+                .replace(/\s(src|href)\s*=\s*data:[^\s>]{20,}/gi, ' $1=""')
+                // Final nuke: destroy any remaining data:image payload anywhere in the string
+                .replace(/data:[a-zA-Z]+\/[a-zA-Z]+;base64,[A-Za-z0-9+/=\s]{50,}/g, 'data:removed');
+        }
+
+        function stripControlChars(str) {
+            if (typeof str !== 'string') return str;
+            return str
+                .replace(/\u0000/g, '')           // Null bytes
+                .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ''); // Control chars (preserve \t \n \r)
+        }
+
+        // Recursively walk a plain object and sanitize all string values
+        function deepSanitize(obj) {
+            if (typeof obj === 'string') return stripControlChars(obj);
+            if (Array.isArray(obj)) return obj.map(deepSanitize);
+            if (obj !== null && typeof obj === 'object') {
+                const clean = {};
+                for (const [key, val] of Object.entries(obj)) {
+                    clean[key] = deepSanitize(val);
+                }
+                return clean;
+            }
+            return obj; // numbers, booleans, null
+        }
+
         function getWorkspaceData() {
-            return {
+            // Bake live textarea/input values into the DOM before extracting HTML
+            if (ui.v2TimelineFeed) {
+                ui.v2TimelineFeed.querySelectorAll('textarea').forEach(ta => ta.textContent = ta.value);
+                ui.v2TimelineFeed.querySelectorAll('input').forEach(input => input.setAttribute('value', input.value));
+            }
+
+            // Extract and sanitize all HTML fields at source
+            const safeTimeline    = stripBase64FromHTML(ui.v2TimelineFeed?.innerHTML || '');
+            const safeScriptHTML  = stripBase64FromHTML(document.getElementById('out-script')?.innerHTML || '');
+            const safeTitlesHTML  = stripBase64FromHTML(document.getElementById('out-titles-container')?.innerHTML || '');
+            const safeV3Titles    = stripBase64FromHTML(document.getElementById('v3-out-titles')?.innerHTML || '');
+            const safeV3Thumbnails = stripBase64FromHTML(document.getElementById('v3-out-thumbnails')?.innerHTML || '');
+
+            const rawData = {
                 // View 1
-                formulaId: ui.formulaSelect?.value || '',
-                channelId: ui.channelSelect?.value || '',
-                transcript: ui.transcriptContent?.value || '',
-                length: ui.scriptLength?.value || '30',
-                pacing: ui.scriptPacing?.value || '150',
-                mode: ui.generationMode?.value || 'chunking',
-                scriptContent: document.getElementById('out-script')?.innerHTML || '',
-                scriptTitles: document.getElementById('out-titles-container')?.innerHTML || '',
+                formulaId:    ui.formulaSelect?.value || '',
+                channelId:    ui.channelSelect?.value || '',
+                transcript:   ui.transcriptContent?.value || '',
+                length:       ui.scriptLength?.value || '30',
+                pacing:       ui.scriptPacing?.value || '150',
+                mode:         ui.generationMode?.value || 'chunking',
+                scriptContent: safeScriptHTML,
+                scriptTitles:  safeTitlesHTML,
+                factSheet:     ui.researchContent?.value || '',
                 // View 2
-                v2Script: ui.v2Script?.value || '',
-                v2Min: ui.v2Min?.value || '10',
-                v2Sec: ui.v2Sec?.value || '0',
+                v2Script:     ui.v2Script?.value || '',
+                v2Min:        ui.v2Min?.value || '10',
+                v2Sec:        ui.v2Sec?.value || '0',
                 v2DirectorMode: ui.v2DirectorMode?.value || 'smart',
-                v2Aspect: ui.v2ImageAspectRatio?.value || '16:9',
-                v2Timeline: ui.v2TimelineFeed?.innerHTML || '',
+                v2Aspect:     ui.v2ImageAspectRatio?.value || '16:9',
+                v2Timeline:   safeTimeline,
                 // View 3
-                v3Script: ui.v3Script?.value || '',
+                v3Script:     ui.v3Script?.value || '',
                 v3CompTitles: ui.v3CompTitles?.value || '',
-                v3CompDesc: ui.v3CompDesc?.value || '',
-                v3OutDesc: ui.v3OutDesc?.value || '',
+                v3CompDesc:   ui.v3CompDesc?.value || '',
+                v3Aspect:     ui.v3ImageAspectRatio?.value || '16:9',
+                v3OutDesc:    ui.v3OutDesc?.value || '',
                 v3OutThumbPrompt: ui.v3OutThumbPrompt?.value || '',
                 v3OutHashtags: ui.v3OutHashtags?.value || '',
-                v3Titles: document.getElementById('v3-out-titles')?.innerHTML || '',
-                updatedAt: Date.now()
+                v3Titles:     safeV3Titles,
+                v3Thumbnails: safeV3Thumbnails,
+                updatedAt:    Date.now()
             };
+
+            // Deep-sanitize the entire object at the JS level (not string level)
+            // This is what actually reaches Firestore's serializer
+            return deepSanitize(rawData);
         }
 
         function loadWorkspaceData(data) {
@@ -2177,8 +3053,26 @@
             const outTitles = document.getElementById('out-titles-container');
             if(outScript) outScript.innerHTML = data.scriptContent || '';
             if(outTitles) outTitles.innerHTML = data.scriptTitles || '';
-            if(data.scriptContent) { ui.emptyState?.classList.add('hidden'); ui.resultsState?.classList.remove('hidden'); }
             
+            // BUG FIX: Ignore hidden HTML comments when checking for emptiness
+            const hasV1Content = data.scriptContent && data.scriptContent.replace(/<!--[\s\S]*?-->/g, '').trim() !== '';
+            if(hasV1Content) { 
+                ui.emptyState?.classList.add('hidden'); 
+                ui.resultsState?.classList.remove('hidden'); 
+            } else { 
+                ui.emptyState?.classList.remove('hidden'); 
+                ui.resultsState?.classList.add('hidden'); 
+            }
+            
+            // Restore Fact Sheet
+            if(ui.researchContent) ui.researchContent.value = data.factSheet || '';
+            if(ui.researchDisplay) ui.researchDisplay.innerHTML = typeof formatResearchText === 'function' ? formatResearchText(data.factSheet) : '';
+            if(data.factSheet && data.factSheet.trim() !== '') {
+                ui.btnViewResearch?.classList.remove('hidden');
+            } else {
+                ui.btnViewResearch?.classList.add('hidden');
+            }
+
             // View 2
             if(ui.v2Script) ui.v2Script.value = data.v2Script || '';
             if(ui.v2Min) ui.v2Min.value = data.v2Min || '10';
@@ -2186,19 +3080,60 @@
             if(ui.v2DirectorMode) ui.v2DirectorMode.value = data.v2DirectorMode || 'smart';
             if(ui.v2ImageAspectRatio) ui.v2ImageAspectRatio.value = data.v2Aspect || '16:9';
             if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML = data.v2Timeline || '';
-            if(data.v2Timeline) { ui.v2EmptyState?.classList.add('hidden'); ui.v2ResultsState?.classList.remove('hidden'); window.updateBulkExports(); }
+            
+            // BUG FIX: Ignore hidden HTML comments when checking for emptiness
+            const hasV2Content = data.v2Timeline && data.v2Timeline.replace(/<!--[\s\S]*?-->/g, '').trim() !== '';
+            if(hasV2Content) { 
+                ui.v2EmptyState?.classList.add('hidden'); 
+                ui.v2ResultsState?.classList.remove('hidden'); 
+            } else { 
+                ui.v2EmptyState?.classList.remove('hidden'); 
+                ui.v2ResultsState?.classList.add('hidden'); 
+            }
+            // Always update bulk exports so they reflect the loaded (or empty) state
+            if (typeof window.updateBulkExports === 'function') window.updateBulkExports();
             calculateV2Stats();
 
             // View 3
             if(ui.v3Script) ui.v3Script.value = data.v3Script || '';
             if(ui.v3CompTitles) ui.v3CompTitles.value = data.v3CompTitles || '';
+            if(ui.v3ImageAspectRatio) ui.v3ImageAspectRatio.value = data.v3Aspect || '16:9';
             if(ui.v3CompDesc) ui.v3CompDesc.value = data.v3CompDesc || '';
             if(ui.v3OutDesc) ui.v3OutDesc.value = data.v3OutDesc || '';
             if(ui.v3OutThumbPrompt) ui.v3OutThumbPrompt.value = data.v3OutThumbPrompt || '';
             if(ui.v3OutHashtags) ui.v3OutHashtags.value = data.v3OutHashtags || '';
+            
             const v3Titles = document.getElementById('v3-out-titles');
-            if(v3Titles) v3Titles.innerHTML = data.v3Titles || '';
-            if(data.v3OutDesc) { ui.v3EmptyState?.classList.add('hidden'); ui.v3ResultsState?.classList.remove('hidden'); }
+            const hasV3Titles = data.v3Titles && data.v3Titles.replace(/<!--[\s\S]*?-->/g, '').trim() !== '';
+            
+            if(v3Titles) {
+                v3Titles.innerHTML = data.v3Titles || '';
+                // Restore "More Formula Titles" button visibility based on true content
+                if (hasV3Titles) { 
+                    document.getElementById('btn-more-formula-titles')?.classList.remove('hidden'); 
+                } else { 
+                    document.getElementById('btn-more-formula-titles')?.classList.add('hidden'); 
+                    document.getElementById('btn-more-comp-titles')?.classList.add('hidden'); 
+                }
+            }
+            
+            const v3Thumbnails = document.getElementById('v3-out-thumbnails');
+            const hasV3Thumbnails = data.v3Thumbnails && data.v3Thumbnails.replace(/<!--[\s\S]*?-->/g, '').trim() !== '';
+            if(v3Thumbnails) v3Thumbnails.innerHTML = data.v3Thumbnails || '';
+
+            const hasV3Desc = data.v3OutDesc && data.v3OutDesc.trim() !== '';
+            const hasV3Tags = data.v3OutHashtags && data.v3OutHashtags.trim() !== '';
+
+            // Check if ANY true metadata was generated to determine state
+            if(hasV3Desc || hasV3Titles || hasV3Thumbnails || hasV3Tags) { 
+                ui.v3EmptyState?.classList.add('hidden'); 
+                ui.v3ResultsState?.classList.remove('hidden'); 
+            } else { 
+                ui.v3EmptyState?.classList.remove('hidden'); 
+                ui.v3ResultsState?.classList.add('hidden'); 
+            }
+            
+            if (typeof updateImportButtons === 'function') updateImportButtons();
         }
 
         window.updateProjectsList = function() {
@@ -2291,6 +3226,9 @@
             if(ui.outTitlesContainer) ui.outTitlesContainer.innerHTML = '';
             ui.resultsState?.classList.add('hidden');
             ui.emptyState?.classList.remove('hidden');
+            if(ui.researchContent) ui.researchContent.value = '';
+            if(ui.researchDisplay) ui.researchDisplay.innerHTML = '';
+            ui.btnViewResearch?.classList.add('hidden');
 
             // View 2 Resets
             if(ui.v2Script) ui.v2Script.value = '';
@@ -2323,7 +3261,22 @@
             const proj = appProjects.find(p => p.id === id);
             if(!proj) return;
             
-            loadWorkspaceData(proj.data);
+            let loadedData = proj.data;
+            // DECOMPRESSION: If the data was compressed as a string, decompress it back to a JSON object
+            if (typeof loadedData === 'string') {
+                try {
+                    const decompressed = LZString.decompressFromUTF16(loadedData);
+                    if (!decompressed) throw new Error("Decompression returned empty data.");
+                    loadedData = JSON.parse(decompressed);
+                } catch (e) {
+                    console.error("Failed to decompress project data", e);
+                    return showToast("Error: Project file is corrupted or couldn't be decompressed.");
+                }
+            }
+
+            if (!loadedData) return showToast("Error: Project data is empty.");
+
+            loadWorkspaceData(loadedData);
             activeProjectId = id;
             ui.projectsModal?.classList.add('hidden');
             showToast("Project Loaded: " + proj.name);
@@ -2335,6 +3288,8 @@
                 await deleteProjectDB(id);
                 if(activeProjectId === id) {
                     activeProjectId = null;
+                    // FIX: Clear the screen so the user doesn't keep typing into a "Ghost" project that won't save
+                    window.resetWorkspace(); 
                 }
                 deletingProjectId = null;
                 if(!isFirebaseEnabled) { 
@@ -2432,6 +3387,24 @@
         });
         ui.btnCloseProjects?.addEventListener('click', () => ui.projectsModal?.classList.add('hidden'));
 
+        // Research Sidebar Listeners
+        const openResearchSidebar = () => {
+            ui.researchOverlay?.classList.remove('hidden');
+            setTimeout(() => {
+                ui.researchOverlay?.classList.remove('opacity-0');
+                ui.researchSidebar?.classList.remove('translate-x-full');
+            }, 10);
+        };
+        const closeResearchSidebar = () => {
+            ui.researchSidebar?.classList.add('translate-x-full');
+            ui.researchOverlay?.classList.add('opacity-0');
+            setTimeout(() => ui.researchOverlay?.classList.add('hidden'), 300); // Wait for slide to finish
+        };
+        
+        ui.btnViewResearch?.addEventListener('click', openResearchSidebar);
+        ui.btnCloseResearch?.addEventListener('click', closeResearchSidebar);
+        ui.researchOverlay?.addEventListener('click', closeResearchSidebar); // Clicking the dark background closes it
+
         ui.btnSaveNewProject?.addEventListener('click', async () => {
             const name = ui.newProjectName?.value.trim();
             if(!name) return showToast("Please give your project a name.");
@@ -2453,6 +3426,7 @@
                 
                 if(!isFirebaseEnabled) { appProjects = await loadProjectsIndexedDB(); updateProjectsList(); }
                 updateActiveProjectUI();
+                ui.projectsModal?.classList.add('hidden'); // UX FIX: Close the modal automatically
                 showToast("New project created & active!");
             } catch (e) {
                 showToast("Error saving project.");
@@ -2464,7 +3438,10 @@
         });
 
         // The Auto-Save Debouncer (Triggered on any typing or clicks)
-        document.body.addEventListener('input', () => {
+        document.body.addEventListener('input', (e) => {
+            // BUG FIX: Ignore typing inside the Projects Modal to prevent Firebase syncs from stealing keyboard focus.
+            if (e.target.closest('#projects-modal')) return;
+            
             if(!activeProjectId) return;
             clearTimeout(autoSaveTimeout);
             autoSaveTimeout = setTimeout(async () => {
