@@ -184,26 +184,9 @@ html[data-bs-theme='dark'] .progress-bar.error{background-color:#ca6f1e}
              placeholder="https://yt-meta.YOUR-SUBDOMAIN.workers.dev" autocomplete="off">
       <button class="btn btn-outline-info" id="saveWorker" type="button">Set Worker</button>
       <button class="btn btn-outline-danger" id="clearWorker" type="button">Clear</button>
+      <button class="btn btn-outline-secondary copy-worker-btn" type="button" title="Copy Worker Script"><i class="bi bi-clipboard"></i> Code</button>
     </div>
     <small id="workerStatus" class="text-muted mt-1 d-block">Worker: <em>not set — direct API calls (CORS may fail on GitHub Pages)</em></small>
-  </div>
-
-  <!-- Transcript API row -->
-  <div class="mt-2 pt-2" style="border-top:1px solid rgba(255,255,255,.06)">
-    <div class="mb-1">
-      <small class="text-muted">
-        <i class="bi bi-chat-left-text me-1 text-success"></i>
-        <strong>Transcript Service URL</strong>
-        <span class="text-muted"> — optional Python backend for fetching video transcripts.</span>
-      </small>
-    </div>
-    <div class="input-group input-group-sm" style="max-width:560px">
-      <input type="text" class="form-control font-monospace" id="transcriptApiInput"
-             placeholder="https://yt-transcript.your-server.com" autocomplete="off">
-      <button class="btn btn-outline-success" id="saveTranscriptApi" type="button">Set Transcript API</button>
-      <button class="btn btn-outline-danger" id="clearTranscriptApi" type="button">Clear</button>
-    </div>
-    <small id="transcriptApiStatus" class="text-muted mt-1 d-block">Transcript API: <em>not set</em></small>
   </div>
 </div>
 </div>
@@ -253,7 +236,7 @@ html[data-bs-theme='dark'] .progress-bar.error{background-color:#ca6f1e}
       <input id="importFileChooser" type="file" accept=".zip" hidden>
     </button>
   </div>
-  <p class="export small text-muted mb-1">ZIP contains: about.txt, video.json, playlist.json, channel.json, transcript.json, transcript.txt, thumbnails</p>
+  <p class="export small text-muted mb-1">ZIP contains: about.txt, video.json, playlist.json, channel.json, thumbnails</p>
   <p class="mb-1 small">Share this result:</p>
   <div class="input-group" style="max-width:280px">
     <input type="text" class="form-control form-control-sm" id="shareLink" autocomplete="off" disabled placeholder="Submit something first">
@@ -310,31 +293,6 @@ html[data-bs-theme='dark'] .progress-bar.error{background-color:#ca6f1e}
   <div id="cdxStatus" class="small text-muted mb-2"></div>
   <div id="cdxResults"></div>
 </div>
-</div>
-
-<!-- ═══ TRANSCRIPT ════════════════════════════════════════════════════════════ -->
-<div class="container mb-15" id="transcript-container" style="display:none">
-  <h2><i class="bi bi-chat-left-text me-2 text-success"></i>Transcript</h2>
-  <p class="small text-muted">Video transcript / captions fetched from your Transcript Service.</p>
-  <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
-    <button class="btn btn-sm btn-success" id="loadTranscriptBtn" type="button">
-      <span class="btn-text"><i class="bi bi-download me-1"></i>Load Transcript</span>
-      <span class="btn-spinner spinner-border spinner-border-sm" role="status"></span>
-    </button>
-    <button class="btn btn-sm btn-outline-secondary" id="listTracksBtn" type="button">List Available Tracks</button>
-    <select id="transcriptLangSelect" class="form-select form-select-sm" style="max-width:160px">
-      <option value="">Auto-generated</option>
-      <option value="en" selected>English</option>
-      <option value="fr">French</option>
-      <option value="es">Spanish</option>
-      <option value="ar">Arabic</option>
-      <option value="de">German</option>
-      <option value="ja">Japanese</option>
-      <option value="zh-Hans">Chinese (Simplified)</option>
-    </select>
-  </div>
-  <div id="transcriptStatus" class="small text-muted mb-2"></div>
-  <div id="transcript-section"></div>
 </div>
 
 <!-- ═══ PLAYLIST ═════════════════════════════════════════════════════════════ -->
@@ -1176,14 +1134,12 @@ const shared = (function () {
             currentVideoId = parsedInput.value;
             window._currentVideoId = parsedInput.value;
             $('#video').show();
-            $('#transcript-container').hide();
             youtube.ajax('videos', {
                 part: Object.keys(videoPartMap).join(','),
                 id: parsedInput.value
             }).done(function (res) {
                 parseType('video', 'video-section', res, parsedInput);
                 $('#video-more').append(getSuggestedHtml(null, shared.idx(['items', '0'], res), 'video', null));
-                $('#transcript-container').show();
                 try { localStorage.setItem(delaySubmitKey, moment().format()); } catch (e) {}
                 countdownCheck(delaySubmitKey, controls.submit, delay3SecMs, 'submit');
             }).fail(function (err) {
@@ -1224,55 +1180,6 @@ const shared = (function () {
         }
     }
 
-    /* ── Transcript ──────────────────────────────────────────────────────── */
-    function transcriptApiBase() {
-        let b = '';
-        try { b = localStorage.getItem('yt-meta-transcript-api') || ''; } catch (e) {}
-        return b.replace(/\/$/, '');
-    }
-
-    async function fetchTranscript(videoId, lang) {
-    const base = transcriptApiBase();
-    if (!base) throw new Error('Transcript API not configured. Set it in the banner above.');
-    // Send empty string for Auto-generated so worker picks the 'asr' track
-    const langValue = (lang === 'Auto-generated') ? '' : (lang || '');
-    const url = `${base}/api/transcript?videoId=${encodeURIComponent(videoId)}&languages=${encodeURIComponent(langValue)}`;
-    const res = await fetch(url);
-        if (!res.ok) {
-            let msg = `HTTP ${res.status}`;
-            try { const d = await res.json(); msg = d.error || msg; } catch (e) {}
-            throw new Error(msg);
-        }
-        return res.json();
-    }
-
-    async function fetchTranscriptList(videoId) {
-        const base = transcriptApiBase();
-        if (!base) throw new Error('Transcript API not configured.');
-        const url = `${base}/api/transcripts/list?videoId=${encodeURIComponent(videoId)}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-    }
-
-    function renderTranscript(data) {
-        const el = document.getElementById('transcript-section');
-        const status = document.getElementById('transcriptStatus');
-        const typeLabel = data.is_generated ? '<span class="badge bg-secondary">auto-generated</span>' : '<span class="badge bg-success">manual</span>';
-        status.innerHTML = `Language: <span class="orange">${escHtml(data.language)}</span> (${escHtml(data.language_code)}) ${typeLabel}`;
-        const snippets = data.snippets || [];
-        el.innerHTML = snippets.map(s => {
-            const t = Number(s.start || 0);
-            const ts = [Math.floor(t / 60), Math.floor(t % 60)].map(n => String(n).padStart(2, '0')).join(':');
-            return `<div class="transcript-line">
-                <span class="transcript-ts" title="${t.toFixed(2)}s">${ts}</span>
-                <span>${escHtml(s.text || '')}</span>
-            </div>`;
-        }).join('') || '<p class="text-muted small">No transcript content returned.</p>';
-        exportData.transcript = data;
-        updateAbout();
-    }
-
     /* ── Export ZIP ──────────────────────────────────────────────────────── */
     async function doExport() {
         const btn = $('#export');
@@ -1289,15 +1196,6 @@ const shared = (function () {
             if (exportData.video) zip.file('video.json', JSON.stringify(exportData.video, null, 2));
             if (exportData.playlist) zip.file('playlist.json', JSON.stringify(exportData.playlist, null, 2));
             if (exportData.channel) zip.file('channel.json', JSON.stringify(exportData.channel, null, 2));
-            if (exportData.transcript) {
-                zip.file('transcript.json', JSON.stringify(exportData.transcript, null, 2));
-                const txt = (exportData.transcript.snippets || []).map(s => {
-                    const t = Number(s.start || 0);
-                    const ts = [Math.floor(t / 60), Math.floor(t % 60)].map(n => String(n).padStart(2, '0')).join(':');
-                    return `[${ts}] ${s.text || ''}`;
-                }).join('\n');
-                zip.file('transcript.txt', txt);
-            }
             // Thumbnails
             if (currentVideoId) {
                 const names = ['0', 'hqdefault', 'mqdefault', 'maxresdefault'];
@@ -1331,8 +1229,6 @@ const shared = (function () {
             const reset = () => {
                 $('#video-section, #playlist-section, #channel-section').empty();
                 $('#thumbnails, #video-more, #playlist-more, #channel-more').empty();
-                $('#transcript-section').empty();
-                $('#transcriptStatus').text('');
                 $('#video, #playlist, #channel').hide();
                 exportData = {};
                 currentVideoId = null;
@@ -1345,7 +1241,6 @@ const shared = (function () {
                     const fakeRes = { items: [json] };
                     parseType('video', 'video-section', fakeRes, {});
                     currentVideoId = json.id;
-                    $('#transcript-container').show();
                 } else if (fname === 'playlist.json') {
                     const json = JSON.parse(await zip.files[fname].async('text'));
                     exportData.playlist = json;
@@ -1354,9 +1249,6 @@ const shared = (function () {
                     const json = JSON.parse(await zip.files[fname].async('text'));
                     exportData.channel = json;
                     parseType('channel', 'channel-section', { items: [json] }, {});
-                } else if (fname === 'transcript.json') {
-                    const data = JSON.parse(await zip.files[fname].async('text'));
-                    renderTranscript(data);
                 }
             }
             $('.export').show();
@@ -1397,60 +1289,6 @@ const shared = (function () {
         $(document).on('click', '.section-header', function () {
             const next = $(this).next('.part-section');
             if (next.length) next.toggle();
-        });
-
-        // Transcript buttons
-        $('#loadTranscriptBtn').on('click', async function () {
-            if (!currentVideoId) { alert('Submit a video first.'); return; }
-            const lang = $('#transcriptLangSelect').val();
-            const btn = $(this).addClass('loading');
-            const status = document.getElementById('transcriptStatus');
-            status.textContent = 'Loading transcript…';
-            try {
-                const data = await fetchTranscript(currentVideoId, lang);
-                renderTranscript(data);
-            } catch (e) {
-                status.textContent = 'Error: ' + e.message;
-            }
-            btn.removeClass('loading');
-        });
-
-        $('#listTracksBtn').on('click', async function () {
-            if (!currentVideoId) { alert('Submit a video first.'); return; }
-            const status = document.getElementById('transcriptStatus');
-            const el = document.getElementById('transcript-section');
-            status.textContent = 'Fetching available tracks…';
-            el.innerHTML = '';
-                try {
-      const data = await fetchTranscriptList(currentVideoId);
-      const tracks = data.tracks || [];
-      if (!tracks.length) {
-        status.textContent = 'No transcripts available for this video.';
-        return;
-      }
-      
-      status.textContent = `${tracks.length} transcript track(s) available.`;
-      
-      let html = '<ul class="mt-2">';
-      tracks.forEach(t => {
-        let isAuto = t.is_generated;
-        let val = isAuto ? '' : escHtml(t.language_code);
-        let badge = isAuto 
-          ? '<span class="badge bg-secondary ms-1">auto</span>' 
-          : '<span class="badge bg-success ms-1">manual</span>';
-        let translatable = t.is_translatable 
-          ? '<span class="badge bg-info ms-1">translatable</span>' 
-          : '';
-          
-        html += `<li><span class="orange">${escHtml(t.language_code)}</span> ${escHtml(t.language)} ${badge} ${translatable} 
-          <button class="btn btn-sm btn-outline-light ms-2" onclick="document.getElementById('transcriptLangSelect').value='${val}';document.getElementById('loadTranscriptBtn').click()">Load</button></li>`;
-      });
-      html += '</ul>';
-      
-      el.innerHTML = html;
-    } catch(e) {
-      status.textContent = 'Error: ' + e.message;
-    }
         });
 
         // Auto-submit from URL
@@ -1543,29 +1381,6 @@ const shared = (function () {
 
     saveWorker.addEventListener('click', () => setWorker(workerInput.value.trim()));
     clearWorker.addEventListener('click', () => { workerInput.value = ''; setWorker(''); });
-
-    // Transcript API
-    const trInput = document.getElementById('transcriptApiInput');
-    const trStatus = document.getElementById('transcriptApiStatus');
-    const saveTr = document.getElementById('saveTranscriptApi');
-    const clearTr = document.getElementById('clearTranscriptApi');
-
-    function setTranscriptApi(url) {
-        if (url) {
-            trStatus.innerHTML = 'Transcript API: <strong class="text-success">' + url + '</strong>';
-            trInput.value = url;
-        } else {
-            trStatus.innerHTML = 'Transcript API: <em>not set</em>';
-        }
-        try { localStorage.setItem('yt-meta-transcript-api', url || ''); } catch (e) {}
-    }
-
-    let savedTr = '';
-    try { savedTr = localStorage.getItem('yt-meta-transcript-api') || ''; } catch (e) {}
-    if (savedTr) setTranscriptApi(savedTr);
-
-    saveTr.addEventListener('click', () => setTranscriptApi(trInput.value.trim()));
-    clearTr.addEventListener('click', () => { trInput.value = ''; setTranscriptApi(''); });
 
     // Clipboard
     new ClipboardJS('.clipboard');
