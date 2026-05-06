@@ -120,6 +120,7 @@ footer{font-size:.78rem;color:#6c757d;text-align:center;padding:2rem 0;border-to
       <input type="text" class="form-control font-monospace" id="workerUrlInput" placeholder="https://yt-meta.YOUR-SUBDOMAIN.workers.dev" autocomplete="off">
       <button class="btn btn-outline-info" id="saveWorker" type="button">Set Worker</button>
       <button class="btn btn-outline-danger" id="clearWorker" type="button">Clear</button>
+      <button class="btn btn-outline-secondary copy-worker-btn" type="button" title="Copy Worker Script"><i class="bi bi-clipboard"></i> Code</button>
     </div>
     <small id="workerStatus" class="text-muted mt-1 d-block">Worker: <em>not set</em></small>
   </div>
@@ -1300,6 +1301,56 @@ $(function() {
   document.getElementById('filmotBulkBtn')?.addEventListener('click', doFilmotBulk);
   document.getElementById('cdxBulkBtn')?.addEventListener('click', doCDXBulk);
 });
+/* ══════════════════════════════════════════════════════════════════════════
+   CLOUDFLARE WORKER COPY CODE
+   ══════════════════════════════════════════════════════════════════════════ */
+(function initWorkerCopy() {
+    const workerCode = `export default {
+  async fetch(request) {
+    const url = new URL(request.url);
+    if (url.pathname === '/proxy') {
+      const target = url.searchParams.get('target');
+      if (!target) return new Response('Missing target', { status: 400 });
+      const targetUrl = new URL(target);
+      url.searchParams.forEach((val, key) => {
+          if (key !== 'target') targetUrl.searchParams.append(key, val);
+      });
+      const modifiedRequest = new Request(targetUrl.toString(), {
+        method: request.method,
+        headers: request.headers
+      });
+      modifiedRequest.headers.delete('Origin');
+      modifiedRequest.headers.delete('Referer');
+      const response = await fetch(modifiedRequest);
+      const newResponse = new Response(response.body, response);
+      newResponse.headers.set('Access-Control-Allow-Origin', '*');
+      return newResponse;
+    } else if (url.pathname === '/resolveurl') {
+       const target = url.searchParams.get('url');
+       if(!target) return new Response('Missing url', {status: 400});
+       try {
+         const res = await fetch(target, { headers: { 'User-Agent': 'Mozilla/5.0' }});
+         const text = await res.text();
+         const match = text.match(/<meta itemprop="identifier" content="(UC[^"]+)">/);
+         if (match) return Response.json({ channelId: match[1] }, { headers: { 'Access-Control-Allow-Origin': '*' } });
+         return Response.json({ error: 'Not found' }, { status: 404, headers: { 'Access-Control-Allow-Origin': '*' } });
+       } catch(e) {
+         return Response.json({ error: e.message }, { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
+       }
+    }
+    return new Response('Not found', { status: 404 });
+  }
+};`;
+    document.querySelectorAll('.copy-worker-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            navigator.clipboard.writeText(workerCode).then(() => {
+                const orig = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-check"></i> Copied!';
+                setTimeout(() => this.innerHTML = orig, 2000);
+            });
+        });
+    });
+})();
 </script>
 </body>
 </html>
