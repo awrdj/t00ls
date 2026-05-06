@@ -969,7 +969,7 @@ async function doSubmit() {
     rebuildOther();
 
     document.getElementById('exportBtn').style.display = '';
-    updateStatus(`Done — ${allVideos.length} video(s) loaded.`);
+    updateStatus(`Done — ${allVideos.length} video(s) loaded at ${moment().format('h:mm:ss a')}.`);
     showExtraSections();
     setProgress(100);
 
