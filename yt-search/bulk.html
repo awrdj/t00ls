@@ -1557,7 +1557,8 @@ async function handleResolveUrl(workerUrl) {
 function extractFirst(text, regex) {
   const m = text.match(regex);
   return m ? m[1] : null;
-}\`;
+}`;
+
     document.querySelectorAll('.copy-worker-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             navigator.clipboard.writeText(workerCode).then(() => {
