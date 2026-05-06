@@ -761,7 +761,7 @@ const shared = (function () {
                 partDiv.append(`<p class="mb-15" style="font-size:1.25em">${escHtml(partJson.title)}</p>`);
                 partDiv.append(`<p class="mb-15">Published by <a href="https://www.youtube.com/channel/${partJson.channelId}" target="_blank">${escHtml(partJson.channelTitle)}</a></p>`);
                 const pub = new Date(partJson.publishedAt);
-                partDiv.append(`<p class="mb-15">Published on <span class="orange">${pub.toUTCString()}</span> — ${moment(pub).utc().fromNow()} ${getConvertTime(pub)}</p>`);
+                partDiv.append(`<p class="mb-15">Published on <span class="orange">${moment(pub).format('MMMM Do YYYY, h:mm:ss a')}</span> — ${moment(pub).fromNow()} ${getConvertTime(pub)}</p>`);
                 if (partJson.tags && partJson.tags.length) {
                     partDiv.append(`<p class="mb-15">Tags: ${partJson.tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}</p>`);
                 } else {
@@ -900,7 +900,7 @@ const shared = (function () {
                 partDiv.append(`<p class="mb-15" style="font-size:1.25em">${escHtml(partJson.title)}</p>`);
                 partDiv.append(`<p class="mb-15">Published by <a href="https://www.youtube.com/channel/${partJson.channelId}" target="_blank">${escHtml(partJson.channelTitle)}</a></p>`);
                 const pub = new Date(partJson.publishedAt);
-                partDiv.append(`<p class="mb-15">Published on <span class="orange">${pub.toUTCString()}</span> — ${moment(pub).utc().fromNow()} ${getConvertTime(pub)}</p>`);
+                partDiv.append(`<p class="mb-15">Published on <span class="orange">${moment(pub).format('MMMM Do YYYY, h:mm:ss a')}</span> — ${moment(pub).fromNow()} ${getConvertTime(pub)}</p>`);
                 if (partJson.description) partDiv.append(`<p class="mb-15">Description: ${escHtml(partJson.description)}</p>`);
                 partDiv.append(`<p class="mb-15">Playlist id is <span class="orange">${fullJson.id}</span></p>`);
             }
@@ -944,7 +944,7 @@ const shared = (function () {
                 if (thumbUrl) partDiv.append(`<img class="profile mb-15" src="${thumbUrl}">`);
                 partDiv.append(`<p class="mb-15" style="font-size:1.25em">${escHtml(partJson.title)}</p>`);
                 const pub = new Date(partJson.publishedAt);
-                partDiv.append(`<p class="mb-15">Channel created on <span class="orange">${pub.toUTCString()}</span> — ${moment(pub).utc().fromNow()} ${getConvertTime(pub)}</p>`);
+                partDiv.append(`<p class="mb-15">Channel created on <span class="orange">${moment(pub).format('MMMM Do YYYY, h:mm:ss a')}</span> — ${moment(pub).fromNow()} ${getConvertTime(pub)}</p>`);
                 if (partJson.description) partDiv.append(`<p class="mb-15">Description: ${escHtml(partJson.description)}</p>`);
                 if (partJson.country) {
                     const t = bcp47.lookup(partJson.country);
