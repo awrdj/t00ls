@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Grab all metadata about a YouTube video, playlist, or channel via the YouTube Data API v3.">
-<title>YT Search</title>
+<title>YT Metadata</title>
 <link rel="preconnect" href="//cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="//fonts.googleapis.com">
 <link rel="preconnect" href="//fonts.gstatic.com" crossorigin>
@@ -63,7 +63,6 @@ button.loading .countdown,button.loading .spinner{display:initial}
 .wayback-cdx-older{filter:brightness(.75)}
 .export{display:none}
 .apexcharts-heatmap-rect[val="0"],.apexcharts-heatmap-rect:not([val]){display:none}
-#api-key-banner{background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);border-bottom:1px solid rgba(255,255,255,.08)}
 footer{font-size:.78rem;color:#6c757d;text-align:center;padding:2rem 0;border-top:1px solid rgba(255,255,255,.06)}
 /* transcript */
 .transcript-line{display:flex;gap:.75rem;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem}
@@ -132,6 +131,9 @@ html[data-bs-theme='dark'] .progress-bar.error{background-color:#ca6f1e}
       <li class="nav-item"><a class="nav-link" href="search.html">Search</a></li>
     </ul>
     <div class="d-flex align-items-center gap-3">
+      <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#settingsModal">
+        <i class="bi bi-gear-fill"></i> Settings
+      </button>
       <div class="form-check form-switch mb-0">
         <input class="form-check-input" type="checkbox" role="switch" id="darkMode" checked>
         <label class="form-check-label small" for="darkMode">Dark</label>
@@ -142,49 +144,46 @@ html[data-bs-theme='dark'] .progress-bar.error{background-color:#ca6f1e}
 </nav>
 
 <!-- ═══ API KEY BANNER ═══════════════════════════════════════════════════════ -->
-<div id="api-key-banner" class="py-3 mb-3">
-<div class="container">
-  <div class="row align-items-center gy-2">
-    <div class="col-auto">
-      <span class="fw-semibold small"><i class="bi bi-key-fill text-warning me-1"></i>YouTube API Key</span>
-      <span class="text-muted ms-1" style="font-size:.78rem">— your key stays local, never sent anywhere except Google</span>
-    </div>
-    <div class="col-12 col-md">
-      <div class="input-group input-group-sm" style="max-width:500px">
-        <input type="password" class="form-control font-monospace" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
-        <button class="btn btn-outline-secondary" id="toggleKeyVis" type="button" title="Show/hide"><i class="bi bi-eye"></i></button>
-        <button class="btn btn-warning" id="saveApiKey" type="button">Save Key</button>
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-bottom border-secondary-subtle">
+        <h5 class="modal-title fs-6" id="settingsModalLabel"><i class="bi bi-gear-fill me-2 text-secondary"></i>Settings</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="fw-semibold mb-0 small"><i class="bi bi-key-fill text-warning me-1"></i>YouTube API Key</label>
+            <span id="apiKeyStatus" class="badge bg-danger">No key</span>
+          </div>
+          <p class="small text-muted mb-2" style="font-size:.8rem">Your key stays local in your browser and is only sent to Google (or your proxy).</p>
+          <div class="input-group input-group-sm mb-2">
+            <input type="password" class="form-control font-monospace" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
+            <button class="btn btn-outline-secondary" id="toggleKeyVis" type="button" title="Show/hide"><i class="bi bi-eye"></i></button>
+            <button class="btn btn-warning" id="saveApiKey" type="button">Save Key</button>
+          </div>
+          <a href="https://developers.google.com/youtube/v3/getting-started" target="_blank" rel="noopener" class="text-info text-decoration-none" style="font-size:.8rem">Get a free API key &rarr;</a>
+        </div>
+        
+        <hr class="border-secondary-subtle">
+
+        <div class="mb-2">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="fw-semibold mb-0 small"><i class="bi bi-shield-check text-info me-1"></i>Cloudflare Worker URL</label>
+          </div>
+          <p class="small text-muted mb-2" style="font-size:.8rem">Handles CORS, YouTube API proxying, and vanity URL resolution.</p>
+          <div class="input-group input-group-sm mb-2">
+            <input type="text" class="form-control font-monospace" id="workerUrlInput" placeholder="https://yt-meta.YOUR-SUBDOMAIN.workers.dev" autocomplete="off">
+            <button class="btn btn-outline-info" id="saveWorker" type="button">Set</button>
+            <button class="btn btn-outline-danger" id="clearWorker" type="button">Clear</button>
+            <button class="btn btn-outline-secondary copy-worker-btn" type="button" title="Copy Worker Script"><i class="bi bi-clipboard"></i> Code</button>
+          </div>
+          <small id="workerStatus" class="text-muted d-block" style="font-size:.8rem">Worker: <em>not set</em></small>
+        </div>
       </div>
     </div>
-    <div class="col-auto">
-      <a href="https://developers.google.com/youtube/v3/getting-started" target="_blank" rel="noopener" class="text-info small">
-        Get a free API key →
-      </a>
-    </div>
-    <div class="col-auto">
-      <span id="apiKeyStatus" class="badge bg-danger">No key</span>
-    </div>
   </div>
-
-  <!-- Worker / Proxy row -->
-  <div class="mt-2 pt-2" style="border-top:1px solid rgba(255,255,255,.06)">
-    <div class="mb-1">
-      <small class="text-muted">
-        <i class="bi bi-shield-check me-1 text-info"></i>
-        <strong>Cloudflare Worker URL</strong>
-        <span class="text-muted"> — handles CORS, YouTube API proxying &amp; vanity URL resolution. Required for GitHub Pages.</span>
-      </small>
-    </div>
-    <div class="input-group input-group-sm" style="max-width:560px">
-      <input type="text" class="form-control font-monospace" id="workerUrlInput"
-             placeholder="https://yt-meta.YOUR-SUBDOMAIN.workers.dev" autocomplete="off">
-      <button class="btn btn-outline-info" id="saveWorker" type="button">Set Worker</button>
-      <button class="btn btn-outline-danger" id="clearWorker" type="button">Clear</button>
-      <button class="btn btn-outline-secondary copy-worker-btn" type="button" title="Copy Worker Script"><i class="bi bi-clipboard"></i> Code</button>
-    </div>
-    <small id="workerStatus" class="text-muted mt-1 d-block">Worker: <em>not set — direct API calls (CORS may fail on GitHub Pages)</em></small>
-  </div>
-</div>
 </div>
 
 <!-- ═══ MAIN FORM ════════════════════════════════════════════════════════════ -->
