@@ -714,7 +714,7 @@ function rebuildHeatmap(yearFilter) {
   allVideos.forEach(v => {
     const pub = v.snippet?.publishedAt;
     if (!pub) return;
-    const m = moment(pub).utc();
+    const m = moment(pub);
     if (yearFilter !== 'all' && String(m.year()) !== String(yearFilter)) return;
     const day = m.day();
     const hour = m.hour();
@@ -747,7 +747,7 @@ function rebuildHeatmap(yearFilter) {
   // Populate year dropdown
   const years = [...new Set(allVideos.map(v => {
     const p = v.snippet?.publishedAt;
-    return p ? String(moment(p).utc().year()) : null;
+    return p ? String(moment(p).year()) : null;
   }).filter(Boolean))].sort().reverse();
   const sel = document.getElementById('freqYear');
   sel.innerHTML = '<option value="all">All years</option>' +
