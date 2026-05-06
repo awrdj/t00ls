@@ -481,7 +481,7 @@ async function doSearch(append) {
 
     renderSearchResults(items, append);
     document.getElementById('progressFill').style.width = '100%';
-    updateStatus(`Found ${searchItems.length} result(s)${nextPageToken ? ' — more available' : ''}.`);
+    updateStatus(`Found ${searchItems.length} result(s)${nextPageToken ? ' — more available' : ''} at ${moment().format('h:mm:ss a')}.`);
 
     // Share link
     const base = location.origin + location.pathname;
@@ -548,7 +548,7 @@ async function fetchFullMetadata() {
   rebuildOther();
   document.getElementById('bulkSection').style.display = '';
   document.getElementById('videoCount').textContent = allVideos.length;
-  updateStatus(`Loaded full metadata for ${allVideos.length} video(s).`);
+  updateStatus(`Loaded full metadata for ${allVideos.length} video(s) at ${moment().format('h:mm:ss a')}.`);
   document.getElementById('fetchDetailsBtn').disabled = false;
   document.getElementById('progressFill').style.width = '100%';
 }
