@@ -11,11 +11,11 @@ Requirement: Make sure you have Node.js installed.
 
 Open your terminal, navigate to your t00ls folder, and run these commands one by one:
 
-npm create vite@latest monosegment -- --template react
-cd monosegment
-npm install lucide-react firebase postcss autoprefixer
-npm install tailwindcss@3
-npx tailwindcss init -p
+1. npm create vite@latest monosegment -- --template react
+2. cd monosegment
+3. npm install lucide-react firebase postcss autoprefixer
+4. npm install tailwindcss@3
+5. npx tailwindcss init -p
 
 
 2. Configure Tailwind CSS
