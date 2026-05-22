@@ -11,16 +11,19 @@ Do this once to set up the local environment in your `t00ls/monosegment` folder.
 
 Open your terminal, navigate to your `t00ls` folder, and run these commands one by one:
 
+```bash
 npm create vite@latest monosegment -- --template react
 cd monosegment
 npm install lucide-react firebase postcss autoprefixer
 npm install tailwindcss@3
 npx tailwindcss init -p
+```
 
 ### 2. Configure Tailwind CSS
 
 Open `tailwind.config.js` and replace everything inside with this:
 
+```javascript
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -32,17 +35,21 @@ export default {
   },
   plugins: [],
 }
+```
 
 Open `src/index.css` and replace everything inside with this:
 
+```css
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+```
 
 ### 3. Configure Vite
 
 Open `vite.config.js` and replace everything inside with this exact code. *The base path is critical so GitHub knows it's inside a subfolder.*
 
+```javascript
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -50,6 +57,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/t00ls/monosegment/',
 })
+```
 
 ---
 
@@ -65,8 +73,9 @@ Whenever you make updates in the AI Canvas and want to push the new version live
 ### 2. Build the App
 Open your terminal, make sure you are inside the `t00ls/monosegment` folder, and run:
 
+```bash
 npm run build
-
+```
 *This command squishes your code and creates a hidden `dist` (distribution) folder on your computer.*
 
 ### 3. Drag and Drop to GitHub
@@ -78,21 +87,3 @@ npm run build
 6. Scroll down and click **Commit changes**.
 
 *(Note: If you haven't turned on GitHub pages yet: Go to Settings -> Pages -> Source: Deploy from branch -> Branch: main / root -> Save).*
-
----
-
-## ⚠️ Troubleshooting Common Problems
-
-If you run into issues during setup, here is how to fix the exact problems you might encounter:
-
-**Problem 1: Terminal gets "stuck" after the first `npm create vite` command.**
-* **Why:** You accidentally started a live local web server by pressing "Yes" to start.
-* **Fix:** Click inside the terminal and press `Ctrl + C` on your keyboard. This kills the server and gives you your standard typing prompt back.
-
-**Problem 2: `npm error could not determine executable to run` when setting up Tailwind.**
-* **Why:** The newest version of Tailwind (v4) changed how installation works and broke the standard config command.
-* **Fix:** Force install version 3 by running `npm install tailwindcss@3`, and then run `npx tailwindcss init -p` again.
-
-**Problem 3: `Error: Failed to get remote.origin.url` when trying to run `npm run deploy`.**
-* **Why:** This happens if you try to use the automated terminal deployment, but your local folder isn't fully linked to your GitHub repository using Git. 
-* **Fix:** Skip the terminal deploy command entirely! Instead, use the **Drag and Drop** method outlined in Phase 2 above. It relies on `npm run build` instead, which works perfectly without Git setup.
