@@ -11,12 +11,11 @@ Requirement: Make sure you have Node.js installed.
 
 Open your terminal, navigate to your t00ls folder, and run these commands one by one:
 
-1. npm create vite@latest monosegment -- --template react
-2. cd monosegment
-3. npm install
-4. npm install lucide-react firebase tailwindcss postcss autoprefixer
-5. npm install gh-pages --save-dev
-6. npx tailwindcss init -p
+npm create vite@latest monosegment -- --template react
+cd monosegment
+npm install lucide-react firebase postcss autoprefixer
+npm install tailwindcss@3
+npx tailwindcss init -p
 
 
 2. Configure Tailwind CSS
@@ -43,33 +42,22 @@ Open src/index.css and replace everything inside with this:
 @tailwind utilities;
 
 
-3. Configure Vite & GitHub Pages
+3. Configure Vite
 
-Open vite.config.js and replace everything inside with this (assuming your repository is exactly named t00ls):
+Open vite.config.js and replace everything inside with this exact code. The base path is critical so GitHub knows it's inside a subfolder.
 
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/t00ls/',
+  base: '/t00ls/monosegment/',
 })
-
-
-Open package.json. Find the "scripts" section and add the deploy line so it looks exactly like this:
-
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "deploy": "gh-pages -d dist"
-  },
 
 
 🔄 Phase 2: Updating the App (Do this every time!)
 
-Whenever you make updates in the AI Canvas and want to push the new version live, follow these two simple steps:
+Whenever you make updates in the AI Canvas and want to push the new version live, follow these steps using the simple drag-and-drop method:
 
 1. Copy the Code
 
@@ -77,16 +65,51 @@ Copy the full, final code of App.jsx from the AI Canvas.
 
 Open your local file at t00ls/monosegment/src/App.jsx.
 
-Replace everything inside it with the copied code.
+Replace everything inside it with the copied code and save.
 
-Save the file.
-
-2. Deploy to GitHub
+2. Build the App
 
 Open your terminal, make sure you are inside the t00ls/monosegment folder, and run:
 
 npm run build
-npm run deploy
 
 
-Note: It usually takes GitHub Pages 1-2 minutes to update the live website after you run the deploy command. You may need to refresh your live webpage (Ctrl+F5) to see the changes.
+This command squishes your code and creates a hidden dist (distribution) folder on your computer.
+
+3. Drag and Drop to GitHub
+
+Open your computer's file explorer (Finder) and go to /Users/mac/React Canvas2Github/monosegment/dist/.
+
+Open your web browser and go to your t00ls repository on GitHub.
+
+Navigate inside the monosegment folder on the GitHub website.
+
+Click Add file -> Upload files.
+
+Drag and drop everything inside your local dist folder (the index.html file, the assets folder, etc.) directly into the GitHub webpage.
+
+Scroll down and click Commit changes.
+
+(Note: If you haven't turned on GitHub pages yet: Go to Settings -> Pages -> Source: Deploy from branch -> Branch: main / root -> Save).
+
+⚠️ Troubleshooting Common Problems
+
+If you run into issues during setup, here is how to fix the exact problems you might encounter:
+
+Problem 1: Terminal gets "stuck" after the first npm create vite command.
+
+Why: You accidentally started a live local web server by pressing "Yes" to start.
+
+Fix: Click inside the terminal and press Ctrl + C on your keyboard. This kills the server and gives you your standard typing prompt back.
+
+Problem 2: npm error could not determine executable to run when setting up Tailwind.
+
+Why: The newest version of Tailwind (v4) changed how installation works and broke the standard config command.
+
+Fix: Force install version 3 by running npm install tailwindcss@3, and then run npx tailwindcss init -p again.
+
+Problem 3: Error: Failed to get remote.origin.url when trying to run npm run deploy.
+
+Why: This happens if you try to use the automated terminal deployment, but your local folder isn't fully linked to your GitHub repository using Git.
+
+Fix: Skip the terminal deploy command entirely! Instead, use the Drag and Drop method outlined in Phase 2 above. It relies on npm run build instead, which works perfectly without Git setup.
