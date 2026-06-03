@@ -812,7 +812,8 @@
                                 <i data-lucide="type" class="text-orange-400"></i> Titles
                             </h3>
                             <div class="flex gap-2">
-                                <button class="btn-v3-inject text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors flex items-center gap-1" data-target="titles"><i data-lucide="dna" class="w-3 h-3 text-purple-400"></i><!-- Inject Competitor--></button>
+                                <button class="btn-v3-analyze text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded transition-colors flex items-center gap-1 shadow-lg" title="AI Title Rater"><i data-lucide="bar-chart" class="w-3 h-3"></i> Analyze</button>
+                                <button class="btn-v3-inject text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors flex items-center gap-1" data-target="titles" title="Inject Competitor"><i data-lucide="dna" class="w-3 h-3 text-purple-400"></i></button>
                                 <button class="btn-v3-regen-all text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" data-target="titles"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen All</button>
                                 <button onclick="copyAllV3Titles()" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" title="Copy All Titles"><i data-lucide="copy" class="w-3 h-3"></i> Copy All</button>
                             </div>
@@ -827,6 +828,10 @@
                     </div>
                     <div id="v3-out-titles" class="flex flex-col gap-3 mb-4">
                         <!-- Dynamic Titles -->
+                    </div>
+                    <!-- Analysis Panel (Hidden by default) -->
+                    <div id="v3-title-analysis" class="hidden mb-4 bg-slate-900 border border-indigo-500/50 rounded-lg p-4 shadow-inner flex flex-col gap-3">
+                        <!-- JS injects analysis here -->
                     </div>
                     <!-- More Buttons -->
                     <div class="flex gap-2 pt-2 border-t border-slate-700/50">
@@ -884,6 +889,7 @@
                             <i data-lucide="type" class="text-yellow-400"></i> Thumbnail Hooks
                         </h3>
                         <div class="flex gap-2">
+                            <button class="btn-v3-analyze-slug text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded transition-colors flex items-center gap-1 shadow-lg" title="AI Hook Rater"><i data-lucide="bar-chart" class="w-3 h-3"></i> Analyze</button>
                             <button class="btn-v3-inject text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors flex items-center gap-1" data-target="slugs"><i data-lucide="dna" class="w-3 h-3 text-purple-400"></i></button>
                             <button class="btn-v3-regen-all text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" data-target="slugs"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen All</button>
                             <button onclick="copyAllV3Slugs()" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" title="Copy All Hooks"><i data-lucide="copy" class="w-3 h-3"></i> Copy All</button>
@@ -897,8 +903,12 @@
                             <button class="btn-execute-inject bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors self-end" data-target="slugs">Extract & Generate</button>
                         </div>
                     </div>
-                    <div id="v3-out-slugs" class="grid grid-cols-2 xl:grid-cols-2 gap-2">
+                    <div id="v3-out-slugs" class="grid grid-cols-2 xl:grid-cols-2 gap-2 mb-4">
                         <!-- Dynamic Slugs -->
+                    </div>
+                    <!-- Analysis Panel (Hidden by default) -->
+                    <div id="v3-slug-analysis" class="hidden mb-4 bg-slate-900 border border-indigo-500/50 rounded-lg p-4 shadow-inner flex flex-col gap-3">
+                        <!-- JS injects analysis here -->
                     </div>
                 </div>
 
@@ -4984,6 +4994,166 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
         // --- Surgical Injection & Regeneration Logic ---
         document.getElementById('v3-results-state')?.addEventListener('click', async (e) => {
             
+            // AI Title Rater / Analyzer
+            const btnAnalyze = e.target.closest('.btn-v3-analyze');
+            if (btnAnalyze) {
+                const titleElements = document.querySelectorAll('#v3-out-titles .item-text');
+                if (titleElements.length === 0) return showToast("No titles to analyze!");
+                
+                const scriptContext = ui.v3Script?.value.trim();
+                if (!scriptContext) return showToast("No script found to compare against!");
+
+                const titlesArray = Array.from(titleElements).map(el => el.innerText.trim());
+                const analysisBox = document.getElementById('v3-title-analysis');
+                
+                const currentKey = getActiveApiKey();
+                if (!currentKey && !isFirebaseEnabled) return showToast("API Key needed!");
+                
+                const originalHTML = btnAnalyze.innerHTML;
+                btnAnalyze.disabled = true;
+                btnAnalyze.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div> Analyzing...`;
+                analysisBox.innerHTML = '';
+                analysisBox.classList.remove('hidden');
+
+                try {
+                    const schema = {
+                        type: "OBJECT",
+                        properties: {
+                            winnerIndex: { type: "INTEGER", description: "The array index (0, 1, 2, etc.) of the absolute best title." },
+                            evaluations: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        score: { type: "INTEGER", description: "Score out of 100 based on clickability AND relevance to the script." },
+                                        critique: { type: "STRING", description: "1-2 punchy sentences explaining WHY it works or what it lacks (Curiosity, Urgency, Script Fit)." }
+                                    }, required: ["score", "critique"]
+                                }
+                            }
+                        }, required: ["winnerIndex", "evaluations"]
+                    };
+
+                    const sysPrompt = "You are an elite YouTube Growth Strategist. Analyze the provided list of video titles against the provided video script. Score each title out of 100 based on its Click-Through Rate (CTR) potential, Curiosity Gap, Emotional Urgency, AND how accurately/compellingly it represents the script's core narrative. Select the single best 'Winner' title. Be ruthlessly honest in your critiques.";
+                    const userPrompt = `FINAL SCRIPT CONTEXT:\n${scriptContext}\n\nRATE THESE TITLES:\n${titlesArray.map((t, i) => `[Title ${i}]: ${t}`).join('\n')}`;
+
+                    const data = await executeGeminiCall(sysPrompt, userPrompt, schema);
+
+                    if (data && data.evaluations) {
+                        let html = `<h4 class="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5 mb-2"><i data-lucide="brain-circuit" class="w-4 h-4"></i> AI Strategic Analysis</h4>`;
+                        
+                        data.evaluations.forEach((evalData, i) => {
+                            const isWinner = i === data.winnerIndex;
+                            const tColor = isWinner ? 'text-amber-400' : 'text-slate-300';
+                            const bColor = isWinner ? 'border-amber-500/50 bg-amber-900/10' : 'border-slate-700 bg-slate-800/50';
+                            
+                            html += `
+                                <div class="p-3 border ${bColor} rounded-md flex flex-col gap-2 relative">
+                                    ${isWinner ? `<div class="absolute -top-2.5 -right-2 bg-amber-500 text-amber-950 text-[9px] font-bold px-2 py-0.5 rounded shadow-lg uppercase tracking-wider flex items-center gap-1"><i data-lucide="trophy" class="w-3 h-3"></i> Top Pick</div>` : ''}
+                                    <div class="flex justify-between items-start gap-4">
+                                        <p class="text-xs font-bold ${tColor} flex-1">"${titlesArray[i]}"</p>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <div class="w-16 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-700"><div class="h-full ${evalData.score > 85 ? 'bg-emerald-500' : evalData.score > 70 ? 'bg-amber-500' : 'bg-red-500'}" style="width: ${evalData.score}%"></div></div>
+                                            <span class="text-[10px] font-mono font-bold ${evalData.score > 85 ? 'text-emerald-400' : evalData.score > 70 ? 'text-amber-400' : 'text-red-400'}">${evalData.score}/100</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 leading-relaxed italic border-t border-slate-700/50 pt-2">${evalData.critique}</p>
+                                </div>
+                            `;
+                        });
+                        analysisBox.innerHTML = html;
+                        lucide.createIcons({ root: analysisBox });
+                    }
+                } catch (err) {
+                    console.error(err);
+                    analysisBox.innerHTML = `<p class="text-xs text-red-400">Analysis failed: ${err.message}</p>`;
+                } finally {
+                    btnAnalyze.disabled = false;
+                    btnAnalyze.innerHTML = originalHTML;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            // AI Hook Rater / Analyzer (Thumbnail Slugs)
+            const btnAnalyzeSlug = e.target.closest('.btn-v3-analyze-slug');
+            if (btnAnalyzeSlug) {
+                const slugElements = document.querySelectorAll('#v3-out-slugs .item-text');
+                if (slugElements.length === 0) return showToast("No hooks to analyze!");
+                
+                const scriptContext = ui.v3Script?.value.trim();
+                if (!scriptContext) return showToast("No script found to compare against!");
+
+                const slugsArray = Array.from(slugElements).map(el => el.innerText.trim());
+                const analysisBox = document.getElementById('v3-slug-analysis');
+                
+                const currentKey = getActiveApiKey();
+                if (!currentKey && !isFirebaseEnabled) return showToast("API Key needed!");
+                
+                const originalHTML = btnAnalyzeSlug.innerHTML;
+                btnAnalyzeSlug.disabled = true;
+                btnAnalyzeSlug.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div> Analyzing...`;
+                analysisBox.innerHTML = '';
+                analysisBox.classList.remove('hidden');
+
+                try {
+                    const schema = {
+                        type: "OBJECT",
+                        properties: {
+                            winnerIndex: { type: "INTEGER", description: "The array index (0, 1, 2, etc.) of the absolute best hook." },
+                            evaluations: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        score: { type: "INTEGER", description: "Score out of 100 based on punchiness, emotion, and script fit." },
+                                        critique: { type: "STRING", description: "1-2 punchy sentences explaining WHY it works or what it lacks (Too long? Boring? Great curiosity gap?)." }
+                                    }, required: ["score", "critique"]
+                                }
+                            }
+                        }, required: ["winnerIndex", "evaluations"]
+                    };
+
+                    const sysPrompt = "You are an elite YouTube Growth Strategist. Analyze the provided list of thumbnail text hooks against the provided video script. Score each hook out of 100 based on its Click-Through Rate (CTR) potential, brevity (under 5 words is best), Emotional Urgency, AND how accurately it represents the script's core narrative. Select the single best 'Winner' hook. Be ruthlessly honest in your critiques.";
+                    const userPrompt = `FINAL SCRIPT CONTEXT:\n${scriptContext}\n\nRATE THESE THUMBNAIL HOOKS:\n${slugsArray.map((t, i) => `[Hook ${i}]: ${t}`).join('\n')}`;
+
+                    const data = await executeGeminiCall(sysPrompt, userPrompt, schema);
+
+                    if (data && data.evaluations) {
+                        let html = `<h4 class="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5 mb-2"><i data-lucide="brain-circuit" class="w-4 h-4"></i> AI Strategic Analysis</h4>`;
+                        
+                        data.evaluations.forEach((evalData, i) => {
+                            const isWinner = i === data.winnerIndex;
+                            const tColor = isWinner ? 'text-yellow-400' : 'text-slate-300';
+                            const bColor = isWinner ? 'border-yellow-500/50 bg-yellow-900/10' : 'border-slate-700 bg-slate-800/50';
+                            
+                            html += `
+                                <div class="p-3 border ${bColor} rounded-md flex flex-col gap-2 relative">
+                                    ${isWinner ? `<div class="absolute -top-2.5 -right-2 bg-yellow-500 text-yellow-950 text-[9px] font-bold px-2 py-0.5 rounded shadow-lg uppercase tracking-wider flex items-center gap-1"><i data-lucide="trophy" class="w-3 h-3"></i> Top Pick</div>` : ''}
+                                    <div class="flex justify-between items-start gap-4">
+                                        <p class="text-xs font-bold ${tColor} flex-1 uppercase tracking-widest">"${slugsArray[i]}"</p>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <div class="w-16 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-700"><div class="h-full ${evalData.score > 85 ? 'bg-emerald-500' : evalData.score > 70 ? 'bg-amber-500' : 'bg-red-500'}" style="width: ${evalData.score}%"></div></div>
+                                            <span class="text-[10px] font-mono font-bold ${evalData.score > 85 ? 'text-emerald-400' : evalData.score > 70 ? 'text-amber-400' : 'text-red-400'}">${evalData.score}/100</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 leading-relaxed italic border-t border-slate-700/50 pt-2">${evalData.critique}</p>
+                                </div>
+                            `;
+                        });
+                        analysisBox.innerHTML = html;
+                        lucide.createIcons({ root: analysisBox });
+                    }
+                } catch (err) {
+                    console.error(err);
+                    analysisBox.innerHTML = `<p class="text-xs text-red-400">Analysis failed: ${err.message}</p>`;
+                } finally {
+                    btnAnalyzeSlug.disabled = false;
+                    btnAnalyzeSlug.innerHTML = originalHTML;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
             // Toggle Inject Panels
             const btnInject = e.target.closest('.btn-v3-inject');
             if (btnInject) {
