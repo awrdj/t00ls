@@ -3675,7 +3675,14 @@
 
             const reader = new FileReader();
             reader.onload = (event) => {
-                const srtText = event.target.result;
+                let srtText = event.target.result;
+                
+                // --- GHOST TAG STRIPPER ---
+                // 1. Remove HTML formatting tags (<i>, <b>, <u>, <font...>, etc.)
+                srtText = srtText.replace(/<\/?(?:i|b|u|font|span|div)[^>]*>/gi, '');
+                // 2. Remove SubStation Alpha (SSA/ASS) style override tags like {\an8} or {\c&H0000FF&}
+                srtText = srtText.replace(/\{\\[^}]+\}/g, '');
+                
                 const blocks = srtText.trim().split(/\n\s*\n|\r\n\s*\r\n/);
                 window.parsedSRTWords = [];
 
