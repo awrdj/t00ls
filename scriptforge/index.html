@@ -652,6 +652,7 @@
                                         <button class="btn-select-all text-[9px] bg-purple-900/50 hover:bg-purple-800 text-purple-200 px-1.5 py-0.5 rounded transition-colors shadow" data-target="motion">All / None</button>
                                     </div>
                                     <div class="max-h-48 overflow-y-auto custom-scrollbar">
+                                        <button class="multi-select-btn w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-purple-900/50 transition-colors border-b border-slate-700/50 flex items-center justify-between" data-type="motion" data-value="none">🛑 No Motion <i data-lucide="check" class="w-3 h-3 text-emerald-400 opacity-0 transition-opacity pointer-events-none"></i></button>
                                         <button class="multi-select-btn w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-purple-900/50 transition-colors border-b border-slate-700/50 flex items-center justify-between" data-type="motion" data-value="zoom_in">🔍 Zoom In <i data-lucide="check" class="w-3 h-3 text-emerald-400 opacity-0 transition-opacity pointer-events-none"></i></button>
                                         <button class="multi-select-btn w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-purple-900/50 transition-colors border-b border-slate-700/50 flex items-center justify-between" data-type="motion" data-value="zoom_out">🔍 Zoom Out <i data-lucide="check" class="w-3 h-3 text-emerald-400 opacity-0 transition-opacity pointer-events-none"></i></button>
                                         <button class="multi-select-btn w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-purple-900/50 transition-colors border-b border-slate-700/50 flex items-center justify-between" data-type="motion" data-value="pan_left">⬅️ Pan Left <i data-lucide="check" class="w-3 h-3 text-emerald-400 opacity-0 transition-opacity pointer-events-none"></i></button>
@@ -682,6 +683,7 @@
                                         <button class="btn-select-all text-[9px] bg-purple-900/50 hover:bg-purple-800 text-purple-200 px-1.5 py-0.5 rounded transition-colors shadow" data-target="transition">All / None</button>
                                     </div>
                                     <div class="max-h-48 overflow-y-auto custom-scrollbar">
+                                        <button class="multi-select-btn w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-purple-900/50 transition-colors border-b border-slate-700/50 flex items-center justify-between" data-type="transition" data-value="none">Hard Cut (None) <i data-lucide="check" class="w-3 h-3 text-emerald-400 opacity-0 transition-opacity pointer-events-none"></i></button>
                                         <button class="multi-select-btn w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-purple-900/50 transition-colors border-b border-slate-700/50 flex items-center justify-between" data-type="transition" data-value="crossfade">Crossfade <i data-lucide="check" class="w-3 h-3 text-emerald-400 opacity-0 transition-opacity pointer-events-none"></i></button>
                                         <button class="multi-select-btn w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-purple-900/50 transition-colors border-b border-slate-700/50 flex items-center justify-between" data-type="transition" data-value="dip_black">Dip to Black <i data-lucide="check" class="w-3 h-3 text-emerald-400 opacity-0 transition-opacity pointer-events-none"></i></button>
                                         <button class="multi-select-btn w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-purple-900/50 transition-colors border-b border-slate-700/50 flex items-center justify-between" data-type="transition" data-value="slide_left">Slide Left <i data-lucide="check" class="w-3 h-3 text-emerald-400 opacity-0 transition-opacity pointer-events-none"></i></button>
@@ -1158,8 +1160,8 @@
                             </div>
                         </div>
 
-                        <!-- Row 2: Image Engine & Limits (4 Columns) -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <!-- Row 2: Image Engine & RAM Threshold (3 Columns) -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <!-- Image Delay -->
                             <div class="bg-slate-900 border border-slate-700 rounded flex justify-between items-center p-2.5 shadow-inner">
                                 <div class="flex flex-col mr-2">
@@ -1178,6 +1180,18 @@
                                 <input type="number" id="api-image-batch-size-input" min="1" step="1" placeholder="8" class="w-20 bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-center text-white focus:outline-none focus:border-orange-500 transition-colors shrink-0">
                             </div>
 
+                            <!-- RAM Threshold -->
+                            <div class="bg-slate-900 border border-slate-700 rounded flex justify-between items-center p-2.5 shadow-inner">
+                                <div class="flex flex-col mr-2">
+                                    <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="hard-drive" class="w-3 h-3 text-orange-400"></i> RAM Limit</span>
+                                    <span class="text-[9px] text-slate-500 mt-0.5 leading-tight">Max video minutes before forcing chunks.</span>
+                                </div>
+                                <input type="number" id="api-ram-threshold-input" min="1" step="1" placeholder="12" class="w-20 bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-center text-white focus:outline-none focus:border-orange-500 transition-colors shrink-0">
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Advanced Limits (2 Columns) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <!-- Chunk Size -->
                             <div class="bg-slate-900 border border-slate-700 rounded flex justify-between items-center p-2.5 shadow-inner">
                                 <div class="flex flex-col mr-2">
@@ -1196,11 +1210,6 @@
                                 <input type="number" id="api-warning-threshold-input" min="10" step="5" placeholder="65" class="w-20 bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-center text-white focus:outline-none focus:border-orange-500 transition-colors shrink-0">
                             </div>
                         </div>
-
-                        <!-- Row 3: Limits (2 Columns)
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        </div>
-                        -->
                     </div>
                 </div>
 
@@ -1303,12 +1312,12 @@
                     </div>
 
                     <!-- Prompt: B-Roll -->
-                    <div class="mb-2 bg-slate-900/50 p-4 rounded border border-slate-700">
+                    <div class="mb-4 bg-slate-900/50 p-4 rounded border border-slate-700">
                         <div class="flex justify-between items-center mb-2">
                             <label class="text-sm font-bold text-emerald-400">View 2: B-Roll Director</label>
                             <button onclick="restorePrompt('broll')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"><i data-lucide="rotate-ccw" class="w-3 h-3"></i> Restore Default</button>
                         </div>
-                        <p class="text-[10px] text-slate-500 mb-2 font-mono">Variables: None</p>
+                        <p class="text-[10px] text-slate-500 mb-2 font-mono">Variables: {{DIRECTOR_INSTRUCTION}}</p>
                         <textarea id="prompt-broll" rows="6" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-xs text-slate-300 font-mono resize-y focus:outline-none focus:border-emerald-500"></textarea>
                     </div>
 
@@ -1510,6 +1519,7 @@
             turboCooldown: parseInt(localStorage.getItem('fast_cache_turbo_cooldown') || '1000', 10),
             chunkSize: parseInt(localStorage.getItem('fast_cache_chunk_size') || '800', 10),
             warningThreshold: parseInt(localStorage.getItem('fast_cache_warning_threshold') || '65', 10),
+            ramThreshold: parseInt(localStorage.getItem('fast_cache_ram_threshold') || '12', 10),
             prompts: JSON.parse(localStorage.getItem('fast_cache_prompts') || 'null'),
             models: JSON.parse(localStorage.getItem('fast_cache_models') || '{"text":"gemini-2.5-flash-preview-09-2025", "image":"gemini-2.5-flash-image-preview"}')
         };
@@ -1572,6 +1582,7 @@
                             localStorage.setItem('fast_cache_image_cooldown', appSettings.imageCooldown || '4000');
                             localStorage.setItem('fast_cache_chunk_size', appSettings.chunkSize || '800');
                             localStorage.setItem('fast_cache_warning_threshold', appSettings.warningThreshold || '65');
+                            localStorage.setItem('fast_cache_ram_threshold', appSettings.ramThreshold || '12');
                             if (appSettings.prompts) localStorage.setItem('fast_cache_prompts', JSON.stringify(appSettings.prompts));
                             if (appSettings.models) localStorage.setItem('fast_cache_models', JSON.stringify(appSettings.models));
                         }
@@ -1772,6 +1783,7 @@
             iconApiKeyVisibility: document.getElementById('icon-api-key-visibility'),
             apiChunkSizeInput: document.getElementById('api-chunk-size-input'),
             apiWarningThresholdInput: document.getElementById('api-warning-threshold-input'),
+            apiRamThresholdInput: document.getElementById('api-ram-threshold-input'),
             btnSaveSettings: document.getElementById('btn-save-settings'),
             selectTextModel: document.getElementById('select-text-model'),
             customTextModel: document.getElementById('custom-text-model'),
@@ -2891,6 +2903,9 @@
             if(ui.apiWarningThresholdInput) {
                 ui.apiWarningThresholdInput.value = appSettings.warningThreshold || 65;
             }
+            if(ui.apiRamThresholdInput) {
+                ui.apiRamThresholdInput.value = appSettings.ramThreshold || 12;
+            }
             
             // Load custom prompts into textareas
             const prompts = getPrompts();
@@ -2939,6 +2954,7 @@
             const tbCd = parseInt(ui.apiTurboCooldownInput?.value || "300", 10);
             const cs = parseInt(ui.apiChunkSizeInput?.value || "800", 10);
             const wt = parseInt(ui.apiWarningThresholdInput?.value || "65", 10);
+            const rt = parseInt(ui.apiRamThresholdInput?.value || "12", 10);
             
             // Save custom prompts
             const newPrompts = {
@@ -2954,7 +2970,7 @@
             const finalImgModel = ui.selectImageModel?.value === 'custom' ? ui.customImageModel?.value.trim() : ui.selectImageModel?.value;
             const newModels = { text: finalTxtModel || "gemini-2.5-flash-preview-09-2025", image: finalImgModel || "gemini-2.5-flash-image-preview" };
             
-            appSettings = { id: 'main', apiKey: k, textCooldown: tCd, textBatchSize: tbs, imageCooldown: iCd, imageBatchSize: ibs, turboCooldown: tbCd, chunkSize: cs, warningThreshold: wt, prompts: newPrompts, models: newModels };
+            appSettings = { id: 'main', apiKey: k, textCooldown: tCd, textBatchSize: tbs, imageCooldown: iCd, imageBatchSize: ibs, turboCooldown: tbCd, chunkSize: cs, warningThreshold: wt, ramThreshold: rt, prompts: newPrompts, models: newModels };
 
             // Save to the instant fast-cache
             localStorage.setItem('fast_cache_api', k);
@@ -2965,6 +2981,7 @@
             localStorage.setItem('fast_cache_turbo_cooldown', tbCd.toString());
             localStorage.setItem('fast_cache_chunk_size', cs.toString());
             localStorage.setItem('fast_cache_warning_threshold', wt.toString());
+            localStorage.setItem('fast_cache_ram_threshold', rt.toString());
             localStorage.setItem('fast_cache_prompts', JSON.stringify(newPrompts));
             localStorage.setItem('fast_cache_models', JSON.stringify(newModels));
 
@@ -3248,6 +3265,11 @@
                 }
 
                 const activePrompts = getPrompts();
+
+                // Programmatic Emoji Ban: Forcefully injected here so it dynamically applies without altering user settings
+                const emojiBanDirective = "\n\nAbsolutely NO EMOJIS are allowed in the final output.";
+                activePrompts.standard += emojiBanDirective;
+                activePrompts.chapter += emojiBanDirective;
 
                 // Shared schema - narrative with dynamic formatting
                 const sectionsArraySchema = {
@@ -3738,7 +3760,18 @@
             }
         }
 
-        ui.v2Script?.addEventListener('input', () => {
+        ui.v2Script?.addEventListener('input', (e) => {
+            // Live Emoji Cleanup
+            const originalVal = e.target.value;
+            const noEmoji = originalVal.replace(/\p{Extended_Pictographic}/gu, '');
+            if (originalVal !== noEmoji) {
+                const start = e.target.selectionStart;
+                const end = e.target.selectionEnd;
+                e.target.value = noEmoji;
+                // Attempt to restore cursor position seamlessly
+                try { e.target.setSelectionRange(start, end); } catch(err){}
+            }
+            
             calculateV2Stats();
             checkScriptFormatting();
         });
@@ -4425,51 +4458,99 @@
                     // 1. Pro Timing & The "Halfway Split" Logic
                     let rawTimings = [];
                     let currentSec = 0; // For fallback math
-                    let srtSearchIndex = 0; // Sliding window tracker for SRTs
+                    
+                    // --- PROPORTIONAL ANCHOR ALGORITHM (V2: Absolute Bulletproof) ---
+                    // Flatten the entire script to count pure words for accurate percentages
+                    const totalScriptWords = blocks.join(' ').replace(/[^\w\s']/g, '').toLowerCase().split(/\s+/).filter(w => w.length > 0);
+                    const totalWordCount = totalScriptWords.length || 1; // Prevent division by zero
+                    let cumulativeWords = 0;
 
                     // Pass A: Calculate exact start/end for every block based on words
-                    blocks.forEach((blockText) => {
+                    blocks.forEach((blockText, index) => {
                         let blockStartSec = currentSec;
                         let blockEndSec = currentSec;
 
                         if (window.parsedSRTWords && window.parsedSRTWords.length > 0) {
                             const cleanBlockWords = blockText.replace(/[^\w\s']/g, '').toLowerCase().split(/\s+/).filter(w => w.length > 0);
-                            if (cleanBlockWords.length > 0) {
-                                // Find start word match
-                                let startFound = false;
-                                for (let i = srtSearchIndex; i < window.parsedSRTWords.length; i++) {
-                                    if (window.parsedSRTWords[i].word === cleanBlockWords[0]) {
-                                        blockStartSec = window.parsedSRTWords[i].start;
-                                        srtSearchIndex = i;
-                                        startFound = true;
-                                        break;
-                                    }
-                                }
+                            const blockWordCount = cleanBlockWords.length;
+                            
+                            // 1. Force the start time to be EXACTLY the end time of the previous block
+                            // (The very first block MUST start at absolute 0 to cover any intro music/silence)
+                            if (index === 0) {
+                                blockStartSec = 0;
+                            } else {
+                                blockStartSec = rawTimings[index - 1].end;
+                            }
+                            
+                            if (blockWordCount > 0) {
+                                cumulativeWords += blockWordCount;
                                 
-                                // Find end word match
-                                let endFound = false;
+                                // 2. Calculate perfect proportional target based on word progress
+                                const progressRatio = Math.min(cumulativeWords / totalWordCount, 1.0);
+                                let expectedSrtIdx = Math.floor(progressRatio * (window.parsedSRTWords.length - 1));
+                                
+                                // Boundary check
+                                expectedSrtIdx = Math.max(0, Math.min(expectedSrtIdx, window.parsedSRTWords.length - 1));
+
+                                // 3. Default to the mathematically proportional time
+                                blockEndSec = window.parsedSRTWords[expectedSrtIdx].end;
+
+                                // 4. Fuzzy Snap: Try to find the exact ending word nearby to be frame-accurate
                                 const targetEndWord = cleanBlockWords[cleanBlockWords.length - 1];
-                                for (let i = srtSearchIndex; i < Math.min(srtSearchIndex + cleanBlockWords.length + 15, window.parsedSRTWords.length); i++) {
-                                    if (window.parsedSRTWords[i].word === targetEndWord) {
-                                        blockEndSec = window.parsedSRTWords[i].end;
-                                        srtSearchIndex = i;
-                                        endFound = true;
-                                        break;
+                                let foundExact = false;
+                                
+                                // Search within a generous 40-word radius of the expected index
+                                for (let offset = -40; offset <= 40; offset++) {
+                                    let testIdx = expectedSrtIdx + offset;
+                                    if (testIdx > 0 && testIdx < window.parsedSRTWords.length) {
+                                        if (window.parsedSRTWords[testIdx].word === targetEndWord) {
+                                            // Make sure this end time is strictly greater than the start time
+                                            if (window.parsedSRTWords[testIdx].end > blockStartSec) {
+                                                blockEndSec = window.parsedSRTWords[testIdx].end;
+                                                foundExact = true;
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
-                                
-                                if (!startFound || !endFound || blockEndSec <= blockStartSec) {
-                                    const duration = (cleanBlockWords.length / stats.wpm) * 60;
-                                    blockEndSec = blockStartSec + duration;
+
+                                // 5. Fallback Snap: If punctuation/emoji caused a mismatch, try the second-to-last word
+                                if (!foundExact && blockWordCount > 1) {
+                                    const backupEndWord = cleanBlockWords[cleanBlockWords.length - 2];
+                                    for (let offset = -40; offset <= 40; offset++) {
+                                        let testIdx = expectedSrtIdx + offset;
+                                        if (testIdx > 0 && testIdx < window.parsedSRTWords.length) {
+                                            if (window.parsedSRTWords[testIdx].word === backupEndWord) {
+                                                let finalIdx = Math.min(testIdx + 1, window.parsedSRTWords.length - 1);
+                                                if (window.parsedSRTWords[finalIdx].end > blockStartSec) {
+                                                    blockEndSec = window.parsedSRTWords[finalIdx].end;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
+                            
+                            // 6. Failsafe if math crossed over or went backwards somehow
+                            if (blockEndSec <= blockStartSec) {
+                                blockEndSec = blockStartSec + ((blockWordCount / stats.wpm) * 60);
+                            }
+                            
+                            // 7. Final Block Override: ALWAYS snap to the absolute end of the audio
+                            if (index === blocks.length - 1) {
+                                blockEndSec = window.parsedSRTWords[window.parsedSRTWords.length - 1].end;
+                            }
+
                             currentSec = blockEndSec;
                         } else {
+                            // Fallback if no SRT
                             const blockWords = blockText.split(/\s+/).length;
                             const duration = (blockWords / stats.wpm) * 60;
                             blockEndSec = currentSec + duration;
                             currentSec = blockEndSec; 
                         } 
+                        
                         rawTimings.push({ start: blockStartSec, end: blockEndSec });
                     });
 
@@ -6939,6 +7020,63 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
         };
 
         document.body.addEventListener('change', (e) => {
+            // Randomize Checkbox Smart Auto-Fill Logic
+            if (e.target.id === 'motion-randomize-toggle' && e.target.checked) {
+                const isEffectivelyEmpty = window.selectedMotions.length === 0 || (window.selectedMotions.length === 1 && window.selectedMotions[0] === 'none');
+                if (isEffectivelyEmpty) {
+                    const container = document.getElementById('motion-dropdown');
+                    const btns = Array.from(container.querySelectorAll('.multi-select-btn')).filter(b => b.dataset.value !== 'none');
+                    window.selectedMotions.length = 0;
+                    window.selectedMotions.push(...btns.map(b => b.dataset.value));
+                    
+                    Array.from(container.querySelectorAll('.multi-select-btn')).forEach(multiBtn => {
+                        const checkIcon = multiBtn.querySelector('svg') || multiBtn.querySelector('i');
+                        if (multiBtn.dataset.value !== 'none') {
+                            checkIcon.classList.remove('opacity-0');
+                            checkIcon.classList.add('opacity-100');
+                            multiBtn.classList.remove('text-slate-300');
+                            multiBtn.classList.add('bg-purple-900/30', 'text-purple-300');
+                        } else {
+                            checkIcon.classList.remove('opacity-100');
+                            checkIcon.classList.add('opacity-0');
+                            multiBtn.classList.remove('bg-purple-900/30', 'text-purple-300');
+                            multiBtn.classList.add('text-slate-300');
+                        }
+                    });
+                    
+                    const badge = document.getElementById('motion-count-badge');
+                    badge.innerText = `${window.selectedMotions.length} Selected`;
+                }
+            }
+
+            if (e.target.id === 'transition-randomize-toggle' && e.target.checked) {
+                const isEffectivelyEmpty = window.selectedTransitions.length === 0 || (window.selectedTransitions.length === 1 && window.selectedTransitions[0] === 'none');
+                if (isEffectivelyEmpty) {
+                    const container = document.getElementById('transition-dropdown');
+                    const btns = Array.from(container.querySelectorAll('.multi-select-btn')).filter(b => b.dataset.value !== 'none');
+                    window.selectedTransitions.length = 0;
+                    window.selectedTransitions.push(...btns.map(b => b.dataset.value));
+                    
+                    Array.from(container.querySelectorAll('.multi-select-btn')).forEach(multiBtn => {
+                        const checkIcon = multiBtn.querySelector('svg') || multiBtn.querySelector('i');
+                        if (multiBtn.dataset.value !== 'none') {
+                            checkIcon.classList.remove('opacity-0');
+                            checkIcon.classList.add('opacity-100');
+                            multiBtn.classList.remove('text-slate-300');
+                            multiBtn.classList.add('bg-purple-900/30', 'text-purple-300');
+                        } else {
+                            checkIcon.classList.remove('opacity-100');
+                            checkIcon.classList.add('opacity-0');
+                            multiBtn.classList.remove('bg-purple-900/30', 'text-purple-300');
+                            multiBtn.classList.add('text-slate-300');
+                        }
+                    });
+                    
+                    const badge = document.getElementById('transition-count-badge');
+                    badge.innerText = `${window.selectedTransitions.length} Selected`;
+                }
+            }
+
             if (e.target.classList.contains('broll-subject-upload') || e.target.classList.contains('thumb-subject-upload')) {
                 const locker = e.target.closest('.group\\/locker');
                 if (locker) {
@@ -6984,7 +7122,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             const renderBtns = Array.from(document.querySelectorAll('.btn-ai-render'));
             if(renderBtns.length === 0) return showToast("No visuals to generate!");
 
-            window.bulkState = { queue: renderBtns, active: true, paused: false, currentIndex: 0, accumulatedTime: 0 };
+            // --- FIX: Track baseCompleted and totalItems for the progress bar ---
+            window.bulkState = { queue: renderBtns, active: true, paused: false, currentIndex: 0, accumulatedTime: 0, baseCompleted: 0, totalItems: renderBtns.length };
             
             ui.btnBulkGen.classList.add('hidden');
             ui.btnBulkPause.classList.remove('hidden');
@@ -7040,7 +7179,11 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
 
             if(failedRenderBtns.length === 0) return showToast("No failed visuals found!");
 
-            window.bulkState = { queue: failedRenderBtns, active: true, paused: false, currentIndex: 0, accumulatedTime: 0 };
+            // --- FIX: Tell the queue how many we ALREADY finished so it doesn't drop back to 0 ---
+            const totalItems = document.querySelectorAll('#v2-timeline-feed .btn-ai-render').length;
+            const baseCompleted = totalItems - failedRenderBtns.length;
+
+            window.bulkState = { queue: failedRenderBtns, active: true, paused: false, currentIndex: 0, accumulatedTime: 0, baseCompleted: baseCompleted, totalItems: totalItems };
             
             ui.btnBulkGen.classList.add('hidden');
             ui.btnBulkPause.classList.remove('hidden');
@@ -7062,9 +7205,13 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
 
         function updateBulkProgress() {
             if (!ui.bulkProgressBar) return;
-            const total = window.bulkState.queue.length;
-            const current = window.bulkState.currentIndex;
+            
+            // --- FIX: Combine base completed with current index so retries show the true overall progress ---
+            const total = window.bulkState.totalItems || window.bulkState.queue.length;
+            const base = window.bulkState.baseCompleted || 0;
+            const current = base + window.bulkState.currentIndex;
             const percent = total === 0 ? 0 : Math.round((current / total) * 100);
+            // -----------------------------------------------------------------------------------------------
             
             let timeString = "";
             if (window.bulkState.active && v2StartTime) {
@@ -7457,14 +7604,22 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const areAllSelected = allValues.length > 0 && allValues.every(val => arr.includes(val));
                 
                 if (areAllSelected) {
-                    // Clear all
-                    arr.length = 0; 
+                    // Clear all except "None"
+                    arr.length = 0;
+                    arr.push('none');
                     btns.forEach(multiBtn => {
                         const checkIcon = multiBtn.querySelector('svg') || multiBtn.querySelector('i');
-                        checkIcon.classList.remove('opacity-100');
-                        checkIcon.classList.add('opacity-0');
-                        multiBtn.classList.remove('bg-purple-900/30', 'text-purple-300');
-                        multiBtn.classList.add('text-slate-300');
+                        if (multiBtn.dataset.value === 'none') {
+                            checkIcon.classList.remove('opacity-0');
+                            checkIcon.classList.add('opacity-100');
+                            multiBtn.classList.remove('text-slate-300');
+                            multiBtn.classList.add('bg-purple-900/30', 'text-purple-300');
+                        } else {
+                            checkIcon.classList.remove('opacity-100');
+                            checkIcon.classList.add('opacity-0');
+                            multiBtn.classList.remove('bg-purple-900/30', 'text-purple-300');
+                            multiBtn.classList.add('text-slate-300');
+                        }
                     });
                 } else {
                     // Select all
@@ -7484,8 +7639,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const badge = document.getElementById(badgeId);
                 const emptyText = targetType === 'motion' ? 'No Motion' : 'Hard Cuts';
                 
-                if (arr.length === 0) badge.innerText = emptyText;
-                else if (arr.length === 1) badge.innerText = "1 Selected";
+                if (arr.length === 0 || (arr.length === 1 && arr[0] === 'none')) badge.innerText = emptyText;
                 else badge.innerText = `${arr.length} Selected`;
                 
                 return; // Stop execution
@@ -7521,13 +7675,11 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 // Update the Top Buttons Text
                 if (type === 'motion') {
                     const badge = document.getElementById('motion-count-badge');
-                    if (arr.length === 0) badge.innerText = "No Motion";
-                    else if (arr.length === 1) badge.innerText = "1 Selected";
+                    if (arr.length === 0 || (arr.length === 1 && arr[0] === 'none')) badge.innerText = "No Motion";
                     else badge.innerText = `${arr.length} Selected`;
                 } else {
                     const badge = document.getElementById('transition-count-badge');
-                    if (arr.length === 0) badge.innerText = "Hard Cuts";
-                    else if (arr.length === 1) badge.innerText = "1 Selected";
+                    if (arr.length === 0 || (arr.length === 1 && arr[0] === 'none')) badge.innerText = "Hard Cuts";
                     else badge.innerText = `${arr.length} Selected`;
                 }
             }
@@ -7563,14 +7715,13 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
 
             let fileHandle = null;
             let writableStream = null;
-            let target = null;
             
             const totalEstimatedSeconds = validClips[validClips.length - 1].end;
             const now = new Date();
             const ts = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}-${now.getMinutes().toString().padStart(2, '0')}`;
 
             // 1. Setup Stream to Disk (Prevent RAM Crash)
-            let useFastStart = 'in-memory';
+            let useFastStart = false; // Disable fast start by default to save RAM during finalize
             if (window.showSaveFilePicker) {
                 try {
                     fileHandle = await window.showSaveFilePicker({
@@ -7578,31 +7729,52 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                         types: [{ description: 'Video File', accept: { 'video/mp4': ['.mp4'] } }],
                     });
                     writableStream = await fileHandle.createWritable();
-                    target = new Mp4Muxer.FileSystemWritableFileStreamTarget(writableStream);
-                    useFastStart = false; // Streaming directly to disk
                 } catch (err) {
                     if (err.name === 'AbortError') return; // User cancelled, exit quietly
-                    
-                    // If we are in an iframe (like the Canvas environment), the browser blocks file pickers.
-                    // We catch this gracefully and fallback to the in-memory array buffer!
                     console.warn("File Picker blocked by browser (likely inside an iframe). Falling back to memory storage.", err);
-                    target = new Mp4Muxer.ArrayBufferTarget();
                 }
-            } else {
-                target = new Mp4Muxer.ArrayBufferTarget();
             }
 
-            // Fallback warning for non-streaming browsers or iframe fallback
-            if (!writableStream && totalEstimatedSeconds > 180 && !navigator.userAgent.toLowerCase().includes('chrome')) {
-                const proceed = confirm("⚠️ Warning: Rendering massive videos without disk streaming may use a lot of memory.\n\nDo you want to continue?");
-                if (!proceed) return;
+            // HYBRID ENGINE LOGIC: Determine if we need to chunk
+            const customThresholdMins = appSettings.ramThreshold || 12;
+            const THRESHOLD_SECONDS = customThresholdMins * 60; 
+            const CHUNK_SIZE_SECONDS = Math.max(120, (customThresholdMins * 60) - 240); // Base chunks ~4 mins smaller than threshold to be safe
+            const needsChunking = !writableStream && totalEstimatedSeconds > THRESHOLD_SECONDS;
+
+            // Build the Chunks Array
+            let videoChunks = [];
+            if (needsChunking) {
+                let currentChunk = [];
+                let currentChunkStart = validClips[0].start;
+                
+                for (let i = 0; i < validClips.length; i++) {
+                    currentChunk.push(validClips[i]);
+                    // If this chunk exceeds the safety size (and isn't the very last clip on the timeline)
+                    if (validClips[i].end - currentChunkStart >= CHUNK_SIZE_SECONDS && i < validClips.length - 1) {
+                        videoChunks.push(currentChunk);
+                        currentChunk = [];
+                        currentChunkStart = validClips[i+1].start;
+                    }
+                }
+                if (currentChunk.length > 0) videoChunks.push(currentChunk);
+            } else {
+                // Not chunking, everything goes into one array
+                videoChunks.push(validClips);
+            }
+
+            if (needsChunking) {
+                const proceed = confirm(`⚠️ HYBRID ENGINE ACTIVATED ⚠️\n\nThis video is ${Math.round(totalEstimatedSeconds / 60)} minutes long. Because you are running in an iframe, rendering this as a single file will crash your browser's memory.\n\nScriptForge will now automatically split the render into ${videoChunks.length} separate segments (~8 mins each) and download them sequentially. \n\nWhen done, drop the parts into your editor—they will snap together perfectly!\n\nContinue?`);
+                if (!proceed) {
+                    if (writableStream) { try { await writableStream.abort(); } catch(e){} }
+                    return;
+                }
             }
 
             ui.btnRenderVideo.disabled = true;
             const originalHTML = ui.btnRenderVideo.innerHTML;
-            ui.btnRenderVideo.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div> Rendering MP4...`;
+            ui.btnRenderVideo.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div> Rendering...`;
             
-            // --- NEW: Render State & Overlay UI ---
+            // --- Render State & Overlay UI ---
             window.cancelMp4Render = false;
             const renderOverlay = document.createElement('div');
             renderOverlay.className = "fixed inset-0 bg-slate-900/95 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6";
@@ -7615,6 +7787,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     <div class="relative w-full aspect-video bg-black rounded-lg border border-slate-700 shadow-2xl overflow-hidden flex items-center justify-center">
                         <canvas id="render-live-preview" class="max-w-full max-h-full object-contain"></canvas>
                         <div class="absolute top-4 left-4 bg-black/60 backdrop-blur text-[10px] text-purple-400 font-mono font-bold px-2 py-1 rounded border border-purple-500/50">LIVE PREVIEW</div>
+                        ${needsChunking ? `<div id="chunk-indicator" class="absolute top-4 right-4 bg-blue-600/80 backdrop-blur text-[10px] text-white font-mono font-bold px-2 py-1 rounded shadow-lg animate-pulse">PART 1 / ${videoChunks.length}</div>` : ''}
                     </div>
 
                     <div class="w-full bg-slate-800 rounded-full h-6 border border-slate-700 overflow-hidden relative shadow-inner">
@@ -7637,74 +7810,38 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
 
             const previewCanvas = document.getElementById('render-live-preview');
             const previewCtx = previewCanvas.getContext('2d', { willReadFrequently: true });
+            
+            // Calculate total frames for global progress
             let totalExpectedFrames = 0;
-            // --------------------------------------
+            validClips.forEach((clip) => {
+                totalExpectedFrames += Math.round((clip.end - clip.start) * 30);
+            });
+            
+            let globalFrameCount = 0;
+            const renderStartTime = Date.now();
 
             try {
-                // 2. Load first image to set master video dimensions
+                // Load first image to set master video dimensions
                 const firstImg = new Image();
                 firstImg.src = validClips[0].src;
                 await new Promise(r => firstImg.onload = r);
                 
                 const width = firstImg.width - (firstImg.width % 2);
                 const height = firstImg.height - (firstImg.height % 2);
-                
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-
                 const fps = 30;
-                
-                let muxer = new Mp4Muxer.Muxer({
-                    target: target,
-                    video: { codec: 'avc', width: width, height: height },
-                    fastStart: useFastStart 
-                });
 
-                let videoEncoder = new VideoEncoder({
-                    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-                    error: e => console.error("Encoder Error:", e)
-                });
-
-                videoEncoder.configure({
-                    codec: 'avc1.640028',
-                    width: width,
-                    height: height,
-                    bitrate: 5_000_000,
-                    framerate: fps
-                });
-
-                let globalFrameCount = 0;
-                const transitionDuration = 0.5; // Seconds duration of the overlap
-                const transitionFrames = Math.round(fps * transitionDuration);
-
-                showToast("Hardware Encoding frames natively...");
-
+                // Pre-assign motions so they are consistent across chunks
+                const allMotions = ['zoom_in', 'zoom_out', 'pan_left', 'pan_right', 'pan_up', 'pan_down', 'pan_top_left', 'pan_top_right', 'pan_bottom_left', 'pan_bottom_right'];
                 const isMotionRandom = document.getElementById('motion-randomize-toggle')?.checked;
                 const isTransitionRandom = document.getElementById('transition-randomize-toggle')?.checked;
-
-                // --- FIX: Calculate exact Total Frames for Progress Bar ---
-                validClips.forEach((clip) => {
-                    const startFrame = Math.round(clip.start * fps);
-                    const endFrame = Math.round(clip.end * fps);
-                    totalExpectedFrames += (endFrame - startFrame);
-                });
-                // No need to deduct overlap, the loop handles precise frame alignment!
-                // ----------------------------------------------------------
-
-                // Pre-assign motions resolving local overrides, selected cycling, and randomizers
-                const allMotions = ['zoom_in', 'zoom_out', 'pan_left', 'pan_right', 'pan_up', 'pan_down', 'pan_top_left', 'pan_top_right', 'pan_bottom_left', 'pan_bottom_right'];
                 
-                validClips.forEach((clip, idx) => {
+                let globalClipIndex = 0;
+                validClips.forEach((clip) => {
                     let activeMotion = 'none';
                     if (clip.localMotion === 'global') {
                         if (window.selectedMotions && window.selectedMotions.length > 0) {
-                            if (isMotionRandom) {
-                                activeMotion = window.selectedMotions[Math.floor(Math.random() * window.selectedMotions.length)];
-                            } else {
-                                activeMotion = window.selectedMotions[idx % window.selectedMotions.length];
-                            }
+                            if (isMotionRandom) activeMotion = window.selectedMotions[Math.floor(Math.random() * window.selectedMotions.length)];
+                            else activeMotion = window.selectedMotions[globalClipIndex % window.selectedMotions.length];
                         }
                     } else if (clip.localMotion === 'random') {
                         activeMotion = allMotions[Math.floor(Math.random() * allMotions.length)];
@@ -7712,195 +7849,256 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                         activeMotion = clip.localMotion;
                     }
                     clip.motion = activeMotion;
+                    globalClipIndex++;
                 });
 
-                let prevTransition = 'none';
-                const renderStartTime = Date.now(); // NEW: Track elapsed time
+                // ---------------------------------------------------------
+                // OUTER CHUNK LOOP
+                // ---------------------------------------------------------
+                for (let chunkIdx = 0; chunkIdx < videoChunks.length; chunkIdx++) {
+                    if (window.cancelMp4Render) throw new Error("Render cancelled by user.");
 
-                // 4. Paint images with transitions and motion
-                for (let i = 0; i < validClips.length; i++) {
+                    const chunkClips = videoChunks[chunkIdx];
                     
-                    let currentTransition = 'none';
-                    // We don't append a transition to the very last clip of the video
-                    if (window.selectedTransitions && window.selectedTransitions.length > 0 && i < validClips.length - 1) {
-                        if (isTransitionRandom) {
-                            currentTransition = window.selectedTransitions[Math.floor(Math.random() * window.selectedTransitions.length)];
-                        } else {
-                            currentTransition = window.selectedTransitions[i % window.selectedTransitions.length];
-                        }
+                    if (needsChunking) {
+                        const ind = document.getElementById('chunk-indicator');
+                        if (ind) ind.innerText = `PART ${chunkIdx + 1} / ${videoChunks.length}`;
                     }
-                    
-                    const clip = validClips[i];
-                    const img = new Image();
-                    img.src = clip.src;
-                    await new Promise(r => img.onload = r);
 
-                    let nextImg = null, nextClip = null, nextTotalFrames = 0;
-                    const hasTransition = currentTransition !== 'none' && i < validClips.length - 1;
-                    
-                    if (hasTransition) {
-                        nextClip = validClips[i+1];
-                        nextImg = new Image();
-                        nextImg.src = nextClip.src;
-                        await new Promise(r => nextImg.onload = r);
-                        nextTotalFrames = Math.round((nextClip.end - nextClip.start) * fps);
+                    // Setup Muxer for THIS chunk
+                    let target;
+                    if (writableStream && !needsChunking) {
+                        target = new Mp4Muxer.FileSystemWritableFileStreamTarget(writableStream);
+                    } else {
+                        // If chunking OR blocked, use RAM for this segment
+                        target = new Mp4Muxer.ArrayBufferTarget();
                     }
-                    
-                    const absoluteStartFrame = Math.round(clip.start * fps);
-                    const absoluteEndFrame = Math.round(clip.end * fps);
-                    const totalFramesForClip = absoluteEndFrame - absoluteStartFrame;
-                    
-                    // --- FIX: Always start loop at 0 to guarantee exact frame count for audio sync ---
-                    for (let f = 0; f < totalFramesForClip; f++) {
-                        ctx.fillStyle = 'black';
-                        ctx.fillRect(0, 0, width, height);
 
-                        const isTransitioning = hasTransition && f >= (totalFramesForClip - transitionFrames);
+                    let muxer = new Mp4Muxer.Muxer({
+                        target: target,
+                        video: { codec: 'avc', width: width, height: height },
+                        fastStart: useFastStart 
+                    });
+
+                    let videoEncoder = new VideoEncoder({
+                        output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+                        error: e => console.error("Encoder Error:", e)
+                    });
+
+                    // Dynamically lower bitrate for massive videos if forced into RAM and not chunking.
+                    // If chunking, chunks are ~8 mins, so 5M is perfectly safe.
+                    const targetBitrate = (!writableStream && !needsChunking && totalEstimatedSeconds > 600) ? 2_500_000 : 5_000_000;
+
+                    videoEncoder.configure({
+                        codec: 'avc1.640028',
+                        width: width,
+                        height: height,
+                        bitrate: targetBitrate,
+                        framerate: fps
+                    });
+
+                    const transitionDuration = 0.5;
+                    const transitionFrames = Math.round(fps * transitionDuration);
+                    let prevTransition = 'none';
+                    let localChunkFrameCount = 0; // MUST start at 0 for every new MP4 file!
+
+                    // ---------------------------------------------------------
+                    // INNER LOOP: Render clips for this chunk
+                    // ---------------------------------------------------------
+                    for (let i = 0; i < chunkClips.length; i++) {
+                        let currentTransition = 'none';
                         
-                        // Calculate motion rect (shift progress forward slightly if we crossfaded in, so the zoom doesn't visually stutter)
-                        const f_motion = (prevTransition !== 'none') ? f + transitionFrames : f;
-                        const currentProgress = f_motion / totalFramesForClip;
-                        const rect1 = window.getMotionRect(clip.motion, currentProgress, width, height, img.width, img.height);
+                        // Assign transitions
+                        if (window.selectedTransitions && window.selectedTransitions.length > 0 && i < chunkClips.length - 1) {
+                            if (isTransitionRandom) {
+                                currentTransition = window.selectedTransitions[Math.floor(Math.random() * window.selectedTransitions.length)];
+                            } else {
+                                // Local index is fine for transitions
+                                currentTransition = window.selectedTransitions[i % window.selectedTransitions.length];
+                            }
+                        }
 
-                        if (!isTransitioning) {
-                            ctx.globalAlpha = 1.0;
-                            ctx.drawImage(img, rect1.x, rect1.y, rect1.w, rect1.h);
-                        } else {
-                            const tProgress = (f - (totalFramesForClip - transitionFrames)) / transitionFrames;
+                        // *** EDGE CASE SOLVED: THE CLEAN BREAK RULE ***
+                        // If this is the LAST clip in a chunk (and we are chunking), FORCE a hard cut so they snap together later!
+                        if (needsChunking && i === chunkClips.length - 1) {
+                            currentTransition = 'none';
+                        }
+
+                        const clip = chunkClips[i];
+                        const img = new Image();
+                        img.src = clip.src;
+                        await new Promise(r => img.onload = r);
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true }); 
+
+                        let nextImg = null, nextClip = null, nextTotalFrames = 0;
+                        const hasTransition = currentTransition !== 'none' && i < chunkClips.length - 1;
+                        
+                        if (hasTransition) {
+                            nextClip = chunkClips[i+1];
+                            nextImg = new Image();
+                            nextImg.src = nextClip.src;
+                            await new Promise(r => nextImg.onload = r);
+                            nextTotalFrames = Math.round((nextClip.end - nextClip.start) * fps);
+                        }
+                        
+                        const totalFramesForClip = Math.round((clip.end - clip.start) * fps);
+                        
+                        for (let f = 0; f < totalFramesForClip; f++) {
+                            ctx.fillStyle = 'black';
+                            ctx.fillRect(0, 0, width, height);
+
+                            const isTransitioning = hasTransition && f >= (totalFramesForClip - transitionFrames);
                             
-                            // Calculate motion rect for incoming image
-                            // It is active for its first `transitionFrames` frames out of its total life
-                            const nextProgress = (f - (totalFramesForClip - transitionFrames)) / nextTotalFrames;
-                            const rect2 = window.getMotionRect(nextClip.motion, nextProgress, width, height, nextImg.width, nextImg.height);
-                            
-                            if (currentTransition === 'crossfade') {
-                                ctx.globalAlpha = 1.0 - tProgress;
+                            const f_motion = (prevTransition !== 'none') ? f + transitionFrames : f;
+                            const currentProgress = f_motion / totalFramesForClip;
+                            const rect1 = window.getMotionRect(clip.motion, currentProgress, width, height, img.width, img.height);
+
+                            if (!isTransitioning) {
+                                ctx.globalAlpha = 1.0;
                                 ctx.drawImage(img, rect1.x, rect1.y, rect1.w, rect1.h);
-                                ctx.globalAlpha = tProgress;
-                                ctx.drawImage(nextImg, rect2.x, rect2.y, rect2.w, rect2.h);
-                            } else if (currentTransition === 'dip_black') {
-                                if (tProgress < 0.5) {
-                                    ctx.globalAlpha = 1.0 - (tProgress * 2);
-                                    ctx.drawImage(img, rect1.x, rect1.y, rect1.w, rect1.h);
-                                } else {
-                                    ctx.globalAlpha = (tProgress - 0.5) * 2;
-                                    ctx.drawImage(nextImg, rect2.x, rect2.y, rect2.w, rect2.h);
-                                }
-                            } else if (currentTransition === 'slide_left') {
-                                const offset = tProgress * width;
-                                ctx.globalAlpha = 1.0;
-                                ctx.drawImage(img, rect1.x - offset, rect1.y, rect1.w, rect1.h);
-                                ctx.drawImage(nextImg, rect2.x + width - offset, rect2.y, rect2.w, rect2.h);
-                            } else if (currentTransition === 'slide_right') {
-                                const offset = tProgress * width;
-                                ctx.globalAlpha = 1.0;
-                                ctx.drawImage(img, rect1.x + offset, rect1.y, rect1.w, rect1.h);
-                                ctx.drawImage(nextImg, rect2.x - width + offset, rect2.y, rect2.w, rect2.h);
-                            } else if (currentTransition === 'slide_up') {
-                                const offset = tProgress * height;
-                                ctx.globalAlpha = 1.0;
-                                ctx.drawImage(img, rect1.x, rect1.y - offset, rect1.w, rect1.h);
-                                ctx.drawImage(nextImg, rect2.x, rect2.y + height - offset, rect2.w, rect2.h);
-                            } else if (currentTransition === 'slide_down') {
-                                const offset = tProgress * height;
-                                ctx.globalAlpha = 1.0;
-                                ctx.drawImage(img, rect1.x, rect1.y + offset, rect1.w, rect1.h);
-                                ctx.drawImage(nextImg, rect2.x, rect2.y - height + offset, rect2.w, rect2.h);
-                            } else if (currentTransition === 'zoom_fade') {
-                                const z1 = 1.0 + (tProgress * 0.15); // Bonus zoom out on exit
-                                ctx.globalAlpha = 1.0 - tProgress;
-                                ctx.drawImage(img, rect1.x - ((rect1.w*z1 - rect1.w)/2), rect1.y - ((rect1.h*z1 - rect1.h)/2), rect1.w*z1, rect1.h*z1);
+                            } else {
+                                const tProgress = (f - (totalFramesForClip - transitionFrames)) / transitionFrames;
+                                const nextProgress = (f - (totalFramesForClip - transitionFrames)) / nextTotalFrames;
+                                const rect2 = window.getMotionRect(nextClip.motion, nextProgress, width, height, nextImg.width, nextImg.height);
                                 
-                                const z2 = 1.15 - (tProgress * 0.15); // Bonus zoom out on enter
-                                ctx.globalAlpha = tProgress;
-                                ctx.drawImage(nextImg, rect2.x - ((rect2.w*z2 - rect2.w)/2), rect2.y - ((rect2.h*z2 - rect2.h)/2), rect2.w*z2, rect2.h*z2);
+                                if (currentTransition === 'crossfade') {
+                                    ctx.globalAlpha = 1.0 - tProgress;
+                                    ctx.drawImage(img, rect1.x, rect1.y, rect1.w, rect1.h);
+                                    ctx.globalAlpha = tProgress;
+                                    ctx.drawImage(nextImg, rect2.x, rect2.y, rect2.w, rect2.h);
+                                } else if (currentTransition === 'dip_black') {
+                                    if (tProgress < 0.5) {
+                                        ctx.globalAlpha = 1.0 - (tProgress * 2);
+                                        ctx.drawImage(img, rect1.x, rect1.y, rect1.w, rect1.h);
+                                    } else {
+                                        ctx.globalAlpha = (tProgress - 0.5) * 2;
+                                        ctx.drawImage(nextImg, rect2.x, rect2.y, rect2.w, rect2.h);
+                                    }
+                                } else if (currentTransition === 'slide_left') {
+                                    const offset = tProgress * width;
+                                    ctx.globalAlpha = 1.0;
+                                    ctx.drawImage(img, rect1.x - offset, rect1.y, rect1.w, rect1.h);
+                                    ctx.drawImage(nextImg, rect2.x + width - offset, rect2.y, rect2.w, rect2.h);
+                                } else if (currentTransition === 'slide_right') {
+                                    const offset = tProgress * width;
+                                    ctx.globalAlpha = 1.0;
+                                    ctx.drawImage(img, rect1.x + offset, rect1.y, rect1.w, rect1.h);
+                                    ctx.drawImage(nextImg, rect2.x - width + offset, rect2.y, rect2.w, rect2.h);
+                                } else if (currentTransition === 'slide_up') {
+                                    const offset = tProgress * height;
+                                    ctx.globalAlpha = 1.0;
+                                    ctx.drawImage(img, rect1.x, rect1.y - offset, rect1.w, rect1.h);
+                                    ctx.drawImage(nextImg, rect2.x, rect2.y + height - offset, rect2.w, rect2.h);
+                                } else if (currentTransition === 'slide_down') {
+                                    const offset = tProgress * height;
+                                    ctx.globalAlpha = 1.0;
+                                    ctx.drawImage(img, rect1.x, rect1.y + offset, rect1.w, rect1.h);
+                                    ctx.drawImage(nextImg, rect2.x, rect2.y - height + offset, rect2.w, rect2.h);
+                                } else if (currentTransition === 'zoom_fade') {
+                                    const z1 = 1.0 + (tProgress * 0.15);
+                                    ctx.globalAlpha = 1.0 - tProgress;
+                                    ctx.drawImage(img, rect1.x - ((rect1.w*z1 - rect1.w)/2), rect1.y - ((rect1.h*z1 - rect1.h)/2), rect1.w*z1, rect1.h*z1);
+                                    
+                                    const z2 = 1.15 - (tProgress * 0.15);
+                                    ctx.globalAlpha = tProgress;
+                                    ctx.drawImage(nextImg, rect2.x - ((rect2.w*z2 - rect2.w)/2), rect2.y - ((rect2.h*z2 - rect2.h)/2), rect2.w*z2, rect2.h*z2);
+                                }
+                                ctx.globalAlpha = 1.0;
                             }
-                            ctx.globalAlpha = 1.0;
-                        }
-                        
-                        let timestamp = Math.round((globalFrameCount * 1e6) / fps);
-                        let frame = new VideoFrame(canvas, { timestamp });
-                        videoEncoder.encode(frame, { keyFrame: globalFrameCount % 150 === 0 });
-                        frame.close();
-                        
-                        await window.awaitEncoderQueue(videoEncoder);
+                            
+                            let timestamp = Math.round((localChunkFrameCount * 1e6) / fps);
+                            let frame = new VideoFrame(canvas, { timestamp });
+                            videoEncoder.encode(frame, { keyFrame: localChunkFrameCount % 150 === 0 });
+                            frame.close();
+                            
+                            await window.awaitEncoderQueue(videoEncoder);
 
-                        // --- NEW: Check Cancel, Update Progress, and Draw Preview ---
-                        if (window.cancelMp4Render) {
-                            throw new Error("Render cancelled by user.");
-                        }
+                            if (window.cancelMp4Render) throw new Error("Render cancelled by user.");
 
-                        globalFrameCount++;
-                        
-                        // Update Progress UI (throttle visual updates to every 5 frames for performance)
-                        if (globalFrameCount % 5 === 0 || globalFrameCount === totalExpectedFrames) {
-                            const percent = Math.min(100, Math.round((globalFrameCount / totalExpectedFrames) * 100));
+                            localChunkFrameCount++;
+                            globalFrameCount++;
                             
-                            // Calculate Elapsed Time
-                            const elapsedSec = Math.floor((Date.now() - renderStartTime) / 1000);
-                            const m = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
-                            const s = String(elapsedSec % 60).padStart(2, '0');
-                            
-                            document.getElementById('render-progress-bar').style.width = `${percent}%`;
-                            document.getElementById('render-progress-text').innerText = `Rendering: ${percent}% (${globalFrameCount}/${totalExpectedFrames} Frames) • ${m}:${s} Elapsed`;
-                            
-                            // Update Live Preview Canvas
-                            if (previewCanvas.width !== canvas.width) {
-                                previewCanvas.width = canvas.width;
-                                previewCanvas.height = canvas.height;
+                            // Update Progress UI (throttle visual updates to every 5 frames)
+                            if (globalFrameCount % 5 === 0 || globalFrameCount === totalExpectedFrames) {
+                                const percent = Math.min(100, Math.round((globalFrameCount / totalExpectedFrames) * 100));
+                                const elapsedSec = Math.floor((Date.now() - renderStartTime) / 1000);
+                                const m = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+                                const s = String(elapsedSec % 60).padStart(2, '0');
+                                
+                                document.getElementById('render-progress-bar').style.width = `${percent}%`;
+                                document.getElementById('render-progress-text').innerText = `Rendering: ${percent}% (${globalFrameCount}/${totalExpectedFrames} Frames) • ${m}:${s} Elapsed`;
+                                
+                                if (previewCanvas.width !== canvas.width) {
+                                    previewCanvas.width = canvas.width;
+                                    previewCanvas.height = canvas.height;
+                                }
+                                previewCtx.drawImage(canvas, 0, 0);
                             }
-                            previewCtx.drawImage(canvas, 0, 0);
+                            
+                            // Prevent browser freezing
+                            if (globalFrameCount % 15 === 0) await new Promise(r => setTimeout(r, 0)); 
                         }
+
+                        prevTransition = currentTransition;
+                    } // END INNER LOOP
+
+                    await videoEncoder.flush();
+                    muxer.finalize();
+                    
+                    // Download the finalized chunk or the single file
+                    if (writableStream && !needsChunking) {
+                        await writableStream.close();
+                        showToast("True MP4 Rendered and Saved Successfully!");
+                    } else {
+                        // If chunking or if iframe fallback triggered
+                        const buffer = muxer.target.buffer;
+                        const blob = new Blob([buffer], { type: 'video/mp4' });
+                        const url = URL.createObjectURL(blob);
                         
-                        // Prevent browser freezing during heavy encoding
-                        if (globalFrameCount % 15 === 0) await new Promise(r => setTimeout(r, 0)); 
-                        // ------------------------------------------------------------
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = needsChunking ? `ScriptForge_Video_${ts}_Part${chunkIdx+1}.mp4` : `ScriptForge_Video_${ts}.mp4`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        
+                        // CRITICAL: Aggressive memory wipe between chunks!
+                        muxer = null;
+                        videoEncoder = null;
+                        target = null;
+                        await new Promise(r => setTimeout(r, 500)); // Give browser a moment to Garbage Collect
                     }
-
-                    prevTransition = currentTransition;
-                }
-
-                await videoEncoder.flush();
-                muxer.finalize();
-                
-                if (writableStream) {
-                    await writableStream.close();
-                    showToast("True MP4 Rendered and Saved Successfully!");
-                } else {
-                    // Legacy Download (Safari/Firefox)
-                    const buffer = muxer.target.buffer;
-                    const blob = new Blob([buffer], { type: 'video/mp4' });
-                    const url = URL.createObjectURL(blob);
                     
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `ScriptForge_Video_${ts}.mp4`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    
-                    showToast("True MP4 Rendered Successfully!");
+                    if (needsChunking) showToast(`Part ${chunkIdx+1} downloaded! Starting next part...`);
+
+                } // END OUTER LOOP
+
+                if (needsChunking) {
+                    showToast("All parts rendered successfully!");
                 }
 
             } catch (err) {
                 if (writableStream) {
-                    try { await writableStream.abort(); } catch(e) {} // Cleans up the partial corrupted file
+                    try { await writableStream.abort(); } catch(e) {} 
                 }
                 console.error("WebCodecs Render Error:", err);
                 
-                // Catch the manual cancellation
                 if (err.message === "Render cancelled by user.") {
                     showToast("Rendering cancelled.");
                 } else if (err.name === 'QuotaExceededError' || err.message.toLowerCase().includes('disk space')) {
                     showToast("Error: Not enough disk space to finish saving the video!");
+                } else if (err.message.includes('Array buffer allocation failed') || err.message.includes('ArrayBuffer')) {
+                    showToast("FATAL RAM CRASH: Video is too long. Try downloading index.html to run locally.");
                 } else {
                     showToast("Error rendering video: " + err.message);
                 }
             } finally {
-                // --- NEW: Cleanup UI Overlay ---
                 const overlay = document.querySelector('.fixed.inset-0.bg-slate-900\\/95.z-\\[100\\]');
                 if (overlay) overlay.remove();
                 window.cancelMp4Render = false;
-                // -------------------------------
                 
                 ui.btnRenderVideo.disabled = false;
                 ui.btnRenderVideo.innerHTML = originalHTML;
