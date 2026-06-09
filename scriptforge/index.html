@@ -115,7 +115,14 @@
                 <i data-lucide="folder-open" class="w-4 h-4 text-amber-400"></i>
                 <span class="text-[0.65rem] font-semibold uppercase tracking-wider">Projects</span>
             </button>
-            <button id="btn-settings" class="text-slate-400 hover:text-white transition-colors p-2" title="API Settings">
+            <!--<button id="btn-api-settings" class="text-slate-400 hover:text-white transition-colors p-2 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full px-4 shadow" title="API & Models">
+                <i data-lucide="cpu" class="w-4 h-4 text-purple-400"></i>
+                <span class="text-[0.65rem] font-semibold uppercase tracking-wider">AI Engines</span>
+            </button>-->
+            <button id="btn-api-settings" class="text-slate-400 hover:text-white transition-colors p-2" title="API & Models">
+                <i data-lucide="cpu" class="w-5 h-5"></i>
+            </button>
+            <button id="btn-settings" class="text-slate-400 hover:text-white transition-colors p-2" title="App Settings">
                 <i data-lucide="settings" class="w-5 h-5"></i>
             </button>
         </div>
@@ -425,22 +432,28 @@
                     <span id="sync-badge" class="text-[10px] font-bold bg-slate-700 text-slate-300 px-2 py-0.5 rounded shadow-inner transition-colors">Math Mode</span>
                 </div>
                 
-                <!-- SRT Upload -->
-                <div class="mb-6 bg-slate-900 border border-slate-700 rounded-lg p-3 flex flex-col gap-2 shadow-inner">
+                                  <!-- SRT Upload -->
+                  <div id="srt-drop-zone" class="mb-6 bg-slate-900 border border-slate-700 rounded-lg p-3 flex flex-col gap-2 shadow-inner transition-colors duration-200">
                     <label class="text-xs text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="subtitles" class="w-3 h-3"></i> Pro Sync: Upload SRT</label>
-                    <p class="text-[10px] text-slate-400">Upload a transcription file (.srt) for exact millisecond audio syncing, unlocking timeline exports.</p>
+                    <p class="text-[10px] text-slate-400">Upload or drag & drop a transcription file (.srt) anywhere in this box for exact millisecond audio syncing.</p>
                     <div class="flex items-center gap-2">
                         <input type="file" id="v2-srt-upload" accept=".srt" class="w-full text-xs text-slate-500 file:cursor-pointer file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-emerald-900/30 file:text-emerald-400 hover:file:bg-emerald-900/50 transition-colors">
                         <button id="btn-clear-srt" class="hidden bg-slate-800 hover:bg-slate-700 text-slate-500 hover:text-red-400 transition-colors p-1.5 rounded" title="Clear SRT"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
-                    <div id="srt-gap-mode-container" class="hidden mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between">
-                        <label class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Gap Handling:</label>
-                        <select id="srt-gap-mode" class="bg-slate-800 border border-slate-700 rounded p-1 text-[10px] text-white focus:outline-none focus:border-emerald-500 transition-colors">
-                            <option value="hold" selected>Hold & Cut (Standard)</option>
-                            <option value="split">Halfway Split (Cinematic)</option>
-                            <option value="exact">Exact Words (Leaves Gaps)</option>
-                        </select>
+                  <div id="srt-gap-mode-container" class="hidden mt-2 pt-2 flex flex-col gap-2 border-t border-slate-700/50">
+                    <div class="flex items-center justify-between">
+                      <label class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Gap Handling</label>
+                      <select id="srt-gap-mode" class="bg-slate-800 border border-slate-700 rounded p-1 text-[10px] text-white focus:outline-none focus:border-emerald-500 transition-colors">
+                        <option value="hold" selected>Hold (Cut Standard)</option>
+                        <option value="split">Halfway Split (Cinematic)</option>
+                        <option value="exact">Exact Words (Leaves Gaps)</option>
+                      </select>
                     </div>
+                    <div class="flex items-center justify-between">
+                      <label class="text-[10px] text-slate-400 font-bold uppercase tracking-wider" title="Adds extra seconds to the final clip for outro music">Outro Padding (sec)</label>
+                      <input type="number" id="srt-outro-padding" value="0" min="0" max="60" class="w-16 bg-slate-800 border border-slate-700 rounded p-1 text-[10px] text-center text-white focus:outline-none focus:border-emerald-500 transition-colors">
+                    </div>
+                  </div>
                 </div>
 
                 <div id="v2-manual-math" class="flex gap-4 mb-6 transition-opacity">
@@ -481,7 +494,15 @@
                     </div>
 
                     <div class="relative">
-                        <textarea id="director-mode-input" rows="4" class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors resize-y"></textarea>
+                        <textarea id="director-mode-input" rows="4" class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors resize-y pr-16"></textarea>
+                        <div class="absolute bottom-3 right-3 group flex items-center gap-1.5">
+                            <button id="btn-shield-director" class="text-emerald-400 hover:text-emerald-300 transition-colors p-1 bg-emerald-900/30 hover:bg-emerald-900/50 border border-emerald-500/30 rounded shadow" title="Add Safe/Halal Imagery Constraint">
+                                <i data-lucide="shield" class="w-4 h-4"></i>
+                            </button>
+                            <button id="btn-magic-director" class="text-amber-400 hover:text-amber-300 transition-colors p-1 bg-amber-900/30 hover:bg-amber-900/50 border border-amber-500/30 rounded shadow" title="AI Magic Director">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Hidden Save Bar (Appears on Dirty State) -->
@@ -636,9 +657,19 @@
                             <button id="btn-bulk-download" class="hidden bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors shadow flex items-center gap-2" title="Download as PNGs">
                                 <i data-lucide="image" class="w-3 h-3"></i> Images (ZIP)
                             </button>
-                            <button id="btn-bulk-download-vid" class="hidden bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors shadow flex items-center gap-2" title="Download individual MP4 clips">
-                                <i data-lucide="video" class="w-3 h-3"></i> Clips (ZIP)
-                            </button>
+                            <!-- Split Button: Clips (ZIP) -->
+                            <div class="inline-flex rounded shadow-sm relative hidden" id="group-bulk-download-vid">
+                                <button id="btn-bulk-download-vid" data-quality="1" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-l text-xs font-bold transition-colors flex items-center gap-2" title="Download individual MP4 clips">
+                                    <i data-lucide="video" class="w-3 h-3"></i> Clips (ZIP)
+                                </button>
+                                <button id="btn-bulk-download-vid-toggle" class="bg-indigo-700 hover:bg-indigo-600 text-white px-2 py-2 rounded-r border-l border-indigo-500 transition-colors flex items-center justify-center">
+                                    <i data-lucide="chevron-down" class="w-3 h-3 pointer-events-none"></i>
+                                </button>
+                                <div id="dropdown-bulk-vid-quality" class="absolute hidden flex-col bg-slate-800 border border-slate-600 rounded shadow-xl overflow-hidden z-50 min-w-[140px] right-0">
+                                    <button class="btn-export-quality w-full text-xs text-left px-4 py-2 text-white hover:bg-indigo-600 transition-colors" data-target="btn-bulk-download-vid" data-quality="0.666">Standard (720p)</button>
+                                    <button class="btn-export-quality w-full text-xs text-left px-4 py-2 text-white hover:bg-indigo-600 transition-colors" data-target="btn-bulk-download-vid" data-quality="0.444">Draft (480p)</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="flex gap-2 items-center">
                             <!-- Multi-Select Motion -->
@@ -700,9 +731,19 @@
                                 </div>
                             </div>
 
-                            <button id="btn-render-video" class="hidden bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors flex items-center gap-2 shadow" title="Render MP4">
-                                <i data-lucide="film" class="w-3 h-3 pointer-events-none"></i> Render MP4
-                            </button>
+                            <!-- Split Button: Render MP4 -->
+                            <div class="inline-flex rounded shadow-sm relative hidden" id="group-render-video">
+                                <button id="btn-render-video" data-quality="1" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-l text-xs font-bold transition-colors flex items-center gap-2" title="Render MP4">
+                                    <i data-lucide="film" class="w-3 h-3 pointer-events-none"></i> Render MP4
+                                </button>
+                                <button id="btn-render-video-toggle" class="bg-purple-700 hover:bg-purple-600 text-white px-2 py-2 rounded-r border-l border-purple-500 transition-colors flex items-center justify-center">
+                                    <i data-lucide="chevron-down" class="w-3 h-3 pointer-events-none"></i>
+                                </button>
+                                <div id="dropdown-render-video-quality" class="absolute hidden flex-col bg-slate-800 border border-slate-600 rounded shadow-xl overflow-hidden z-50 min-w-[140px] right-0">
+                                    <button class="btn-export-quality w-full text-xs text-left px-4 py-2 text-white hover:bg-purple-600 transition-colors" data-target="btn-render-video" data-quality="0.666">Standard (720p)</button>
+                                    <button class="btn-export-quality w-full text-xs text-left px-4 py-2 text-white hover:bg-purple-600 transition-colors" data-target="btn-render-video" data-quality="0.444">Draft (480p)</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1048,6 +1089,95 @@
         <div id="blueprint-display" class="flex-1 overflow-y-auto p-6 bg-[#0f172a] custom-scrollbar"></div>
     </div>
 
+    <!-- API & Models Modal -->
+    <div id="api-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-2xl w-full max-w-3xl flex flex-col">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-4 shrink-0 border-b border-slate-700 pb-4">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="cpu" class="w-5 h-5 text-purple-400"></i> AI Engines & API Keys
+                </h2>
+                <button id="btn-close-api" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <!-- Content -->
+            <div class="space-y-6">
+                <!-- API Key Section -->
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="key" class="w-4 h-4 text-blue-400"></i> API Configuration</h3>
+                    <p class="text-xs text-slate-400 mb-2">Enter your Gemini API Key to use outside Canvas. (Not required inside the Canvas environment).</p>
+                    <div class="relative">
+                        <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 pr-10 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors">
+                        <button id="btn-toggle-api-key" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors" title="Toggle Visibility">
+                            <i data-lucide="eye" id="icon-api-key-visibility" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Model Configuration Section -->
+                <div class="border-t border-slate-700 pt-6 mt-6">
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-emerald-400"></i> AI Models</h3>
+                            <p class="text-xs text-slate-400">Select standard models or enter custom ones.</p>
+                        </div>
+                        <a href="https://ai.google.dev/gemini-api/docs/models/gemini" target="_blank" class="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"><i data-lucide="external-link" class="w-3 h-3"></i> View Available Models</a>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Text Model -->
+                        <div class="flex flex-col gap-2">
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-slate-500 mb-1 block tracking-wider">Text Generation Model</label>
+                                <select id="select-text-model" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors">
+                                    <optgroup label="Free Tier / High Speed (Flash)">
+                                        <option value="gemini-2.5-flash-preview-09-2025">gemini-2.5-flash-preview-09-2025 (Canvas Default)</option>
+                                        <option value="gemini-2.5-flash">gemini-2.5-flash (Standard)</option>
+                                        <option value="gemini-2.0-flash">gemini-2.0-flash (Legacy)</option>
+                                    </optgroup>
+                                    <optgroup label="Paid Tier / Heavy Reasoning (Pro)">
+                                        <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                                        <option value="gemini-2.0-pro-exp-02-05">gemini-2.0-pro-exp</option>
+                                        <option value="gemini-1.5-pro">gemini-1.5-pro (Legacy)</option>
+                                    </optgroup>
+                                    <option value="custom">Custom...</option>
+                                </select>
+                            </div>
+                            <input type="text" id="custom-text-model" placeholder="e.g. gemini-3.0-pro" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors hidden">
+                        </div>
+
+                        <!-- Image Model -->
+                        <div class="flex flex-col gap-2">
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-slate-500 mb-1 block tracking-wider">Image Generation Model</label>
+                                <select id="select-image-model" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors">
+                                    <optgroup label="Free Tier / Fast Generation">
+                                        <option value="gemini-2.5-flash-image-preview">gemini-2.5-flash-image-preview (Nano Banana - Default)</option>
+                                    </optgroup>
+                                    <optgroup label="Paid Tier / High Quality">
+                                        <option value="gemini-3-pro-image-preview-11-2025">gemini-3-pro-image-preview-11-2025 (Pro Banana)</option>
+                                    </optgroup>
+                                    <option value="custom">Custom...</option>
+                                </select>
+                            </div>
+                            <input type="text" id="custom-image-model" placeholder="e.g. gemini-3-pro-image" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors hidden">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-6 pt-4 border-t border-slate-700 shrink-0">
+                <!-- Hooking directly into the existing save mechanism for ease -->
+                <button onclick="document.getElementById('btn-save-settings').click(); document.getElementById('api-modal').classList.add('hidden');" class="w-full bg-purple-600 hover:bg-purple-500 text-white rounded py-3 font-bold tracking-wide transition-colors shadow flex justify-center items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Save API & Models
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Settings Modal -->
     <div id="projects-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
@@ -1190,8 +1320,8 @@
                             </div>
                         </div>
 
-                        <!-- Row 3: Advanced Limits (2 Columns) -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Row 3: Advanced Limits (3 Columns) -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <!-- Chunk Size -->
                             <div class="bg-slate-900 border border-slate-700 rounded flex justify-between items-center p-2.5 shadow-inner">
                                 <div class="flex flex-col mr-2">
@@ -1209,69 +1339,15 @@
                                 </div>
                                 <input type="number" id="api-warning-threshold-input" min="10" step="5" placeholder="65" class="w-20 bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-center text-white focus:outline-none focus:border-orange-500 transition-colors shrink-0">
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- API Key Section -->
-                <div class="border-t border-slate-700 pt-6 mt-6">
-                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="key" class="w-4 h-4 text-blue-400"></i> API Configuration</h3>
-                    <p class="text-xs text-slate-400 mb-2">Enter your Gemini API Key to use outside Canvas. (Not required inside the Canvas environment).</p>
-                    <div class="relative">
-                        <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 pr-10 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
-                        <button id="btn-toggle-api-key" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors" title="Toggle Visibility">
-                            <i data-lucide="eye" id="icon-api-key-visibility" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Model Configuration Section -->
-                <div class="border-t border-slate-700 pt-6 mt-6 mb-6">
-                    <div class="flex justify-between items-end mb-4">
-                        <div>
-                            <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-2"><i data-lucide="cpu" class="w-4 h-4 text-purple-400"></i> AI Models</h3>
-                            <p class="text-xs text-slate-400">Select standard models or enter custom ones.</p>
-                        </div>
-                        <a href="https://ai.google.dev/gemini-api/docs/models/gemini" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"><i data-lucide="external-link" class="w-3 h-3"></i> View Available Models</a>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Text Model -->
-                        <div class="flex flex-col gap-2">
-                            <div>
-                                <label class="text-[10px] uppercase font-bold text-slate-500 mb-1 block tracking-wider">Text Generation Model</label>
-                                <select id="select-text-model" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
-                                    <optgroup label="Free Tier / High Speed (Flash)">
-                                        <option value="gemini-2.5-flash-preview-09-2025">gemini-2.5-flash-preview-09-2025 (Canvas Default)</option>
-                                        <option value="gemini-2.5-flash">gemini-2.5-flash (Standard)</option>
-                                        <option value="gemini-2.0-flash">gemini-2.0-flash (Legacy)</option>
-                                    </optgroup>
-                                    <optgroup label="Paid Tier / Heavy Reasoning (Pro)">
-                                        <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-                                        <option value="gemini-2.0-pro-exp-02-05">gemini-2.0-pro-exp</option>
-                                        <option value="gemini-1.5-pro">gemini-1.5-pro (Legacy)</option>
-                                    </optgroup>
-                                    <option value="custom">Custom...</option>
-                                </select>
+                            
+                            <!-- B-Roll Batch Size -->
+                            <div class="bg-slate-900 border border-slate-700 rounded flex justify-between items-center p-2.5 shadow-inner">
+                                <div class="flex flex-col mr-2">
+                                    <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="layers" class="w-3 h-3 text-orange-400"></i> B-Roll Batch</span>
+                                    <span class="text-[9px] text-slate-500 mt-0.5 leading-tight">Blocks to process before API cooldown.</span>
+                                </div>
+                                <input type="number" id="api-broll-batch-size-input" min="1" step="5" placeholder="50" class="w-20 bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-center text-white focus:outline-none focus:border-orange-500 transition-colors shrink-0">
                             </div>
-                            <input type="text" id="custom-text-model" placeholder="e.g. gemini-3.0-pro" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors hidden">
-                        </div>
-
-                        <!-- Image Model -->
-                        <div class="flex flex-col gap-2">
-                            <div>
-                                <label class="text-[10px] uppercase font-bold text-slate-500 mb-1 block tracking-wider">Image Generation Model</label>
-                                <select id="select-image-model" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
-                                    <optgroup label="Free Tier / Fast Generation">
-                                        <option value="gemini-2.5-flash-image-preview">gemini-2.5-flash-image-preview (Nano Banana - Default)</option>
-                                    </optgroup>
-                                    <optgroup label="Paid Tier / High Quality">
-                                        <option value="gemini-3-pro-image-preview-11-2025">gemini-3-pro-image-preview-11-2025 (Pro Banana)</option>
-                                    </optgroup>
-                                    <option value="custom">Custom...</option>
-                                </select>
-                            </div>
-                            <input type="text" id="custom-image-model" placeholder="e.g. gemini-3-pro-image" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors hidden">
                         </div>
                     </div>
                 </div>
@@ -1363,7 +1439,7 @@
 
         const DEFAULT_DIRECTOR_NAMES = {
             'capcut_metaphor': 'CapCut Flow (Contextual Image-Only)',
-            'smart': 'Smart Director (Mix of A-Roll & B-Roll)',
+            'smart': 'Smart Director (Dynamic Visuals)',
             'full': 'Full Coverage (Wall-to-Wall B-Roll)',
             'tiktok': 'Short-Form / High-Retention (Fast Cuts)',
             'cinematic': 'Cinematic Narrative (Moody / Slow Cuts)',
@@ -1371,26 +1447,26 @@
             'podcast': 'Minimalist Podcast (Sparse Evidence Only)'
         };
         const DEFAULT_DIRECTORS = {
-            'capcut_metaphor': `EVERY single block MUST be labeled "Image". NO A-ROLL. NO VIDEO. You are creating a wall-to-wall visual timeline. CORE RULE (CONTEXTUAL AWARENESS): Do not look at blocks in isolation. Analyze the before and after paragraphs to ensure the visual perfectly matches the overarching narrative. Adapt immediately to the script's specific niche (e.g., if True Crime, show evidence boards; if Tech, show macro product shots; if History, show period-accurate artifacts). Ensure visual continuity across consecutive blocks. Focus on highly relevant, continuous visual storytelling that grounds the viewer in the facts. CRITICAL OVERRIDE: Completely ignore the global rule about using "professional camera terms", do not output words like "wide shot", "medium shot", or "cinematic" unless needed for niche.`,
+            'capcut_metaphor': `EVERY single block MUST be labeled "Image". NO VIDEO. You are creating a wall-to-wall visual timeline. Analyze the before and after paragraphs to ensure the visual perfectly matches the overarching narrative. Adapt composition to the script's niche. Ensure visual continuity across consecutive blocks. Focus on highly relevant, continuous visual storytelling. Use clear, direct subject descriptions rather than complex camera terminology unless strictly necessary.`,
             
-            'smart': `Default to "A-Roll" (Narrator face time, leave prompts blank) for connective tissue, transitions, personal opinions, and setups. ONLY label a block "Image" or "Video" if it requires specific visual evidence (charts, historical photos, explicit locations) OR if it is a core thematic beat that demands a strong atmospheric/metaphorical visualization (e.g., a foggy landscape for doubt, a bustling intersection for chaos.. etc). Let the narrator breathe during setups, but do not leave deep concepts without visual metaphors.`,
+            'smart': `Mix "Image" and "Video" fluidly. Adapt your composition and angles to the specific niche. Use wide, ambient, or abstract establishing composition for connective tissue and setups. Use highly specific and detailed compositional subjects for hard facts, charts, explicit locations, or core thematic beats that demand strong metaphorical visualization.`,
             
-            'full': `EVERY single block MUST be labeled "Image" or "Video". Do not use A-Roll. VISUAL CONTINUITY: If consecutive blocks discuss the exact same scene or subject, output the EXACT SAME prompt and search query for them. This allows a single visual to stretch across multiple blocks without jarring jump cuts.`,
+            'full': `EVERY single block MUST be labeled "Image" or "Video". VISUAL CONTINUITY: If consecutive blocks discuss the exact same scene or subject, output the EXACT SAME prompt and search query for them. This allows a single visual to stretch across multiple blocks without jarring jump cuts.`,
             
-            'tiktok': `HYPER-FAST PACING. You are directing for TikTok/Shorts. EVERY single block MUST be labeled "Image" or "Video". Do not use A-Roll. Visuals must be highly engaging, trendy, and visceral. Use bold metaphorical imagery, split-screens, and high-contrast aesthetics. Do not hold on any single shot or concept for long. Wall-to-wall, aggressive coverage to maximize audience retention.`,
+            'tiktok': `HYPER-FAST PACING. You are directing for TikTok/Shorts. EVERY single block MUST be labeled "Image" or "Video". Visuals must be highly engaging, trendy, and visceral. Use bold metaphorical imagery, split-screens, and high-contrast compositions. Do not hold on any single shot or concept for long. Wall-to-wall, aggressive coverage to maximize audience retention.`,
             
-            'cinematic': `Focus heavily on mood, atmosphere, and pacing. Use sweeping establishing shots, dramatic lighting, and deep visual metaphors. Allow the visuals to breathe; do NOT cut rapidly. Use Visual Continuity to hold scenes across multiple blocks. If a scene is tense, use moody, high-contrast imagery. Prioritize "Cinematic narrative" framing over literal, clinical representations.`,
+            'cinematic': `Focus heavily on mood, composition, and pacing. Mix "Image" and "Video" fluidly. Use sweeping establishing angles, dramatic lighting, and deep visual metaphors. Allow the visuals to breathe; do NOT cut rapidly. Use Visual Continuity to hold scenes across multiple blocks. If a scene is tense, use moody, high-contrast imagery. Prioritize "Cinematic narrative" framing.`,
             
-            'news': `Strict journalistic and documentary coverage. EVERY single block MUST be labeled "Image" or "Video". Use raw archival footage, C-SPAN style briefings, geopolitical maps, and clinical data visualizations. ZERO metaphorical or 'artsy' fluff. If a specific politician, location, or vehicle is mentioned, show it exactly. Wall-to-wall factual B-roll.`,
+            'news': `Strict journalistic and documentary coverage. EVERY single block MUST be labeled "Image" or "Video". Use raw archival framing, C-SPAN style angles, geopolitical maps, and clinical data visualizations. ZERO metaphorical or 'artsy' fluff. If a specific politician, location, or vehicle is mentioned, show it exactly. Wall-to-wall factual B-roll.`,
             
-            'podcast': `Highly minimalist. Default heavily to "A-Roll" (Narrator face time). ONLY generate an "Image" or "Video" prompt if the speaker directly references a specific chart, map, historical photo, or piece of physical evidence that the viewer MUST see to understand the point. Keep visual interruptions to an absolute minimum.`
+            'podcast': `Highly minimalist. Provide a visual prompt for EVERY block, but default heavily to simple, static, unobtrusive compositions. ONLY generate complex or dynamic "Image" or "Video" prompts if the speaker directly references a specific chart, map, historical photo, or piece of physical evidence that the viewer MUST see to understand the point.`
         };
 
         const DEFAULT_ART_STYLES = {
             'none': 'None (Photorealistic / Default)',
             'custom': 'Custom Style...',
             'group_special': '--- FAVORITE PRESETS ---',
-            'seedream_oil_painting': 'Plein air impressionist oil painting aesthetic, very thick impasto brushwork, French impressionist technique, canvas texture, painterly realism.',
+            'seedream_oil_painting': 'Plein air impressionist oil painting aesthetic, richly layered thick impasto brushwork, thick palette-knife texture, visible canvas grain, broken color, soft edges, luminous natural light, warm atmospheric depth, painterly realism, handcrafted fine art surface, refined museum-grade finish, elegant color harmony, expressive yet controlled brushwork, highly textured traditional oil painting aesthetic. Borderless, full frame, no borders, no picture frames, no canvas edges.',
             
             'group_photo': '--- PHOTOGRAPHY & REALISM ---',
             'realistic_film': 'High budget cinematic realistic film still, 35mm lens, depth of field, highly detailed, 8k resolution, cinematic lighting.',
@@ -1437,24 +1513,24 @@
             'toon_shader': 'Cel-shaded 3D render, toon shader aesthetic, flat colors, bold outlines, anime video game style.',
 
             'group_illustration': '--- ILLUSTRATION & ART ---',
-            'whimsical': 'Soft pastel whimsical illustration, Studio Ghibli style, airy, magical, gentle brushstrokes.',
-            'urban_sketch': 'Loose urban sketch illustration, pen and watercolor wash, architectural drawing style, messy lines.',
-            'ink_watercolor': 'Delicate ink and watercolor illustration, loose coloring, refined line art, elegant aesthetic.',
-            'fairy_tale': 'Ethereal fairy tale book illustration, soft luminous lighting, magical atmosphere, detailed and delicate.',
-            'impressionist': 'Impressionist oil painting, visible thick brush strokes, capturing light and color over detail, classic art.',
-            'oil_painting': 'Traditional classical oil painting on canvas, rich textures, masterful brushwork, gallery art.',
-            'neoclassic': 'Neoclassical oil painting, historical museum portrait style, dramatic formal lighting, highly detailed.',
-            'roman_art': 'Ancient Roman classical aesthetic, bright marble, historical realism, Mediterranean sunlight, fresco style.',
-            'chinese_ancient': 'Ancient Chinese traditional illustration, delicate ink brushstrokes, elegant, historical fantasy, wuxia aesthetic.',
-            'concept_art': 'Concept art sketch, digital painting, dramatic lighting, detailed.',
-            'charcoal': 'Rough charcoal sketch on textured paper, smudged shadows.',
+            'whimsical': 'Soft pastel whimsical illustration, Studio Ghibli style, airy, magical, gentle brushstrokes. Borderless, full frame, no borders, no picture frames, no canvas edges.',
+            'urban_sketch': 'Loose urban sketch illustration, pen and watercolor wash, architectural drawing style, messy lines. Borderless, full frame, no borders, no picture frames, no canvas edges.',
+            'ink_watercolor': 'Delicate ink and watercolor illustration, loose coloring, refined line art, elegant aesthetic. Borderless, full frame, no borders, no picture frames, no canvas edges.',
+            'fairy_tale': 'Ethereal fairy tale illustration, soft luminous lighting, magical atmosphere, detailed and delicate. Borderless, full frame, no borders, no picture frames, no canvas edges.',
+            'impressionist': 'Impressionist oil painting aesthetic, visible thick brush strokes, capturing light and color over detail, classic art. Borderless, full frame, no borders, no picture frames, no canvas edges.',
+            'oil_painting': 'Traditional classical oil painting on canvas aesthetic, rich textures, masterful brushwork, gallery art. Borderless, full frame, no borders, no picture frames, no canvas edges.',
+            'neoclassic': 'Neoclassical historical oil painting aesthetic, dramatic formal lighting, highly detailed. Borderless, full frame, no borders, no picture frames, no canvas edges.',
+            'roman_art': 'Ancient Roman classical aesthetic, bright marble, historical realism, Mediterranean sunlight, fresco style. Borderless, full frame, no borders, no picture frames, no canvas edges.',
+            'chinese_ancient': 'Ancient Chinese traditional illustration aesthetic, delicate ink brushstrokes, elegant, historical fantasy, wuxia aesthetic. Borderless, full frame, no borders, no picture frames, no canvas edges.',
+            'concept_art': 'Concept art sketch, digital painting, dramatic lighting, detailed. Borderless, full frame, no borders, no picture frames, no canvas edges.',
+            'charcoal': 'Rough charcoal sketch on textured paper, smudged shadows. Borderless, full frame, no borders, no picture frames, no canvas edges.',
 
             'group_fantasy': '--- THEMATIC & FANTASY ---',
-            'epic_fantasy': 'Epic high fantasy concept art, highly detailed digital painting, majestic, dramatic lighting, masterpiece.',
+            'epic_fantasy': 'Epic high fantasy concept art, highly detailed digital painting aesthetic, majestic, dramatic lighting, masterpiece.',
             'lovecraftian': 'Eerie cosmic horror, Lovecraftian aesthetic, dark moody atmosphere, mysterious, foggy, terrifying.',
             'biblical': 'Historical biblical epic cinematic style, warm glowing sunlight, ancient middle eastern aesthetic, dramatic.',
             'dreamscape': 'Surreal dreamscape fantasy art, floating elements, magical lighting, ethereal atmosphere, highly imaginative.',
-            'jurassic': 'Prehistoric Jurassic era cinematic realism, lush dense jungle, dramatic lighting, hyper detailed nature.',
+            'jurassic': 'Prehistoric Jurassic era cinematic realism aesthtetic, dramatic lighting, hyper detailed.',
             'horror': 'Dark horror cinematic aesthetic, terrifying, grim, shadow-heavy, eerie lighting, highly detailed macabre.',
             'cyberpunk': 'Cyberpunk 2077 aesthetic, neon city lights, cybernetic details, synthwave color palette, gritty sci-fi.',
             'prehistoric': 'Gritty prehistoric cinematic aesthetic, ancient tribal atmosphere, raw survival, natural lighting.',
@@ -1463,7 +1539,7 @@
             'group_craft': '--- CRAFT & RETRO ---',
             'felt_dolls': 'Macro photography of needle-felted wool, soft fuzzy tactile texture, miniature diorama, cute cozy aesthetic.',
             'paper_cutout': 'Layered paper cutout diorama, craft style, soft paper shadows.',
-            'stained_glass': 'Intricate stained glass window mosaic, glowing colored light.',
+            'stained_glass': 'Intricate stained glass window mosaic aesthetic, glowing colored light.',
             'crayon': 'Childlike crayon drawing, textured paper, waxy strokes, vibrant colors, innocent aesthetic.',
             'chalkboard': 'Detailed chalkboard drawing, white and colored chalk dust, educational.',
             'pixel_art': '16-bit retro pixel art, vibrant color palette, nostalgic game style.',
@@ -1520,6 +1596,7 @@
             chunkSize: parseInt(localStorage.getItem('fast_cache_chunk_size') || '800', 10),
             warningThreshold: parseInt(localStorage.getItem('fast_cache_warning_threshold') || '65', 10),
             ramThreshold: parseInt(localStorage.getItem('fast_cache_ram_threshold') || '12', 10),
+            brollBatchSize: parseInt(localStorage.getItem('fast_cache_broll_batch_size') || '50', 10),
             prompts: JSON.parse(localStorage.getItem('fast_cache_prompts') || 'null'),
             models: JSON.parse(localStorage.getItem('fast_cache_models') || '{"text":"gemini-2.5-flash-preview-09-2025", "image":"gemini-2.5-flash-image-preview"}')
         };
@@ -1693,6 +1770,8 @@
             bulkProgressText: document.getElementById('bulk-progress-text'),
             v2Script: document.getElementById('v2-script'),
             directorModeInput: document.getElementById('director-mode-input'),
+            btnMagicDirector: document.getElementById('btn-magic-director'),
+            btnShieldDirector: document.getElementById('btn-shield-director'),
             btnDeleteDirector: document.getElementById('btn-delete-director'),
             directorSaveBar: document.getElementById('director-save-bar'),
             directorNameInput: document.getElementById('director-name-input'),
@@ -1717,6 +1796,7 @@
             btnGenerateBroll: document.getElementById('btn-generate-broll'),
             v2EmptyState: document.getElementById('v2-empty-state'),
             v2LoadingState: document.getElementById('v2-loading-state'),
+            v2LoadingText: document.getElementById('v2-loading-text'),
             v2ResultsState: document.getElementById('v2-results-state'),
             v2TimelineFeed: document.getElementById('v2-timeline-feed'),
             v2BulkImg: document.getElementById('v2-bulk-img'),
@@ -1769,6 +1849,11 @@
             activeProjectBanner: document.getElementById('active-project-banner'),
             activeProjectName: document.getElementById('active-project-name'),
 
+            // API & Models
+            btnApiSettings: document.getElementById('btn-api-settings'),
+            apiModal: document.getElementById('api-modal'),
+            btnCloseApi: document.getElementById('btn-close-api'),
+
             // Settings
             btnSettings: document.getElementById('btn-settings'),
             settingsModal: document.getElementById('settings-modal'),
@@ -1784,6 +1869,7 @@
             apiChunkSizeInput: document.getElementById('api-chunk-size-input'),
             apiWarningThresholdInput: document.getElementById('api-warning-threshold-input'),
             apiRamThresholdInput: document.getElementById('api-ram-threshold-input'),
+            apiBrollBatchSizeInput: document.getElementById('api-broll-batch-size-input'),
             btnSaveSettings: document.getElementById('btn-save-settings'),
             selectTextModel: document.getElementById('select-text-model'),
             customTextModel: document.getElementById('custom-text-model'),
@@ -1796,7 +1882,7 @@
             standard: `You are an elite YouTube Scriptwriter performing a perfect STYLE TRANSFER for the channel "{{CHANNEL_NAME}}".\n\nCRITICAL DIRECTIVE: You will receive two inputs enclosed in XML tags.\n1. <STYLE_GUIDE>: Extract from this ONLY the tone, pacing, structural beats, and emotional hooks..etc. IGNORE all "specific names, dates, and events.. etc" mentioned here—they are just examples.\n2. <SOURCE_MATERIAL>: This is your ONLY source of truth. Every name, location, statistic, core event.. etc in the final script MUST originate from here.\n\n{{FORMAT_INSTRUCTION}}\n\nTARGET LENGTH: EXACTLY {{TARGET_WORDS}} words. {{PACING_INSTRUCTION}} Pace the script to hit this word count.`,
             outline: `You are the Lead Architect for the YouTube channel "{{CHANNEL_NAME}}". Break the provided <SOURCE_MATERIAL> down into exactly {{NUM_CHAPTERS}} chapters for a {{MINUTES}}-minute video.\n\nCRITICAL DIRECTIVE:\n- Apply "the Niche, Structure, and Tone.. etc" from the <STYLE_GUIDE>.\n- The <SOURCE_MATERIAL> is your ONLY source of truth. Do not use example "names or quotes.. etc" from the <STYLE_GUIDE>.\n- Outline according to the required format (e.g., Solo video essay, skit, podcast.. etc). DO NOT use the original channel name from the STYLE_GUIDE.\n\nProvide 3 distinct potential titles based on the <STYLE_GUIDE>'s Title Format.`,
             chapter: `You are writing Chapter {{CURRENT_CHAPTER}} of {{TOTAL_CHAPTERS}} for the YouTube channel "{{CHANNEL_NAME}}".\n\nCRITICAL DIRECTIVE:\n- Apply "the Tone and Structure.. etc" from the <STYLE_GUIDE>.\n- Use ONLY facts from the <SOURCE_MATERIAL>.\n- DO NOT use the original channel name from the STYLE_GUIDE. Always refer to your channel as "{{CHANNEL_NAME}}".\n\n{{FORMAT_INSTRUCTION}}\n\nTARGET LENGTH: EXACTLY {{WORDS_PER_CHAPTER}} words. {{PACING_INSTRUCTION}}\n{{HOOK_INSTRUCTION}}\n{{OUTRO_INSTRUCTION}}`,
-            broll: `Role: You are an elite Master Video Producer and AI B-Roll Director.\nYou will receive a script broken down into an array of numbered "Storyboard Blocks". \nYOUR FIRST TASK is to analyze the provided script, determine its specific niche (e.g., Tech Review, True Crime, Geopolitics, Finance, Gaming, History, Philosophy, Psychology.. etc), and generate highly realistic, physically accurate image and video prompts perfectly tailored to that genre's visual aesthetic.\n\nYOUR SECOND TASK:\nYou MUST output an exact 1:1 mapping. If there are 45 blocks, you must output an array of EXACTLY 45 directorial decisions, one for each block in chronological order.\n\nDIRECTOR MODE INSTRUCTIONS:\n{{DIRECTOR_INSTRUCTION}}\n\nCore Rules for Visuals:\n1. Niche Adaptation & Realism: First, identify the script's subject matter. You must match the visual style to the topic (For Tech use clean macro product shots, studio lighting, or screen captures. For True Crime, use archival police footage, grainy evidence photos, or moody interrogations. For Geopolitics, use documentary-style press briefings or raw news footage. For Finance, use Bloomberg-style terminal screens, trading floors, or clean infographics.. etc)\n2. Ban on Hollywood Buzzwords & Tropes: DO NOT use words like "cinematic", "epic", "blockbuster", or "movie-like".. etc. Instead, use professional camera terms specific to the niche (e.g., "macro probe lens", "raw C-SPAN footage", "CCTV security camera style", "AP news broadcast", "high-contrast studio lighting".. etc).\n3. Direct Subject References: Use the exact "names of people, specific products, locations, or historical events.. etc" mentioned in the script (e.g., "iPhone 15 Pro Max titanium frame", "Pentagon briefing room", "Bitcoin chart", "1990s desktop computer".. etc). Do not use generic placeholders.\n4. PACING & DENSITY: Maintain viewer retention by adhering strictly to the Director Mode Instructions above.`,
+            broll: `Role: You are an elite AI B-Roll Director.\nYou will receive a script broken down into numbered "Storyboard Blocks". \nYOUR FIRST TASK: Analyze the script to understand its specific niche and tone, and generate vivid, highly descriptive image and video prompts perfectly tailored to that genre's visual aesthetic.\n\nYOUR SECOND TASK:\nOutput an exact 1:1 mapping. If there are 45 blocks, output an array of EXACTLY 45 directorial decisions in chronological order.\n\nDIRECTOR MODE INSTRUCTIONS (CRITICAL - OBEY THESE FOR CREATIVE STYLE):\n{{DIRECTOR_INSTRUCTION}}\n\nCore System Rules:\n1. Subject Specificity: When a scene calls for specific people, products, locations, or historical events mentioned in the script, use their EXACT names in the prompt (e.g., "Pentagon briefing room", "iPhone 15 Pro Max"). Do not use generic placeholders.\n2. Professional Camera Terminology: Avoid generic filler words like "epic" or "blockbuster". Instead, use precise camera terminology and lighting descriptors specific to the niche and Director Mode.\n3. PACING & DENSITY: Maintain viewer retention by adhering strictly to the pacing, transitions, and coverage rules defined in the Director Mode Instructions above.\n4. THE "NO HOST" RULE (Prevent A-Roll): Do NOT generate prompts showing the YouTuber, host, or narrator talking to the camera. For intros, outros, or conversational filler, use thematic background B-roll. HOWEVER, you MUST show the specific historical figures, celebrities, or named characters actively discussed in the script. Do NOT leave the prompt empty.`,
             packager: `You are an elite YouTube SEO Strategist performing a PERFECT FORMAT CLONE.\n\nCRITICAL DIRECTIVES:\n1. FACTUAL QUARANTINE: The 'Channel Formula', 'Competitor Titles', and 'Competitor Description' often contain specific example names, locations (e.g., "Strait of Hormuz"), and dates to demonstrate tone. DO NOT blindly copy these examples into your output. You may ONLY use a specific name, location, or fact if it explicitly appears in the FINAL SCRIPT. The formula dictates the vibe; the script dictates the facts.\n2. THE CLONE PROTOCOL: You must clone the EXACT FORMATTING SHELL of the Competitor Description. If they put 3 hashtags on the first line, YOU put 3 hashtags on the first line (but make them relevant to the script). If they use specific line breaks, ALL CAPS, or emojis, YOU replicate that exact visual layout line-by-line.\n3. TITLES: Copy the exact psychological structure and punctuation of the competitor titles (e.g., if they use "Topic | Breaking News Today [Date]", you do the same using the script's topic and script's dates.. etc).\n4. THUMBNAIL GENERATION: First, deeply analyze the Final Script to understand its overarching narrative, core theme, and main emotional hook. If images are attached, extract their STRUCTURAL SKELETON (exact layout, text placement, color scheme, split screens, arrows, etc.). However, you must perform a TOTAL NICHE TRANSLATION. For example if the reference image is military, but the script is about politics or finance, ZERO military vehicles or environments are allowed. You must map the reference's skeleton perfectly onto the script's specific subjects and setting (e.g., swap a fighter jet for a politician, swap an ocean for a debate stage.. etc). Entirely IGNORE the Channel Formula's thumbnail rules. If NO images are attached, base the thumbnails purely on the Channel Formula guidelines and Final Script.\n5. INTERNAL SEARCH TAGS: Generate a standalone block of 10-15 highly optimized, comma-separated YouTube backend search tags (phrases). DO NOT remove spaces between words. DO NOT use the '#' symbol.\n\nOUTPUT REQUIRED (JSON):\n- "titles": Array of 3 titles perfectly mimicking the competitor's format but using ONLY script facts.\n- "thumbnailSlugs": Array of EXACTLY 6 AGGRESSIVE, HYPER-CLICKBAITY thumbnail text options based on the script. They MUST evoke strong emotion (fear, curiosity, shock, anger.. etc). Keep them varying lengths (between 1 and 5 words max).\n- "description": A YouTube description matching the competitor's EXACT layout, line-by-line structure, and hashtag placement, populated exclusively with script facts.\n- "thumbnailPrompts": Array of 3 highly detailed prompts for an AI image generator applying the competitor's visual layout to the final script's specific niche.\n- "hashtags": A string of 10-15 optimized search tags with normal spaces (e.g. "Drone Force, Military Strategy, US Military".. etc).`
         };
 
@@ -2687,7 +2773,7 @@
         // --- Custom Director Logic ---
         window.updateDirectorDropdown = function() {
             if (!ui.v2DirectorMode) return;
-            const targetSelection = localStorage.getItem('last_selected_director') || 'smart';
+            const targetSelection = localStorage.getItem('last_selected_director') || 'capcut_metaphor';
             
             ui.v2DirectorMode.innerHTML = '';
             
@@ -2714,7 +2800,7 @@
             if (DEFAULT_DIRECTOR_NAMES[targetSelection] || appDirectors.some(d => d.id === targetSelection)) {
                 ui.v2DirectorMode.value = targetSelection;
             } else {
-                ui.v2DirectorMode.value = 'smart';
+                ui.v2DirectorMode.value = 'capcut_metaphor';
             }
             
             handleDirectorSelectionChange();
@@ -2822,6 +2908,47 @@
             catch(e) { console.error(e); }
         });
 
+        ui.btnMagicDirector?.addEventListener('click', async () => {
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) return showToast("API Key needed for magic director!");
+            
+            const userInput = ui.directorModeInput?.value.trim();
+            if (!userInput) return showToast("Please type a brief director idea first!");
+
+            const originalHTML = ui.btnMagicDirector.innerHTML;
+            ui.btnMagicDirector.disabled = true;
+            ui.btnMagicDirector.innerHTML = `<div class="loader !w-4 !h-4 !border-2 !border-t-amber-400"></div>`;
+            showToast("Generating director rules...");
+
+            try {
+                const schema = { type: "OBJECT", properties: { generatedRules: { type: "STRING" } }, required: ["generatedRules"] };
+                const systemPrompt = "You are an expert AI Video Director. Convert the user's rough idea into strict, professional directing instructions for an AI B-Roll generator. Dictate camera angles, pacing, lighting, composition, and whether to use Images or Videos. Output ONLY the strict rules block.";
+                
+                const data = await executeGeminiCall(systemPrompt, `User idea: "${userInput}"`, schema);
+                if (data && data.generatedRules) {
+                    ui.directorModeInput.value = data.generatedRules;
+                    showToast("Custom director rules generated!");
+                    ui.directorModeInput.dispatchEvent(new Event('input'));
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Error generating director rules.");
+            } finally {
+                ui.btnMagicDirector.disabled = false;
+                ui.btnMagicDirector.innerHTML = originalHTML;
+                lucide.createIcons();
+            }
+        });
+
+        ui.btnShieldDirector?.addEventListener('click', () => {
+            const safeText = "\n\nAvoid imagery that conflicts with Islamic values, including women, nudity, immodest clothing, sexualized subjects, alcohol, gambling, idols, religious worship rituals, occult symbolism, and other prohibited (haram) content. When such elements are central to a paragraph, do not depict them directly. Instead, reinterpret the paragraph's meaning through suitable symbolic, environmental, object-based, contextual, or metaphorical storytelling.";
+            if (ui.directorModeInput) {
+                ui.directorModeInput.value = ui.directorModeInput.value.trim() + safeText;
+                ui.directorModeInput.dispatchEvent(new Event('input'));
+                showToast("Safe imagery constraint added!");
+            }
+        });
+
         ui.btnMagicFormat?.addEventListener('click', async () => {
             const currentKey = getActiveApiKey();
             if (!currentKey && !isFirebaseEnabled) return showToast("API Key needed for magic formatter!");
@@ -2831,7 +2958,7 @@
 
             const originalHTML = ui.btnMagicFormat.innerHTML;
             ui.btnMagicFormat.disabled = true;
-            ui.btnMagicFormat.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-amber-400"></div>`;
+            ui.btnMagicFormat.innerHTML = `<div class="loader !w-4 !h-4 !border-2 !border-t-amber-400"></div>`;
             showToast("Generating strict formatting rules...");
 
             try {
@@ -2871,17 +2998,41 @@
             }
             lucide.createIcons();
         });
-        ui.btnSettings?.addEventListener('click', () => { 
+        ui.btnApiSettings?.addEventListener('click', () => {
             if(ui.apiKeyInput) {
-                // FIX: Load from the new database, not localStorage
                 ui.apiKeyInput.value = appSettings.apiKey || ''; 
-                
-                // FEATURE: Force the input to be hidden (password mode) every time you open settings
                 ui.apiKeyInput.type = 'password';
                 ui.iconApiKeyVisibility?.setAttribute('data-lucide', 'eye');
                 lucide.createIcons();
             }
 
+            // Load saved models into dropdowns
+            const savedText = appSettings.models?.text || "gemini-2.5-flash-preview-09-2025";
+            const savedImage = appSettings.models?.image || "gemini-2.5-flash-image-preview";
+            
+            if (ui.selectTextModel && ui.selectTextModel.querySelector(`option[value="${savedText}"]`)) {
+                ui.selectTextModel.value = savedText;
+                ui.customTextModel?.classList.add('hidden');
+            } else if (ui.selectTextModel) {
+                ui.selectTextModel.value = 'custom';
+                ui.customTextModel.value = savedText;
+                ui.customTextModel?.classList.remove('hidden');
+            }
+
+            if (ui.selectImageModel && ui.selectImageModel.querySelector(`option[value="${savedImage}"]`)) {
+                ui.selectImageModel.value = savedImage;
+                ui.customImageModel?.classList.add('hidden');
+            } else if (ui.selectImageModel) {
+                ui.selectImageModel.value = 'custom';
+                ui.customImageModel.value = savedImage;
+                ui.customImageModel?.classList.remove('hidden');
+            }
+
+            ui.apiModal?.classList.remove('hidden');
+        });
+        ui.btnCloseApi?.addEventListener('click', () => ui.apiModal?.classList.add('hidden'));
+
+        ui.btnSettings?.addEventListener('click', () => { 
             if(ui.apiTextCooldownInput) {
                 ui.apiTextCooldownInput.value = appSettings.textCooldown || 4000;
             }
@@ -2906,6 +3057,9 @@
             if(ui.apiRamThresholdInput) {
                 ui.apiRamThresholdInput.value = appSettings.ramThreshold || 12;
             }
+            if(ui.apiBrollBatchSizeInput) {
+                ui.apiBrollBatchSizeInput.value = appSettings.brollBatchSize || 50;
+            }
             
             // Load custom prompts into textareas
             const prompts = getPrompts();
@@ -2920,28 +3074,6 @@
             if(elBroll) elBroll.value = prompts.broll;
             if(elPackager) elPackager.value = prompts.packager;
 
-            // Load saved models into dropdowns
-            const savedText = appSettings.models?.text || "gemini-2.5-flash-preview-09-2025";
-            const savedImage = appSettings.models?.image || "gemini-2.5-flash-image-preview";
-            
-            if (ui.selectTextModel && ui.selectTextModel.querySelector(`option[value="${savedText}"]`)) {
-                ui.selectTextModel.value = savedText;
-                ui.customTextModel?.classList.add('hidden');
-            } else if (ui.selectTextModel) {
-                ui.selectTextModel.value = 'custom';
-                ui.customTextModel.value = savedText;
-                ui.customTextModel?.classList.remove('hidden');
-            }
-
-            if (ui.selectImageModel && ui.selectImageModel.querySelector(`option[value="${savedImage}"]`)) {
-                ui.selectImageModel.value = savedImage;
-                ui.customImageModel?.classList.add('hidden');
-            } else if (ui.selectImageModel) {
-                ui.selectImageModel.value = 'custom';
-                ui.customImageModel.value = savedImage;
-                ui.customImageModel?.classList.remove('hidden');
-            }
-
             ui.settingsModal?.classList.remove('hidden'); 
         });
         ui.btnCloseSettings?.addEventListener('click', () => ui.settingsModal?.classList.add('hidden'));
@@ -2955,6 +3087,7 @@
             const cs = parseInt(ui.apiChunkSizeInput?.value || "800", 10);
             const wt = parseInt(ui.apiWarningThresholdInput?.value || "65", 10);
             const rt = parseInt(ui.apiRamThresholdInput?.value || "12", 10);
+            const bbs = parseInt(ui.apiBrollBatchSizeInput?.value || "50", 10);
             
             // Save custom prompts
             const newPrompts = {
@@ -2970,7 +3103,7 @@
             const finalImgModel = ui.selectImageModel?.value === 'custom' ? ui.customImageModel?.value.trim() : ui.selectImageModel?.value;
             const newModels = { text: finalTxtModel || "gemini-2.5-flash-preview-09-2025", image: finalImgModel || "gemini-2.5-flash-image-preview" };
             
-            appSettings = { id: 'main', apiKey: k, textCooldown: tCd, textBatchSize: tbs, imageCooldown: iCd, imageBatchSize: ibs, turboCooldown: tbCd, chunkSize: cs, warningThreshold: wt, ramThreshold: rt, prompts: newPrompts, models: newModels };
+            appSettings = { id: 'main', apiKey: k, textCooldown: tCd, textBatchSize: tbs, imageCooldown: iCd, imageBatchSize: ibs, turboCooldown: tbCd, chunkSize: cs, warningThreshold: wt, ramThreshold: rt, brollBatchSize: bbs, prompts: newPrompts, models: newModels };
 
             // Save to the instant fast-cache
             localStorage.setItem('fast_cache_api', k);
@@ -2982,6 +3115,7 @@
             localStorage.setItem('fast_cache_chunk_size', cs.toString());
             localStorage.setItem('fast_cache_warning_threshold', wt.toString());
             localStorage.setItem('fast_cache_ram_threshold', rt.toString());
+            localStorage.setItem('fast_cache_broll_batch_size', bbs.toString());
             localStorage.setItem('fast_cache_prompts', JSON.stringify(newPrompts));
             localStorage.setItem('fast_cache_models', JSON.stringify(newModels));
 
@@ -3617,8 +3751,30 @@
             }
         };
 
+        // Global Helper to Generate Placeholder Images for A-Roll
+        window.createPlaceholderImage = async function(width, height, text) {
+            const c = document.createElement('canvas');
+            c.width = width || 1920; c.height = height || 1080;
+            const x = c.getContext('2d');
+            x.fillStyle = '#0f172a'; x.fillRect(0, 0, c.width, c.height); // Slate background
+            
+            // Draw a subtle border
+            x.strokeStyle = '#334155'; x.lineWidth = 10; x.strokeRect(5, 5, c.width-10, c.height-10);
+            
+            x.fillStyle = '#64748b'; x.font = `bold ${Math.floor(c.height/12)}px sans-serif`;
+            x.textAlign = 'center'; x.textBaseline = 'middle';
+            x.fillText(text, c.width/2, c.height/2);
+            
+            const img = new Image();
+            img.src = c.toDataURL('image/png');
+            await new Promise(r => img.onload = r);
+            return img;
+        };
+
         // Global Helper for Ken Burns Motion Math
         window.getMotionRect = function(type, progress, cW, cH, iW, iH) {
+            // Absolute safety clamp to prevent ANY mathematical out-of-bounds black borders
+            progress = Math.max(0, Math.min(1, progress));
             const baseScale = Math.max(cW / iW, cH / iH);
             const baseW = iW * baseScale;
             const baseH = iH * baseScale;
@@ -3660,6 +3816,42 @@
             const hms = parts[0].split(':');
             return parseInt(hms[0], 10) * 3600 + parseInt(hms[1], 10) * 60 + parseInt(hms[2], 10) + ms;
         }
+
+        // --- BIGGER DRAG AND DROP ZONE FOR SRT ---
+    const srtDropZone = document.getElementById('srt-drop-zone');
+    if (srtDropZone) {
+      srtDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        // Highlight the box when a file hovers over it
+        srtDropZone.classList.add('border-emerald-500', 'bg-slate-800');
+        srtDropZone.classList.remove('border-slate-700', 'bg-slate-900');
+      });
+      srtDropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        // Remove highlight when mouse leaves
+        srtDropZone.classList.remove('border-emerald-500', 'bg-slate-800');
+        srtDropZone.classList.add('border-slate-700', 'bg-slate-900');
+      });
+      srtDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        // Remove highlight on drop
+        srtDropZone.classList.remove('border-emerald-500', 'bg-slate-800');
+        srtDropZone.classList.add('border-slate-700', 'bg-slate-900');
+        
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          const droppedFile = e.dataTransfer.files[0];
+          // Ensure it's actually an SRT file
+          if (droppedFile.name.toLowerCase().endsWith('.srt')) {
+            if (ui.v2SrtUpload) {
+              ui.v2SrtUpload.files = e.dataTransfer.files; // Inject the dragged file into the input
+              ui.v2SrtUpload.dispatchEvent(new Event('change')); // Trigger your existing logic manually
+            }
+          } else {
+            showToast('Please drop a valid .srt file');
+          }
+        }
+      });
+    }
 
         ui.v2SrtUpload?.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -3730,8 +3922,62 @@
             reader.readAsText(file);
         });
 
+        // --- NEW: DYNAMIC OUTRO PADDING LISTENER ---
+        document.getElementById('srt-outro-padding')?.addEventListener('input', (e) => {
+            const paddingSecs = parseFloat(e.target.value) || 0;
+            
+            // If no SRT is loaded or timeline isn't built yet, just return
+            if (!window.parsedSRTWords || window.parsedSRTWords.length === 0) return;
+            const timelineCards = document.getElementById('v2-timeline-feed')?.querySelectorAll('.v2-timeline-card');
+            if (!timelineCards || timelineCards.length === 0) return;
+
+            // 1. Calculate the new absolute end time
+            const baseEnd = window.parsedSRTWords[window.parsedSRTWords.length - 1].end;
+            const newEnd = baseEnd + paddingSecs;
+
+            // 2. Update the final card in the UI
+            const lastCard = timelineCards[timelineCards.length - 1];
+            lastCard.dataset.end = newEnd;
+
+            // Find the timecode badge inside that block and update the text
+            // Query explicitly for 'p.font-mono' so we don't accidentally grab input boxes!
+            const timeBadges = lastCard.querySelectorAll('p.font-mono');
+            if (timeBadges.length > 0) {
+                const lastTimeBadge = timeBadges[timeBadges.length - 1];
+                if (lastTimeBadge && lastTimeBadge.innerText.includes(' - ')) {
+                    const startStr = lastTimeBadge.innerText.split(' - ')[0];
+                    // Re-add the closing bracket that gets stripped during the split
+                    lastTimeBadge.innerText = `${startStr} - ${formatTimecode(newEnd, true)}]`;
+                    
+                    // Apply dynamic color highlighting
+                    if (paddingSecs > 0) {
+                        lastTimeBadge.classList.remove('text-emerald-300', 'text-slate-400');
+                        lastTimeBadge.classList.add('text-amber-400');
+                    } else {
+                        lastTimeBadge.classList.remove('text-amber-400');
+                        // /* A-ROLL REF: 
+                        // const isAroll = lastCard.querySelector('.lucide-user') !== null;
+                        // lastTimeBadge.classList.add(isAroll ? 'text-slate-400' : 'text-emerald-300');
+                        // */
+                        lastTimeBadge.classList.add('text-emerald-300'); // Restore original color
+                    }
+                }
+            }
+
+            // 3. Update the underlying export data array
+            if (window.masterRenderTimings && window.masterRenderTimings.length > 0) {
+                window.masterRenderTimings[window.masterRenderTimings.length - 1].end = newEnd;
+            }
+        });
+
         ui.btnClearSrt?.addEventListener('click', () => {
             ui.v2SrtUpload.value = '';
+            const paddingInput = document.getElementById('srt-outro-padding');
+            if (paddingInput) {
+                paddingInput.value = '0';
+                // Trigger the live-update listener to instantly strip the padding from the current timeline
+                paddingInput.dispatchEvent(new Event('input')); 
+            }
             ui.v2SrtUpload.dispatchEvent(new Event('change'));
         });
 
@@ -3854,7 +4100,7 @@
         // --- ART STYLE LOGIC ---
         window.updateArtStyleDropdown = function() {
             if (!ui.v2ArtStyle) return;
-            const targetSelection = localStorage.getItem('last_selected_art_style') || 'none';
+            const targetSelection = localStorage.getItem('last_selected_art_style') || 'seedream_oil_painting';
             
             ui.v2ArtStyle.innerHTML = '';
             
@@ -3887,7 +4133,7 @@
             if (DEFAULT_ART_STYLES[targetSelection] || appArtStyles.some(s => s.id === targetSelection)) {
                 ui.v2ArtStyle.value = targetSelection;
             } else {
-                ui.v2ArtStyle.value = 'none';
+                ui.v2ArtStyle.value = 'seedream_oil_painting';
             }
             
             handleArtStyleSelectionChange();
@@ -4237,9 +4483,18 @@
                                         <option value="pan_bottom_right">↘️ Btm-Right</option>
                                         <option value="random">🎲 Randomize</option>
                                     </select>
-                                    <button class="btn-dl-clip bg-indigo-900/90 hover:bg-indigo-800 text-white px-3 py-1.5 rounded border border-indigo-600/50 shadow-lg flex items-center gap-2 text-xs font-bold backdrop-blur-sm transition-colors" title="Download MP4 Clip">
-                                        <i data-lucide="video" class="w-3 h-3 text-indigo-300 pointer-events-none"></i>
-                                    </button>
+                                    <div class="inline-flex rounded shadow-sm relative z-30">
+                                        <button class="btn-dl-clip bg-indigo-900/90 hover:bg-indigo-800 text-white px-3 py-1.5 rounded-l border border-indigo-600/50 shadow-lg flex items-center gap-2 text-xs font-bold backdrop-blur-sm transition-colors" data-quality="1" title="Download MP4 Clip">
+                                            <i data-lucide="video" class="w-3 h-3 text-indigo-300 pointer-events-none"></i>
+                                        </button>
+                                        <button class="btn-dl-clip-toggle bg-indigo-800/90 hover:bg-indigo-700 text-white px-1.5 py-1.5 rounded-r border-y border-r border-indigo-600/50 shadow-lg flex items-center justify-center backdrop-blur-sm transition-colors">
+                                            <i data-lucide="chevron-down" class="w-3 h-3 pointer-events-none"></i>
+                                        </button>
+                                        <div class="dropdown-dl-clip-quality absolute hidden flex-col bg-slate-800 border border-slate-600 rounded shadow-xl overflow-hidden min-w-[120px] right-0">
+                                            <button class="btn-export-quality w-full text-xs text-left px-3 py-2 text-white hover:bg-indigo-600 transition-colors" data-target="self" data-quality="0.666">720p (Fast)</button>
+                                            <button class="btn-export-quality w-full text-xs text-left px-3 py-2 text-white hover:bg-indigo-600 transition-colors" data-target="self" data-quality="0.444">480p (Fastest)</button>
+                                        </div>
+                                    </div>
                                     <a href="${finalImageB64}" download="${fileName}" class="dl-link bg-slate-900/90 hover:bg-slate-800 text-white px-3 py-1.5 rounded border border-slate-600 shadow-lg flex items-center gap-2 text-xs font-bold backdrop-blur-sm transition-colors" title="Download Image">
                                         <i data-lucide="download" class="w-3 h-3 text-slate-300 pointer-events-none"></i>
                                     </a>
@@ -4391,9 +4646,11 @@
             if(ui.btnBulkPause) ui.btnBulkPause.classList.add('hidden');
             if(ui.btnBulkStop) ui.btnBulkStop.classList.add('hidden');
             if(ui.btnBulkDownload) ui.btnBulkDownload.classList.add('hidden');
-            if(ui.btnBulkDownloadVid) ui.btnBulkDownloadVid.classList.add('hidden');
+            document.getElementById('group-bulk-download-vid')?.classList.add('hidden');
+            if(ui.btnBulkDownloadVid) ui.btnBulkDownloadVid.classList.remove('hidden'); // Force inner visible
             if(ui.btnBulkRegenFailed) ui.btnBulkRegenFailed.classList.add('hidden');
-            if(ui.btnRenderVideo) ui.btnRenderVideo.classList.add('hidden');
+            document.getElementById('group-render-video')?.classList.add('hidden');
+            if(ui.btnRenderVideo) ui.btnRenderVideo.classList.remove('hidden'); // Force inner visible
             document.getElementById('btn-motion-toggle')?.classList.add('hidden');
             document.getElementById('btn-transition-toggle')?.classList.add('hidden');
 
@@ -4406,10 +4663,10 @@
                             items: {
                                 type: "OBJECT",
                                 properties: {
-                                    type: { type: "STRING", description: "Must be exactly 'A-Roll', 'Image', or 'Video'" },
-                                    prompt: { type: "STRING", description: "Visual prompt (leave empty for A-Roll)" },
-                                    searchQuery: { type: "STRING", description: "Search query (leave empty for A-Roll)" },
-                                    keySubjects: { type: "ARRAY", items: { type: "STRING" }, description: "Extract specific 'people, named characters, physical objects, real-world locations, or specific graphics/logos' ONLY if they are EXPLICITLY mentioned in the generated 'prompt' text above. If the specific subject is NOT in the prompt text, DO NOT include it. Do NOT extract abstract concepts, lighting, or background elements. Return an empty array if none are needed or if A-Roll." }
+                                    type: { type: "STRING", description: "Must be exactly 'Image' or 'Video'" },
+                                    prompt: { type: "STRING", description: "The visual prompt detailing exactly what should be shown on screen." },
+                                    searchQuery: { type: "STRING", description: "CRITICAL: Must be a highly optimized, short 2-6 word search phrase for stock footage sites based on the core subject. Do not exceed 6 words." },
+                                    keySubjects: { type: "ARRAY", items: { type: "STRING" }, description: "Extract specific 'people, named characters, pivotal physical objects, important subjects, real-world locations, or specific graphics/logos' ONLY if they are EXPLICITLY mentioned in the generated 'prompt' text above. If the specific subject is NOT in the prompt text, DO NOT include it. Do NOT extract abstract concepts, lighting, or generic background elements (e.g., 'microphone', 'desk', 'wall') unless they are the central focus of the scene. Return an empty array if none are needed." }
                                 }, required: ["type", "prompt", "searchQuery", "keySubjects"]
                             }
                         }
@@ -4435,18 +4692,53 @@
                 const selectedDirId = ui.v2DirectorMode?.value || 'smart';
                 const dirName = DEFAULT_DIRECTOR_NAMES[selectedDirId] || (appDirectors.find(d => d.id === selectedDirId)?.name) || 'Custom Director';
                 
-                // Present the AI with a numbered list of blocks so it maps them 1:1
-                const formattedScript = blocks.map((b, i) => `[BLOCK ${i+1}]:\n${b}`).join('\n\n');
+                let allSafeAssets = [];
+                const batchSize = appSettings.brollBatchSize || 50; // Batch into user-defined blocks to preserve high-quality reference lockers
+                const totalBatches = Math.ceil(blocks.length / batchSize);
 
-                const data = await executeGeminiCall(systemInstruction, `I have ${blocks.length} Storyboard Blocks. Provide EXACTLY ${blocks.length} asset decisions mapped 1:1 to these blocks.\n\n${formattedScript}`, schema);
-                
-                // BUG FIX: Fallback to empty array if AI hallucinates and skips the 'assets' key
-                const safeAssets = data.assets || [];
+                for (let i = 0; i < blocks.length; i += batchSize) {
+                    const currentBatchBlocks = blocks.slice(i, i + batchSize);
+                    const currentBatchNum = Math.floor(i / batchSize) + 1;
+                    
+                    if (totalBatches > 1) {
+                        if(ui.v2LoadingText) ui.v2LoadingText.innerText = `Directing Visuals (Part ${currentBatchNum} of ${totalBatches})...`;
+                    }
+
+                    // Present the AI with a numbered list of blocks for THIS specific batch
+                    const formattedScript = currentBatchBlocks.map((b, idx) => `[BLOCK ${i + idx + 1}]:\n${b}`).join('\n\n');
+
+                    const promptHeader = `I have ${currentBatchBlocks.length} Storyboard Blocks. Provide EXACTLY ${currentBatchBlocks.length} asset decisions mapped 1:1 to these blocks.\n\n`;
+
+                    try {
+                        const data = await executeGeminiCall(systemInstruction, promptHeader + formattedScript, schema);
+                        const batchAssets = data.assets || [];
+                        allSafeAssets = allSafeAssets.concat(batchAssets);
+                    } catch (batchErr) {
+                        console.error(`Batch ${currentBatchNum} failed:`, batchErr);
+                        // Fallback: inject empty blocks so the timeline math still compiles
+                        for(let j=0; j<currentBatchBlocks.length; j++){
+                            allSafeAssets.push({ type: 'Image', prompt: 'Failed to generate visual for this block.', searchQuery: 'error', keySubjects: [] });
+                        }
+                    }
+
+                    // Cooldown between batches if there are more to process
+                    if (i + batchSize < blocks.length) {
+                        if(ui.v2LoadingText) ui.v2LoadingText.innerText = `Cooling down API...`;
+                        await new Promise(r => setTimeout(r, appSettings.textCooldown || 4000));
+                    }
+                }
+
+                // Map to the variable expected by the rest of the code
+                const safeAssets = allSafeAssets;
 
                 if(ui.v2TimelineFeed) {
                     // Calculate actual visuals vs A-Roll mapped perfectly to the blocks
-                    const visualCount = blocks.reduce((count, _, i) => {
+                    /*const visualCount = blocks.reduce((count, _, i) => {
                         const asset = safeAssets[i] || { type: 'A-Roll', prompt: '', searchQuery: '' };
+                    */
+                    // Calculate actual visual coverage mapped perfectly to the blocks
+                    const visualCount = blocks.reduce((count, _, i) => {
+                        const asset = safeAssets[i] || { type: 'Image', prompt: '', searchQuery: '' };
                         const isVisual = asset.type.toLowerCase().includes('image') || asset.type.toLowerCase().includes('video');
                         return count + (isVisual ? 1 : 0);
                     }, 0);
@@ -4544,10 +4836,12 @@
                                 blockEndSec = blockStartSec + ((blockWordCount / stats.wpm) * 60);
                             }
                             
-                            // 7. Final Block Override: ALWAYS snap to the absolute end of the audio
-                            if (index === blocks.length - 1) {
-                                blockEndSec = window.parsedSRTWords[window.parsedSRTWords.length - 1].end;
-                            }
+                                      // 7. Final Block Override: ALWAYS snap to the absolute end of the audio + optional padding
+          if (index === blocks.length - 1) {
+            const paddingInput = document.getElementById('srt-outro-padding');
+            const paddingSecs = paddingInput ? parseFloat(paddingInput.value) || 0 : 0;
+            blockEndSec = window.parsedSRTWords[window.parsedSRTWords.length - 1].end + paddingSecs;
+          }
 
                             currentSec = blockEndSec;
                         } else {
@@ -4596,18 +4890,32 @@
                     // 2. Grouping Logic
                     let groups = [];
                     blocks.forEach((blockText, index) => {
-                        const asset = safeAssets[index] || { type: 'A-Roll', prompt: '', searchQuery: '' };
+                        // Default to Image if the AI somehow skips a block
+                        // /* A-ROLL REF: const asset = safeAssets[index] || { type: 'A-Roll', prompt: '', searchQuery: '' }; */
+                        const asset = safeAssets[index] || { type: 'Image', prompt: 'Dynamic thematic background matching the overarching narrative.', searchQuery: 'thematic background' };
                         
                         // Pass 'isProSync' to dynamically reveal millisecond precision in the UI
                         const timeStr = `[${formatTimecode(rawTimings[index].start, isProSync)} - ${formatTimecode(rawTimings[index].end, isProSync)}]`;
-                        const isAroll = asset.type.toLowerCase().includes('a-roll') || asset.type.toLowerCase().includes('narrator');
-                        const type = isAroll ? 'A-Roll' : asset.type;
+                        
+                        /* A-ROLL REF: Force any rogue A-Roll outputs to Image
+                        let isAroll = asset.type.toLowerCase().includes('a-roll') || asset.type.toLowerCase().includes('narrator');
+                        if (isAroll || !asset.prompt || asset.prompt.trim() === '') { ... }
+                        */
+                        // Generic Failsafe: Force any rogue outputs (or empty prompts) to a generic Image
+                        let isInvalidType = !['image', 'video'].includes(asset.type.toLowerCase());
+                        if (isInvalidType || !asset.prompt || asset.prompt.trim() === '') {
+                            asset.type = 'Image';
+                            asset.prompt = 'Dynamic thematic background matching the overarching narrative.';
+                            asset.searchQuery = 'thematic background';
+                        }
+                        const type = asset.type;
                         
                         // ART STYLE INJECTION LOGIC
                         let basePrompt = asset.prompt || '';
                         let styleToAppend = '';
                         
-                        if (ui.v2ArtStyle && ui.v2ArtStyle.value !== 'none' && !isAroll) {
+                        // /* A-ROLL REF: if (ui.v2ArtStyle && ui.v2ArtStyle.value !== 'none' && !isAroll) { */
+                        if (ui.v2ArtStyle && ui.v2ArtStyle.value !== 'none') {
                             styleToAppend = ui.v2CustomStyleInput?.value.trim() || '';
                         }
 
@@ -4631,8 +4939,9 @@
 
                         if (groups.length > 0) {
                             const lastGroup = groups[groups.length - 1];
-                            // Merge if NOT A-Roll and exactly same prompt & type
-                            if (!isAroll && lastGroup.type === type && lastGroup.prompt === prompt && prompt.trim() !== '') {
+                            // /* A-ROLL REF: if (!isAroll && lastGroup.type === type && lastGroup.prompt === prompt && prompt.trim() !== '') { */
+                            // Merge if exactly same prompt & type
+                            if (lastGroup.type === type && lastGroup.prompt === prompt && prompt.trim() !== '') {
                                 lastGroup.blocks.push(blockData);
                                 return; // Skip creating a new group
                             }
@@ -4647,21 +4956,23 @@
 
                     // 2. Rendering Logic
                     groups.forEach((group) => {
+                        /* A-ROLL DEPRECATED - Commented out for future reference
                         if (group.type === 'A-Roll') {
                             // A-Roll cards are not grouped, always 1 block
                             const b = group.blocks[0];
-                            if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML += `
+                            if(ui.v2TimelineFeed) ui.v2TimelineFeed.innerHTML += \`
                                 <div class="bg-slate-800/40 border border-slate-700/50 rounded-lg p-5 flex flex-col lg:flex-row gap-4 opacity-70 mb-4 hover:opacity-100 transition-opacity">
                                     <div class="lg:w-1/4 border-r border-slate-700/50 pr-4">
-                                        <p class="font-mono text-slate-400 font-bold mb-2">${b.timeStr}</p>
+                                        <p class="font-mono text-slate-400 font-bold mb-2">\${b.timeStr}</p>
                                         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> A-Roll (Narrator)</p>
                                     </div>
                                     <div class="lg:w-3/4">
-                                        <p class="text-sm text-slate-300 italic leading-relaxed">"${b.text}"</p>
+                                        <p class="text-sm text-slate-300 italic leading-relaxed">"\${b.text}"</p>
                                     </div>
                                 </div>
-                            `;
+                            \`;
                         } else {
+                        */
                             // Render Parent/Child Image/Video block
                             // BUG FIX: Use HTML entity &#39; instead of JS escape \\' so backslashes don't show up in the text boxes
                             const safeQuery = group.query ? group.query.replace(/'/g, "&#39;").replace(/"/g, "&quot;") : '';
@@ -4768,7 +5079,7 @@
                                     </div>
                                 </div>
                             `;
-                        }
+                        // } <-- Closing bracket for the commented-out A-Roll else block
                     });
 
                     // Update the counters based on the final grouped cards rendered (Moved INSIDE the else block)
@@ -5028,7 +5339,7 @@
                                 type: "OBJECT",
                                 properties: {
                                     prompt: { type: "STRING", description: "The highly detailed prompt for the AI image generator." },
-                                    keySubjects: { type: "ARRAY", items: { type: "STRING" }, description: "Extract specific 'people, named characters, physical objects, real-world locations, or specific graphics/logos' ONLY if they are EXPLICITLY mentioned in the generated 'prompt' text above. If the specific subject is NOT in the prompt text, DO NOT include it. Do NOT extract abstract concepts, lighting, or background elements. Return an empty array if none are needed." }
+                                    keySubjects: { type: "ARRAY", items: { type: "STRING" }, description: "Extract specific 'people, named characters, pivotal physical objects, important subjects, real-world locations, or specific graphics/logos' ONLY if they are EXPLICITLY mentioned in the generated 'prompt' text above. If the specific subject is NOT in the prompt text, DO NOT include it. Do NOT extract abstract concepts, lighting, or generic background elements (e.g., 'microphone', 'desk', 'wall') unless they are the central focus of the scene. Return an empty array if none are needed." }
                                 },
                                 required: ["prompt", "keySubjects"]
                             }
@@ -5579,7 +5890,7 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete description of 
                                     type: "OBJECT",
                                     properties: {
                                         prompt: { type: "STRING", description: "The highly detailed prompt for the AI image generator." },
-                                        keySubjects: { type: "ARRAY", items: { type: "STRING" }, description: "Extract specific 'people, named characters, physical objects, real-world locations, or specific graphics/logos' ONLY if they are EXPLICITLY mentioned in the generated 'prompt' text above. If the specific subject is NOT in the prompt text, DO NOT include it. Do NOT extract abstract concepts, lighting, or background elements. Return an empty array if none are needed." }
+                                        keySubjects: { type: "ARRAY", items: { type: "STRING" }, description: "Extract specific 'people, named characters, pivotal physical objects, important subjects, real-world locations, or specific graphics/logos' ONLY if they are EXPLICITLY mentioned in the generated 'prompt' text above. If the specific subject is NOT in the prompt text, DO NOT include it. Do NOT extract abstract concepts, lighting, or generic background elements (e.g., 'microphone', 'desk', 'wall') unless they are the central focus of the scene. Return an empty array if none are needed." }
                                     }, required: ["prompt", "keySubjects"]
                                 }
                             }
@@ -5697,7 +6008,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     type: "OBJECT",
                     properties: {
                         newPrompt: { type: "STRING", description: "The highly detailed prompt for the AI image generator." },
-                        keySubjects: { type: "ARRAY", items: { type: "STRING" }, description: "Extract specific 'people, named characters, physical objects, real-world locations, or specific graphics/logos' ONLY if they are EXPLICITLY mentioned in the generated 'prompt' text above. If the specific subject is NOT in the prompt text, DO NOT include it. Do NOT extract abstract concepts, lighting, or background elements. Return an empty array if none are needed." }
+                        keySubjects: { type: "ARRAY", items: { type: "STRING" }, description: "Extract specific 'people, named characters, pivotal physical objects, important subjects, real-world locations, or specific graphics/logos' ONLY if they are EXPLICITLY mentioned in the generated 'prompt' text above. If the specific subject is NOT in the prompt text, DO NOT include it. Do NOT extract abstract concepts, lighting, or generic background elements (e.g., 'microphone', 'desk', 'wall') unless they are the central focus of the scene. Return an empty array if none are needed." }
                     }, required: ["newPrompt", "keySubjects"]
                 };
                 
@@ -5918,8 +6229,10 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     clipImg.src = img.src;
                     await new Promise(r => clipImg.onload = r);
                     
-                    const width = clipImg.width - (clipImg.width % 2);
-                    const height = clipImg.height - (clipImg.height % 2);
+                    // Read quality directly from the button that was clicked
+                    const qualityMult = parseFloat(btnDlClip.dataset.quality || '1');
+                    const width = Math.round((clipImg.width * qualityMult) / 2) * 2;
+                    const height = Math.round((clipImg.height * qualityMult) / 2) * 2;
                     
                     const canvas = document.createElement('canvas');
                     canvas.width = width;
@@ -6136,6 +6449,9 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 v2Script:     ui.v2Script?.value || '',
                 v2Min:        ui.v2Min?.value || '10',
                 v2Sec:        ui.v2Sec?.value || '0',
+                v2SrtGapMode: document.getElementById('srt-gap-mode')?.value || 'hold',
+                v2SrtPadding: document.getElementById('srt-outro-padding')?.value || '0',
+                v2SrtWords:   window.parsedSRTWords || [],
                 v2DirectorMode: ui.v2DirectorMode?.value || 'smart',
                 v2Aspect:     ui.v2ImageAspectRatio?.value || '16:9',
                 v2ArtStyle:   ui.v2ArtStyle?.value || 'none',
@@ -6237,6 +6553,32 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             if(ui.v2Script) ui.v2Script.value = data.v2Script || '';
             if(ui.v2Min) ui.v2Min.value = data.v2Min || '10';
             if(ui.v2Sec) ui.v2Sec.value = data.v2Sec || '0';
+            
+            const srtGapModeEl = document.getElementById('srt-gap-mode');
+            if (srtGapModeEl) srtGapModeEl.value = data.v2SrtGapMode || 'hold';
+            
+            const srtPaddingEl = document.getElementById('srt-outro-padding');
+            if (srtPaddingEl) srtPaddingEl.value = data.v2SrtPadding || '0';
+            
+            window.parsedSRTWords = data.v2SrtWords || [];
+            if (window.parsedSRTWords.length > 0) {
+                if (ui.syncBadge) {
+                    ui.syncBadge.innerText = "PRO: SRT Sync (Restored)";
+                    ui.syncBadge.className = "text-[10px] font-bold bg-emerald-900 text-emerald-400 px-2 py-0.5 rounded shadow-inner border border-emerald-500/50 transition-colors";
+                }
+                if (ui.v2ManualMath) ui.v2ManualMath.style.opacity = "0.3";
+                if (ui.btnClearSrt) ui.btnClearSrt.classList.remove('hidden');
+                if (ui.srtGapModeContainer) ui.srtGapModeContainer.classList.remove('hidden');
+            } else {
+                if (ui.syncBadge) {
+                    ui.syncBadge.innerText = "Math Mode";
+                    ui.syncBadge.className = "text-[10px] font-bold bg-slate-700 text-slate-300 px-2 py-0.5 rounded shadow-inner transition-colors";
+                }
+                if (ui.v2ManualMath) ui.v2ManualMath.style.opacity = "1";
+                if (ui.btnClearSrt) ui.btnClearSrt.classList.add('hidden');
+                if (ui.srtGapModeContainer) ui.srtGapModeContainer.classList.add('hidden');
+            }
+
             if(ui.v2DirectorMode) {
                 ui.v2DirectorMode.value = data.v2DirectorMode || 'smart';
                 if(typeof handleDirectorSelectionChange === 'function') handleDirectorSelectionChange();
@@ -6480,6 +6822,22 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             if(ui.v2Script) ui.v2Script.value = '';
             if(ui.v2Min) ui.v2Min.value = '10';
             if(ui.v2Sec) ui.v2Sec.value = '0';
+            
+            const srtGapModeEl = document.getElementById('srt-gap-mode');
+            if (srtGapModeEl) srtGapModeEl.value = 'hold';
+            
+            const srtPaddingEl = document.getElementById('srt-outro-padding');
+            if (srtPaddingEl) srtPaddingEl.value = '0';
+
+            window.parsedSRTWords = [];
+            if (ui.syncBadge) {
+                ui.syncBadge.innerText = "Math Mode";
+                ui.syncBadge.className = "text-[10px] font-bold bg-slate-700 text-slate-300 px-2 py-0.5 rounded shadow-inner transition-colors";
+            }
+            if (ui.v2ManualMath) ui.v2ManualMath.style.opacity = "1";
+            if (ui.btnClearSrt) ui.btnClearSrt.classList.add('hidden');
+            if (ui.srtGapModeContainer) ui.srtGapModeContainer.classList.add('hidden');
+            
             if(ui.v2ArtStyle) ui.v2ArtStyle.value = 'none';
             if(ui.v2CustomStyleContainer) ui.v2CustomStyleContainer.classList.add('hidden');
             if(ui.v2CustomStyleInput) ui.v2CustomStyleInput.value = '';
@@ -6498,10 +6856,11 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             if(ui.btnBulkPause) ui.btnBulkPause.classList.add('hidden');
             if(ui.btnBulkStop) ui.btnBulkStop.classList.add('hidden');
             if(ui.btnBulkDownload) ui.btnBulkDownload.classList.add('hidden');
-            if(ui.btnBulkDownloadVid) ui.btnBulkDownloadVid.classList.add('hidden');
+            document.getElementById('group-bulk-download-vid')?.classList.add('hidden');
+            if(ui.btnBulkDownloadVid) ui.btnBulkDownloadVid.classList.remove('hidden'); // Force inner visible
             if(ui.btnBulkRegenFailed) ui.btnBulkRegenFailed.classList.add('hidden');
-            if(ui.renderVideoGroup) ui.renderVideoGroup.classList.add('hidden');
-            if(ui.btnRenderVideo) ui.btnRenderVideo.classList.remove('hidden'); // Force inner button visible
+            document.getElementById('group-render-video')?.classList.add('hidden');
+            if(ui.btnRenderVideo) ui.btnRenderVideo.classList.remove('hidden'); // Force inner visible
 
             // View 3 Resets
             if(ui.v3ChannelSelect) ui.v3ChannelSelect.value = '';
@@ -7234,8 +7593,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             // Show download buttons as soon as at least 1 image is done
             if (current > 0) {
                 ui.btnBulkDownload.classList.remove('hidden');
-                ui.btnBulkDownloadVid?.classList.remove('hidden');
-                ui.btnRenderVideo?.classList.remove('hidden');
+                document.getElementById('group-bulk-download-vid')?.classList.remove('hidden');
+                document.getElementById('group-render-video')?.classList.remove('hidden');
                 document.getElementById('btn-motion-toggle')?.classList.remove('hidden');
                 document.getElementById('btn-transition-toggle')?.classList.remove('hidden');
             }
@@ -7251,14 +7610,14 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             const images = document.querySelectorAll('#v2-timeline-feed .main-generated-img');
             if (images.length > 0) {
                 ui.btnBulkDownload?.classList.remove('hidden');
-                ui.btnBulkDownloadVid?.classList.remove('hidden');
-                ui.btnRenderVideo?.classList.remove('hidden');
+                document.getElementById('group-bulk-download-vid')?.classList.remove('hidden');
+                document.getElementById('group-render-video')?.classList.remove('hidden');
                 document.getElementById('btn-motion-toggle')?.classList.remove('hidden');
                 document.getElementById('btn-transition-toggle')?.classList.remove('hidden');
             } else {
                 ui.btnBulkDownload?.classList.add('hidden');
-                ui.btnBulkDownloadVid?.classList.add('hidden');
-                ui.btnRenderVideo?.classList.add('hidden');
+                document.getElementById('group-bulk-download-vid')?.classList.add('hidden');
+                document.getElementById('group-render-video')?.classList.add('hidden');
                 document.getElementById('btn-motion-toggle')?.classList.add('hidden');
                 document.getElementById('btn-transition-toggle')?.classList.add('hidden');
             }
@@ -7418,127 +7777,231 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const img = card.querySelector('.main-generated-img');
                 const wrapper = card.querySelector('.image-editor-wrapper');
                 
-                // --- FIX: Pull timing directly from the card's data attributes ---
-                if (img && img.src.startsWith('data:image/png;base64,')) {
-                    const exactStart = parseFloat(card.dataset.start);
-                    const exactEnd = parseFloat(card.dataset.end);
-                    const localMotion = wrapper?.querySelector('.clip-motion-select')?.value || 'global';
-                    
-                    if (exactEnd > exactStart) {
+                const exactStart = parseFloat(card.dataset.start);
+                const exactEnd = parseFloat(card.dataset.end);
+                const localMotion = wrapper?.querySelector('.clip-motion-select')?.value || 'global';
+                
+                if (exactEnd > exactStart) {
+                    if (img && img.src.startsWith('data:image/png;base64,')) {
                         let baseName = wrapper ? wrapper.dataset.filename.replace('.png', '') : `Block_${i+1}`;
-                        validClips.push({ src: img.src, start: exactStart, end: exactEnd, name: baseName, localMotion });
+                        validClips.push({ src: img.src, start: exactStart, end: exactEnd, name: baseName, localMotion, isPlaceholder: false });
+                    } else {
+                        // /* A-ROLL REF: validClips.push({ src: null, start: exactStart, end: exactEnd, name: \`Block_\${i+1}_A-ROLL\`, localMotion: 'none', isPlaceholder: true }); */
+                        validClips.push({ src: null, start: exactStart, end: exactEnd, name: `Block_${i+1}_MISSING`, localMotion: 'none', isPlaceholder: true });
                     }
                 }
             }
 
-            if (validClips.length === 0) return showToast("No valid images found on the timeline to stitch!");
+            if (validClips.length === 0) return showToast("No valid clips found on the timeline!");
+
+            // TIME-BASED CHUNKING: Pack exactly 5 minutes (300 seconds) of video into each ZIP file
+            const THRESHOLD_SECONDS = 300; 
+            const clipChunks = [];
+            let currentChunk = [];
+            let currentChunkStart = validClips[0].start;
+            
+            for (let i = 0; i < validClips.length; i++) {
+                currentChunk.push(validClips[i]);
+                if (validClips[i].end - currentChunkStart >= THRESHOLD_SECONDS && i < validClips.length - 1) {
+                    clipChunks.push(currentChunk);
+                    currentChunk = [];
+                    currentChunkStart = validClips[i+1].start;
+                }
+            }
+            if (currentChunk.length > 0) clipChunks.push(currentChunk);
 
             ui.btnBulkDownloadVid.disabled = true;
             const originalHTML = ui.btnBulkDownloadVid.innerHTML;
-            ui.btnBulkDownloadVid.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div> Rendering...`;
             
-            showToast("WARNING: Keep this tab active! Rendering individual clips...", 8000);
+            // Setup Cancel Overlay (Just like MP4)
+            window.cancelZipRender = false;
+            const renderOverlay = document.createElement('div');
+            renderOverlay.className = "fixed inset-0 bg-slate-900/95 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden";
+            renderOverlay.innerHTML = `
+                <div class="w-full max-w-3xl flex flex-col gap-3 items-center justify-center h-full max-h-full">
+                    <h2 class="text-lg sm:text-xl font-bold text-white uppercase tracking-widest animate-pulse flex items-center gap-2 shrink-0">
+                        <i data-lucide="archive" class="w-5 h-5 text-indigo-400"></i> Rendering Clips to ZIP
+                    </h2>
+                    
+                    ${clipChunks.length > 1 ? `<div class="w-full max-w-2xl bg-indigo-900/40 border border-indigo-500/50 text-indigo-200 text-xs p-2 rounded text-center shrink-0"><strong>⚠️ Memory Protection:</strong> Splitting into <strong>${clipChunks.length} separate ZIP files</strong>.</div>` : ''}
+                    
+                    <div class="relative flex flex-col max-w-full shrink min-h-0 w-full mt-4">
+                        <div class="w-full bg-slate-800 rounded-lg h-8 border border-slate-700 overflow-hidden relative shadow-inner shrink-0">
+                            <div id="zip-progress-bar" class="bg-gradient-to-r from-blue-600 to-indigo-500 h-full transition-all duration-200 w-0"></div>
+                            <span id="zip-progress-text" class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-md">Preparing engine...</span>
+                        </div>
+                    </div>
+
+                    <button id="btn-cancel-zip" class="mt-6 bg-red-900/50 hover:bg-red-600 text-red-200 hover:text-white border border-red-500/50 px-6 py-2 rounded-full text-xs font-bold transition-all shadow-lg flex items-center gap-2 shrink-0">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Cancel Rendering
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(renderOverlay);
+            lucide.createIcons({ root: renderOverlay });
+            
+            document.getElementById('btn-cancel-zip').onclick = () => {
+                window.cancelZipRender = true;
+                document.getElementById('btn-cancel-zip').innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div> Cancelling...`;
+            };
 
             try {
-                const zip = new JSZip();
                 const fps = 30;
+                
+                // Aspect Ratio & Quality Math
+                const aspect = document.getElementById('v2-image-aspect-ratio')?.value || '16:9';
+                let baseW = 1920, baseH = 1080;
+                if (aspect === '9:16') { baseW = 1080; baseH = 1920; }
+                else if (aspect === '1:1') { baseW = 1080; baseH = 1080; }
 
-                for (let i = 0; i < validClips.length; i++) {
-                    const clip = validClips[i];
-                    ui.btnBulkDownloadVid.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div> Rendering Clip ${i+1}/${validClips.length}...`;
-                    
-                    const img = new Image();
-                    img.src = clip.src;
-                    await new Promise(r => img.onload = r);
-                    
-                    const width = img.width - (img.width % 2);
-                    const height = img.height - (img.height % 2);
-                    
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-
-                    let muxer = new Mp4Muxer.Muxer({
-                        target: new Mp4Muxer.ArrayBufferTarget(),
-                        video: { codec: 'avc', width: width, height: height },
-                        fastStart: 'in-memory'
-                    });
-
-                    let videoEncoder = new VideoEncoder({
-                        output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-                        error: e => console.error("Encoder Error:", e)
-                    });
-
-                    videoEncoder.configure({
-                        codec: 'avc1.640028',
-                        width: width,
-                        height: height,
-                        bitrate: 5_000_000,
-                        framerate: fps
-                    });
-
-                    const totalFramesForClip = Math.round((clip.end - clip.start) * fps);
-
-                    let activeMotion = 'none';
-                    if (clip.localMotion === 'global') {
-                        if (window.selectedMotions && window.selectedMotions.length > 0) {
-                            const isRandom = document.getElementById('motion-randomize-toggle')?.checked;
-                            if (isRandom) {
-                                activeMotion = window.selectedMotions[Math.floor(Math.random() * window.selectedMotions.length)];
-                            } else {
-                                // Cycle sequentially based on its index (i)
-                                activeMotion = window.selectedMotions[i % window.selectedMotions.length];
-                            }
-                        }
-                    } else if (clip.localMotion === 'random') {
-                        const allMotions = ['zoom_in', 'zoom_out', 'pan_left', 'pan_right', 'pan_up', 'pan_down', 'pan_top_left', 'pan_top_right', 'pan_bottom_left', 'pan_bottom_right'];
-                        activeMotion = allMotions[Math.floor(Math.random() * allMotions.length)];
-                    } else {
-                        activeMotion = clip.localMotion;
-                    }
-
-                    for (let f = 0; f < totalFramesForClip; f++) {
-                        ctx.fillStyle = 'black';
-                        ctx.fillRect(0, 0, width, height);
-
-                        const currentProgress = f / totalFramesForClip;
-                        const rect = window.getMotionRect(activeMotion, currentProgress, width, height, img.width, img.height);
-                        ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h);
-
-                        let timestamp = Math.round((f * 1e6) / fps);
-                        let frame = new VideoFrame(canvas, { timestamp });
-                        videoEncoder.encode(frame, { keyFrame: f % 150 === 0 });
-                        frame.close();
-
-                        await window.awaitEncoderQueue(videoEncoder);
-                        if (f % 30 === 0) await new Promise(r => setTimeout(r, 0)); // Allows background tab rendering
-                    }
-
-                    await videoEncoder.flush();
-                    muxer.finalize();
-                    
-                    zip.file(`${clip.name}.mp4`, muxer.target.buffer);
+                const firstValidClip = validClips.find(c => !c.isPlaceholder);
+                if (firstValidClip) {
+                    const tempImg = new Image();
+                    tempImg.src = firstValidClip.src;
+                    await new Promise(r => tempImg.onload = r);
+                    baseW = tempImg.width;
+                    baseH = tempImg.height;
                 }
                 
-                ui.btnBulkDownloadVid.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div> Zipping Archive...`;
+                const qualityMult = parseFloat(ui.btnBulkDownloadVid.dataset.quality || '1');
+                const width = Math.round((baseW * qualityMult) / 2) * 2;
+                const height = Math.round((baseH * qualityMult) / 2) * 2;
                 
-                const content = await zip.generateAsync({type:"blob"});
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(content);
-                
-                const now = new Date();
-                const ts = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}-${now.getMinutes().toString().padStart(2, '0')}`;
-                link.download = `ScriptForge_Clips_${validClips.length}_${ts}.zip`;
-                link.click();
-                URL.revokeObjectURL(link.href);
-                
-                showToast(`Downloaded ${validClips.length} MP4 clips!`);
+                // /* A-ROLL REF: const placeholderObj = await window.createPlaceholderImage(width, height, "A-ROLL / MISSING VISUAL"); */
+                const placeholderObj = await window.createPlaceholderImage(width, height, "MISSING VISUAL");
+
+                let globalClipProcessed = 0;
+
+                // OUTER LOOP: Process each ZIP Chunk
+                for (let chunkIdx = 0; chunkIdx < clipChunks.length; chunkIdx++) {
+                    if (window.cancelZipRender) throw new Error("Cancelled by user.");
+                    
+                    const chunk = clipChunks[chunkIdx];
+                    const zip = new JSZip();
+
+                    // INNER LOOP: Process each clip in the chunk
+                    for (let i = 0; i < chunk.length; i++) {
+                        if (window.cancelZipRender) throw new Error("Cancelled by user.");
+                        
+                        const clip = chunk[i];
+                        globalClipProcessed++;
+                        
+                        const percent = Math.round((globalClipProcessed / validClips.length) * 100);
+                        document.getElementById('zip-progress-bar').style.width = `${percent}%`;
+                        document.getElementById('zip-progress-text').innerText = `Rendering Clip ${globalClipProcessed} of ${validClips.length}... (${percent}%)`;
+                        
+                        let img = placeholderObj;
+                        if (!clip.isPlaceholder) {
+                            img = new Image();
+                            img.src = clip.src;
+                            await new Promise(r => img.onload = r);
+                        }
+                        
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+
+                        let muxer = new Mp4Muxer.Muxer({
+                            target: new Mp4Muxer.ArrayBufferTarget(),
+                            video: { codec: 'avc', width: width, height: height },
+                            fastStart: 'in-memory'
+                        });
+
+                        let videoEncoder = new VideoEncoder({
+                            output: (c, meta) => muxer.addVideoChunk(c, meta),
+                            error: e => console.error("Encoder Error:", e)
+                        });
+
+                        // Standardize bitrate mapping to quality scaling to further reduce RAM
+                        const bitrate = qualityMult < 1 ? (qualityMult < 0.6 ? 1_500_000 : 3_000_000) : 5_000_000;
+
+                        videoEncoder.configure({
+                            codec: 'avc1.640028',
+                            width: width,
+                            height: height,
+                            bitrate: bitrate,
+                            framerate: fps
+                        });
+
+                        const totalFramesForClip = Math.round((clip.end - clip.start) * fps);
+
+                        let activeMotion = 'none';
+                        if (clip.localMotion === 'global') {
+                            if (window.selectedMotions && window.selectedMotions.length > 0) {
+                                const isRandom = document.getElementById('motion-randomize-toggle')?.checked;
+                                if (isRandom) {
+                                    activeMotion = window.selectedMotions[Math.floor(Math.random() * window.selectedMotions.length)];
+                                } else {
+                                    // Cycle sequentially based on global index
+                                    activeMotion = window.selectedMotions[(globalClipProcessed - 1) % window.selectedMotions.length];
+                                }
+                            }
+                        } else if (clip.localMotion === 'random') {
+                            const allMotions = ['zoom_in', 'zoom_out', 'pan_left', 'pan_right', 'pan_up', 'pan_down', 'pan_top_left', 'pan_top_right', 'pan_bottom_left', 'pan_bottom_right'];
+                            activeMotion = allMotions[Math.floor(Math.random() * allMotions.length)];
+                        } else {
+                            activeMotion = clip.localMotion;
+                        }
+
+                        for (let f = 0; f < totalFramesForClip; f++) {
+                            if (window.cancelZipRender) throw new Error("Cancelled by user.");
+                            
+                            ctx.fillStyle = 'black';
+                            ctx.fillRect(0, 0, width, height);
+
+                            const currentProgress = f / totalFramesForClip;
+                            const rect = window.getMotionRect(activeMotion, currentProgress, width, height, img.width, img.height);
+                            ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h);
+
+                            let timestamp = Math.round((f * 1e6) / fps);
+                            let frame = new VideoFrame(canvas, { timestamp });
+                            videoEncoder.encode(frame, { keyFrame: f % 150 === 0 });
+                            frame.close();
+
+                            await window.awaitEncoderQueue(videoEncoder);
+                            if (f % 30 === 0) await new Promise(r => setTimeout(r, 0)); 
+                        }
+
+                        await videoEncoder.flush();
+                        muxer.finalize();
+                        
+                        zip.file(`${clip.name}.mp4`, muxer.target.buffer);
+                    }
+                    
+                    document.getElementById('zip-progress-text').innerText = `Zipping Archive ${chunkIdx + 1} of ${clipChunks.length}...`;
+                    
+                    const content = await zip.generateAsync({type:"blob"});
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    
+                    const now = new Date();
+                    const ts = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}-${now.getMinutes().toString().padStart(2, '0')}`;
+                    link.download = clipChunks.length > 1 
+                        ? `ScriptForge_Clips_Part${chunkIdx+1}_${ts}.zip`
+                        : `ScriptForge_Clips_All_${ts}.zip`;
+                    
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    
+                    // Memory Wipe to prevent JSZip from crashing
+                    await new Promise(r => setTimeout(r, 500));
+                }
+
+                showToast(`Successfully exported all MP4 clips!`);
 
             } catch (err) {
-                console.error("WebCodecs Render Error:", err);
-                showToast("Error rendering videos: " + err.message);
+                console.error("Clips Render Error:", err);
+                if (err.message === "Cancelled by user.") {
+                    showToast("Render cancelled. Memory cleared.");
+                } else {
+                    showToast("Error rendering videos: " + err.message);
+                }
             } finally {
+                const overlay = document.querySelector('.fixed.inset-0.bg-slate-900\\/95.z-\\[100\\]');
+                if (overlay) overlay.remove();
+                window.cancelZipRender = false;
+                
                 ui.btnBulkDownloadVid.disabled = false;
                 ui.btnBulkDownloadVid.innerHTML = originalHTML;
                 lucide.createIcons();
@@ -7580,6 +8043,67 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
         }
 
         document.body.addEventListener('click', (e) => {
+            // Export Quality Selector Logic
+            const qualityBtn = e.target.closest('.btn-export-quality');
+            if (qualityBtn) {
+                const targetId = qualityBtn.dataset.target;
+                const qualityVal = qualityBtn.dataset.quality;
+                
+                let mainBtn;
+                if (targetId === 'self') {
+                    // For individual clips, the target is the sibling button in the wrapper
+                    mainBtn = qualityBtn.closest('.inline-flex').querySelector('.btn-dl-clip');
+                } else {
+                    mainBtn = document.getElementById(targetId);
+                }
+                
+                if (mainBtn) {
+                    mainBtn.dataset.quality = qualityVal;
+                    // Trigger the main button automatically with the selected quality
+                    mainBtn.click();
+                    // Delay the reset slightly so the async render functions can read the tag before it reverts
+                    setTimeout(() => { mainBtn.dataset.quality = "1"; }, 500);
+                }
+                // Hide dropdown after click
+                qualityBtn.parentElement.classList.add('hidden');
+                return;
+            }
+
+            // Toggle Bulk Clips (ZIP) Quality
+            const bulkVidToggle = e.target.closest('#btn-bulk-download-vid-toggle');
+            if (bulkVidToggle) {
+                toggleSmartMenu(bulkVidToggle, 'dropdown-bulk-vid-quality', 'dropdown-render-video-quality');
+                return;
+            }
+
+            // Toggle Bulk Render MP4 Quality
+            const renderVidToggle = e.target.closest('#btn-render-video-toggle');
+            if (renderVidToggle) {
+                toggleSmartMenu(renderVidToggle, 'dropdown-render-video-quality', 'dropdown-bulk-vid-quality');
+                return;
+            }
+
+            // Toggle Individual Clip Quality
+            const inlineClipToggle = e.target.closest('.btn-dl-clip-toggle');
+            if (inlineClipToggle) {
+                const menu = inlineClipToggle.parentElement.querySelector('.dropdown-dl-clip-quality');
+                // Close all others first
+                document.querySelectorAll('.dropdown-dl-clip-quality').forEach(m => {
+                    if (m !== menu) m.classList.add('hidden');
+                });
+                if (menu) {
+                    if (menu.classList.contains('hidden')) {
+                        // Force it to always open downwards for OCD consistency inside the card
+                        menu.classList.remove('bottom-full', 'mb-1');
+                        menu.classList.add('top-full', 'mt-1');
+                        menu.classList.remove('hidden');
+                    } else {
+                        menu.classList.add('hidden');
+                    }
+                }
+                return;
+            }
+
             // Toggles
             const motionToggle = e.target.closest('#btn-motion-toggle');
             if (motionToggle) {
@@ -7597,6 +8121,15 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             if (!e.target.closest('#motion-dropdown-wrapper') && !e.target.closest('#transition-dropdown-wrapper')) {
                 document.getElementById('motion-dropdown')?.classList.add('hidden');
                 document.getElementById('transition-dropdown')?.classList.add('hidden');
+            }
+            
+            // Add click outside for export menus
+            if (!e.target.closest('#group-bulk-download-vid') && !e.target.closest('#group-render-video')) {
+                document.getElementById('dropdown-bulk-vid-quality')?.classList.add('hidden');
+                document.getElementById('dropdown-render-video-quality')?.classList.add('hidden');
+            }
+            if (!e.target.closest('.btn-dl-clip-toggle') && !e.target.closest('.dropdown-dl-clip-quality')) {
+                document.querySelectorAll('.dropdown-dl-clip-quality').forEach(m => m.classList.add('hidden'));
             }
 
             // Handle Select All / None Logic
@@ -7706,19 +8239,21 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const img = card.querySelector('.main-generated-img');
                 const wrapper = card.querySelector('.image-editor-wrapper');
                 
-                // --- FIX: Pull timing directly from the card's data attributes ---
-                if (img && img.src.startsWith('data:image/png;base64,')) {
-                    const exactStart = parseFloat(card.dataset.start);
-                    const exactEnd = parseFloat(card.dataset.end);
-                    const localMotion = wrapper?.querySelector('.clip-motion-select')?.value || 'global';
-                    
-                    if (exactEnd > exactStart) {
-                        validClips.push({ src: img.src, start: exactStart, end: exactEnd, localMotion });
+                const exactStart = parseFloat(card.dataset.start);
+                const exactEnd = parseFloat(card.dataset.end);
+                const localMotion = wrapper?.querySelector('.clip-motion-select')?.value || 'global';
+                
+                if (exactEnd > exactStart) {
+                    if (img && img.src.startsWith('data:image/png;base64,')) {
+                        validClips.push({ src: img.src, start: exactStart, end: exactEnd, localMotion, isPlaceholder: false });
+                    } else {
+                        // CRITICAL FIX: Inject A-Roll/Missing blocks as explicit placeholder frames to maintain audio sync
+                        validClips.push({ src: null, start: exactStart, end: exactEnd, localMotion: 'none', isPlaceholder: true });
                     }
                 }
             }
 
-            if (validClips.length === 0) return showToast("No valid images found on the timeline to stitch!");
+            if (validClips.length === 0) return showToast("No valid clips found on the timeline to stitch!");
 
             let fileHandle = null;
             let writableStream = null;
@@ -7769,12 +8304,9 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 videoChunks.push(validClips);
             }
 
+            // Remove confirm() because it is blocked in Sandboxed iframes!
             if (needsChunking) {
-                const proceed = confirm(`⚠️ HYBRID ENGINE ACTIVATED ⚠️\n\nThis video is ${Math.round(totalEstimatedSeconds / 60)} minutes long. Because you are running in an iframe, rendering this as a single file will crash your browser's memory.\n\nScriptForge will now automatically split the render into ${videoChunks.length} separate segments (~8 mins each) and download them sequentially. \n\nWhen done, drop the parts into your editor—they will snap together perfectly!\n\nContinue?`);
-                if (!proceed) {
-                    if (writableStream) { try { await writableStream.abort(); } catch(e){} }
-                    return;
-                }
+                showToast(`⚠️ HYBRID ENGINE: Splitting into ${videoChunks.length} parts to save RAM!`);
             }
 
             ui.btnRenderVideo.disabled = true;
@@ -7784,25 +8316,30 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             // --- Render State & Overlay UI ---
             window.cancelMp4Render = false;
             const renderOverlay = document.createElement('div');
-            renderOverlay.className = "fixed inset-0 bg-slate-900/95 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6";
+            renderOverlay.className = "fixed inset-0 bg-slate-900/95 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden";
             renderOverlay.innerHTML = `
-                <div class="w-full max-w-2xl flex flex-col gap-6 items-center">
-                    <h2 class="text-2xl font-bold text-white uppercase tracking-widest animate-pulse flex items-center gap-3">
-                        <i data-lucide="film" class="w-6 h-6 text-purple-400"></i> Rendering Video Engine
+                <div class="w-full max-w-3xl flex flex-col gap-3 items-center justify-center h-full max-h-full">
+                    <h2 class="text-lg sm:text-xl font-bold text-white uppercase tracking-widest animate-pulse flex items-center gap-2 shrink-0">
+                        <i data-lucide="film" class="w-5 h-5 text-purple-400"></i> Rendering Video Engine
                     </h2>
                     
-                    <div class="relative w-full aspect-video bg-black rounded-lg border border-slate-700 shadow-2xl overflow-hidden flex items-center justify-center">
-                        <canvas id="render-live-preview" class="max-w-full max-h-full object-contain"></canvas>
-                        <div class="absolute top-4 left-4 bg-black/60 backdrop-blur text-[10px] text-purple-400 font-mono font-bold px-2 py-1 rounded border border-purple-500/50">LIVE PREVIEW</div>
-                        ${needsChunking ? `<div id="chunk-indicator" class="absolute top-4 right-4 bg-blue-600/80 backdrop-blur text-[10px] text-white font-mono font-bold px-2 py-1 rounded shadow-lg animate-pulse">PART 1 / ${videoChunks.length}</div>` : ''}
+                    ${needsChunking ? `<div class="w-full max-w-2xl bg-blue-900/40 border border-blue-500/50 text-blue-200 text-xs p-2 rounded text-center shrink-0"><strong>⚠️ Hybrid Engine Activated:</strong> Splitting into <strong>${videoChunks.length} segments</strong> to preserve memory.</div>` : ''}
+                    
+                    <!-- Unified Render Block -->
+                    <div class="relative flex flex-col max-w-full shrink min-h-0">
+                        <div class="relative rounded-t-lg border border-slate-700 shadow-2xl bg-black overflow-hidden flex justify-center items-center shrink min-h-0">
+                            <canvas id="render-live-preview" class="object-contain max-h-[60vh] max-w-full block"></canvas>
+                            <div class="absolute top-3 left-3 bg-black/60 backdrop-blur text-[10px] text-purple-400 font-mono font-bold px-2 py-1 rounded border border-purple-500/50 pointer-events-none">LIVE PREVIEW</div>
+                            ${needsChunking ? `<div id="chunk-indicator" class="absolute top-3 right-3 bg-blue-600/80 backdrop-blur text-[10px] text-white font-mono font-bold px-2 py-1 rounded shadow-lg animate-pulse pointer-events-none">PART 1 / ${videoChunks.length}</div>` : ''}
+                        </div>
+                        
+                        <div class="w-full bg-slate-800 rounded-b-lg h-6 border-x border-b border-slate-700 overflow-hidden relative shadow-inner shrink-0">
+                            <div id="render-progress-bar" class="bg-gradient-to-r from-purple-600 to-indigo-500 h-full transition-all duration-200 w-0"></div>
+                            <span id="render-progress-text" class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow-md">Initializing...</span>
+                        </div>
                     </div>
 
-                    <div class="w-full bg-slate-800 rounded-full h-6 border border-slate-700 overflow-hidden relative shadow-inner">
-                        <div id="render-progress-bar" class="bg-gradient-to-r from-purple-600 to-indigo-500 h-full transition-all duration-200 w-0"></div>
-                        <span id="render-progress-text" class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-md">Initializing...</span>
-                    </div>
-
-                    <button id="btn-cancel-render" class="bg-red-900/50 hover:bg-red-600 text-red-200 hover:text-white border border-red-500/50 px-6 py-3 rounded-full text-sm font-bold transition-all shadow-lg flex items-center gap-2">
+                    <button id="btn-cancel-render" class="mt-2 bg-red-900/50 hover:bg-red-600 text-red-200 hover:text-white border border-red-500/50 px-6 py-2 rounded-full text-xs font-bold transition-all shadow-lg flex items-center gap-2 shrink-0">
                         <i data-lucide="x-circle" class="w-4 h-4"></i> Cancel Rendering
                     </button>
                 </div>
@@ -7828,14 +8365,28 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             const renderStartTime = Date.now();
 
             try {
-                // Load first image to set master video dimensions
-                const firstImg = new Image();
-                firstImg.src = validClips[0].src;
-                await new Promise(r => firstImg.onload = r);
+                const aspect = document.getElementById('v2-image-aspect-ratio')?.value || '16:9';
+                let baseW = 1920, baseH = 1080;
+                if (aspect === '9:16') { baseW = 1080; baseH = 1920; }
+                else if (aspect === '1:1') { baseW = 1080; baseH = 1080; }
+
+                const firstValidClip = validClips.find(c => !c.isPlaceholder);
+                if (firstValidClip) {
+                    const tempImg = new Image();
+                    tempImg.src = firstValidClip.src;
+                    await new Promise(r => tempImg.onload = r);
+                    baseW = tempImg.width;
+                    baseH = tempImg.height;
+                }
                 
-                const width = firstImg.width - (firstImg.width % 2);
-                const height = firstImg.height - (firstImg.height % 2);
+                const qualityMult = parseFloat(ui.btnRenderVideo.dataset.quality || '1');
+                const width = Math.round((baseW * qualityMult) / 2) * 2;
+                const height = Math.round((baseH * qualityMult) / 2) * 2;
                 const fps = 30;
+                
+                // Pre-generate the A-Roll placeholder image to use dynamically
+                // /* A-ROLL REF: const placeholderObj = await window.createPlaceholderImage(width, height, "A-ROLL / MISSING VISUAL"); */
+                const placeholderObj = await window.createPlaceholderImage(width, height, "MISSING VISUAL");
 
                 // Pre-assign motions so they are consistent across chunks
                 const allMotions = ['zoom_in', 'zoom_out', 'pan_left', 'pan_right', 'pan_up', 'pan_down', 'pan_top_left', 'pan_top_right', 'pan_bottom_left', 'pan_bottom_right'];
@@ -7960,8 +8511,11 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
 
                             const isTransitioning = hasTransition && f >= (totalFramesForClip - transitionFrames);
                             
+                            // Stretch motion duration across the active loop PLUS any previous overlap
                             const f_motion = (prevTransition !== 'none') ? f + transitionFrames : f;
-                            const currentProgress = f_motion / totalFramesForClip;
+                            const motionDuration = totalFramesForClip + (prevTransition !== 'none' ? transitionFrames : 0);
+                            const currentProgress = f_motion / motionDuration;
+                            
                             const rect1 = window.getMotionRect(clip.motion, currentProgress, width, height, img.width, img.height);
 
                             if (!isTransitioning) {
@@ -7969,7 +8523,11 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                                 ctx.drawImage(img, rect1.x, rect1.y, rect1.w, rect1.h);
                             } else {
                                 const tProgress = (f - (totalFramesForClip - transitionFrames)) / transitionFrames;
-                                const nextProgress = (f - (totalFramesForClip - transitionFrames)) / nextTotalFrames;
+                                
+                                // The next clip's motion must account for the overlap time it experiences right now
+                                const nextMotionDuration = nextTotalFrames + transitionFrames;
+                                const nextProgress = (f - (totalFramesForClip - transitionFrames)) / nextMotionDuration;
+                                
                                 const rect2 = window.getMotionRect(nextClip.motion, nextProgress, width, height, nextImg.width, nextImg.height);
                                 
                                 if (currentTransition === 'crossfade') {
@@ -8068,7 +8626,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                         
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = needsChunking ? `ScriptForge_Video_${ts}_Part${chunkIdx+1}.mp4` : `ScriptForge_Video_${ts}.mp4`;
+                        a.download = needsChunking ? `Part${chunkIdx+1}_ScriptForge_Video_${ts}.mp4` : `ScriptForge_Video_${ts}.mp4`;
                         a.click();
                         URL.revokeObjectURL(url);
                         
