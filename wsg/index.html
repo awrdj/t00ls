@@ -129,13 +129,25 @@
 
 <div class="bg-gray-100 p-2 shrink-0 shadow-sm z-30 border-b border-gray-200 flex flex-col gap-2">
     <!-- Presets Bar -->
-    <div class="flex items-center gap-2 bg-white p-1.5 rounded-lg border border-gray-200 shadow-sm">
+    <div class="flex items-center gap-1.5 bg-white p-1.5 rounded-lg border border-gray-200 shadow-sm shrink-0">
         <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Preset:</span>
-        <select id="preset-selector" class="flex-1 rounded border-gray-300 shadow-sm text-xs py-1 px-2 outline-none focus:border-indigo-500 bg-gray-50">
+        <select id="preset-selector" class="flex-1 rounded border-gray-300 shadow-sm text-xs py-1 px-1 outline-none focus:border-indigo-500 bg-gray-50 min-w-0">
             <option value="">Default Settings</option>
         </select>
-        <button type="button" id="save-preset-btn" class="text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded border border-indigo-200 transition-colors">Save</button>
-        <button type="button" id="delete-preset-btn" class="text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1.5 rounded border border-red-200 transition-colors hidden">Delete</button>
+        <button type="button" id="save-preset-btn" class="p-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200 transition-colors shrink-0" title="Save Preset">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        </button>
+        <button type="button" id="delete-preset-btn" class="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded border border-red-200 transition-colors hidden shrink-0" title="Delete Preset">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        </button>
+        <div class="w-px h-4 bg-gray-300 mx-0.5 shrink-0"></div>
+        <button type="button" id="export-preset-btn" class="p-1.5 text-slate-600 bg-white hover:bg-slate-100 rounded border border-slate-200 transition-colors shrink-0" title="Export Preset(s) to JSON">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        </button>
+        <button type="button" id="import-preset-btn" class="p-1.5 text-slate-600 bg-white hover:bg-slate-100 rounded border border-slate-200 transition-colors shrink-0" title="Import Presets from JSON">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        </button>
+        <input type="file" id="import-preset-input" accept=".json" class="hidden">
     </div>
     
     <!-- Tabs -->
@@ -180,6 +192,7 @@
                         <label for="word-sort" class="block text-xs font-medium text-gray-700">Word Sorting</label>
                         <select id="word-sort" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2 outline-none">
                             <option value="none">No Sort</option>
+                            <option value="random">Randomize</option>
                             <option value="az">A to Z</option>
                             <option value="za">Z to A</option>
                             <option value="short">Short to Long</option>
@@ -215,6 +228,14 @@
                 <div>
                     <label for="filler-letters" class="block text-xs font-medium text-gray-700">Custom Filler Letters</label>
                     <input type="text" id="filler-letters" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2 outline-none" placeholder="e.g. ABC (leave empty for random A-Z)">
+                    <label class="flex items-center space-x-2 mt-2 text-xs text-gray-700 cursor-pointer">
+                        <input type="checkbox" id="smart-fill" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span>Smart Fill (Use letters from Word Bank)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 mt-2 text-xs text-gray-700 cursor-pointer" title="Strips accents (Ó to O) but preserves unique letters like Ñ">
+                        <input type="checkbox" id="remove-accents" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
+                        <span>Remove Accents (e.g. Ó → O)</span>
+                    </label>
                 </div>
 
                 <div class="pt-2 border-t border-gray-100">
@@ -473,7 +494,7 @@
         <div class="accordion-content">
             <div class="p-2 pt-2 space-y-4">
                 <div>
-                    <div class="flex justify-between items-center mb-2 mt-4">
+                    <div class="flex justify-between items-center mb-2">
                         <label class="block text-sm font-bold text-gray-700">Typography</label>
                         <input type="file" id="custom-font-upload" accept=".ttf,.otf,.woff,.woff2" class="hidden">
                         <button type="button" id="upload-font-btn" class="text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded border border-indigo-100 transition-colors whitespace-nowrap" title="Upload custom font (.ttf, .otf)">+ Upload Font</button>
@@ -1095,6 +1116,107 @@
         </div>
     </div>
 
+    <!-- 2. Page Numbers & Footers -->
+    <div class="accordion-section mb-2 bg-white border border-gray-100 rounded-lg shadow-sm overflow-hidden mx-2 mt-2">
+        <h2 class="accordion-header flex justify-between items-center w-full p-3.5 text-sm font-extrabold text-slate-700 uppercase tracking-wider cursor-pointer hover:bg-slate-50 transition-colors">
+            <span>2. Page Numbers & Footers</span>
+            <svg class="accordion-icon w-5 h-5 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        </h2>
+        <div class="accordion-content">
+            <div class="p-2 pt-2 space-y-4">
+                <div class="grid grid-cols-4 gap-3">
+                    <div class="col-span-3">
+                        <label for="footer-text" class="block text-sm font-medium text-gray-700">Footer Text</label>
+                        <input type="text" id="footer-text" value="" placeholder="e.g. Page #PAGE - © MyBrand" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2 outline-none">
+                        <p class="text-[10px] text-gray-500 mt-1">Use <code class="bg-gray-100 px-1 rounded font-mono">#PAGE</code> for automatic page numbering.</p>
+                    </div>
+                    <div>
+                        <label for="footer-start-number" class="block text-sm font-medium text-gray-700">Start Page #</label>
+                        <input type="number" id="footer-start-number" value="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2 outline-none">
+                    </div>
+                </div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 mt-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Typography & Style</div>
+                        <div class="flex items-center gap-2">
+                            <select id="footer-align" class="rounded-md border border-gray-300 shadow-sm text-[10px] px-1 py-0.5 outline-none focus:border-indigo-500 bg-white" title="Alignment">
+                                <option value="left">Left</option>
+                                <option value="center" selected>Center</option>
+                                <option value="right">Right</option>
+                                <option value="alternating">Alternating (L/R)</option>
+                            </select>
+                            <input type="color" id="color-footer" value="#000000" class="h-5 w-5 rounded border border-gray-300 cursor-pointer p-0 shrink-0" title="Text Color">
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2 mb-2">
+                        <div class="relative flex-1 min-w-0">
+                            <button type="button" class="font-dropdown-btn w-full bg-white border border-gray-300 rounded-md shadow-sm px-2 py-1 text-left sm:text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 flex justify-between items-center transition-colors overflow-hidden" data-target="footer">
+                                <span id="footer-font-selected" class="truncate flex-1 text-[13px]" style="font-family: 'Inter', sans-serif;">Inter</span>
+                                <svg class="h-3 w-3 text-gray-400 shrink-0 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+                            <div id="footer-font-menu" class="font-dropdown-menu hidden absolute z-50 mt-1 w-48 bg-white shadow-xl max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-y-auto sm:text-sm border border-gray-200 left-0" style="padding-top:0;"></div>
+                        </div>
+                        <select id="footer-font-weight" class="w-20 rounded-md border border-gray-300 shadow-sm text-xs px-1 py-1 outline-none focus:border-indigo-500 shrink-0">
+                            <option value="normal" selected>Normal</option>
+                            <option value="bold">Bold</option>
+                        </select>
+                        <input type="number" id="footer-font-size" value="10" class="w-16 rounded-md border border-gray-300 shadow-sm text-xs px-1 py-1 outline-none text-center focus:border-indigo-500 shrink-0" title="Size (pt)">
+                    </div>
+
+                    <div class="flex gap-2 items-center">
+                        <select id="footer-effect" class="flex-1 rounded-md border border-gray-300 shadow-sm text-xs px-1 py-1 outline-none focus:border-indigo-500">
+                            <option value="none" selected>No Effect</option>
+                            <option value="hollow">Hollow</option>
+                            <option value="center-stroke">Stroke</option>
+                        </select>
+                        <div class="flex items-center gap-1 opacity-50 transition-opacity">
+                            <span class="text-[10px] text-gray-500">W:</span>
+                            <input type="number" step="0.5" id="footer-effect-width" value="1" disabled class="w-12 rounded-md border border-gray-300 shadow-sm text-xs px-1 py-1 outline-none text-center focus:border-indigo-500">
+                        </div>
+                        <div class="flex items-center gap-1 opacity-50 transition-opacity">
+                            <input type="color" id="footer-effect-color" value="#000000" disabled class="w-8 h-7 rounded border border-gray-300 cursor-pointer p-0">
+                        </div>
+                    </div>
+
+                    <div class="mt-2 pt-2 border-t border-gray-200">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Background Box</span>
+                            <select id="footer-box-style" class="rounded-md border border-gray-300 shadow-sm text-[10px] px-1 py-0.5 outline-none focus:border-indigo-500 bg-white">
+                                <option value="none" selected>None</option>
+                                <option value="solid">Solid Block</option>
+                            </select>
+                        </div>
+                        <div id="footer-box-options" class="hidden grid grid-cols-2 gap-2 mt-1">
+                            <div class="flex items-center gap-1">
+                                <input type="color" id="footer-box-color" value="#FFFFFF" class="w-6 h-6 rounded border border-gray-300 cursor-pointer p-0 shrink-0">
+                                <input type="range" id="footer-box-opacity" min="0" max="100" value="100" class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer" title="Opacity">
+                            </div>
+                            <div class="flex items-center gap-1" title="Padding (pt)">
+                                <span class="text-[9px] text-gray-500 uppercase font-bold">Pad:</span>
+                                <input type="number" id="footer-box-padding" value="5" min="0" max="100" class="w-full rounded-md border border-gray-300 shadow-sm text-[10px] px-1 py-0.5 outline-none text-center">
+                            </div>
+                            <div class="flex items-center gap-1" title="Radius (pt)">
+                                <span class="text-[9px] text-gray-500 uppercase font-bold">Rad:</span>
+                                <input type="number" id="footer-box-radius" value="5" min="0" max="100" class="w-full rounded-md border border-gray-300 shadow-sm text-[10px] px-1 py-0.5 outline-none text-center">
+                            </div>
+                            <div class="flex items-center gap-1" title="Border Width & Color">
+                                <span class="text-[9px] text-gray-500 uppercase font-bold">Bdr:</span>
+                                <input type="number" step="0.5" id="footer-box-stroke" value="0" min="0" max="10" class="w-full rounded-md border border-gray-300 shadow-sm text-[10px] px-1 py-0.5 outline-none text-center">
+                                <input type="color" id="footer-box-stroke-color" value="#000000" class="w-6 h-6 rounded border border-gray-300 cursor-pointer p-0 shrink-0">
+                            </div>
+                            <div class="flex items-center gap-1 col-span-2" title="Vertical Nudge">
+                                <span class="text-[9px] text-gray-500 uppercase font-bold">Nudge Y:</span>
+                                <span id="footer-box-nudge-y-val" class="text-[9px] font-bold text-indigo-600 w-4 text-right">0</span>
+                                <input type="range" id="footer-box-nudge-y" min="-50" max="50" value="0" class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer" title="Double-click to reset">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
             </div>
 
@@ -1242,9 +1364,10 @@
             </div>
 
             <div class="flex flex-col gap-2 mb-1 pl-2">
-                <div class="flex text-xs font-medium text-gray-500">
+                <div class="flex text-xs font-medium text-gray-500 gap-2">
                     <div class="flex-1">Topic</div>
-                    <div class="w-24 text-center">Word Count</div>
+                    <div class="w-20 text-center" title="Max characters per word">Max Chars</div>
+                    <div class="w-20 text-center">Word Count</div>
                     <div class="w-8"></div>
                 </div>
             </div>
@@ -1256,23 +1379,50 @@
             </button>
 
             <div class="mb-6 pt-3 border-t border-gray-100 flex flex-col gap-3">
-                <div class="flex gap-4">
-                    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input type="radio" name="ai-action" value="append" checked class="text-indigo-600 focus:ring-indigo-500">
-                        Append to current list
-                    </label>
-                    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input type="radio" name="ai-action" value="replace" class="text-indigo-600 focus:ring-indigo-500">
-                        Replace current list
-                    </label>
+                <div class="flex items-center justify-between gap-4 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                            <input type="radio" name="ai-action" value="append" checked class="text-indigo-600 focus:ring-indigo-500">
+                            Append
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                            <input type="radio" name="ai-action" value="replace" class="text-indigo-600 focus:ring-indigo-500">
+                            Replace
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-medium text-gray-500">Language:</span>
+                        <select id="ai-language" class="rounded-md border-gray-300 shadow-sm text-xs border px-2 py-1 outline-none focus:border-indigo-500">
+                            <option value="English" selected>English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Dutch">Dutch</option>
+                            <option value="Portuguese">Portuguese</option>
+                        </select>
+                    </div>
                 </div>
                 <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer bg-indigo-50 p-3 rounded-lg border border-indigo-100 transition-colors hover:bg-indigo-100">
-                    <input type="checkbox" id="ai-include-topics" checked class="rounded border-gray-400 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                    <input type="checkbox" id="ai-include-topics" checked class="rounded border-gray-400 text-indigo-600 focus:ring-indigo-500 w-4 h-4 shrink-0">
                     <div class="flex flex-col">
                         <span class="font-bold text-indigo-900">Include @Topic headers</span>
                         <span class="text-[10px] text-indigo-700 leading-tight mt-0.5">Uncheck to generate a raw, continuous list of words without custom titles.</span>
                     </div>
                 </label>
+                <div class="flex items-center gap-3 bg-purple-50 p-3 rounded-lg border border-purple-100 transition-colors hover:bg-purple-100">
+                    <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer flex-1">
+                        <input type="checkbox" id="ai-generate-clues" class="rounded border-gray-400 text-purple-600 focus:ring-purple-500 w-4 h-4 shrink-0">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-purple-900">Generate Trivia Clues</span>
+                            <span class="text-[10px] text-purple-700 leading-tight mt-0.5">Format: "Clue:WORD".</span>
+                        </div>
+                    </label>
+                    <div class="flex items-center gap-2 shrink-0 border-l border-purple-200 pl-3">
+                        <span class="text-xs font-bold text-purple-900">Max Words:</span>
+                        <input type="number" id="ai-clue-max-words" value="5" min="1" max="15" class="w-16 rounded-md border-gray-300 shadow-sm text-xs border px-2 py-1 outline-none focus:border-purple-500 text-center">
+                    </div>
+                </div>
             </div>
 
             <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
@@ -1311,8 +1461,62 @@
         </div>
     </div>
 
+    <!-- Custom Alert/Confirm Modal -->
+    <div id="custom-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[100] hidden">
+        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-sm flex flex-col">
+            <h3 id="custom-modal-title" class="text-lg font-bold mb-2 text-gray-800">Notice</h3>
+            <p id="custom-modal-message" class="text-sm text-gray-600 mb-6"></p>
+            <div class="flex justify-end gap-3">
+                <button type="button" id="custom-modal-cancel" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors hidden">Cancel</button>
+                <button type="button" id="custom-modal-ok" class="px-6 py-2 text-sm font-bold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Custom Modal System
+            const customModal = document.getElementById('custom-modal');
+            const customModalTitle = document.getElementById('custom-modal-title');
+            const customModalMessage = document.getElementById('custom-modal-message');
+            const customModalCancel = document.getElementById('custom-modal-cancel');
+            const customModalOk = document.getElementById('custom-modal-ok');
+
+            window.appAlert = (message, title = "Notice") => {
+                return new Promise(resolve => {
+                    customModalTitle.textContent = title;
+                    customModalMessage.textContent = message;
+                    customModalCancel.classList.add('hidden');
+                    customModal.classList.remove('hidden');
+                    
+                    const handleOk = () => { cleanup(); resolve(true); };
+                    const cleanup = () => {
+                        customModal.classList.add('hidden');
+                        customModalOk.removeEventListener('click', handleOk);
+                    };
+                    customModalOk.addEventListener('click', handleOk);
+                });
+            };
+
+            window.appConfirm = (message, title = "Please Confirm") => {
+                return new Promise(resolve => {
+                    customModalTitle.textContent = title;
+                    customModalMessage.textContent = message;
+                    customModalCancel.classList.remove('hidden');
+                    customModal.classList.remove('hidden');
+                    
+                    const handleOk = () => { cleanup(); resolve(true); };
+                    const handleCancel = () => { cleanup(); resolve(false); };
+                    const cleanup = () => {
+                        customModal.classList.add('hidden');
+                        customModalOk.removeEventListener('click', handleOk);
+                        customModalCancel.removeEventListener('click', handleCancel);
+                    };
+                    customModalOk.addEventListener('click', handleOk);
+                    customModalCancel.addEventListener('click', handleCancel);
+                });
+            };
+
             // UI Elements
             const trimSizeSelect = document.getElementById('trim-size');
             const customSizeContainer = document.getElementById('custom-size-container');
@@ -1321,6 +1525,12 @@
             const requireBleed = document.getElementById('require-bleed');
             const marginOutsideInput = document.getElementById('margin-outside');
             const marginGutterInput = document.getElementById('margin-gutter');
+            const footerTextInput = document.getElementById('footer-text');
+            const footerAlignSelect = document.getElementById('footer-align');
+            const footerFontSizeInput = document.getElementById('footer-font-size');
+            const footerFontWeightInput = document.getElementById('footer-font-weight');
+            const footerStartNumberInput = document.getElementById('footer-start-number');
+            const colorFooterInput = document.getElementById('color-footer');
             const generateBtn = document.getElementById('generate-btn');
             const exportPdfBtn = document.getElementById('export-pdf-btn');
 
@@ -1338,6 +1548,8 @@ const pdfFormatBtns = document.querySelectorAll('.pdf-format-btn');
             const wordBankTitleInput = document.getElementById('word-bank-title');
             const hiddenMessageInput = document.getElementById('hidden-message');
             const fillerLettersInput = document.getElementById('filler-letters');
+            const smartFillCheckbox = document.getElementById('smart-fill');
+            const removeAccentsCheckbox = document.getElementById('remove-accents');
             const gridRowsInput = document.getElementById('grid-rows');
             const gridColsInput = document.getElementById('grid-cols');
             const hideLinesCheckbox = document.getElementById('grid-hide-lines');
@@ -1516,7 +1728,7 @@ const pngTransparentBgCheckbox = document.getElementById('png-transparent-bg');
             let isDragging = false;
             let isDirty = false; 
             
-            let activeFonts = { title: 'Inter', grid: 'Inter', 'words-title': 'Inter', words: 'Inter' };
+            let activeFonts = { title: 'Inter', grid: 'Inter', 'words-title': 'Inter', words: 'Inter', footer: 'Inter' };
 
             const preMadeShapes = {
                 'Basic Shapes': {
@@ -1596,7 +1808,7 @@ const GOOGLE_FONTS = [
             };
 
             const structuralInputs = [
-                wordsTextarea, wordsPerPuzzleInput, wordSortSelect, hiddenMessageInput, fillerLettersInput,
+                wordsTextarea, wordsPerPuzzleInput, wordSortSelect, hiddenMessageInput, fillerLettersInput, smartFillCheckbox, removeAccentsCheckbox,
                 gridRowsInput, gridColsInput, shapeSelect, solPlacementSelect, solXPagesInput, solPerPageSelect,
                 csvUploadInput, bgImageUpload, customWidthInput, customHeightInput, puzzlesPerPageSelect
             ];
@@ -1654,7 +1866,7 @@ const GOOGLE_FONTS = [
                     document.querySelectorAll('.accordion-icon').forEach(i => i.classList.remove('rotate-180'));
                     
                     if (!isOpen) { 
-                        content.style.maxHeight = content.scrollHeight + 300 + "px"; 
+                        content.style.maxHeight = "2500px"; 
                         icon.classList.add('rotate-180');
                         setTimeout(() => { if (content.style.maxHeight !== '0px') content.style.overflow = 'visible'; }, 300);
                     }
@@ -1719,6 +1931,7 @@ if (type === 'google') {
                     if (key === 'grid') currentConfig.fontGrid = fontName;
                     if (key === 'words-title') currentConfig.fontWordsTitle = fontName;
                     if (key === 'words') currentConfig.fontWords = fontName;
+                    if (key === 'footer') currentConfig.fontFooter = fontName;
                     
                     // Call our upgraded async function instead of bypassing it
                     updateLivePreview();
@@ -1737,7 +1950,7 @@ function initFonts() {
     }
     // --- END NEW CODE ---
 
-    const menus = [document.getElementById('title-font-menu'), document.getElementById('grid-font-menu'), document.getElementById('words-title-font-menu'), document.getElementById('words-font-menu')].filter(Boolean);
+    const menus = [document.getElementById('title-font-menu'), document.getElementById('grid-font-menu'), document.getElementById('words-title-font-menu'), document.getElementById('words-font-menu'), document.getElementById('footer-font-menu')].filter(Boolean);
     menus.forEach(menu => menu.innerHTML = '');
     
     const addItemsToMenus = (labelStr, fontsArray, type) => {
@@ -1755,7 +1968,7 @@ function initFonts() {
                 item.className = 'px-3 py-2 cursor-pointer hover:bg-indigo-50 hover:text-indigo-900 text-gray-800 text-[15px] transition-colors'; 
                 item.style.fontFamily = `"${name}", sans-serif`; 
                 item.textContent = name;
-                const key = index === 0 ? 'title' : (index === 1 ? 'grid' : (index === 2 ? 'words-title' : 'words'));
+                const key = index === 0 ? 'title' : (index === 1 ? 'grid' : (index === 2 ? 'words-title' : (index === 3 ? 'words' : 'footer')));
                 item.addEventListener('click', () => handleFontChange(name, type, key)); 
                 menu.appendChild(item);
             });
@@ -1805,7 +2018,14 @@ currentConfig.titleBoxNudge = titleBoxNudgeSlider ? parseFloat(titleBoxNudgeSlid
                 currentConfig.effectWordsTitle = document.getElementById('words-title-effect').value; currentConfig.effectWidthWordsTitle = document.getElementById('words-title-effect-width').value; currentConfig.effectColorWordsTitle = document.getElementById('words-title-effect-color').value;
                 currentConfig.effectWords = document.getElementById('words-effect').value; currentConfig.effectWidthWords = document.getElementById('words-effect-width').value; currentConfig.effectColorWords = document.getElementById('words-effect-color').value;
                 
-                ['title', 'grid', 'words-title', 'words'].forEach(k => {
+                currentConfig.fontFooter = activeFonts.footer;
+                currentConfig.weightFooter = footerFontWeightInput ? footerFontWeightInput.value : 'normal';
+                currentConfig.colorFooter = colorFooterInput ? colorFooterInput.value : '#000000';
+                currentConfig.effectFooter = document.getElementById('footer-effect') ? document.getElementById('footer-effect').value : 'none';
+                currentConfig.effectWidthFooter = document.getElementById('footer-effect-width') ? document.getElementById('footer-effect-width').value : '1';
+                currentConfig.effectColorFooter = document.getElementById('footer-effect-color') ? document.getElementById('footer-effect-color').value : '#000000';
+
+                ['title', 'grid', 'words-title', 'words', 'footer'].forEach(k => {
                     currentConfig[`${k}BoxStyle`] = document.getElementById(`${k}-box-style`) ? document.getElementById(`${k}-box-style`).value : 'none';
                     currentConfig[`${k}BoxColor`] = document.getElementById(`${k}-box-color`) ? document.getElementById(`${k}-box-color`).value : '#FFFFFF';
                     currentConfig[`${k}BoxOpacity`] = document.getElementById(`${k}-box-opacity`) ? document.getElementById(`${k}-box-opacity`).value : '100';
@@ -1825,6 +2045,8 @@ currentConfig.titleBoxNudge = titleBoxNudgeSlider ? parseFloat(titleBoxNudgeSlid
                 currentConfig.solTitleFormat = solTitleFormatInput.value; currentConfig.solShowWordBank = solShowWordBankCheckbox.checked; currentConfig.solStrikethroughWords = solStrikethroughWordsCheckbox.checked;
                 currentConfig.solHighlightShape = solHighlightShapeSelect.value; currentConfig.solHighlightFill = solHighlightFillSelect.value; currentConfig.solHighlightOutline = solHighlightOutlineSelect.value; currentConfig.solHighlightWidth = solHighlightWidthInput.value; currentConfig.solHighlightStrokeWidth = solHighlightStrokeWidthInput.value; currentConfig.solLineBoost = solLineBoostInput.value;
                 currentConfig.bgImage = loadedBgImage; currentConfig.bgScaling = bgImageScaling.value; currentConfig.bgImageZoom = document.getElementById('bg-image-zoom') ? document.getElementById('bg-image-zoom').value : 100; currentConfig.contentOpacity = contentOpacitySlider.value; currentConfig.contentBoxRadius = contentBoxRadiusInput.value; currentConfig.contentBoxStrokeWidth = contentBoxStrokeWidthInput.value; currentConfig.contentBoxStrokeColor = contentBoxStrokeColorInput.value;
+                currentConfig.footerText = footerTextInput ? footerTextInput.value : ''; currentConfig.footerAlign = footerAlignSelect ? footerAlignSelect.value : 'center'; currentConfig.footerFontSize = footerFontSizeInput ? footerFontSizeInput.value : 10;
+                currentConfig.footerStartNumber = footerStartNumberInput ? parseInt(footerStartNumberInput.value, 10) : 1;
                 renderCurrentPage();
             };
 
@@ -1832,7 +2054,7 @@ currentConfig.titleBoxNudge = titleBoxNudgeSlider ? parseFloat(titleBoxNudgeSlid
                 if(input) { input.addEventListener('change', updateLivePreview); if(input.type === 'number') input.addEventListener('input', updateLivePreview); }
             });
             
-            ['title', 'grid', 'words-title', 'words'].forEach(key => {
+            ['title', 'grid', 'words-title', 'words', 'footer'].forEach(key => {
                 const effect = document.getElementById(`${key}-effect`); const width = document.getElementById(`${key}-effect-width`); const color = document.getElementById(`${key}-effect-color`);
                 effect.addEventListener('change', (e) => { const disable = e.target.value === 'none'; width.disabled = disable; color.disabled = disable; width.parentElement.classList.toggle('opacity-50', disable); color.parentElement.classList.toggle('opacity-50', disable); updateLivePreview(); });
                 width.addEventListener('input', updateLivePreview); color.addEventListener('input', updateLivePreview);
@@ -1853,7 +2075,7 @@ currentConfig.titleBoxNudge = titleBoxNudgeSlider ? parseFloat(titleBoxNudgeSlid
                         // Fix to ensure accordion resizes when menu opens
                         const content = boxStyle.closest('.accordion-content');
                         if (content && content.style.maxHeight !== '0px') {
-                            content.style.maxHeight = content.scrollHeight + 300 + "px";
+                            content.style.maxHeight = "2500px";
                         }
                         updateLivePreview();
                     });
@@ -1895,6 +2117,10 @@ currentConfig.titleBoxNudge = titleBoxNudgeSlider ? parseFloat(titleBoxNudgeSlid
     input.addEventListener('change', updateLivePreview);
   });
             [gapTopInput, gapTitleInput, gapWordbankInput, gapWbTitleInput, gridLineWidthInput, solHighlightWidthInput, solHighlightStrokeWidthInput].forEach(input => { input.addEventListener('input', updateLivePreview); input.addEventListener('change', updateLivePreview); });
+            
+            [footerTextInput, footerAlignSelect, footerFontSizeInput, footerFontWeightInput, colorFooterInput, footerStartNumberInput].forEach(input => { 
+                if(input) { input.addEventListener('input', updateLivePreview); input.addEventListener('change', updateLivePreview); } 
+            });
             
             gridVerticalNudgeInput.addEventListener('input', (e) => { if (gridVerticalNudgeVal) gridVerticalNudgeVal.textContent = e.target.value + '%'; updateLivePreview(); });
             gridVerticalNudgeInput.addEventListener('dblclick', (e) => { e.target.value = 0; if (gridVerticalNudgeVal) gridVerticalNudgeVal.textContent = '0%'; updateLivePreview(); });
@@ -1962,11 +2188,11 @@ if (titleBoxNudgeSlider) {
             bgImageUpload.addEventListener('change', (e) => {
                 const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
                 reader.onload = (event) => {
-                    const img = new Image(); img.onload = () => { loadedBgImage = img; clearBgImageBtn.classList.remove('hidden'); bgImageOptions.classList.remove('hidden'); const content = bgImageUpload.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = content.scrollHeight + 300 + "px"; } updateLivePreview(); }; img.src = event.target.result;
+                    const img = new Image(); img.onload = () => { loadedBgImage = img; clearBgImageBtn.classList.remove('hidden'); bgImageOptions.classList.remove('hidden'); const content = bgImageUpload.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = "2500px"; } updateLivePreview(); }; img.src = event.target.result;
                 }; reader.readAsDataURL(file);
             });
             clearBgImageBtn.addEventListener('click', () => { loadedBgImage = null; bgImageUpload.value = ''; clearBgImageBtn.classList.add('hidden'); bgImageOptions.classList.add('hidden'); updateLivePreview(); });
-            solShowWordBankCheckbox.addEventListener('change', (e) => { solStrikethroughContainer.classList.toggle('hidden', !e.target.checked); const content = solShowWordBankCheckbox.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = content.scrollHeight + 300 + "px"; } updateLivePreview(); });
+            solShowWordBankCheckbox.addEventListener('change', (e) => { solStrikethroughContainer.classList.toggle('hidden', !e.target.checked); const content = solShowWordBankCheckbox.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = "2500px"; } updateLivePreview(); });
             solStrikethroughWordsCheckbox.addEventListener('change', updateLivePreview);
 
             solHighlightShapeSelect.addEventListener('change', () => {
@@ -2025,7 +2251,7 @@ if (titleBoxNudgeContainer) titleBoxNudgeContainer.style.display = val === 'side
             });
             
             puzzlesPerPageSelect.addEventListener('change', updateLivePreview);
-            hideLinesCheckbox.addEventListener('change', (e) => { outerBorderContainer.classList.toggle('hidden', !e.target.checked); const content = hideLinesCheckbox.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = content.scrollHeight + 300 + "px"; } updateLivePreview(); });
+            hideLinesCheckbox.addEventListener('change', (e) => { outerBorderContainer.classList.toggle('hidden', !e.target.checked); const content = hideLinesCheckbox.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = "2500px"; } updateLivePreview(); });
             showOuterBorderCheckbox.addEventListener('change', () => {
     innerMarginContainer.classList.toggle('hidden', !showOuterBorderCheckbox.checked);
     if (!showOuterBorderCheckbox.checked) {
@@ -2045,7 +2271,7 @@ if (titleBoxNudgeContainer) titleBoxNudgeContainer.style.display = val === 'side
                         if (existingIdx >= 0) customFonts[existingIdx] = { name: fontName, data: dataUrl }; else customFonts.push({ name: fontName, data: dataUrl });
                         localStorage.setItem('kdp_custom_fonts', JSON.stringify(customFonts)); initFonts(); try { await document.fonts.load(`16px "${fontName}"`); } catch(e) {}
                         const origText = uploadFontBtn.textContent; uploadFontBtn.textContent = 'Added!'; setTimeout(() => uploadFontBtn.textContent = origText, 2000);
-                    } catch (err) { alert("Font file is too large to save in browser storage."); }
+                    } catch (err) { window.appAlert("Font file is too large to save in browser storage."); }
                 }; reader.readAsDataURL(file); e.target.value = '';
             });
 
@@ -2082,7 +2308,7 @@ if (titleBoxNudgeContainer) titleBoxNudgeContainer.style.display = val === 'side
                         canvas.width = targetWidth; canvas.height = targetHeight; ctx.drawImage(img, 0, 0, targetWidth, targetHeight); const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight); const data = imageData.data;
                         const table = document.createElement('table'); table.className = 'grid-editor-table mx-auto'; table.addEventListener('mousedown', (e) => { e.preventDefault(); isDragging = true; if (e.target.classList.contains('grid-editor-cell')) applyBrush(e.target); }); table.addEventListener('mouseover', (e) => { if (isDragging && e.target.classList.contains('grid-editor-cell')) applyBrush(e.target); });
                         for (let y = 0; y < targetHeight; y++) { const tr = table.insertRow(); for (let x = 0; x < targetWidth; x++) { const index = (y * targetWidth + x) * 4; const r = data[index]; const g = data[index + 1]; const b = data[index + 2]; const a = data[index + 3]; const isShape = a > 128 && (r < 240 || g < 240 || b < 240); const td = tr.insertCell(); td.className = `grid-editor-cell ${isShape ? 'active' : 'inactive'}`; td.dataset.active = isShape; } }
-                        gridEditor.innerHTML = ''; gridEditor.appendChild(table); shapeSelect.value = 'custom'; customGridEditorContainer.classList.remove('hidden'); saveShapeBtn.classList.remove('hidden'); imageUploadContainer.classList.add('hidden'); imageProcessOptions.classList.add('hidden'); imageLoader.classList.add('hidden'); const content = shapeSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = content.scrollHeight + 300 + "px"; }
+                        gridEditor.innerHTML = ''; gridEditor.appendChild(table); shapeSelect.value = 'custom'; customGridEditorContainer.classList.remove('hidden'); saveShapeBtn.classList.remove('hidden'); imageUploadContainer.classList.add('hidden'); imageProcessOptions.classList.add('hidden'); imageLoader.classList.add('hidden'); const content = shapeSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = "2500px"; }
                     }; img.src = event.target.result;
                 }; reader.readAsDataURL(uploadedFile); imageUploader.value = ''; markDirty();
             }
@@ -2093,9 +2319,9 @@ if (titleBoxNudgeContainer) titleBoxNudgeContainer.style.display = val === 'side
             shapeSelect.addEventListener('change', () => {
                 const val = shapeSelect.value; customGridEditorContainer.classList.add('hidden'); imageUploadContainer.classList.add('hidden'); saveShapeBtn.classList.add('hidden'); editShapeBtn.classList.add('hidden'); deleteShapeBtn.classList.add('hidden');
                 if (val === 'custom') { customGridEditorContainer.classList.remove('hidden'); saveShapeBtn.classList.remove('hidden'); renderGridEditor(); } else if (val === 'image-upload') { imageUploadContainer.classList.remove('hidden'); } else if (val !== 'rectangle') { editShapeBtn.classList.remove('hidden'); if (val.startsWith('Saved Shapes/')) { deleteShapeBtn.classList.remove('hidden'); } }
-                const content = shapeSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = content.scrollHeight + 300 + "px"; }
+                const content = shapeSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = "2500px"; }
             });
-            editShapeBtn.addEventListener('click', () => { const initialData = getInitialGrid(); if (!initialData) return; shapeSelect.value = 'custom'; customGridEditorContainer.classList.remove('hidden'); saveShapeBtn.classList.remove('hidden'); editShapeBtn.classList.add('hidden'); renderGridEditor(initialData.grid); const content = shapeSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = content.scrollHeight + 300 + "px"; } });
+            editShapeBtn.addEventListener('click', () => { const initialData = getInitialGrid(); if (!initialData) return; shapeSelect.value = 'custom'; customGridEditorContainer.classList.remove('hidden'); saveShapeBtn.classList.remove('hidden'); editShapeBtn.classList.add('hidden'); renderGridEditor(initialData.grid); const content = shapeSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = "2500px"; } });
             gridRowsInput.addEventListener('input', () => { if(shapeSelect.value === 'custom') renderGridEditor(); });
             gridColsInput.addEventListener('input', () => { if(shapeSelect.value === 'custom') renderGridEditor(); });
             imageUploader.addEventListener('change', (e) => { if (e.target.files && e.target.files[0]) { imageProcessOptions.classList.remove('hidden'); } });
@@ -2103,11 +2329,12 @@ if (titleBoxNudgeContainer) titleBoxNudgeContainer.style.display = val === 'side
             saveShapeBtn.addEventListener('click', () => { shapeNameInput.value = ''; saveShapeModal.classList.remove('hidden'); shapeNameInput.focus(); });
             cancelSaveShapeBtn.addEventListener('click', () => { saveShapeModal.classList.add('hidden'); });
             confirmSaveShapeBtn.addEventListener('click', () => { const name = shapeNameInput.value.trim(); if (!name) return; const currentGrid = parseCustomGridFromEditor(); if (!currentGrid) return; savedShapes[name] = currentGrid.map(row => row.map(cell => cell === null ? 'x' : '.').join('')).join('\n'); localStorage.setItem('kdp_saved_shapes', JSON.stringify(savedShapes)); populateShapes(); shapeSelect.value = `Saved Shapes/${name}`; saveShapeModal.classList.add('hidden'); shapeSelect.dispatchEvent(new Event('change')); });
-            deleteShapeBtn.addEventListener('click', () => {
+            deleteShapeBtn.addEventListener('click', async () => {
     const val = shapeSelect.value;
     if (!val.startsWith('Saved Shapes/')) return;
 const shapeName = val.split('/')[1];
-    if (!confirm(`Delete saved shape "${shapeName}"? This cannot be undone.`)) return;
+    const confirmed = await window.appConfirm(`Delete saved shape "${shapeName}"? This cannot be undone.`);
+    if (!confirmed) return;
     delete savedShapes[shapeName];
     localStorage.setItem('kdp_saved_shapes', JSON.stringify(savedShapes));
     populateShapes();
@@ -2121,9 +2348,9 @@ const shapeName = val.split('/')[1];
             solPlacementSelect.addEventListener('change', () => {
                 const val = solPlacementSelect.value; solXPagesContainer.classList.toggle('hidden', val !== 'after_x_pages'); const disablePerpage = (val === 'after_puzzle' || val === 'none'); solPerPageSelect.disabled = disablePerpage; const disableHighlights = (val === 'none'); solHighlightShapeSelect.disabled = disableHighlights;
                 if (disableHighlights) { solHighlightOptionsContainer.classList.add('opacity-50'); solHighlightFillSelect.disabled = true; solHighlightOutlineSelect.disabled = true; solHighlightWidthInput.disabled = true; solHighlightStrokeWidthInput.disabled = true; } else { solHighlightShapeSelect.dispatchEvent(new Event('change')); }
-                solPerPageHint.classList.toggle('hidden', val !== 'after_puzzle'); if (val === 'after_puzzle') { solPerPageSelect.value = "1"; } const showWordBankOptions = solPerPageSelect.value === "1" && val !== 'none'; solWordBankOptionsContainer.classList.toggle('hidden', !showWordBankOptions); const content = solPlacementSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = content.scrollHeight + 300 + "px"; } updateBoosterState();
+                solPerPageHint.classList.toggle('hidden', val !== 'after_puzzle'); if (val === 'after_puzzle') { solPerPageSelect.value = "1"; } const showWordBankOptions = solPerPageSelect.value === "1" && val !== 'none'; solWordBankOptionsContainer.classList.toggle('hidden', !showWordBankOptions); const content = solPlacementSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = "2500px"; } updateBoosterState();
             });
-            solPerPageSelect.addEventListener('change', () => { const showWordBankOptions = solPerPageSelect.value === "1" && solPlacementSelect.value !== 'none'; solWordBankOptionsContainer.classList.toggle('hidden', !showWordBankOptions); const content = solPerPageSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = content.scrollHeight + 300 + "px"; } updateBoosterState(); });
+            solPerPageSelect.addEventListener('change', () => { const showWordBankOptions = solPerPageSelect.value === "1" && solPlacementSelect.value !== 'none'; solWordBankOptionsContainer.classList.toggle('hidden', !showWordBankOptions); const content = solPerPageSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = "2500px"; } updateBoosterState(); });
 
             function renderDirectionSelector() {
                 const container = document.getElementById('direction-selector'); container.innerHTML = '';
@@ -2146,7 +2373,7 @@ const shapeName = val.split('/')[1];
             const getMarginsForPage = (pageIndex, totalPages) => { const specs = calculateMarginsAndSize(totalPages); const isEven = (pageIndex + 1) % 2 === 0; const left = isEven ? specs.outside : specs.gutter; const right = isEven ? specs.gutter : specs.outside; return { top: specs.top, bottom: specs.bottom, left, right }; };
             const resizePreview = () => { const specs = calculateMarginsAndSize(bookPages.length || 100); physicalPage.style.width = `${specs.docWidth}in`; physicalPage.style.height = `${specs.docHeight}in`; const margins = getMarginsForPage(currentPageIndex, bookPages.length || 100); safeZone.style.top = `${margins.top}in`; safeZone.style.bottom = `${margins.bottom}in`; safeZone.style.left = `${margins.left}in`; safeZone.style.right = `${margins.right}in`; const dpi = 96; const pxWidth = specs.docWidth * dpi; const pxHeight = specs.docHeight * dpi; const wrapperRect = previewWorkspace.getBoundingClientRect(); const padding = 40; const scale = Math.min((wrapperRect.width - padding) / pxWidth, (wrapperRect.height - padding) / pxHeight, 1.2); physicalPage.style.transform = `scale(${scale})`; };
             window.addEventListener('resize', resizePreview);
-            trimSizeSelect.addEventListener('change', (e) => { if (e.target.value === 'custom') { customSizeContainer.classList.remove('hidden'); } else { customSizeContainer.classList.add('hidden'); } const content = trimSizeSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = content.scrollHeight + 300 + "px"; } resizePreview(); renderCurrentPage(); });
+            trimSizeSelect.addEventListener('change', (e) => { if (e.target.value === 'custom') { customSizeContainer.classList.remove('hidden'); } else { customSizeContainer.classList.add('hidden'); } const content = trimSizeSelect.closest('.accordion-content'); if (content && content.style.maxHeight !== '0px') { content.style.maxHeight = "2500px"; } resizePreview(); renderCurrentPage(); });
             [customWidthInput, customHeightInput].forEach(el => { el.addEventListener('input', () => { resizePreview(); renderCurrentPage(); }); });
             requireBleed.addEventListener('change', () => { const currentMargin = parseFloat(marginOutsideInput.value); if (requireBleed.checked) { if (currentMargin === 0.25 || currentMargin < 0.375) marginOutsideInput.value = "0.375"; } else { if (currentMargin === 0.375) marginOutsideInput.value = "0.25"; } resizePreview(); renderCurrentPage(); });
             marginOutsideInput.addEventListener('change', () => { resizePreview(); renderCurrentPage(); });
@@ -2159,18 +2386,34 @@ const shapeName = val.split('/')[1];
             csvUploadInput.addEventListener('change', (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { const content = event.target.result; const standardized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n'); if (wordsTextarea.value.trim().length > 0) { wordsTextarea.value = wordsTextarea.value.trim() + "\n\n" + standardized; } else { wordsTextarea.value = standardized; } const origText = csvUploadBtn.textContent; csvUploadBtn.textContent = 'Loaded!'; setTimeout(() => csvUploadBtn.textContent = origText, 2000); markDirty(); updateLivePreview(); }; reader.readAsText(file); e.target.value = ''; });
 
             if (!window.location.hostname.includes('usercontent.goog') && !window.location.hostname.includes('localhost') && window.location.hostname !== '') { apiKeyContainer.classList.remove('hidden'); const savedKey = localStorage.getItem('gemini_api_key'); if (savedKey) geminiApiKeyInput.value = savedKey; }
-            const createTopicRow = () => { const row = document.createElement('div'); row.className = 'flex gap-2 items-center'; row.innerHTML = `<input type="text" class="topic-input flex-1 rounded-md border-gray-300 shadow-sm text-sm border px-3 py-2 outline-none focus:border-indigo-500" placeholder="e.g. Animals"><input type="number" class="count-input w-24 text-center rounded-md border-gray-300 shadow-sm text-sm border px-2 py-2 outline-none focus:border-indigo-500" value="15" min="5" max="40"><button type="button" class="remove-topic text-red-500 hover:text-red-700 p-2 font-bold transition-colors" title="Remove">&times;</button>`; row.querySelector('.remove-topic').onclick = () => { if (topicList.children.length > 1) row.remove(); }; topicList.appendChild(row); };
+            const createTopicRow = () => { const row = document.createElement('div'); row.className = 'flex gap-2 items-center'; row.innerHTML = `<input type="text" class="topic-input flex-1 rounded-md border-gray-300 shadow-sm text-sm border px-3 py-2 outline-none focus:border-indigo-500" placeholder="e.g. Animals"><input type="number" class="chars-input w-20 text-center rounded-md border-gray-300 shadow-sm text-sm border px-2 py-2 outline-none focus:border-indigo-500" value="12" min="3" max="25" title="Max Characters"><input type="number" class="count-input w-20 text-center rounded-md border-gray-300 shadow-sm text-sm border px-2 py-2 outline-none focus:border-indigo-500" value="15" min="5" max="40" title="Word Count"><button type="button" class="remove-topic text-red-500 hover:text-red-700 p-2 font-bold transition-colors" title="Remove">&times;</button>`; row.querySelector('.remove-topic').onclick = () => { if (topicList.children.length > 1) row.remove(); }; topicList.appendChild(row); };
             openAiBtn.onclick = () => { if (topicList.children.length === 0) createTopicRow(); aiModal.classList.remove('hidden'); };
             closeAiModalBtn.onclick = () => { aiModal.classList.add('hidden'); }; addTopicBtn.onclick = () => createTopicRow();
             generateAiBtn.onclick = async () => {
-                const topicInputs = document.querySelectorAll('.topic-input'); const countInputs = document.querySelectorAll('.count-input'); const topics = [];
-                for (let i = 0; i < topicInputs.length; i++) { const t = topicInputs[i].value.trim(); const c = countInputs[i].value; if (t) topics.push({ topic: t, count: c }); }
-                if (topics.length === 0) { alert("Please enter at least one topic."); return; }
-                let apiKey = ""; if (!apiKeyContainer.classList.contains('hidden')) { apiKey = geminiApiKeyInput.value.trim(); if (!apiKey) { alert("Please enter your Gemini API Key."); return; } localStorage.setItem('gemini_api_key', apiKey); }
-                generateAiBtn.disabled = true; aiLoader.classList.remove('hidden'); const includeTopics = document.getElementById('ai-include-topics').checked;
-                let promptText = "Generate a word search word bank for the following topics:\n"; topics.forEach((t) => { promptText += `- Topic: ${t.topic}, Word Count: ${t.count}\n`; });
-                let systemInstructionText = "";
-                if (includeTopics) { promptText += "\nOutput ONLY the generated words. For each topic, start with a line containing '@' followed by the topic name (e.g. @Animals). Then list the words separated by newlines. Separate topics with an empty line."; systemInstructionText = "You are a helpful assistant that strictly outputs words for a word search puzzle. No conversational filler. For each topic, you MUST output a title line starting with '@' (like @Topic Name), then the requested words separated by newlines."; } else { promptText += "\nOutput ONLY the generated words. Do NOT output any topic headers, titles, or '@' symbols. Just give me the raw words separated by newlines. If multiple topics are provided, separate the words for each topic with a single empty line."; systemInstructionText = "You are a helpful assistant that strictly outputs words for a word search puzzle. No conversational filler. Do NOT output any topic headers. Just the requested words separated by newlines. If multiple topics are provided, separate them by exactly ONE empty line."; }
+                const topicInputs = document.querySelectorAll('.topic-input'); const countInputs = document.querySelectorAll('.count-input'); const charsInputs = document.querySelectorAll('.chars-input'); const topics = [];
+                for (let i = 0; i < topicInputs.length; i++) { const t = topicInputs[i].value.trim(); const c = countInputs[i].value; const chars = charsInputs[i].value; if (t) topics.push({ topic: t, count: c, chars: chars }); }
+                if (topics.length === 0) { window.appAlert("Please enter at least one topic."); return; }
+                let apiKey = ""; if (!apiKeyContainer.classList.contains('hidden')) { apiKey = geminiApiKeyInput.value.trim(); if (!apiKey) { window.appAlert("Please enter your Gemini API Key."); return; } localStorage.setItem('gemini_api_key', apiKey); }
+                generateAiBtn.disabled = true; aiLoader.classList.remove('hidden'); 
+                const includeTopics = document.getElementById('ai-include-topics').checked;
+                const generateClues = document.getElementById('ai-generate-clues').checked;
+                const targetLanguage = document.getElementById('ai-language').value;
+                const maxClueWords = document.getElementById('ai-clue-max-words').value;
+                
+                let promptText = `Generate a word search word bank in ${targetLanguage} for the following topics:\n`; topics.forEach((t) => { promptText += `- Topic: ${t.topic}, Word Count: ${t.count}, Max Characters per word: ${t.chars}\n`; });
+                let systemInstructionText = `You are a helpful assistant that strictly outputs content in ${targetLanguage} for a word search puzzle. No conversational filler. Ensure no word exceeds the requested Max Characters limit.`;
+                
+                let formatInstruction = generateClues 
+                    ? `For every single word, provide a short, fun trivia clue (MAXIMUM ${maxClueWords} words long) followed by a colon and the word in ALL CAPS. Format strictly as 'Clue:WORD' (e.g., Man's best friend:DOG). Do not use spaces around the colon.`
+                    : "Output just the requested words in ALL CAPS, separated by newlines.";
+
+                if (includeTopics) { 
+                    promptText += `\nOutput ONLY the generated content. For each topic, start with a line containing '@' followed by the topic name (e.g. @Animals). Then list the items separated by newlines. Separate topics with an empty line. ${formatInstruction}`; 
+                    systemInstructionText += " For each topic, you MUST output a title line starting with '@' (like @Topic Name)."; 
+                } else { 
+                    promptText += `\nOutput ONLY the generated content. Do NOT output any topic headers, titles, or '@' symbols. If multiple topics are provided, separate the items for each topic with a single empty line. ${formatInstruction}`; 
+                    systemInstructionText += " Do NOT output any topic headers. If multiple topics are provided, separate them by exactly ONE empty line."; 
+                }
                 try {
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`; const payload = { contents: [{ parts: [{ text: promptText }] }], systemInstruction: { parts: [{ text: systemInstructionText }] } };
                     let response; for (let i = 0; i <= 5; i++) { try { response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (response.ok) break; if (i === 5) break; } catch (e) { if (i === 5) throw e; } await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000)); }
@@ -2178,12 +2421,30 @@ const shapeName = val.split('/')[1];
                     if (!response.ok) { if (response.status === 401) { if (!apiKey) { throw new Error("Canvas session expired or rate-limited. Please save your work and refresh the page."); } else { throw new Error("Invalid Gemini API Key. Please check your key and try again."); } } throw new Error(result.error?.message || `API request failed with status ${response.status}`); }
                     const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (text) { const action = document.querySelector('input[name="ai-action"]:checked').value; if (action === 'append' && wordsTextarea.value.trim().length > 0) { wordsTextarea.value = wordsTextarea.value.trim() + "\n\n" + text.trim(); } else { wordsTextarea.value = text.trim(); } aiModal.classList.add('hidden'); const originalText = openAiBtn.textContent; openAiBtn.textContent = 'Done!'; setTimeout(() => { openAiBtn.textContent = originalText; }, 2000); }
-                } catch (err) { console.error(err); alert(err.message.includes("Canvas session") || err.message.includes("Invalid Gemini") ? err.message : "Error generating words: " + err.message); } finally { generateAiBtn.disabled = false; aiLoader.classList.add('hidden'); }
+                } catch (err) { console.error(err); window.appAlert(err.message.includes("Canvas session") || err.message.includes("Invalid Gemini") ? err.message : "Error generating words: " + err.message); } finally { generateAiBtn.disabled = false; aiLoader.classList.add('hidden'); }
             };
 
             const parseWords = () => {
                 const raw = wordsTextarea.value; const wordsPer = parseInt(wordsPerPuzzleInput.value, 10); let chunks = []; let currentTitle = ""; let currentWords = []; const lines = raw.split('\n');
-                for (let i = 0; i < lines.length; i++) { const line = lines[i].trim(); if (line.startsWith('@')) { if (currentWords.length > 0) { chunks.push({ title: currentTitle, words: currentWords }); currentWords = []; } currentTitle = line.substring(1).trim(); } else if (line === '' && !(wordsPer > 0)) { if (currentWords.length > 0) { chunks.push({ title: currentTitle, words: currentWords }); currentWords = []; currentTitle = ""; } } else { const words = line.split(',').map(w => w.trim().toUpperCase().replace(/[^A-Z]/g, '')).filter(w => w.length > 0); if (words.length > 0) { currentWords.push(...words); } } }
+                for (let i = 0; i < lines.length; i++) { const line = lines[i].trim(); if (line.startsWith('@')) { if (currentWords.length > 0) { chunks.push({ title: currentTitle, words: currentWords }); currentWords = []; } currentTitle = line.substring(1).trim(); } else if (line === '' && !(wordsPer > 0)) { if (currentWords.length > 0) { chunks.push({ title: currentTitle, words: currentWords }); currentWords = []; currentTitle = ""; } } else { 
+                    const rawItems = line.split(',');
+                    for (let item of rawItems) {
+                        let clue = null; let w = item;
+                        if (item.includes(':')) { const pts = item.split(':'); clue = pts[0].trim(); w = pts[1]; }
+                        
+                        let cleanW = w.trim().toUpperCase();
+                        if (document.getElementById('remove-accents').checked) {
+                            // Smart Normalize: Strip accents but temporarily hide/protect the Spanish Ñ
+                            cleanW = cleanW.replace(/Ñ/g, '##NYE##')
+                                           .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                                           .replace(/##NYE##/g, 'Ñ');
+                        }
+                        cleanW = cleanW.replace(/[^\p{L}]/gu, '');
+                        
+                        // Pass the 'clean' word for the grid, but use the original 'w' (or clue) for the text bank
+                        if (cleanW.length > 0) currentWords.push({ w: cleanW, c: clue || w.trim() });
+                    }
+                } }
                 if (currentWords.length > 0) { chunks.push({ title: currentTitle, words: currentWords }); }
                 let finalChunks = [];
                 if (wordsPer > 0) { chunks.forEach(chunk => { for (let i = 0; i < chunk.words.length; i += wordsPer) { finalChunks.push({ title: chunk.title, words: chunk.words.slice(i, i + wordsPer) }); } }); } else { finalChunks = chunks; }
@@ -2194,7 +2455,7 @@ const shapeName = val.split('/')[1];
                 const initialData = getInitialGrid(); if (!initialData) throw new Error("Invalid grid shape configuration. If using Custom Shape, make sure it is not blank.");
                 const rows = initialData.rows; const cols = initialData.cols; let grid = initialData.grid.map(r => [...r]); let solGrid = initialData.grid.map(r => [...r]);
                 const selectedDirKeys = Object.keys(directions).filter(k => document.getElementById(`dir-${k}`).checked); if (selectedDirKeys.length === 0) selectedDirKeys.push('h', 'v'); 
-                let wordsObj = words.map((w, i) => ({ w, i })); wordsObj.sort((a, b) => b.w.length - a.w.length); 
+                let wordsObj = words.map((obj, i) => ({ w: obj.w || obj, c: obj.c || obj, i })); wordsObj.sort((a, b) => b.w.length - a.w.length); 
                 const coords = []; const placed = []; const unplaced = [];
                 for (let data of wordsObj) {
                     let placedOk = false;
@@ -2206,13 +2467,24 @@ const shapeName = val.split('/')[1];
                     }
                     if (!placedOk) { unplaced.push(data.w); }
                 }
-                placed.sort((a,b) => a.i - b.i); const finalPlaced = placed.map(d => d.w);
-                const msgRaw = hiddenMessageInput.value.trim().toUpperCase().replace(/[^A-Z]/g, ''); const fillRaw = fillerLettersInput.value.trim().toUpperCase().replace(/[^A-Z]/g, '');
-                const pool = fillRaw || "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; let msgIdx = 0;
+                placed.sort((a,b) => a.i - b.i); const finalPlaced = placed.map(d => ({ w: d.w, c: d.c }));
+                let msgRaw = hiddenMessageInput.value.trim().toUpperCase(); let fillRaw = fillerLettersInput.value.trim().toUpperCase();
+                if (document.getElementById('remove-accents').checked) {
+                    msgRaw = msgRaw.replace(/Ñ/g, '##NYE##').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/##NYE##/g, 'Ñ');
+                    fillRaw = fillRaw.replace(/Ñ/g, '##NYE##').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/##NYE##/g, 'Ñ');
+                }
+                msgRaw = msgRaw.replace(/[^\p{L}]/gu, ''); fillRaw = fillRaw.replace(/[^\p{L}]/gu, '');
+                let pool = fillRaw || "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; 
+                if (document.getElementById('smart-fill').checked) {
+                    const uniqueLetters = [...new Set(finalPlaced.map(d => d.w ? d.w : d).join('').split(''))].join('');
+                    if (uniqueLetters.length > 0) pool = uniqueLetters;
+                }
+                let msgIdx = 0;
                 for (let r = 0; r < rows; r++) { for (let c = 0; c < cols; c++) { if (grid[r][c] === null) { if (msgIdx < msgRaw.length) grid[r][c] = msgRaw[msgIdx++]; else grid[r][c] = pool[Math.floor(Math.random() * pool.length)]; } } }
                 const wordCount = finalPlaced.length; let score = 0; const gridSize = rows * cols; score += Math.min(25, gridSize / 40); score += Math.min(25, wordCount * 0.5);
                 const directionWeights = { h: 1, v: 1, d: 2, hr: 3, vr: 3, du: 4, dur: 4, dr: 4 }; let directionScore = 0; selectedDirKeys.forEach(dir => { directionScore += directionWeights[dir] || 0; }); score += Math.min(40, directionScore * 1.5);
-                const avgLength = wordCount > 0 ? finalPlaced.reduce((acc, w) => acc + w.length, 0) / wordCount : 0; if (avgLength > 0 && avgLength < 5) score += 10; else if (avgLength >= 5 && avgLength < 7) score += 5;
+                const avgLength = wordCount > 0 ? finalPlaced.reduce((acc, obj) => acc + (obj.w ? obj.w.length : obj.length), 0) / wordCount : 0; if (avgLength > 0 && avgLength < 5) score += 10; else if (avgLength >= 5 && avgLength < 7) score += 5;
+                if (document.getElementById('smart-fill').checked) score += 15;
                 let difficulty = 'Easy ★'; if (score > 65) difficulty = 'Hard ★★★'; else if (score > 35) difficulty = 'Medium ★★';
                 const baseTimePerWord = 15; const timeMultiplier = 1 + (score / 100); const totalSeconds = wordCount * baseTimePerWord * timeMultiplier; const lowEndMinutes = Math.floor(totalSeconds / 60); const highEndMinutes = Math.ceil((totalSeconds * 1.3) / 60); let time = `${lowEndMinutes}-${highEndMinutes} minutes`; if (lowEndMinutes < 1) time = "Under a minute"; else if (lowEndMinutes === highEndMinutes) time = `Around ${lowEndMinutes} minutes`;
                 return { grid, solGrid, placedWordsCoords: coords, finalPlaced, unplacedWords: unplaced, stats: { difficulty, time } };
@@ -2236,7 +2508,7 @@ try {
 
                 try {
                     const chunks = parseWords();
-                    if(chunks.length === 0) { alert("Word bank is empty."); return; }
+                    if(chunks.length === 0) { window.appAlert("Word bank is empty."); return; }
                     bookPages = []; const puzzlesData = []; let baseIdx = 0;
                     for (const chunk of chunks) {
                         const sorted = sortWords(chunk.words, wordSortSelect.value);
@@ -2306,7 +2578,8 @@ innerMargin: parseFloat(innerMarginSlider.value) || 0,
                         clueCols: clueColsSelect.value, clueAlign: clueAlignSelect.value, clueCase: clueCaseSelect.value,
                         solTitleFormat: solTitleFormatInput.value, solShowWordBank: solShowWordBankCheckbox.checked, solStrikethroughWords: solStrikethroughWordsCheckbox.checked,
                         solPer: perPage, solHighlightShape: solHighlightShapeSelect.value, solHighlightFill: solHighlightFillSelect.value, solHighlightOutline: solHighlightOutlineSelect.value, solHighlightWidth: solHighlightWidthInput.value, solHighlightStrokeWidth: solHighlightStrokeWidthInput.value, solLineBoost: solLineBoostInput.value,
-                        bgImage: loadedBgImage, bgScaling: bgImageScaling.value, bgImageZoom: document.getElementById('bg-image-zoom') ? document.getElementById('bg-image-zoom').value : 100, contentOpacity: contentOpacitySlider.value, contentBoxRadius: contentBoxRadiusInput.value, contentBoxStrokeWidth: contentBoxStrokeWidthInput.value, contentBoxStrokeColor: contentBoxStrokeColorInput.value
+                        bgImage: loadedBgImage, bgScaling: bgImageScaling.value, bgImageZoom: document.getElementById('bg-image-zoom') ? document.getElementById('bg-image-zoom').value : 100, contentOpacity: contentOpacitySlider.value, contentBoxRadius: contentBoxRadiusInput.value, contentBoxStrokeWidth: contentBoxStrokeWidthInput.value, contentBoxStrokeColor: contentBoxStrokeColorInput.value,
+                        footerText: footerTextInput ? footerTextInput.value : '', footerAlign: footerAlignSelect ? footerAlignSelect.value : 'center', footerFontSize: footerFontSizeInput ? footerFontSizeInput.value : 10
                     };
 
                     ['title', 'grid', 'words-title', 'words'].forEach(k => {
@@ -2322,7 +2595,7 @@ innerMargin: parseFloat(innerMarginSlider.value) || 0,
                     });
 
                     resizePreview(); await renderCurrentPage();
-                } catch (err) { alert(err.message); } finally { clearDirty(); generateBtn.disabled = false; }
+                } catch (err) { window.appAlert(err.message); } finally { clearDirty(); generateBtn.disabled = false; }
             });
 
             regeneratePageBtn.addEventListener('click', async () => {
@@ -2332,7 +2605,7 @@ innerMargin: parseFloat(innerMarginSlider.value) || 0,
                 try {
                     page.data.forEach((puzzleData, i) => { const sorted = sortWords(puzzleData.originalWords, wordSortSelect.value); const newResult = createPuzzleGrid(sorted); Object.assign(page.data[i], newResult); });
                     await renderCurrentPage();
-                } catch (err) { alert(err.message); } finally { regeneratePageBtn.disabled = false; regeneratePageBtn.innerHTML = originalText; }
+                } catch (err) { window.appAlert(err.message); } finally { regeneratePageBtn.disabled = false; regeneratePageBtn.innerHTML = originalText; }
             });
 
             const drawGridOnCanvas = (ctx, data, boundsX, boundsY, boundsW, boundsH, isSolution, dpi, scaleMultiplier = 1) => {
@@ -2622,7 +2895,7 @@ const ex = _innerOriginX + (coord.c + (len-1)*dir.c) * _innerCellW + _innerCellW
                                 }
                                 if (leftCols >= 2) { for (let i = 1; i < leftCols; i++) { const dividerX = wbX + (i * colW); ctx.beginPath(); ctx.moveTo(dividerX, wordItemsStartY); ctx.lineTo(dividerX, wordItemsStartY + totalWordH); ctx.strokeStyle = currentConfig.colorGridLines || '#000000'; ctx.lineWidth = scaledGridLineWidth; ctx.stroke(); } }
                                 data.finalPlaced.forEach((w, idx) => {
-                                    let txt = currentConfig.clueCase === 'lowercase' ? w.toLowerCase() : w; const c = idx % leftCols, r = Math.floor(idx / leftCols); let xPos = wbX + (c * colW); let align = currentConfig.clueAlign || 'left';
+                                    let actualWord = w.w || w; let clueText = w.c || actualWord; let txt = currentConfig.clueCase === 'lowercase' ? clueText.toLowerCase() : clueText; const c = idx % leftCols, r = Math.floor(idx / leftCols); let xPos = wbX + (c * colW); let align = currentConfig.clueAlign || 'left';
                                     if (align === 'center') xPos += colW / 2; else if (align === 'right') xPos += colW - textPad; else xPos += (c === 0 ? 0 : textPad); 
                                     const textY = wordItemsStartY + (r * wordLineHeight); 
                                     const pillKey = currentConfig.wordsBoxStyle === 'pills' ? 'words' : null;
@@ -2713,7 +2986,7 @@ let finalBoxY = baseBoxY + ((parseFloat(currentConfig.titleBoxNudge) || 0) * dpi
                                     let curX, cellW_for_align; let startRowIdx;
                                     if (cIdx === 0) { curX = blockX; startRowIdx = 0; cellW_for_align = wbW_final; } else { curX = gridX + (cIdx - 1) * (actualColW + gutter); startRowIdx = leftBaseLines; cellW_for_align = actualColW; }
                                     for(let i=0; i<count; i++) {
-                                        let txt = data.finalPlaced[wordIdx]; txt = currentConfig.clueCase === 'lowercase' ? txt.toLowerCase() : txt;
+                                        let wObj = data.finalPlaced[wordIdx]; let actualWord = wObj.w || wObj; let clueText = wObj.c || actualWord; let txt = currentConfig.clueCase === 'lowercase' ? clueText.toLowerCase() : clueText;
                                         let drawX = curX; if (align === 'center') drawX += cellW_for_align / 2; else if (align === 'right') drawX += cellW_for_align; else drawX += 0;
                                         const curY = wordItemsStartY + (startRowIdx + i) * wordLineHeight;
                                         const pillKey = currentConfig.wordsBoxStyle === 'pills' ? 'words' : null;
@@ -2766,7 +3039,7 @@ let finalBoxY = baseBoxY + ((parseFloat(currentConfig.titleBoxNudge) || 0) * dpi
                                         drawBgBox(ctx, boxActualX, wordItemsStartY, boxActualW, wordListHeightPx, 'words');
                                     }
                                     data.finalPlaced.forEach((w, idx) => {
-                                        let txt = currentConfig.clueCase === 'lowercase' ? w.toLowerCase() : w; const c = idx % cols, r = Math.floor(idx / cols); let xPos = boundsX + (c * colW); let align = currentConfig.clueAlign || 'left';
+                                        let actualWord = w.w || w; let clueText = w.c || actualWord; let txt = currentConfig.clueCase === 'lowercase' ? clueText.toLowerCase() : clueText; const c = idx % cols, r = Math.floor(idx / cols); let xPos = boundsX + (c * colW); let align = currentConfig.clueAlign || 'left';
                                         if (align === 'center') { xPos += colW / 2; } else if (align === 'right') { xPos += colW; } 
                                         const textY = wordItemsStartY + (r * wordLineHeight);
                                         const pillKey = currentConfig.wordsBoxStyle === 'pills' ? 'words' : null;
@@ -2818,6 +3091,40 @@ let finalBoxY = baseBoxY + ((parseFloat(currentConfig.titleBoxNudge) || 0) * dpi
                         if (hasTitle) { drawTextWithEffect(ctx, displayTitle, titleDrawX, startY, `${currentConfig.weightTitle} ${tPx}px "${currentConfig.fontTitle}", sans-serif`, currentConfig.colorTitle || '#000000', tAlign, 'top', currentConfig.effectTitle, parseFloat(currentConfig.effectWidthTitle) * titleScale, currentConfig.effectColorTitle, 'title'); }
                     });
                 }
+                
+                if (currentConfig.footerText && currentConfig.footerText.trim() !== '') {
+                    const startNum = isNaN(currentConfig.footerStartNumber) ? 1 : currentConfig.footerStartNumber;
+                    const absolutePageNum = bookPages.indexOf(page) + startNum;
+                    const fText = currentConfig.footerText.replace(/#PAGE/g, absolutePageNum);
+                    const fSizePx = (parseInt(currentConfig.footerFontSize) / 72) * dpi;
+                    let fAlign = currentConfig.footerAlign || 'center';
+                    if (fAlign === 'alternating') fAlign = (absolutePageNum % 2 === 0) ? 'left' : 'right';
+                    
+                    let fX = specs.docWidth * dpi / 2;
+                    // Horizontally respect the Content Padding bounds
+                    if (fAlign === 'left') fX = innerX;
+                    if (fAlign === 'right') fX = innerX + innerW;
+                    
+                    // Vertically nestle it between the padded content box and the absolute safe margin
+                    const absoluteBottomY = (specs.docHeight - margins.bottom) * dpi;
+                    const fY = absoluteBottomY - (padY / 2); 
+                    
+                    drawTextWithEffect(
+                        ctx, 
+                        fText, 
+                        fX, 
+                        fY, 
+                        `${currentConfig.weightFooter || 'normal'} ${fSizePx}px "${currentConfig.fontFooter || 'Inter'}", sans-serif`, 
+                        currentConfig.colorFooter || '#000000', 
+                        fAlign, 
+                        'middle', 
+                        currentConfig.effectFooter, 
+                        parseFloat(currentConfig.effectWidthFooter), 
+                        currentConfig.effectColorFooter, 
+                        'footer'
+                    );
+                }
+
                 return cvs;
             };
 
@@ -2880,7 +3187,7 @@ pdfFormatBtns.forEach(btn => {
         const format = e.currentTarget.getAttribute('data-format');
         pdfDropdownMenu.classList.add('hidden'); // Close menu
 
-        if (bookPages.length === 0) return alert('Generate a book first!');
+        if (bookPages.length === 0) return window.appAlert('Generate a book first!');
 
         const origHtml = exportPdfBtn.innerHTML;
         exportPdfBtn.textContent = 'Compiling...';
@@ -2917,7 +3224,7 @@ pdfFormatBtns.forEach(btn => {
             
             pdf.save('WordSearchGen_PuzzleBook.pdf');
         } catch (err) {
-            alert('Export failed.');
+            window.appAlert('Export failed.');
             console.error(err);
         } finally {
             exportPdfBtn.innerHTML = origHtml;
@@ -2933,7 +3240,7 @@ pngFormatBtns.forEach(btn => {
         const scope = e.currentTarget.getAttribute('data-scope');
         pngDropdownMenu.classList.add('hidden'); // Close menu immediately
         
-        if (bookPages.length === 0) return alert("Generate a book first!");
+        if (bookPages.length === 0) return window.appAlert("Generate a book first!");
         
         // Save button text so we can change it to "Saving..."
         const origHtml = pngDropdownBtn.innerHTML;
@@ -2980,7 +3287,7 @@ pngFormatBtns.forEach(btn => {
             }
         } catch (err) {
             console.error(err);
-            alert("PNG Export failed.");
+            window.appAlert("PNG Export failed.");
         } finally {
             pngDropdownBtn.innerHTML = origHtml;
             pngDropdownBtn.disabled = false;
@@ -3004,6 +3311,9 @@ pngFormatBtns.forEach(btn => {
             const presetNameInput = document.getElementById('preset-name-input');
             const cancelSavePresetBtn = document.getElementById('cancel-save-preset-btn');
             const confirmSavePresetBtn = document.getElementById('confirm-save-preset-btn');
+            const exportPresetBtn = document.getElementById('export-preset-btn');
+            const importPresetBtn = document.getElementById('import-preset-btn');
+            const importPresetInput = document.getElementById('import-preset-input');
             
             let savedPresets = {};
             const isCanvasEnv = window.location.hostname.includes('usercontent.goog') || typeof __app_id !== 'undefined';
@@ -3140,29 +3450,70 @@ pngFormatBtns.forEach(btn => {
             deletePresetBtn.addEventListener('click', async () => {
                 const val = presetSelector.value;
                 if (!val || !savedPresets[val]) return;
-                if (!confirm(`Delete preset "${val}"?`)) return;
+                const confirmed = await window.appConfirm(`Delete preset "${val}"?`);
+                if (!confirmed) return;
                 
-                deletePresetBtn.textContent = '...';
+                const origHtml = deletePresetBtn.innerHTML;
+                deletePresetBtn.innerHTML = `<svg class="animate-spin h-[14px] w-[14px]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
                 deletePresetBtn.disabled = true;
                 
                 delete savedPresets[val];
                 await performPresetsSave(); // Deletes from Firebase OR LocalStorage
                 populatePresetsDropdown();
                 
-                deletePresetBtn.textContent = 'Delete';
+                deletePresetBtn.innerHTML = origHtml;
                 deletePresetBtn.disabled = false;
             });
 
             presetNameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmSavePresetBtn.click(); } });
+
+            exportPresetBtn.addEventListener('click', () => {
+                if (Object.keys(savedPresets).length === 0) return window.appAlert("No presets to export.");
+                
+                const activePreset = presetSelector.value;
+                // Export only the selected preset, or all of them if "Default" is selected
+                const exportData = activePreset ? { [activePreset]: savedPresets[activePreset] } : savedPresets;
+                
+                // Build Human Readable Timestamp
+                const date = new Date();
+                const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).replace(/ /g, '-').replace(/,/g, '');
+                const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute:'2-digit' }).replace(/ /g, '').replace(/:/g, '');
+                const timestamp = `${dateStr}_${timeStr}`;
+                
+                // Build Filename
+                const namePart = activePreset ? `_${activePreset.replace(/[^a-zA-Z0-9_]/g, '')}` : '_All_Presets';
+                const fileName = `WordSearchGen${namePart}_${timestamp}.json`;
+
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+                const node = document.createElement('a'); node.setAttribute("href", dataStr); node.setAttribute("download", fileName); document.body.appendChild(node); node.click(); node.remove();
+            });
+
+            importPresetBtn.addEventListener('click', () => importPresetInput.click());
+            importPresetInput.addEventListener('change', (e) => {
+                const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        if (typeof imported !== 'object' || imported === null) throw new Error("Invalid format");
+                        let count = 0;
+                        for (let key in imported) { savedPresets[key] = imported[key]; count++; }
+                        if (count > 0) {
+                            await performPresetsSave(); populatePresetsDropdown(); presetSelector.value = Object.keys(imported)[0]; presetSelector.dispatchEvent(new Event('change')); window.appAlert(`Successfully imported ${count} preset(s)!`);
+                        }
+                    } catch (err) { window.appAlert("Error importing JSON. Please ensure it is a valid presets file."); }
+                }; reader.readAsText(file); e.target.value = '';
+            });
             // --- END PRESETS SYSTEM ---
 
             // Word Sorter Helper
             function sortWords(arr, type) {
                 let sorted = [...arr];
-                if (type === 'az') sorted.sort((a,b) => a.localeCompare(b));
-                else if (type === 'za') sorted.sort((a,b) => b.localeCompare(a));
-                else if (type === 'short') sorted.sort((a,b) => a.length - b.length || a.localeCompare(b));
-                else if (type === 'long') sorted.sort((a,b) => b.length - a.length || a.localeCompare(b));
+                const getW = (obj) => typeof obj === 'string' ? obj : (obj.w || '');
+                if (type === 'random') sorted.sort(() => Math.random() - 0.5);
+                else if (type === 'az') sorted.sort((a,b) => getW(a).localeCompare(getW(b)));
+                else if (type === 'za') sorted.sort((a,b) => getW(b).localeCompare(getW(a)));
+                else if (type === 'short') sorted.sort((a,b) => getW(a).length - getW(b).length || getW(a).localeCompare(getW(b)));
+                else if (type === 'long') sorted.sort((a,b) => getW(b).length - getW(a).length || getW(a).localeCompare(getW(b)));
                 return sorted;
             }
         });
