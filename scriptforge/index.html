@@ -18,7 +18,7 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0f172a; /*Slate 900 */
+            background-color: #0f172a; /* Slate 900 */
             color: #f8fafc; /* Slate 50 */
         }
         
@@ -321,7 +321,7 @@
         <!-- Right Panel: Script Output -->
         <div class="flex-1 bg-[#0f172a] overflow-y-auto px-8 pb-8 relative" id="output-container">
             <!-- Empty State -->
-            <div id="empty-state" class="h-full flex flex-col items-center justify-center text-slate-500 opacity-70">
+            <div id="empty-state" class="h-full flex flex-col items-center pt-8 justify-center text-slate-500 opacity-70">
                 <i data-lucide="align-left" class="w-24 h-24 mb-6 text-slate-600"></i>
                 <h2 class="text-2xl font-bold text-slate-400 mb-2">Ready to Generate</h2>
                 <p class="text-sm max-w-md text-center">Generate your core script here. Visuals and SEO will be handled in the next steps.</p>
@@ -341,6 +341,11 @@
                         <span id="v1-timer-result" class="hidden bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-[10px] tracking-normal lowercase"></span>
                     </h2>
                     <div class="flex gap-2 overflow-x-auto no-scrollbar items-center">
+                        <!-- 0. Regen Failed Chapters -->
+                        <button id="btn-regen-failed-chapters" class="hidden bg-red-900/40 hover:bg-red-900/60 border border-red-500/50 text-red-400 px-1.5 py-1.5 rounded flex items-center gap-1.5 transition-colors text-xs font-bold whitespace-nowrap shadow-lg shrink-0 animate-pulse" title="Retry all failed chapters">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i><!-- <span class="hidden sm:inline">Regen Failed</span>-->
+                        </button>
+
                         <!-- 1. Highlight Chapters -->
                         <button id="btn-toggle-chapters" title="Highlight Chapters" class="hidden bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-400 hover:text-white p-1.5 rounded flex items-center justify-center transition-colors shadow-lg shrink-0">
                             <i data-lucide="highlighter" class="w-4 h-4"></i>
@@ -857,15 +862,61 @@
 
                 <!-- The Timeline Feed -->
                 <div>
-                    <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-3">
-                        <h2 class="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                            <i data-lucide="list-video" class="text-emerald-400"></i> Editing Timeline
-                        </h2>
-                        <div class="flex gap-2">
-                            <button onclick="document.getElementById('input-bulk-manual-upload').click()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded transition-colors flex items-center gap-2 border border-slate-600 shadow" title="Name files 1.jpg, 2.jpg to auto-match blocks!">
-                                <i data-lucide="upload-cloud" class="w-4 h-4 text-emerald-400"></i> Bulk Upload
-                            </button>
-                            <input type="file" id="input-bulk-manual-upload" accept="image/*,video/mp4,video/webm,video/quicktime" multiple class="hidden">
+                    <div class="flex flex-col gap-3 mb-6 border-b border-slate-700 pb-3">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="list-video" class="text-emerald-400"></i> Editing Timeline
+                            </h2>
+                            <div class="flex gap-2">
+                                <button onclick="document.getElementById('input-bulk-manual-upload').click()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded transition-colors flex items-center gap-2 border border-slate-600 shadow" title="Name files 1.jpg, 2.jpg to auto-match blocks!">
+                                    <i data-lucide="upload-cloud" class="w-4 h-4 text-emerald-400"></i> Bulk Upload
+                                </button>
+                                <input type="file" id="input-bulk-manual-upload" accept="image/*,video/mp4,video/webm,video/quicktime" multiple class="hidden">
+                            </div>
+                        </div>
+                        
+                        <!-- SELECTION & BULK EDIT TOOLBAR -->
+                        <div class="flex flex-wrap justify-between items-center bg-slate-800/80 p-2 rounded-lg border border-slate-700 shadow-inner gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button id="btn-select-all-cards" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded transition-colors shadow font-bold">Select All</button>
+                                <button id="btn-unselect-all-cards" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white px-3 py-1.5 rounded transition-colors shadow font-bold">Unselect All</button>
+                                
+                                <select id="smart-select-blocks" class="bg-slate-900 border border-emerald-500/50 text-emerald-300 text-[10px] font-bold uppercase tracking-wider rounded shadow px-2 py-1.5 focus:outline-none cursor-pointer">
+                                    <option value="" disabled selected>✨ Smart Select...</option>
+                                    <option value="odd">Odd Blocks (1, 3, 5...)</option>
+                                    <option value="even">Even Blocks (2, 4, 6...)</option>
+                                    <option value="first_10">First 10 Blocks</option>
+                                    <option value="first_20">First 20 Blocks</option>
+                                    <option value="last_10">Last 10 Blocks</option>
+                                    <option value="custom">Custom Range...</option>
+                                </select>
+                                <input type="text" id="smart-select-custom" placeholder="e.g. 1-10, 15" class="hidden w-32 bg-slate-900 border border-emerald-500/50 rounded px-2 py-1 text-[10px] text-white focus:outline-none transition-colors shadow-inner">
+                                
+                                <span id="selection-count-badge" class="text-[10px] font-bold text-emerald-400 ml-2 bg-emerald-900/30 border border-emerald-500/50 px-2 py-1 rounded shadow-inner">0 Selected</span>
+                            </div>
+                            
+                            <div class="flex items-center gap-2 opacity-50 pointer-events-none transition-opacity duration-300" id="bulk-edit-toolbar">
+                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mr-1">Bulk Apply:</span>
+                                
+                                <select id="bulk-apply-motion" class="bg-slate-900 border border-slate-600 text-purple-300 text-[10px] font-bold uppercase tracking-wider rounded shadow px-2 py-1.5 focus:outline-none focus:border-purple-500 cursor-pointer">
+                                    <option value="" disabled selected>🎥 Motion...</option>
+                                    <option value="global">Global Default</option>
+                                    <option value="none">No Motion</option>
+                                    <option value="zoom_in">Zoom In</option>
+                                    <option value="zoom_out">Zoom Out</option>
+                                    <option value="pan_left">Pan Left</option>
+                                    <option value="pan_right">Pan Right</option>
+                                    <option value="pan_up">Pan Up</option>
+                                    <option value="pan_down">Pan Down</option>
+                                    <option value="random">Randomize</option>
+                                </select>
+
+                                <select id="bulk-apply-anim-mode" disabled class="opacity-50 pointer-events-none bg-slate-900 border border-pink-500/50 text-pink-300 text-[10px] font-bold uppercase tracking-wider rounded shadow px-2 py-1.5 focus:outline-none focus:border-pink-500 cursor-pointer transition-opacity">
+                                    <option value="" disabled selected>🪄 Anim Mode...</option>
+                                    <option value="crossfade">Morph / Fade</option>
+                                    <option value="stop_motion">Stop-Motion</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div id="v2-timeline-feed" class="space-y-4">
@@ -1205,21 +1256,67 @@
             </div>
             
             <!-- Content -->
-            <div class="space-y-6">
+            <div class="overflow-y-auto pr-2 pb-2 flex-1 space-y-6">
                 <!-- API Key Section -->
                 <div>
-                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2"><i data-lucide="key" class="w-4 h-4 text-blue-400"></i> API Configuration</h3>
-                    <p class="text-xs text-slate-400 mb-2">Enter your Gemini API Key to use outside Canvas. (Not required inside the Canvas environment).</p>
-                    <div class="relative">
-                        <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 pr-10 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors">
-                        <button id="btn-toggle-api-key" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors" title="Toggle Visibility">
-                            <i data-lucide="eye" id="icon-api-key-visibility" class="w-4 h-4"></i>
-                        </button>
+                    <div class="flex justify-between items-end mb-2">
+                        <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2"><i data-lucide="key" class="w-4 h-4 text-blue-400"></i> API Keys Setup</h3>
+                        <label class="flex items-center gap-2 text-xs text-amber-400 font-bold cursor-pointer hover:text-amber-300 transition-colors" title="If a key hits a Quota Limit (429), auto-switch to the next key on the list.">
+                            <input type="checkbox" id="api-auto-rotate" class="accent-amber-500 w-3 h-3" checked> Auto-Rotate on Quota Limits
+                        </label>
                     </div>
+                    <p class="text-[10px] text-slate-400 mb-3">Add your Gemini API Keys below (one per line). The top key will be used first. Auto-rotate pushes failed keys to the bottom.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Text Generation Keys</label>
+                            <textarea id="api-key-text-input" rows="3" placeholder="AIzaSy...&#10;AIzaSy..." class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white focus:outline-none focus:border-purple-500 transition-colors font-mono whitespace-nowrap overflow-x-auto"></textarea>
+                            <div class="flex items-center gap-3 mt-1">
+                                <span class="text-[9px] text-slate-500 font-bold uppercase">Use on:</span>
+                                <label class="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer"><input type="checkbox" id="text-view-v1" class="accent-purple-500 w-3 h-3"> Script Writer</label>
+                                <label class="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer"><input type="checkbox" id="text-view-v2" class="accent-purple-500 w-3 h-3"> B-Roll</label>
+                                <label class="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer"><input type="checkbox" id="text-view-v3" class="accent-purple-500 w-3 h-3"> Packager</label>
+                            </div>
+                            <details class="mt-1 group">
+                                <summary class="text-[9px] text-slate-500 font-bold uppercase cursor-pointer hover:text-slate-400 list-none flex items-center gap-1"><i data-lucide="chevron-right" class="w-3 h-3 group-open:rotate-90 transition-transform"></i> Advanced Feature Control</summary>
+                                <div class="mt-2 grid grid-cols-2 gap-2 pl-4 border-l border-slate-700">
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-names" class="accent-purple-500 w-2.5 h-2.5"> Channel Names</label>
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-format" class="accent-purple-500 w-2.5 h-2.5"> Format/Director AI</label>
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-research" class="accent-purple-500 w-2.5 h-2.5"> Deep Research</label>
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-polish" class="accent-purple-500 w-2.5 h-2.5"> AI Polish</label>
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-numbers" class="accent-purple-500 w-2.5 h-2.5"> Number Audio Sync</label>
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-seo" class="accent-purple-500 w-2.5 h-2.5"> SEO Packager Items</label>
+                                </div>
+                            </details>
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Image Generation Keys</label>
+                            <textarea id="api-key-image-input" rows="3" placeholder="AIzaSy...&#10;AIzaSy..." class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-white focus:outline-none focus:border-purple-500 transition-colors font-mono whitespace-nowrap overflow-x-auto"></textarea>
+                            <div class="flex items-center gap-3 mt-1">
+                                <span class="text-[9px] text-slate-500 font-bold uppercase">Use on:</span>
+                                <label class="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer"><input type="checkbox" id="img-view-v1" class="accent-purple-500 w-3 h-3"> Script Writer</label>
+                                <label class="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer"><input type="checkbox" id="img-view-v2" class="accent-purple-500 w-3 h-3"> B-Roll</label>
+                                <label class="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer"><input type="checkbox" id="img-view-v3" class="accent-purple-500 w-3 h-3"> Packager</label>
+                            </div>
+                            <!--<details class="mt-1 group">
+                                <summary class="text-[9px] text-slate-500 font-bold uppercase cursor-pointer hover:text-slate-400 list-none flex items-center gap-1"><i data-lucide="chevron-right" class="w-3 h-3 group-open:rotate-90 transition-transform"></i> Advanced Feature Control</summary>
+                                <div class="mt-2 grid grid-cols-2 gap-2 pl-4 border-l border-slate-700">
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer" title="Controls: Generating new Channel Names"><input type="checkbox" id="adv-text-names" class="accent-purple-500 w-2.5 h-2.5"> Channel Names</label>
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer" title="Controls: Magic Extractors, Auto-Pilot Picks, and Magic Director Prompts"><input type="checkbox" id="adv-text-format" class="accent-purple-500 w-2.5 h-2.5"> Format/Director AI</label>
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer" title="Controls: The Phase 0 Web Search fact checking"><input type="checkbox" id="adv-text-research" class="accent-purple-500 w-2.5 h-2.5"> Deep Research</label>
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer" title="Controls: The grammar and flow AI editor"><input type="checkbox" id="adv-text-polish" class="accent-purple-500 w-2.5 h-2.5"> AI Polish</label>
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer" title="Controls: Converting 1,000 into 'one thousand' for teleprompters"><input type="checkbox" id="adv-text-numbers" class="accent-purple-500 w-2.5 h-2.5"> Number Audio Sync</label>
+                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer" title="Controls: Everything inside View 3 (Titles, Descriptions, Slugs, Tags)"><input type="checkbox" id="adv-text-seo" class="accent-purple-500 w-2.5 h-2.5"> SEO Packager Items</label>
+                                </div>
+                            </details>-->
+                        </div>
+                    </div>
+                    <!-- Legacy Fallback hidden just in case -->
+                    <input type="hidden" id="api-key-input">
                 </div>
 
                 <!-- Model Configuration Section -->
-                <div class="border-t border-slate-700 pt-6 mt-6">
+                <div class="border-t border-slate-700 pt-6">
                     <div class="flex justify-between items-end mb-4">
                         <div>
                             <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-emerald-400"></i> AI Models</h3>
@@ -1334,6 +1431,23 @@
                         <p class="text-xs text-slate-400 flex items-center gap-1">
                             <i data-lucide="refresh-cw" class="w-3 h-3 text-emerald-500"></i> Auto-saving as you type...
                         </p>
+                    </div>
+
+                    <!-- Backup Projects Section -->
+                    <div class="mt-4 pt-4 border-t border-slate-700">
+                        <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <i data-lucide="hard-drive-download" class="w-4 h-4 text-blue-400"></i> Backup Projects
+                        </h3>
+                        <div class="flex gap-2">
+                            <button id="btn-export-projects" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white rounded py-2.5 text-xs font-bold transition-colors shadow flex items-center justify-center gap-2">
+                                <i data-lucide="download" class="w-3 h-3 text-blue-400"></i> Export All
+                            </button>
+                            <button id="btn-trigger-proj-import" onclick="document.getElementById('import-projects-upload').click()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white rounded py-2.5 text-xs font-bold transition-colors shadow flex items-center justify-center gap-2">
+                                <i data-lucide="upload" class="w-3 h-3 text-amber-400"></i> Import
+                            </button>
+                            <input type="file" id="import-projects-upload" accept=".json" class="hidden">
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-2 text-center leading-relaxed">Select checkboxes on the left to export specific projects, otherwise all will export.</p>
                     </div>
                 </div>
                 
@@ -2098,19 +2212,7 @@
             </div>
             
             <div class="flex flex-col gap-4">
-                <div>
-                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Target Blocks</label>
-                    <select id="bulk-animate-target" class="w-full bg-slate-800 border border-slate-700 rounded p-2.5 text-sm text-pink-300 font-bold focus:outline-none focus:border-pink-500 transition-colors mb-2">
-                        <option value="all" selected>All Static Images</option>
-                        <option value="odd">Odd Blocks (1, 3, 5...)</option>
-                        <option value="even">Even Blocks (2, 4, 6...)</option>
-                        <option value="first_10">First 10 Blocks</option>
-                        <option value="first_20">First 20 Blocks</option>
-                        <option value="last_10">Last 10 Blocks</option>
-                        <option value="custom">Custom Range (e.g. 1-10, 15, 20-25)</option>
-                    </select>
-                    <input type="text" id="bulk-animate-target-custom" placeholder="e.g. 1-10, 15, 20-25" class="hidden w-full bg-slate-900 border border-slate-600 rounded p-2.5 text-sm text-white focus:outline-none focus:border-pink-500 transition-colors shadow-inner">
-                </div>
+                <!-- Target Blocks moved to main UI toolbar -->
                 <div class="flex gap-4">
                     <div class="flex-1">
                         <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Animation Mode</label>
@@ -2140,7 +2242,7 @@
                 </div>
             </div>
 
-            <div class="mt-4 flex justify-end gap-3 w-full">
+            <div class="mt-0 flex justify-end gap-3 w-full">
                 <button id="btn-cancel-bulk-animate" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-slate-700 shadow">Cancel</button>
                 <button id="btn-start-bulk-animate" class="flex-1 bg-pink-600 hover:bg-pink-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-lg flex items-center justify-center gap-2">
                     <i data-lucide="zap" class="w-4 h-4"></i> Start Engine
@@ -2226,7 +2328,7 @@
             'noir': 'Cinematic Film Noir, high contrast black and white, dramatic shadows.',
             'b&w_film': 'Vintage black and white 35mm film photography, film grain, high contrast, classic cinema aesthetic.',
             'spooky_photo': 'Creepy found footage spooky photograph, grainy, low light, unsettling atmosphere, liminal space, flash photography.',
-            'vhs': 'Found Footage VHS, heavy analog static, chromatic aberration, timestamp.',
+            'vhs': 'Found Footage VHS aesthetic, heavy analog static, chromatic aberration, timestamp.',
             'polaroid': 'Vintage Polaroid camera photo, faded colors, light leaks, nostalgic.',
             'disposable': '90s disposable camera flash photography, overexposed foreground.',
             'neon_noir': 'Neon-noir cinematic film still, moody blues and pinks, anamorphic lens.',
@@ -2237,8 +2339,8 @@
             'fluffy_3d': 'Highly detailed 3D render, extremely fluffy and furry textures, cute anthropomorphic aesthetic, soft lighting.',
             'cute_cartoon': 'Adorable 3D cute cartoon aesthetic, soft smooth textures, warm cozy lighting, highly expressive.',
             'tiny_world': 'Tilt-shift macro photography, miniature model world, depth of field blur, highly detailed tiny figures, diorama aesthetic.',
-            'claymation': 'Claymation stop-motion animation frame, visible fingerprints, plasticine texture, studio lighting.',
-            'clay': 'Smooth 3D clay render, matte plasticine texture, colorful, soft shadows, clean lighting.',
+            'claymation': 'Claymation stop-motion animation frame aesthetic, visible fingerprints, plasticine texture, studio lighting.',
+            'clay': 'Smooth 3D clay render aesthetic, matte plasticine texture, colorful, soft shadows, clean lighting.',
             'low_poly': 'Retro PS1 low poly 3D graphics, flat unlit polygons, blocky aesthetic, nostalgic 90s gaming.',
             'isometric': 'Isometric 3D render, tilt-shift, clean minimalist lighting.',
             'futuristic': 'Futuristic sci-fi concept art 3D render, glowing neon lights, advanced technology, cinematic lighting.',
@@ -2251,14 +2353,16 @@
 
             'group_comic': '--- COMIC & GRAPHIC ---',
             'us_comic': 'Classic US comic book style, bold inking, flat vibrant colors, halftone dots, heroic dynamic aesthetic.',
-            'vintage_comic': 'Vintage comic book style, bold black ink outlines, halftone dot texture.',
-            'noir_comic': 'Gritty black and white comic book art, heavy ink crosshatching, dramatic chiaroscuro lighting, stark shadows.',
+            'vintage_comic': 'Vintage comic book style aesthetic, bold black ink outlines, halftone dot texture.',
+            'noir_comic': 'Gritty black and white comic book aesthetic, heavy ink crosshatching, dramatic chiaroscuro lighting, stark shadows.',
             'pop_art': 'Retro pop art aesthetic, Roy Lichtenstein style, bright primary colors, ben-day dots, comic panels.',
-            'b&w_graphic': 'Stylized black and white graphic novel art, stark contrast, heavy ink, dramatic shadows, bold lines.',
-            'comic': 'Modern colorful comic book illustration, dynamic lines, vivid colors, detailed shading, action-packed.',
-            'comic_strip': 'Colorful Sunday comic strip style, flat coloring, clean linework, playful and expressive aesthetic.',
-            'dark_deco': 'Flat vector illustration, bold minimalist shading, dark moody atmosphere, neon color accents, crisp lines.',
+            'b&w_graphic': 'Stylized black and white graphic novel aesthetic, stark contrast, heavy ink, dramatic shadows, bold lines.',
+            'comic': 'Modern colorful comic book illustration aesthetic, dynamic lines, vivid colors, detailed shading, action-packed.',
+            'comic_strip': 'Colorful Sunday comic strip aesthetic, flat coloring, clean linework, playful and expressive aesthetic.',
+            'dark_deco': 'Flat vector illustration aesthetic, bold minimalist shading, dark moody atmosphere, neon color accents, crisp lines.',
             'gta_4': 'GTA 4 loading screen art style, stylized digital painting, high contrast, slightly gritty, graphic aesthetic.',
+            'gta_5': 'GTA 5 loading screen art style, stylized digital painting, high contrast, slightly gritty, graphic aesthetic.',
+            'gta_6': 'GTA 6 loading screen art style, stylized digital painting, high contrast, slightly gritty, graphic aesthetic.',
             'toon_shader': 'Cel-shaded 3D render, toon shader aesthetic, flat colors, bold outlines, anime video game style.',
 
             'group_illustration': '--- ILLUSTRATION & ART ---',
@@ -2287,13 +2391,13 @@
 
             'group_craft': '--- CRAFT & RETRO ---',
             'felt_dolls': 'Macro photography of needle-felted wool, soft fuzzy tactile texture, miniature diorama, cute cozy aesthetic.',
-            'paper_cutout': 'Layered paper cutout diorama, craft style, soft paper shadows.',
-            'stained_glass': 'Intricate stained glass window mosaic aesthetic, glowing colored light.',
-            'crayon': 'Childlike crayon drawing, textured paper, waxy strokes, vibrant colors, innocent aesthetic.',
-            'chalkboard': 'Detailed chalkboard drawing, white and colored chalk dust, educational.',
+            'paper_cutout': 'Layered paper cutout diorama aesthetic, craft style, soft paper shadows.',
+            'stained_glass': 'Intricate stained glass window mosaic aesthetic, glowing colored light. Borderless, full frame, no borders, no picture frames, no canvas edges.',
+            'crayon': 'Childlike crayon drawing, textured paper aesthetic, waxy strokes, vibrant colors, innocent aesthetic.',
+            'chalkboard': 'Detailed chalkboard drawing, white and colored chalk dust. Borderless, full frame, no borders, no picture frames, no canvas edges.',
             'pixel_art': '16-bit retro pixel art, vibrant color palette, nostalgic game style.',
             '90s_pixel': '16-bit 90s retro pixel art, dithering, limited color palette, nostalgic video game aesthetic.',
-            'cross_stitch': 'Detailed cross stitch embroidery pattern texture, pixelated fabric look, thread details, cozy craft.'
+            'cross_stitch': 'Detailed cross stitch embroidery pattern texture, pixelated fabric look, thread details, cozy craft. Borderless, full frame, no borders, no picture frames, no canvas edges.'
         };
 
         // Hardcoded Default System Formats
@@ -2355,6 +2459,14 @@
         let appSettings = { 
             id: 'main', 
             apiKey: localStorage.getItem('fast_cache_api') || '', 
+            textKeys: JSON.parse(localStorage.getItem('fast_cache_text_keys') || '[]'),
+            imageKeys: JSON.parse(localStorage.getItem('fast_cache_image_keys') || '[]'),
+            // ALL VIEWS US ON: textKeyViews: JSON.parse(localStorage.getItem('fast_cache_text_views') || '["v1", "v2", "v3"]'),
+            // ALL VIEWS US ON: imageKeyViews: JSON.parse(localStorage.getItem('fast_cache_image_views') || '["v1", "v2", "v3"]'),
+            textKeyViews: JSON.parse(localStorage.getItem('fast_cache_text_views') || '["v1"]'),
+            textAdv: JSON.parse(localStorage.getItem('fast_cache_text_adv') || '{"names":false, "format":false, "research":false, "polish":false, "numbers":false, "seo":false}'),
+            imageKeyViews: JSON.parse(localStorage.getItem('fast_cache_image_views') || '[]'),
+            autoRotate: localStorage.getItem('fast_cache_auto_rotate') !== 'false',
             textCooldown: parseInt(localStorage.getItem('fast_cache_text_cooldown') || localStorage.getItem('fast_cache_cooldown') || '4000', 10),
             textBatchSize: parseInt(localStorage.getItem('fast_cache_text_batch_size') || '0', 10),
             imageCooldown: parseInt(localStorage.getItem('fast_cache_image_cooldown') || localStorage.getItem('fast_cache_cooldown') || '3000', 10),
@@ -2441,15 +2553,61 @@
         }
 
         // --- Core Configurations ---
-        const apiKey = ""; 
-        function getActiveApiKey() { return appSettings.apiKey || apiKey || ""; }
-        function getTextModelUrl() { 
-            const model = appSettings.models?.text || "gemini-2.5-flash-preview-09-2025";
-            return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${getActiveApiKey()}`; 
+        function getCurrentActiveView() {
+            if (ui.view1?.classList.contains('active')) return 'v1';
+            if (ui.view2?.classList.contains('active')) return 'v2';
+            if (ui.view3?.classList.contains('active')) return 'v3';
+            return 'v1';
+        }
+
+        function getActiveTextKey(featureContext = null) { 
+            const view = getCurrentActiveView();
+            const allowed = appSettings.textKeyViews || ["v1"];
+            let useKey = allowed.includes(view);
+            
+            // If the user has specifically unchecked this sub-feature, force it to fallback to the Canvas Default
+            if (featureContext && appSettings.textAdv) {
+                if (appSettings.textAdv[featureContext] === false) {
+                    useKey = false;
+                }
+            }
+            
+            if (!useKey) return ""; // Use Canvas Environment Default
+            return (appSettings.textKeys && appSettings.textKeys.length > 0) ? appSettings.textKeys[0] : ""; 
+        }
+
+        function getActiveImageKey() { 
+            const view = getCurrentActiveView();
+            const allowed = appSettings.imageKeyViews || ["v1"];
+            if (!allowed.includes(view)) return ""; // Use Canvas Environment Default
+            return (appSettings.imageKeys && appSettings.imageKeys.length > 0) ? appSettings.imageKeys[0] : ""; 
+        }
+
+        function getActiveApiKey() { return getActiveTextKey() || getActiveImageKey(); } // Legacy bridge for UI checks
+        
+        function rotateKeys(type) {
+            if (!appSettings.autoRotate) return false;
+            let keys = type === 'image' ? appSettings.imageKeys : appSettings.textKeys;
+            if (!keys || keys.length < 2) return false; // Need at least 2 keys to rotate
+            keys.push(keys.shift()); // Move failed key to the back of the line
+            
+            // Save to cache immediately so the next API call loop uses the fresh key
+            localStorage.setItem('fast_cache_text_keys', JSON.stringify(appSettings.textKeys || []));
+            localStorage.setItem('fast_cache_image_keys', JSON.stringify(appSettings.imageKeys || []));
+            return true;
+        }
+
+        function getTextModelUrl(featureContext = null) { 
+            const key = getActiveTextKey(featureContext);
+            // If there's a custom key, use the user's selected model. If falling back to Canvas key, force the Canvas model.
+            const model = key ? (appSettings.models?.text || "gemini-2.5-flash-preview-09-2025") : "gemini-2.5-flash-preview-09-2025";
+            return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`; 
         }
         function getImageModelUrl() { 
-            const model = appSettings.models?.image || "gemini-2.5-flash-image-preview";
-            return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${getActiveApiKey()}`; 
+            const key = getActiveImageKey();
+            // If there's a custom key, use the user's selected model. If falling back to Canvas key, force the Canvas model.
+            const model = key ? (appSettings.models?.image || "gemini-2.5-flash-image-preview") : "gemini-2.5-flash-image-preview";
+            return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`; 
         }
 
         // --- UI Variables ---
@@ -2717,16 +2875,26 @@
             }, 3000);
         }
 
-        async function fetchWithRetry(url, options, retries = 6) {
+        async function fetchWithRetry(getUrlFn, options, retries = 6, featureContext = null) {
             // Expanded to span > 60 seconds to outlast Google's 1-minute API Quota reset timer
             const delays = [2000, 4000, 8000, 15000, 20000, 25000];
             for (let i = 0; i < retries; i++) {
                 try {
+                    // This dynamically pulls the newest key if it rotated on a previous loop
+                    const url = typeof getUrlFn === 'function' ? getUrlFn(featureContext) : getUrlFn;
                     const res = await fetch(url, options);
+                    
                     if (!res.ok) {
                         const errText = await res.text();
-                        // If it's a Bad Request (like a typo in the model name), flag it as FATAL so we don't wait 74 seconds
                         if (res.status === 400) throw new Error(`FATAL_400: ${errText}`);
+                        
+                        // Auto-Rotate Keys on Quota limit errors
+                        if (res.status === 429) {
+                            const isImage = typeof getUrlFn === 'function' && getUrlFn.name.includes('Image');
+                            const rotated = rotateKeys(isImage ? 'image' : 'text');
+                            if (rotated) console.warn("Quota limit hit! Auto-rotated to next API key.");
+                        }
+                        
                         throw new Error(`HTTP ${res.status}: ${errText}`);
                     }
                     return await res.json();
@@ -3435,7 +3603,7 @@
                 const schema = { type: "OBJECT", properties: { names: { type: "ARRAY", items: { type: "STRING" } } }, required: ["names"] };
                 const systemPrompt = "Based on the channel formula provided, generate 10 YouTube channel name ideas. Each name MUST be no more than 3 words. Make them easy to remember, highly relevant to the niche, and have a strong premium brand feel without breaching copyright or IP laws. Return ONLY the 10 names in the JSON array.";
                 
-                const data = await executeGeminiCall(systemPrompt, `Formula: ${formula}`, schema);
+                const data = await executeGeminiCall(systemPrompt, `Formula: ${formula}`, schema, false, null, 'names');
                 
                 if (data && data.names && data.names.length > 0) {
                     cachedChannelNames = data.names;
@@ -3812,7 +3980,7 @@ Study the provided <EXAMPLES> to match the tone, brevity, and authoritative styl
                 
                 const userPromptText = `<EXAMPLES>\n${defaultExamples}\n</EXAMPLES>\n\nUSER'S ROUGH IDEA:\n"${userInput}"`;
 
-                const data = await executeGeminiCall(systemPrompt, userPromptText, schema);
+                const data = await executeGeminiCall(systemPrompt, userPromptText, schema, false, null, 'format');
                 
                 if (data && data.generatedRules) {
                     ui.directorModeInput.value = data.generatedRules;
@@ -3941,7 +4109,7 @@ STUDY THE PROVIDED <EXAMPLES> to match the brevity and authoritative tone of the
                     generationConfig: { responseMimeType: "application/json", responseSchema: schema } 
                 };
 
-                const result = await fetchWithRetry(getTextModelUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const result = await fetchWithRetry(getTextModelUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, 6, 'format');
                 
                 if (!result.candidates || !result.candidates[0]) {
                     throw new Error("AI returned an empty response. Ensure images do not trigger safety filters.");
@@ -4044,7 +4212,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                     generationConfig: { responseMimeType: "application/json", responseSchema: schema } 
                 };
 
-                const result = await fetchWithRetry(getTextModelUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const result = await fetchWithRetry(getTextModelUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, 6, 'format');
                 
                 if (!result.candidates || !result.candidates[0]) {
                     throw new Error("AI returned an empty response. Ensure images do not trigger safety filters.");
@@ -4094,7 +4262,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 
                 const userPromptText = `<EXAMPLES>\n${defaultExamples}\n</EXAMPLES>\n\nUSER'S ROUGH IDEA:\n"${userInput}"`;
 
-                const data = await executeGeminiCall(systemPrompt, userPromptText, schema);
+                const data = await executeGeminiCall(systemPrompt, userPromptText, schema, false, null, 'format');
                 if (data && data.generatedRules) {
                     ui.customFormatInput.value = data.generatedRules;
                     showToast("Custom formatting rules generated!");
@@ -4128,11 +4296,34 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             lucide.createIcons();
         });
         ui.btnApiSettings?.addEventListener('click', () => {
-            if(ui.apiKeyInput) {
-                ui.apiKeyInput.value = appSettings.apiKey || ''; 
-                ui.apiKeyInput.type = 'password';
-                ui.iconApiKeyVisibility?.setAttribute('data-lucide', 'eye');
-                lucide.createIcons();
+            const textInput = document.getElementById('api-key-text-input');
+            const imageInput = document.getElementById('api-key-image-input');
+            const rotateToggle = document.getElementById('api-auto-rotate');
+            
+            if (textInput) {
+                textInput.value = (appSettings.textKeys || []).join('\n');
+                const tViews = appSettings.textKeyViews || ["v1"];
+                const tAdv = appSettings.textAdv || {names:false, format:false, research:false, polish:false, numbers:false, seo:false};
+                document.getElementById('text-view-v1').checked = tViews.includes('v1');
+                document.getElementById('text-view-v2').checked = tViews.includes('v2');
+                document.getElementById('text-view-v3').checked = tViews.includes('v3');
+                
+                if (document.getElementById('adv-text-names')) document.getElementById('adv-text-names').checked = tAdv.names !== false;
+                if (document.getElementById('adv-text-format')) document.getElementById('adv-text-format').checked = tAdv.format !== false;
+                if (document.getElementById('adv-text-research')) document.getElementById('adv-text-research').checked = tAdv.research !== false;
+                if (document.getElementById('adv-text-polish')) document.getElementById('adv-text-polish').checked = tAdv.polish !== false;
+                if (document.getElementById('adv-text-numbers')) document.getElementById('adv-text-numbers').checked = tAdv.numbers !== false;
+                if (document.getElementById('adv-text-seo')) document.getElementById('adv-text-seo').checked = tAdv.seo !== false;
+            }
+            if (imageInput) {
+                imageInput.value = (appSettings.imageKeys || []).join('\n');
+                const iViews = appSettings.imageKeyViews || [];
+                document.getElementById('img-view-v1').checked = iViews.includes('v1');
+                document.getElementById('img-view-v2').checked = iViews.includes('v2');
+                document.getElementById('img-view-v3').checked = iViews.includes('v3');
+            }
+            if (rotateToggle) {
+                rotateToggle.checked = appSettings.autoRotate !== false;
             }
 
             // Load saved models into dropdowns
@@ -4204,7 +4395,14 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
         });
         ui.btnCloseSettings?.addEventListener('click', () => ui.settingsModal?.classList.add('hidden'));
         ui.btnSaveSettings?.addEventListener('click', async () => { 
-            const k = ui.apiKeyInput?.value.trim() || ''; 
+            const textKeysRaw = document.getElementById('api-key-text-input')?.value || '';
+            const imageKeysRaw = document.getElementById('api-key-image-input')?.value || '';
+            const autoRotate = document.getElementById('api-auto-rotate')?.checked ?? true;
+            
+            const textKeysArray = textKeysRaw.split('\n').map(k => k.trim()).filter(k => k.length > 0);
+            const imageKeysArray = imageKeysRaw.split('\n').map(k => k.trim()).filter(k => k.length > 0);
+            const legacyKeyBackup = textKeysArray.length > 0 ? textKeysArray[0] : '';
+
             const tCd = parseInt(ui.apiTextCooldownInput?.value || "4000", 10);
             const tbs = parseInt(ui.apiTextBatchSizeInput?.value || "0", 10); // 0 acts as infinite
             const iCd = parseInt(ui.apiImageCooldownInput?.value || "4000", 10);
@@ -4229,10 +4427,35 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             const finalImgModel = ui.selectImageModel?.value === 'custom' ? ui.customImageModel?.value.trim() : ui.selectImageModel?.value;
             const newModels = { text: finalTxtModel || "gemini-2.5-flash-preview-09-2025", image: finalImgModel || "gemini-2.5-flash-image-preview" };
             
-            appSettings = { id: 'main', apiKey: k, textCooldown: tCd, textBatchSize: tbs, imageCooldown: iCd, imageBatchSize: ibs, turboCooldown: tbCd, chunkSize: cs, warningThreshold: wt, ramThreshold: rt, brollBatchSize: bbs, prompts: newPrompts, models: newModels };
+            const tViews = [];
+            if (document.getElementById('text-view-v1')?.checked) tViews.push('v1');
+            if (document.getElementById('text-view-v2')?.checked) tViews.push('v2');
+            if (document.getElementById('text-view-v3')?.checked) tViews.push('v3');
+
+            const iViews = [];
+            if (document.getElementById('img-view-v1')?.checked) iViews.push('v1');
+            if (document.getElementById('img-view-v2')?.checked) iViews.push('v2');
+            if (document.getElementById('img-view-v3')?.checked) iViews.push('v3');
+
+            const tAdv = {
+                names: document.getElementById('adv-text-names')?.checked ?? true,
+                format: document.getElementById('adv-text-format')?.checked ?? true,
+                research: document.getElementById('adv-text-research')?.checked ?? true,
+                polish: document.getElementById('adv-text-polish')?.checked ?? true,
+                numbers: document.getElementById('adv-text-numbers')?.checked ?? true,
+                seo: document.getElementById('adv-text-seo')?.checked ?? true
+            };
+
+            appSettings = { id: 'main', apiKey: legacyKeyBackup, textKeys: textKeysArray, imageKeys: imageKeysArray, textKeyViews: tViews, textAdv: tAdv, imageKeyViews: iViews, autoRotate: autoRotate, textCooldown: tCd, textBatchSize: tbs, imageCooldown: iCd, imageBatchSize: ibs, turboCooldown: tbCd, chunkSize: cs, warningThreshold: wt, ramThreshold: rt, brollBatchSize: bbs, prompts: newPrompts, models: newModels };
 
             // Save to the instant fast-cache
-            localStorage.setItem('fast_cache_api', k);
+            localStorage.setItem('fast_cache_api', legacyKeyBackup);
+            localStorage.setItem('fast_cache_text_keys', JSON.stringify(textKeysArray));
+            localStorage.setItem('fast_cache_image_keys', JSON.stringify(imageKeysArray));
+            localStorage.setItem('fast_cache_text_views', JSON.stringify(tViews));
+            localStorage.setItem('fast_cache_text_adv', JSON.stringify(tAdv));
+            localStorage.setItem('fast_cache_image_views', JSON.stringify(iViews));
+            localStorage.setItem('fast_cache_auto_rotate', autoRotate.toString());
             localStorage.setItem('fast_cache_text_cooldown', tCd.toString());
             localStorage.setItem('fast_cache_text_batch_size', tbs.toString());
             localStorage.setItem('fast_cache_image_cooldown', iCd.toString());
@@ -4378,7 +4601,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             reader.readAsText(file);
         });
 
-        async function executeGeminiCall(systemInstruction, userPrompt, schema, enableSearch = false, imageData = null) {
+        async function executeGeminiCall(systemInstruction, userPrompt, schema, enableSearch = false, imageData = null, featureContext = null) {
             const parts = [{ text: userPrompt }];
             if (imageData) {
                 // Check if it's an array of multiple images, or just one
@@ -4401,7 +4624,8 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 payload.generationConfig = { responseMimeType: "application/json", responseSchema: schema };
             }
 
-            const result = await fetchWithRetry(getTextModelUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            // Pass the featureContext securely all the way down into the retry loop
+            const result = await fetchWithRetry(getTextModelUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, 6, featureContext);
             
             // NEW: Check if the AI blocked the generation (Token Limit, Safety, etc.) before trying to read the text
             if (result.candidates && result.candidates[0] && !result.candidates[0].content) {
@@ -4409,7 +4633,11 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 throw new Error(`AI Blocked Generation (Reason: ${reason}). Your prompt may have hit the max token limit or safety filters.`);
             }
 
-            let rawText = result.candidates[0].content.parts[0].text;
+            let rawText = result.candidates[0]?.content?.parts?.[0]?.text;
+            
+            if (typeof rawText === 'undefined') {
+                throw new Error("API returned a response, but no text was found. Ensure you are using a TEXT model (like gemini-2.5-flash) for this generation step, not an image model.");
+            }
             
             if (enableSearch) {
                 // Extract actual Web Search links if Gemini used them
@@ -4459,32 +4687,81 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             });
 
             if(ui.outScript) ui.outScript.innerHTML = '';
+            let hasFailedChapters = false;
+
             (data.sections || []).forEach(sec => {
-                // FIX: Sanitize literal '\n' characters from the AI and forcefully split into CapCut blocks
-                const cleanContent = sec.content.replace(/\\n/g, '\n');
-                const subBlocks = cleanContent.split(/\n\s*\n/).map(b => b.trim()).filter(b => b.length > 0);
-                
-                // Track chapter number and assign a cycling color index (1 to 5)
                 const chapterNum = sec.chapter || 1;
                 const colorIndex = ((chapterNum - 1) % 5) + 1;
-                
-                subBlocks.forEach(blockText => {
+
+                if (sec.isFailed) {
+                    hasFailedChapters = true;
                     const el = document.createElement('div');
-                    el.className = "script-block pl-4 border-l-2 border-slate-700 relative group pr-10 py-1.5 mb-4";
+                    const isLocked = sec.isLocked; // New check for sequential cascade locks
+                    
+                    const borderColor = isLocked ? 'border-slate-500/50' : 'border-red-500/50';
+                    const bgColor = isLocked ? 'bg-slate-800/50' : 'bg-red-900/10';
+                    const textColor = isLocked ? 'text-slate-400' : 'text-red-400';
+                    const titleText = isLocked ? `Chapter ${chapterNum} Locked (Awaiting Ch ${chapterNum-1})` : `Chapter ${chapterNum} Generation Failed`;
+                    const iconType = isLocked ? `lock` : `alert-triangle`;
+                    
+                    const btnClasses = isLocked 
+                        ? `btn-regen-single-chapter bg-slate-700 text-slate-500 cursor-not-allowed px-4 py-2 rounded text-xs font-bold transition-all shadow flex items-center gap-2`
+                        : `btn-regen-single-chapter bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded text-xs font-bold transition-all shadow flex items-center gap-2`;
+                    
+                    const btnIcon = isLocked ? `lock` : `refresh-cw`;
+                    const btnText = isLocked ? `Locked` : `Regenerate`;
+                    
+                    const descText = isLocked 
+                        ? `This chapter requires the ending context of the previous chapter to maintain sequential flow. Generate Chapter ${chapterNum-1} first.`
+                        : `The AI dropped this request (likely due to safety filters or rate limits). Click regenerate to retry this specific chapter independently.`;
+
+                    el.className = `script-block pl-4 border-l-2 ${borderColor} ${bgColor} rounded-r-lg relative pr-4 py-4 mb-4 failed-chapter-wrapper`;
                     el.setAttribute('data-color-index', colorIndex);
+                    el.setAttribute('data-chapter', chapterNum);
+                    
                     el.innerHTML = `
-                        <p class="pure-script-text text-slate-300 leading-relaxed text-lg font-light">${blockText}</p>
-                        <button type="button" class="absolute top-1 right-1 p-2 text-slate-500 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-600 rounded opacity-0 group-hover:opacity-100 transition-all shadow-md btn-copy-block z-10" title="Copy Text">
-                            <i data-lucide="copy" class="w-4 h-4 pointer-events-none"></i>
-                        </button>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 ${textColor}">
+                                <i data-lucide="${iconType}" class="w-5 h-5"></i>
+                                <span class="font-bold text-sm tracking-widest uppercase">${titleText}</span>
+                            </div>
+                            <button type="button" class="${btnClasses}" ${isLocked ? 'disabled' : ''}>
+                                <i data-lucide="${btnIcon}" class="w-3.5 h-3.5"></i> ${btnText}
+                            </button>
+                        </div>
+                        <p class="text-[10px] ${isLocked ? 'text-slate-500' : 'text-red-300/70'} mt-2 italic">${descText}</p>
                     `;
-                    el.querySelector('.btn-copy-block').onclick = (e) => {
-                        const textToCopy = e.currentTarget.parentElement.querySelector('.pure-script-text').innerText;
-                        window.copyToClipboard(textToCopy.trim(), 'Paragraph');
-                    };
                     if(ui.outScript) ui.outScript.appendChild(el);
-                });
+                } else {
+                    // FIX: Sanitize literal '\n' characters from the AI and forcefully split into CapCut blocks
+                    const cleanContent = sec.content.replace(/\\n/g, '\n');
+                    const subBlocks = cleanContent.split(/\n\s*\n/).map(b => b.trim()).filter(b => b.length > 0);
+                    
+                    subBlocks.forEach(blockText => {
+                        const el = document.createElement('div');
+                        el.className = "script-block pl-4 border-l-2 border-slate-700 relative group pr-10 py-1.5 mb-4";
+                        el.setAttribute('data-color-index', colorIndex);
+                        el.innerHTML = `
+                            <p class="pure-script-text text-slate-300 leading-relaxed text-lg font-light">${blockText}</p>
+                            <button type="button" class="absolute top-1 right-1 p-2 text-slate-500 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-600 rounded opacity-0 group-hover:opacity-100 transition-all shadow-md btn-copy-block z-10" title="Copy Text">
+                                <i data-lucide="copy" class="w-4 h-4 pointer-events-none"></i>
+                            </button>
+                        `;
+                        el.querySelector('.btn-copy-block').onclick = (e) => {
+                            const textToCopy = e.currentTarget.parentElement.querySelector('.pure-script-text').innerText;
+                            window.copyToClipboard(textToCopy.trim(), 'Paragraph');
+                        };
+                        if(ui.outScript) ui.outScript.appendChild(el);
+                    });
+                }
             });
+
+            // Toggle Global Regen Button
+            const btnRegenAllFailed = document.getElementById('btn-regen-failed-chapters');
+            if (btnRegenAllFailed) {
+                if (hasFailedChapters) btnRegenAllFailed.classList.remove('hidden');
+                else btnRegenAllFailed.classList.add('hidden');
+            }
             
             // Show or Hide the Highlight Button
             const btnToggleChapters = document.getElementById('btn-toggle-chapters');
@@ -4588,7 +4865,8 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             ui.btnViewResearch?.classList.add('hidden');
             if(ui.researchContent) ui.researchContent.value = "";
             
-            // Clear Blueprint
+            // Clear Blueprint & Failed Map
+            window.failedChaptersMap = {};
             const modeName = mode === 'standard' ? 'Standard (One-Shot)' : (mode === 'turbo' ? 'Deep Dive (Turbo)' : 'Deep Dive (Sequential)');
             window.generationBlueprint = { mode: modeName, targetWords: minutes * wpm, actualWords: 0, time: '00:00', steps: [] };
             ui.btnViewBlueprint?.classList.add('hidden');
@@ -4619,7 +4897,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                     if(ui.loadingText) ui.loadingText.innerText = "Phase 0: Deep Researching & Fact-Checking...";
                     const researchInstruction = "You are a Master Researcher. Analyze the provided transcript/idea. Search the web for the latest updates, missing context, and corroborating facts about this specific topic. Generate a comprehensive 'Master Fact Sheet' combining the transcript and your findings.";
                     const researchSchema = { type: "OBJECT", properties: { factSheet: { type: "STRING" } }, required: ["factSheet"] };
-                    const researchData = await executeGeminiCall(researchInstruction, transcript, researchSchema, true);
+                    const researchData = await executeGeminiCall(researchInstruction, transcript, researchSchema, true, null, 'research');
                     
                     // BUG FIX: Fallback to original transcript if search fails to return factSheet.
                     processedSourceMaterial = researchData.factSheet || transcript;
@@ -4813,8 +5091,9 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                                     console.error(`Chapter ${i+1} failed:`, err);
                                     completedChapters++;
                                     if(ui.loadingText) ui.loadingText.innerText = `Phase 2: Turbo Writing Chapters (${completedChapters}/${outlineData.chapters.length})...`;
-                                    // Return a safe fallback object with the chapter tag so the rest of the script can compile
-                                    return { sections: [{ content: `\n\n[Error generating Chapter ${i+1}. Please try regenerating.]\n\n`, chapter: i + 1 }] };
+                                    // Save the exact prompt to retry later
+                                    window.failedChaptersMap[i + 1] = { sysPrompt: chapterInstruction, userPrompt: turboUserPrompt };
+                                    return { sections: [{ content: `Failed to generate Chapter ${i+1}.`, chapter: i + 1, isFailed: true }] };
                                 }
                             });
 
@@ -4841,16 +5120,10 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                         // --- SAFE MODE (SEQUENTIAL) ---
                         // Variable to hold the actual generated text of the previous chapter
                         let previousChapterEndText = "None (This is the opening chapter).";
+                        let sequentialBreak = false; // Tracks if a chapter failed, cascading to the rest
 
                         for (let i = 0; i < outlineData.chapters.length; i++) {
-                            if(ui.loadingText) ui.loadingText.innerText = "Cooling down API...";
-                            // Skip the cooldown on the very first chapter
-                            if (i > 0) {
-                                await new Promise(r => setTimeout(r, (appSettings.textCooldown || 4000) + Math.random() * 500));
-                            }
-                            
                             const chapter = outlineData.chapters[i];
-                            if(ui.loadingText) ui.loadingText.innerText = `Phase 2: Writing Chapter ${i + 1} of ${outlineData.chapters.length}...`;
                             const isFirst = i === 0;
                             const isLast = i === outlineData.chapters.length - 1;
                             const nextChapter = i < outlineData.chapters.length - 1 ? outlineData.chapters[i + 1].focus : "None (This is the concluding chapter).";
@@ -4868,7 +5141,10 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                                 .replace(/{{OUTRO_INSTRUCTION}}/g, outroInstruction)
                                 .replace(/{{FORMAT_INSTRUCTION}}/g, resolvedFormatRules) + hostInstruction;
 
-                            const contextPrompt = `YOUR TASK NOW:\nWrite script sections exclusively for Chapter ${i + 1}.\n\nSTORY ARC CONTEXT:\n- The Previous Chapter Ended With: "${previousChapterEndText}"\n- Your Current Focus: ${chapter.focus}\n- Where the Narrative Goes Next (Next Chapter Focus): ${nextChapter}\n\nCRITICAL INSTRUCTION: Continue the story flawlessly from the exact sentence where the previous chapter ended. Keep your current focus deeply in mind, but naturally lay the groundwork for where the story is heading next.`;
+                            // If we hit a break earlier in the sequence, lock this chapter and prepare a dynamic placeholder
+                            let currentPrevEndText = sequentialBreak ? "___PENDING_PREVIOUS_END___" : previousChapterEndText;
+
+                            const contextPrompt = `YOUR TASK NOW:\nWrite script sections exclusively for Chapter ${i + 1}.\n\nSTORY ARC CONTEXT:\n- The Previous Chapter Ended With: "${currentPrevEndText}"\n- Your Current Focus: ${chapter.focus}\n- Where the Narrative Goes Next (Next Chapter Focus): ${nextChapter}\n\nCRITICAL INSTRUCTION: Continue the story flawlessly from the exact sentence where the previous chapter ended. Keep your current focus deeply in mind, but naturally lay the groundwork for where the story is heading next.`;
 
                             let seqUserPrompt = `<STYLE_GUIDE>\n${formula}\n</STYLE_GUIDE>\n\n<SOURCE_MATERIAL>\n${processedSourceMaterial}\n</SOURCE_MATERIAL>\n\n${contextPrompt}`;
                             if (formulaMode === 'dynamic') seqUserPrompt += dynamicRule;
@@ -4879,17 +5155,33 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                                 content: `${chapterInstruction}\n\n${seqUserPrompt}`
                             });
 
-                            const chapterData = await executeGeminiCall(chapterInstruction, seqUserPrompt, chapterSchema);
-                            
-                            // If successful, tag with chapter number and extract the last ~50 words to feed into the NEXT chapter
-                            if (chapterData && chapterData.sections && chapterData.sections.length > 0) {
-                                chapterData.sections = chapterData.sections.map(s => ({ ...s, chapter: i + 1 }));
-                                const allChapterText = chapterData.sections.map(s => s.content).join(' ');
-                                const words = allChapterText.split(/\s+/);
-                                previousChapterEndText = words.slice(Math.max(words.length - 60, 0)).join(' ');
+                            if (sequentialBreak) {
+                                // Skip API call, mark as locked failure waiting on the previous chapter to succeed
+                                window.failedChaptersMap[i + 1] = { sysPrompt: chapterInstruction, userPrompt: seqUserPrompt, isSequential: true };
+                                finalScriptData.sections.push({ content: `Locked. Waiting on Chapter ${i}.`, chapter: i + 1, isFailed: true, isLocked: true });
+                                continue;
                             }
 
-                            finalScriptData.sections = finalScriptData.sections.concat(chapterData.sections);
+                            if(ui.loadingText) ui.loadingText.innerText = "Cooling down API...";
+                            if (i > 0) await new Promise(r => setTimeout(r, (appSettings.textCooldown || 4000) + Math.random() * 500));
+                            if(ui.loadingText) ui.loadingText.innerText = `Phase 2: Writing Chapter ${i + 1} of ${outlineData.chapters.length}...`;
+
+                            try {
+                                const chapterData = await executeGeminiCall(chapterInstruction, seqUserPrompt, chapterSchema);
+                                
+                                if (chapterData && chapterData.sections && chapterData.sections.length > 0) {
+                                    chapterData.sections = chapterData.sections.map(s => ({ ...s, chapter: i + 1 }));
+                                    const allChapterText = chapterData.sections.map(s => s.content).join(' ');
+                                    const words = allChapterText.split(/\s+/);
+                                    previousChapterEndText = words.slice(Math.max(words.length - 60, 0)).join(' ');
+                                    finalScriptData.sections = finalScriptData.sections.concat(chapterData.sections);
+                                }
+                            } catch (err) {
+                                console.error(`Chapter ${i+1} failed:`, err);
+                                sequentialBreak = true; // Trigger cascade
+                                window.failedChaptersMap[i + 1] = { sysPrompt: chapterInstruction, userPrompt: seqUserPrompt, isSequential: true };
+                                finalScriptData.sections.push({ content: `Failed to generate Chapter ${i+1}.`, chapter: i + 1, isFailed: true, isLocked: false });
+                            }
                         }
                     }
                     if(ui.loadingText) ui.loadingText.innerText = "Phase 3: Finalizing Assembly...";
@@ -4900,10 +5192,17 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 // Calculate actual words for Diagnostics
                 let actualWordCount = 0;
                 if (finalScriptData && finalScriptData.sections) {
-                    const allText = finalScriptData.sections.map(s => s.content).join(' ');
-                    actualWordCount = allText.split(/\s+/).filter(w => w.length > 0).length;
+                    // Ignore the placeholder error text in the word count
+                    const validText = finalScriptData.sections.filter(s => !s.isFailed).map(s => s.content).join(' ');
+                    actualWordCount = validText.split(/\s+/).filter(w => w.length > 0).length;
                 }
                 window.generationBlueprint.actualWords = actualWordCount;
+
+                // ABORT IF NOTHING WAS GENERATED (e.g., Chapter 1 failed in Deep Dive)
+                const hasValidText = finalScriptData.sections.some(s => !s.isFailed);
+                if (!hasValidText) {
+                    throw new Error("Generation failed to start properly. Please click generate to try again.");
+                }
 
                 renderScript(finalScriptData, totalNumChapters);
 
@@ -5247,6 +5546,129 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             return {x, y, w, h};
         };
 
+        // NEW FEATURE: Dynamically recalculate timeline timings without AI regeneration
+        window.recalculateTimelineTimings = function() {
+            const timelineCards = Array.from(document.querySelectorAll('#v2-timeline-feed .v2-timeline-card'));
+            if (timelineCards.length === 0) return;
+
+            const isProSync = window.parsedSRTWords && window.parsedSRTWords.length > 0;
+            const stats = calculateV2Stats();
+            
+            let totalWordCount = 0;
+            const cardData = timelineCards.map(card => {
+                const textElements = Array.from(card.querySelectorAll('p.italic'));
+                const cardFullText = textElements.map(p => p.innerText.replace(/^"|"$/g, '').trim()).join(' ');
+                const cleanWords = cardFullText.replace(/[^\w\s']/g, '').toLowerCase().split(/\s+/).filter(w => w.length > 0);
+                totalWordCount += cleanWords.length;
+                return { card, cleanWords, wordCount: cleanWords.length };
+            });
+
+            if (totalWordCount === 0) totalWordCount = 1;
+
+            let currentSec = 0;
+            let cumulativeWords = 0;
+            let rawTimings = [];
+
+            cardData.forEach((data, index) => {
+                let blockStartSec = currentSec;
+                let blockEndSec = currentSec;
+
+                if (isProSync) {
+                    if (index === 0) blockStartSec = 0;
+                    else blockStartSec = rawTimings[index - 1].end;
+                    
+                    if (data.wordCount > 0) {
+                        cumulativeWords += data.wordCount;
+                        const progressRatio = Math.min(cumulativeWords / totalWordCount, 1.0);
+                        let expectedSrtIdx = Math.floor(progressRatio * (window.parsedSRTWords.length - 1));
+                        expectedSrtIdx = Math.max(0, Math.min(expectedSrtIdx, window.parsedSRTWords.length - 1));
+
+                        blockEndSec = window.parsedSRTWords[expectedSrtIdx].end;
+
+                        const targetEndWord = data.cleanWords[data.cleanWords.length - 1];
+                        let foundExact = false;
+                        for (let offset = -40; offset <= 40; offset++) {
+                            let testIdx = expectedSrtIdx + offset;
+                            if (testIdx > 0 && testIdx < window.parsedSRTWords.length) {
+                                if (window.parsedSRTWords[testIdx].word === targetEndWord && window.parsedSRTWords[testIdx].end > blockStartSec) {
+                                    blockEndSec = window.parsedSRTWords[testIdx].end;
+                                    foundExact = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!foundExact && data.wordCount > 1) {
+                            const backupEndWord = data.cleanWords[data.cleanWords.length - 2];
+                            for (let offset = -40; offset <= 40; offset++) {
+                                let testIdx = expectedSrtIdx + offset;
+                                if (testIdx > 0 && testIdx < window.parsedSRTWords.length) {
+                                    if (window.parsedSRTWords[testIdx].word === backupEndWord) {
+                                        let finalIdx = Math.min(testIdx + 1, window.parsedSRTWords.length - 1);
+                                        if (window.parsedSRTWords[finalIdx].end > blockStartSec) {
+                                            blockEndSec = window.parsedSRTWords[finalIdx].end;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (blockEndSec <= blockStartSec) blockEndSec = blockStartSec + ((data.wordCount / stats.wpm) * 60);
+                    
+                    if (index === cardData.length - 1) {
+                        const paddingInput = document.getElementById('srt-outro-padding');
+                        const paddingSecs = paddingInput ? parseFloat(paddingInput.value) || 0 : 0;
+                        blockEndSec = window.parsedSRTWords[window.parsedSRTWords.length - 1].end + paddingSecs;
+                    }
+                    currentSec = blockEndSec;
+                } else {
+                    const duration = (data.wordCount / stats.wpm) * 60;
+                    blockEndSec = currentSec + duration;
+                    currentSec = blockEndSec; 
+                } 
+                rawTimings.push({ start: blockStartSec, end: blockEndSec });
+            });
+
+            if (isProSync) {
+                const gapMode = document.getElementById('srt-gap-mode')?.value || 'hold';
+                for (let i = 0; i < rawTimings.length; i++) {
+                    if (i < rawTimings.length - 1) {
+                        const currentEnd = rawTimings[i].end;
+                        const nextStart = rawTimings[i+1].start;
+                        if (nextStart > currentEnd) {
+                            if (gapMode === 'hold') rawTimings[i].end = nextStart;
+                            else if (gapMode === 'split') {
+                                const halfway = currentEnd + ((nextStart - currentEnd) / 2);
+                                rawTimings[i].end = halfway;
+                                rawTimings[i+1].start = halfway;
+                            }
+                        } else if (nextStart < currentEnd) {
+                            rawTimings[i].end = nextStart;
+                        }
+                    }
+                }
+            }
+
+            window.masterRenderTimings = rawTimings;
+
+            cardData.forEach((data, index) => {
+                const timing = rawTimings[index];
+                data.card.dataset.start = timing.start;
+                data.card.dataset.end = timing.end;
+                
+                const timeStr = `[${formatTimecode(timing.start, isProSync)} - ${formatTimecode(timing.end, isProSync)}]`;
+                const durationStr = window.formatDurationBadge ? window.formatDurationBadge(timing.end - timing.start) : (timing.end - timing.start).toFixed(1) + 's';
+                
+                data.card.querySelectorAll('.time-badge').forEach(badge => badge.innerText = timeStr);
+                data.card.querySelectorAll('.duration-badge').forEach(badge => badge.innerText = durationStr);
+            });
+            
+            showToast("Timeline timings successfully recalculated!");
+            document.body.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+
         // Helper to parse SRT timecode (e.g. 00:00:03,133) to seconds
         function srtTimeToSeconds(timeStr) {
             if (!timeStr) return 0;
@@ -5301,6 +5723,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 ui.v2ManualMath.style.opacity = "1";
                 ui.btnClearSrt.classList.add('hidden');
                 ui.srtGapModeContainer?.classList.add('hidden');
+                if (typeof window.recalculateTimelineTimings === 'function') window.recalculateTimelineTimings();
                 return;
             }
 
@@ -5357,8 +5780,18 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 ui.srtGapModeContainer?.classList.remove('hidden');
                 showToast("SRT Parsed! Exact timing enabled.");
                 document.body.dispatchEvent(new Event('input', { bubbles: true })); // Trigger Auto-save
+                
+                // NEW: Automatically update timeline if it already exists
+                if (typeof window.recalculateTimelineTimings === 'function') window.recalculateTimelineTimings();
             };
             reader.readAsText(file);
+        });
+
+        // NEW: Allow Gap Mode changes to instantly update the timeline too
+        document.getElementById('srt-gap-mode')?.addEventListener('change', () => {
+            if (window.parsedSRTWords && window.parsedSRTWords.length > 0 && typeof window.recalculateTimelineTimings === 'function') {
+                window.recalculateTimelineTimings();
+            }
         });
 
         // --- NEW: DYNAMIC OUTRO PADDING LISTENER ---
@@ -5379,8 +5812,9 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             lastCard.dataset.end = newEnd;
 
             // Find the timecode badge inside that block and update the text
-            // Query explicitly for 'p.font-mono' so we don't accidentally grab input boxes!
-            const timeBadges = lastCard.querySelectorAll('p.font-mono');
+            const timeBadges = lastCard.querySelectorAll('.time-badge');
+            const durationBadges = lastCard.querySelectorAll('.duration-badge');
+            
             if (timeBadges.length > 0) {
                 const lastTimeBadge = timeBadges[timeBadges.length - 1];
                 if (lastTimeBadge && lastTimeBadge.innerText.includes(' - ')) {
@@ -5394,11 +5828,24 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                         lastTimeBadge.classList.add('text-amber-400');
                     } else {
                         lastTimeBadge.classList.remove('text-amber-400');
-                        // /* A-ROLL REF: 
-                        // const isAroll = lastCard.querySelector('.lucide-user') !== null;
-                        // lastTimeBadge.classList.add(isAroll ? 'text-slate-400' : 'text-emerald-300');
-                        // */
                         lastTimeBadge.classList.add('text-emerald-300'); // Restore original color
+                    }
+                }
+            }
+            
+            if (durationBadges.length > 0) {
+                const lastDurationBadge = durationBadges[durationBadges.length - 1];
+                if (lastDurationBadge) {
+                    const rawDuration = newEnd - parseFloat(lastCard.dataset.start);
+                    const newDuration = window.formatDurationBadge ? window.formatDurationBadge(rawDuration) : rawDuration.toFixed(1) + 's';
+                    lastDurationBadge.innerText = newDuration;
+                    
+                    if (paddingSecs > 0) {
+                        lastDurationBadge.classList.remove('text-slate-400');
+                        lastDurationBadge.classList.add('text-amber-400');
+                    } else {
+                        lastDurationBadge.classList.remove('text-amber-400');
+                        lastDurationBadge.classList.add('text-slate-400');
                     }
                 }
             }
@@ -5414,8 +5861,6 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             const paddingInput = document.getElementById('srt-outro-padding');
             if (paddingInput) {
                 paddingInput.value = '0';
-                // Trigger the live-update listener to instantly strip the padding from the current timeline
-                paddingInput.dispatchEvent(new Event('input')); 
             }
             ui.v2SrtUpload.dispatchEvent(new Event('change'));
         });
@@ -5829,7 +6274,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 const schema = { type: "OBJECT", properties: { aestheticPrompt: { type: "STRING" } }, required: ["aestheticPrompt"] };
                 const systemPrompt = "You are an expert Midjourney Prompt Engineer. The user will give you a vague aesthetic or art style. Convert it into a detailed, comma-separated string of descriptive keywords meant to be appended to the end of an image generation prompt. Focus strictly on the medium, lighting, texture, and mood. Output ONLY the descriptive string (e.g. '1990s analog VHS camcorder footage, heavy static noise, chromatic aberration').";
                 
-                const data = await executeGeminiCall(systemPrompt, `User idea: "${userInput}"`, schema);
+                const data = await executeGeminiCall(systemPrompt, `User idea: "${userInput}"`, schema, false, null, 'format');
                 if (data && data.aestheticPrompt) {
                     ui.v2CustomStyleInput.value = data.aestheticPrompt;
                     showToast("Art style expanded perfectly!");
@@ -5883,7 +6328,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                     userPrompt = `Analyze these ${maxImages} images and blend their core aesthetic into a single style prompt.`;
                 }
                 
-                const data = await executeGeminiCall(systemPrompt, userPrompt, schema, false, base64Images);
+                const data = await executeGeminiCall(systemPrompt, userPrompt, schema, false, base64Images, 'format');
                 
                 if (data && data.aestheticPrompt) {
                     if(ui.v2CustomStyleInput) ui.v2CustomStyleInput.value = data.aestheticPrompt;
@@ -5901,6 +6346,17 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 lucide.createIcons();
             }
         });
+
+        window.formatDurationBadge = function(seconds) {
+            const sec = parseFloat(seconds);
+            if (isNaN(sec)) return "0.0s";
+            if (sec >= 60) {
+                const m = Math.floor(sec / 60);
+                const s = Math.floor(sec % 60);
+                return `${sec.toFixed(1)}s (${m}m ${s.toString().padStart(2, '0')}s)`;
+            }
+            return `${sec.toFixed(1)}s`;
+        };
 
         function formatTimecode(seconds, showMs = false) {
             if (isNaN(seconds) || !isFinite(seconds)) return showMs ? "00:00.000" : "00:00";
@@ -6007,7 +6463,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                     }
                 };
 
-                const result = await fetchWithRetry(getImageModelUrl(), {
+                const result = await fetchWithRetry(getImageModelUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -6058,6 +6514,9 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                                 </button>
                                 <button class="btn-toggle-animate bg-pink-900/90 hover:bg-pink-800 text-white px-3 py-1.5 rounded border border-pink-600/50 shadow-lg flex items-center gap-2 text-[10px] font-bold backdrop-blur-sm transition-colors" title="Create AI Flipbook Sequence">
                                     <i data-lucide="play-circle" class="w-3 h-3 text-pink-300 pointer-events-none"></i> Frame Animate
+                                </button>
+                                <button class="btn-toggle-seq-mode hidden bg-pink-700/90 hover:bg-pink-600 text-white px-3 py-1.5 rounded border border-pink-500/50 shadow-lg flex items-center gap-2 text-[10px] font-bold backdrop-blur-sm transition-colors" title="Toggle Morph / Stop-Motion">
+                                    <i data-lucide="repeat" class="w-3 h-3 text-pink-200 pointer-events-none"></i> <span class="seq-mode-text pointer-events-none">Mode</span>
                                 </button>
                                 <button class="btn-stylize-image hidden bg-blue-900/90 hover:bg-blue-800 text-white px-3 py-1.5 rounded border border-blue-600/50 shadow-lg flex items-center gap-2 text-[10px] font-bold backdrop-blur-sm transition-colors" title="Match timeline Art Style">
                                     <i data-lucide="palette" class="w-3 h-3 text-blue-300 pointer-events-none"></i> Style Match
@@ -6291,6 +6750,9 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                                 </button>
                                 <button class="btn-toggle-animate bg-pink-900/90 hover:bg-pink-800 text-white px-3 py-1.5 rounded border border-pink-600/50 shadow-lg flex items-center gap-2 text-[10px] font-bold backdrop-blur-sm transition-colors" title="Create AI Flipbook Sequence">
                                     <i data-lucide="play-circle" class="w-3 h-3 text-pink-300 pointer-events-none"></i> Frame Animate
+                                </button>
+                                <button class="btn-toggle-seq-mode hidden bg-pink-700/90 hover:bg-pink-600 text-white px-3 py-1.5 rounded border border-pink-500/50 shadow-lg flex items-center gap-2 text-[10px] font-bold backdrop-blur-sm transition-colors" title="Toggle Morph / Stop-Motion">
+                                    <i data-lucide="repeat" class="w-3 h-3 text-pink-200 pointer-events-none"></i> <span class="seq-mode-text pointer-events-none">Mode</span>
                                 </button>
                                 <button class="btn-stylize-image hidden bg-blue-900/90 hover:bg-blue-800 text-white px-3 py-1.5 rounded border border-blue-600/50 shadow-lg flex items-center gap-2 text-[10px] font-bold backdrop-blur-sm transition-colors" title="Match timeline Art Style">
                                     <i data-lucide="palette" class="w-3 h-3 text-blue-300 pointer-events-none"></i> Style Match
@@ -7051,6 +7513,8 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                         
                         // Pass 'isProSync' to dynamically reveal millisecond precision in the UI
                         const timeStr = `[${formatTimecode(rawTimings[index].start, isProSync)} - ${formatTimecode(rawTimings[index].end, isProSync)}]`;
+                        const rawDuration = rawTimings[index].end - rawTimings[index].start;
+                        const blockDurationStr = window.formatDurationBadge ? window.formatDurationBadge(rawDuration) : rawDuration.toFixed(1) + 's';
                         
                         /* A-ROLL REF: Force any rogue A-Roll outputs to Image
                         let isAroll = asset.type.toLowerCase().includes('a-roll') || asset.type.toLowerCase().includes('narrator');
@@ -7098,7 +7562,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                         const query = asset.searchQuery || '';
                         const keySubjects = asset.keySubjects || [];
                         
-                        const blockData = { index: index + 1, text: blockText, timeStr };
+                        const blockData = { index: index + 1, text: blockText, timeStr, duration: blockDurationStr };
 
                         if (groups.length > 0) {
                             const lastGroup = groups[groups.length - 1];
@@ -7209,8 +7673,12 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                             // List grouped script blocks distinctly
                             let scriptsHtml = group.blocks.map((b, i) => `
                                 <div class="${i > 0 ? 'mt-4 pt-4 border-t border-slate-700/50' : ''}">
-                                    <p class="font-mono text-emerald-300 font-bold mb-2 text-sm">${b.timeStr}</p>
-                                    <p class="text-xs font-bold ${colorStr} uppercase tracking-widest flex items-center gap-2 mb-2">
+                                    <div class="flex flex-col items-start gap-1 mb-2">
+                                        <p class="font-mono text-emerald-300 font-bold text-sm time-badge">${b.timeStr}</p>
+                                        <p class="text-[10px] font-mono text-slate-400 bg-slate-900 border border-slate-700 px-1.5 py-0.5 rounded shadow-inner duration-badge inline-block">${b.duration}</p>
+                                    </div>
+                                    <p class="text-xs font-bold ${colorStr} uppercase tracking-widest flex items-center gap-2 mb-2 relative">
+                                        <input type="checkbox" class="card-select-cb accent-emerald-500 w-3.5 h-3.5 cursor-pointer z-10 shrink-0" title="Select this block for bulk actions">
                                         <span class="bg-slate-700 text-white px-2 py-0.5 rounded-md shadow-sm">#${b.index}</span>
                                         ${i === 0 ? `<i data-lucide="${icon}" class="w-4 h-4"></i> ${group.type}` : `<span class="opacity-50 flex items-center gap-1"><i data-lucide="link" class="w-3 h-3"></i> Continued</span>`}
                                     </p>
@@ -7561,7 +8029,7 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
                     generationConfig: { responseMimeType: "application/json", responseSchema: schema }
                 };
 
-                const result = await fetchWithRetry(getTextModelUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const result = await fetchWithRetry(getTextModelUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, 6, 'seo');
                 
                 if (!result.candidates || !result.candidates[0]) {
                     throw new Error("AI returned an empty response. Ensure images do not trigger safety filters.");
@@ -7769,7 +8237,7 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
                     const sysPrompt = "You are an elite YouTube Growth Strategist. Analyze the provided list of video titles against the provided video script. Score each title out of 100 based on its Click-Through Rate (CTR) potential, Curiosity Gap, Emotional Urgency, AND how accurately/compellingly it represents the script's core narrative. Select the single best 'Winner' title. Be ruthlessly honest in your critiques.";
                     const userPrompt = `FINAL SCRIPT CONTEXT:\n${scriptContext}\n\nRATE THESE TITLES:\n${titlesArray.map((t, i) => `[Title ${i}]: ${t}`).join('\n')}`;
 
-                    const data = await executeGeminiCall(sysPrompt, userPrompt, schema);
+                    const data = await executeGeminiCall(sysPrompt, userPrompt, schema, false, null, 'seo');
 
                     if (data && data.evaluations) {
                         let html = `<h4 class="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5 mb-2"><i data-lucide="brain-circuit" class="w-4 h-4"></i> AI Strategic Analysis</h4>`;
@@ -7849,7 +8317,7 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
                     const sysPrompt = "You are an elite YouTube Growth Strategist. Analyze the provided list of thumbnail text hooks against the provided video script. Score each hook out of 100 based on its Click-Through Rate (CTR) potential, brevity (under 5 words is best), Emotional Urgency, AND how accurately it represents the script's core narrative. Select the single best 'Winner' hook. Be ruthlessly honest in your critiques.";
                     const userPrompt = `FINAL SCRIPT CONTEXT:\n${scriptContext}\n\nRATE THESE THUMBNAIL HOOKS:\n${slugsArray.map((t, i) => `[Hook ${i}]: ${t}`).join('\n')}`;
 
-                    const data = await executeGeminiCall(sysPrompt, userPrompt, schema);
+                    const data = await executeGeminiCall(sysPrompt, userPrompt, schema, false, null, 'seo');
 
                     if (data && data.evaluations) {
                         let html = `<h4 class="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5 mb-2"><i data-lucide="brain-circuit" class="w-4 h-4"></i> AI Strategic Analysis</h4>`;
@@ -7931,7 +8399,7 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
                         generationConfig: { responseMimeType: "application/json", responseSchema: schema }
                     };
 
-                    const result = await fetchWithRetry(getTextModelUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const result = await fetchWithRetry(getTextModelUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, 6, 'seo');
                     return JSON.parse(result.candidates[0].content.parts[0].text.replace(/```json\n?|```/g, '').trim());
                 } catch (err) {
                     console.error(err);
@@ -8282,6 +8750,23 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 return;
             }
 
+            // 3.2 Toggle Sequence Mode Button
+            const btnToggleSeqMode = e.target.closest('.btn-toggle-seq-mode');
+            if (btnToggleSeqMode) {
+                const wrapper = btnToggleSeqMode.closest('.image-editor-wrapper');
+                const cid = wrapper.dataset.containerId;
+                const idx = window.imageHistoryIndex[cid];
+                const historyItem = window.imageHistory[cid][idx];
+
+                if (historyItem && historyItem.type === 'ai_sequence') {
+                    // Swap mode and instantly refresh canvas
+                    historyItem.mode = historyItem.mode === 'stop_motion' ? 'crossfade' : 'stop_motion';
+                    window.updateInlineImageUI(wrapper, cid);
+                    document.body.dispatchEvent(new Event('input', { bubbles: true })); // Auto-save
+                }
+                return;
+            }
+
             // 3.5 Enhance Prompt Button (Sparkles)
             const btnEnhance = e.target.closest('.btn-enhance-edit');
             if (btnEnhance) {
@@ -8346,9 +8831,9 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 loadingOverlay.classList.remove('hidden');
 
                 try {
-                    // Force any active camera motion off so it doesn't clash with the AI video
+                    // Default camera motion to Global so it respects user timeline settings
                     const motionSelect = wrapper.querySelector('.clip-motion-select');
-                    if (motionSelect) motionSelect.value = 'none';
+                    if (motionSelect) motionSelect.value = 'global';
 
                     // Ensure we are working with an Image, not an existing video
                     const currentB64 = window.imageHistory[cid][window.imageHistoryIndex[cid]];
@@ -8371,7 +8856,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                             contents: [{ parts: [{ text: promptText }, { inlineData: { mimeType: mime, data: baseImageB64 } }] }],
                             generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
                         };
-                        const res = await fetchWithRetry(getImageModelUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        const res = await fetchWithRetry(getImageModelUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         if (res.candidates && res.candidates[0]?.content?.parts) {
                             const p = res.candidates[0].content.parts.find(x => x.inlineData);
                             if (p) return p.inlineData.data;
@@ -8482,7 +8967,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                         generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
                     };
 
-                    const result = await fetchWithRetry(getImageModelUrl(), {
+                    const result = await fetchWithRetry(getImageModelUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -8573,7 +9058,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                         generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
                     };
 
-                    const result = await fetchWithRetry(getImageModelUrl(), {
+                    const result = await fetchWithRetry(getImageModelUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -8913,7 +9398,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     const progress = (loopTime % segmentFrames) / segmentFrames;
 
                     let fromImg = mediaObj.images[safeSegment];
-                    let toImg = mediaObj.images[(safeSegment + 1) % frameCount];
+                    // Fix: Stop on the last frame instead of crossfading back to the first frame
+                    let toImg = mediaObj.images[Math.min(safeSegment + 1, frameCount - 1)];
 
                     ctx.globalAlpha = alpha;
                     ctx.drawImage(fromImg, rect.x, rect.y, rect.w, rect.h);
@@ -9170,6 +9656,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             const btnCrop = wrapper.querySelector('.btn-crop-image');
             const btnEdit = wrapper.querySelector('.btn-toggle-edit');
             const btnAnimate = wrapper.querySelector('.btn-toggle-animate');
+            const btnToggleSeqMode = wrapper.querySelector('.btn-toggle-seq-mode');
 
             // Interactive Canvas Flipbook Preview
             if (isSequence) {
@@ -9297,7 +9784,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                             const progress = (loopTime % segmentFrames) / segmentFrames;
 
                             const fromImg = mediaEl._seqImages[safeSegment];
-                            const toImg = mediaEl._seqImages[(safeSegment + 1) % frameCount];
+                            // Fix: Stop on the last frame instead of crossfading back to the first frame
+                            const toImg = mediaEl._seqImages[Math.min(safeSegment + 1, frameCount - 1)];
 
                             if (fromImg && fromImg.complete && toImg && toImg.complete) {
                                 ctx.globalAlpha = 1.0;
@@ -9332,11 +9820,22 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     if (isVideo) btnTrim.classList.remove('hidden'); // SHOW trim for standard video
                     else btnTrim.classList.add('hidden'); // Hide trim for sequences
                 }
+                if (btnToggleSeqMode) {
+                    if (isSequence) {
+                        btnToggleSeqMode.classList.remove('hidden');
+                        const modeText = historyItem.mode === 'stop_motion' ? 'Stop-Motion' : 'Morph / Fade';
+                        const span = btnToggleSeqMode.querySelector('.seq-mode-text');
+                        if (span) span.innerText = modeText;
+                    } else {
+                        btnToggleSeqMode.classList.add('hidden');
+                    }
+                }
             } else {
                 if (btnTrim) btnTrim.classList.add('hidden');
                 if (btnCrop) btnCrop.classList.remove('hidden');
                 if (btnEdit) btnEdit.classList.remove('hidden');
                 if (btnAnimate) btnAnimate.classList.remove('hidden');
+                if (btnToggleSeqMode) btnToggleSeqMode.classList.add('hidden');
                 
                 if (btnStylize && window.imageHistoryMeta && window.imageHistoryMeta[cid]) {
                     const meta = window.imageHistoryMeta[cid][idx];
@@ -9459,6 +9958,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 scriptTitles:  safeTitlesHTML,
                 factSheet:     ui.researchContent?.value || '',
                 v1NumberState: window.scriptNumberState || 'numeric',
+                failedMap: window.failedChaptersMap || {},
                 // View 2
                 v2Script:     ui.v2Script?.value || '',
                 v2Min:        ui.v2Min?.value || '10',
@@ -9564,6 +10064,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             
             // Restore Number Toggle UI State
             window.scriptNumberState = data.v1NumberState || 'numeric';
+            window.failedChaptersMap = data.failedMap || {};
+            
             if (ui.btnToggleNumbers) {
                 if (window.scriptNumberState === 'spoken') {
                     ui.btnToggleNumbers.innerHTML = `<i data-lucide="hash" class="w-4 h-4"></i> <span class="toggle-text">Show Digits</span>`;
@@ -9645,6 +10147,15 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 // Bulletproof Ghost Box Fix for View 2
                 ui.v2TimelineFeed.querySelectorAll('div[id$="-img"]').forEach(box => {
                     if (box.innerHTML.trim() === '') box.classList.add('hidden');
+                });
+                
+                // BUG FIX: Reconstruct masterRenderTimings from the loaded DOM so MP4 Render doesn't fail
+                window.masterRenderTimings = [];
+                ui.v2TimelineFeed.querySelectorAll('.v2-timeline-card').forEach(card => {
+                    window.masterRenderTimings.push({
+                        start: parseFloat(card.dataset.start) || 0,
+                        end: parseFloat(card.dataset.end) || 0
+                    });
                 });
             }
             
@@ -9799,7 +10310,10 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     // NORMAL MODE
                     card.innerHTML = `
                         <div class="flex justify-between items-start mb-2">
-                            <h4 class="text-white font-bold truncate pr-2 ${isActive ? 'text-emerald-400' : ''}">${proj.name}</h4>
+                            <div class="flex items-center gap-2 overflow-hidden flex-1 mr-2">
+                                <input type="checkbox" class="project-select-cb accent-emerald-500 w-3 h-3 shrink-0 cursor-pointer" data-id="${proj.id}">
+                                <h4 class="text-white font-bold truncate pr-2 ${isActive ? 'text-emerald-400' : ''}">${proj.name}</h4>
+                            </div>
                             <div class="flex gap-2 shrink-0">
                                 <button class="btn-load-proj text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded transition-colors" title="Load Project">
                                     <i data-lucide="folder-output" class="w-3 h-3"></i>
@@ -9821,6 +10335,25 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
 
                 ui.projectsList.appendChild(card);
             });
+
+            // Dynamic Export Button UI Update
+            const exportBtn = document.getElementById('btn-export-projects');
+            const checkboxes = ui.projectsList.querySelectorAll('.project-select-cb');
+            
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const checkedCount = ui.projectsList.querySelectorAll('.project-select-cb:checked').length;
+                    if (exportBtn) {
+                        if (checkedCount > 0) {
+                            exportBtn.innerHTML = `<i data-lucide="download" class="w-3 h-3 text-blue-400"></i> Export Selected (${checkedCount})`;
+                        } else {
+                            exportBtn.innerHTML = `<i data-lucide="download" class="w-3 h-3 text-blue-400"></i> Export All`;
+                        }
+                        lucide.createIcons({ root: exportBtn.parentElement });
+                    }
+                });
+            });
+
             try { lucide.createIcons({ root: ui.projectsList }); } catch(e) { console.warn('Project List Lucide Error:', e); }
         }
 
@@ -10102,6 +10635,112 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             ui.projectsModal?.classList.remove('hidden');
         });
         ui.btnCloseProjects?.addEventListener('click', () => ui.projectsModal?.classList.add('hidden'));
+
+        // --- PROJECTS EXPORT/IMPORT LOGIC ---
+        document.getElementById('btn-export-projects')?.addEventListener('click', () => {
+            try {
+                const checkboxes = document.querySelectorAll('.project-select-cb:checked');
+                let projectsToExport = [];
+                
+                if (checkboxes.length > 0) {
+                    const selectedIds = Array.from(checkboxes).map(cb => cb.dataset.id);
+                    projectsToExport = appProjects.filter(p => selectedIds.includes(p.id));
+                } else {
+                    projectsToExport = appProjects; // Export all if none selected
+                }
+
+                if (projectsToExport.length === 0) return showToast("No projects available to export.");
+
+                const backupData = {
+                    version: "1.0",
+                    timestamp: Date.now(),
+                    projects: projectsToExport
+                };
+                
+                // Use a Blob to safely handle massive timelines without crashing the browser URI limit
+                const jsonString = JSON.stringify(backupData);
+                const blob = new Blob([jsonString], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                
+                const dlAnchorElem = document.createElement('a');
+                dlAnchorElem.href = url;
+                const dateStr = new Date().toISOString().slice(0,10);
+                dlAnchorElem.download = `ScriptForge_Projects_${dateStr}.json`;
+                
+                document.body.appendChild(dlAnchorElem);
+                dlAnchorElem.click();
+                document.body.removeChild(dlAnchorElem);
+                URL.revokeObjectURL(url);
+                
+                showToast(`Exported ${projectsToExport.length} projects successfully!`);
+                
+                // Reset checkboxes visually
+                document.querySelectorAll('.project-select-cb').forEach(cb => cb.checked = false);
+                const exportBtn = document.getElementById('btn-export-projects');
+                if(exportBtn) {
+                    exportBtn.innerHTML = `<i data-lucide="download" class="w-3 h-3 text-blue-400"></i> Export All`;
+                    lucide.createIcons({ root: exportBtn.parentElement });
+                }
+
+            } catch (err) {
+                console.error("Project Export Error:", err);
+                showToast("Failed to export projects. Data might be too large.");
+            }
+        });
+
+        document.getElementById('import-projects-upload')?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const btnImport = document.getElementById('btn-trigger-proj-import');
+                let originalHtml = "";
+                
+                if (btnImport) {
+                    originalHtml = btnImport.innerHTML;
+                    btnImport.disabled = true;
+                    btnImport.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-amber-400"></div> Importing...`;
+                }
+
+                try {
+                    const importedData = JSON.parse(event.target.result);
+                    
+                    if (!importedData || !importedData.projects || !Array.isArray(importedData.projects)) {
+                        throw new Error("Invalid project backup file structure.");
+                    }
+
+                    let importCount = 0;
+                    for (const proj of importedData.projects) {
+                        if (proj && proj.id && proj.data) {
+                            // Using our standard save function dynamically handles both IndexedDB and Firebase correctly
+                            await saveProjectDB(proj);
+                            importCount++;
+                        }
+                    }
+
+                    // Reload memory array if Firebase isn't auto-syncing it
+                    if (!isFirebaseEnabled) {
+                        appProjects = await loadProjectsIndexedDB();
+                    }
+                    
+                    updateProjectsList();
+                    showToast(`Successfully imported/synced ${importCount} projects!`);
+                    
+                } catch (err) {
+                    console.error("Project Import Error:", err);
+                    showToast("Failed to import: Invalid or corrupted file.");
+                } finally {
+                    if (btnImport) {
+                        btnImport.innerHTML = originalHtml;
+                        btnImport.disabled = false;
+                    }
+                    e.target.value = ''; // Reset input to allow re-uploading the same file
+                }
+            };
+            reader.readAsText(file);
+        });
+        // ------------------------------------
 
         // Research Sidebar Listeners
         const openResearchSidebar = () => {
@@ -10650,7 +11289,11 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
 
         // --- Custom Safe Export Confirmation Modal ---
         window.confirmExportReadiness = async function(exportName) {
-            const allCards = Array.from(document.querySelectorAll('#v2-timeline-feed .v2-timeline-card'));
+            const selectedCheckboxes = document.querySelectorAll('.card-select-cb:checked');
+            const allCards = selectedCheckboxes.length > 0 
+                ? Array.from(selectedCheckboxes).map(cb => cb.closest('.v2-timeline-card'))
+                : Array.from(document.querySelectorAll('#v2-timeline-feed .v2-timeline-card'));
+                
             const failedCards = allCards.filter(card => {
                 const hasRenderBtn = card.querySelector('.btn-ai-render');
                 const hasSuccessImage = card.querySelector('.main-generated-img');
@@ -10699,10 +11342,214 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             });
         };
 
+        // ==========================================
+        // TIMELINE SELECTION & BULK EDIT LOGIC
+        // ==========================================
+        window.updateBulkButtonCounts = function() {
+            const selectedCheckboxes = document.querySelectorAll('.card-select-cb:checked');
+            const checkedCards = selectedCheckboxes.length;
+            
+            const btnBulkGen = document.getElementById('btn-bulk-gen');
+            const btnAnimate = document.getElementById('btn-bulk-animate');
+            const btnImagesZip = document.getElementById('btn-bulk-download');
+            const btnClipsZip = document.getElementById('btn-bulk-download-vid');
+            const btnRenderVideo = document.getElementById('btn-render-video');
+            const countBadge = document.getElementById('selection-count-badge');
+            
+            const suffix = checkedCards > 0 ? ` (${checkedCards})` : ``;
+
+            if (btnBulkGen) btnBulkGen.innerHTML = `<i data-lucide="play" class="w-3 h-3"></i> Start Bulk Render${suffix}`;
+            if (btnAnimate) btnAnimate.innerHTML = `<i data-lucide="play-circle" class="w-3 h-3"></i> Bulk Frame Animate${suffix}`;
+            if (btnImagesZip) btnImagesZip.innerHTML = `<i data-lucide="image" class="w-3 h-3"></i> Images (ZIP)${suffix}`;
+            if (btnClipsZip) btnClipsZip.innerHTML = `<i data-lucide="video" class="w-3 h-3 pointer-events-none"></i> Clips (ZIP)${suffix}`;
+            if (btnRenderVideo) btnRenderVideo.innerHTML = `<i data-lucide="film" class="w-3 h-3 pointer-events-none"></i> Render MP4${suffix}`;
+            if (countBadge) countBadge.innerText = `${checkedCards} Selected`;
+
+            // Enable/Disable the Bulk Edit Toolbar
+            const editToolbar = document.getElementById('bulk-edit-toolbar');
+            if (editToolbar) {
+                if (checkedCards > 0) editToolbar.classList.remove('opacity-50', 'pointer-events-none');
+                else editToolbar.classList.add('opacity-50', 'pointer-events-none');
+            }
+
+            // Check if any selected card has an AI sequence (Flipbook)
+            let hasSeq = false;
+            selectedCheckboxes.forEach(cb => {
+                const wrapper = cb.closest('.v2-timeline-card').querySelector('.image-editor-wrapper');
+                const cid = wrapper?.dataset.containerId;
+                if (cid && window.imageHistoryMeta && window.imageHistoryMeta[cid]) {
+                    const idx = window.imageHistoryIndex[cid];
+                    if (window.imageHistoryMeta[cid][idx] === 'ai_sequence') hasSeq = true;
+                }
+            });
+            
+            const animModeSelect = document.getElementById('bulk-apply-anim-mode');
+            if (animModeSelect) {
+                if (hasSeq) {
+                    animModeSelect.disabled = false;
+                    animModeSelect.classList.remove('opacity-50', 'pointer-events-none');
+                } else {
+                    animModeSelect.disabled = true;
+                    animModeSelect.classList.add('opacity-50', 'pointer-events-none');
+                }
+            }
+            
+            try { lucide.createIcons(); } catch(e){}
+        };
+
+        // UI Toolbar Buttons
+        document.getElementById('btn-select-all-cards')?.addEventListener('click', () => {
+            document.querySelectorAll('.card-select-cb').forEach(cb => {
+                cb.checked = true;
+                const card = cb.closest('.v2-timeline-card');
+                if (card) card.classList.add('ring-2', 'ring-emerald-500', 'ring-offset-2', 'ring-offset-slate-900');
+            });
+            window.updateBulkButtonCounts();
+        });
+
+        document.getElementById('btn-unselect-all-cards')?.addEventListener('click', () => {
+            document.querySelectorAll('.card-select-cb').forEach(cb => {
+                cb.checked = false;
+                const card = cb.closest('.v2-timeline-card');
+                if (card) card.classList.remove('ring-2', 'ring-emerald-500', 'ring-offset-2', 'ring-offset-slate-900');
+            });
+            window.updateBulkButtonCounts();
+        });
+
+        // Smart Select Logic
+        const smartSelectInput = document.getElementById('smart-select-custom');
+        document.getElementById('smart-select-blocks')?.addEventListener('change', (e) => {
+            const mode = e.target.value;
+            if (mode === 'custom') {
+                smartSelectInput.classList.remove('hidden');
+                smartSelectInput.focus();
+                return; // Wait for user to type and press Enter
+            } else {
+                smartSelectInput.classList.add('hidden');
+                smartSelectInput.value = '';
+                applySmartSelect(mode, '');
+                e.target.value = ''; // Reset dropdown
+            }
+        });
+
+        smartSelectInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                applySmartSelect('custom', e.target.value);
+                document.getElementById('smart-select-blocks').value = '';
+                e.target.classList.add('hidden');
+                e.target.value = '';
+            }
+        });
+
+        function applySmartSelect(mode, customText) {
+            const allCards = Array.from(document.querySelectorAll('#v2-timeline-feed .v2-timeline-card'));
+            
+            const isBlockInCustomRange = (blockNum, rangeStr) => {
+                const parts = rangeStr.split(',').map(p => p.trim());
+                for (let part of parts) {
+                    if (part.includes('-')) {
+                        const [start, end] = part.split('-').map(Number);
+                        if (blockNum >= start && blockNum <= end) return true;
+                    } else {
+                        if (blockNum === Number(part)) return true;
+                    }
+                }
+                return false;
+            };
+
+            allCards.forEach((card, index) => {
+                const cb = card.querySelector('.card-select-cb');
+                if (!cb) return;
+
+                const blockNumEl = card.querySelector('span.bg-slate-700.text-white');
+                const blockNum = blockNumEl ? parseInt(blockNumEl.innerText.replace('#', ''), 10) : (index + 1);
+
+                let isTargeted = false;
+                if (mode === 'odd') isTargeted = (blockNum % 2 !== 0);
+                else if (mode === 'even') isTargeted = (blockNum % 2 === 0);
+                else if (mode === 'first_10') isTargeted = (blockNum <= 10);
+                else if (mode === 'first_20') isTargeted = (blockNum <= 20);
+                else if (mode === 'last_10') isTargeted = (blockNum > allCards.length - 10);
+                else if (mode === 'custom') isTargeted = isBlockInCustomRange(blockNum, customText);
+
+                cb.checked = isTargeted;
+                if (isTargeted) card.classList.add('ring-2', 'ring-emerald-500', 'ring-offset-2', 'ring-offset-slate-900');
+                else card.classList.remove('ring-2', 'ring-emerald-500', 'ring-offset-2', 'ring-offset-slate-900');
+            });
+            
+            window.updateBulkButtonCounts();
+            showToast("Smart Selection Applied!");
+        }
+
+        // Bulk Edit Action Dropdowns
+        document.getElementById('bulk-apply-motion')?.addEventListener('change', (e) => {
+            const val = e.target.value;
+            const selectedCheckboxes = document.querySelectorAll('.card-select-cb:checked');
+            let appliedCount = 0;
+            selectedCheckboxes.forEach(cb => {
+                const selectEl = cb.closest('.v2-timeline-card').querySelector('.clip-motion-select');
+                if (selectEl) {
+                    selectEl.value = val;
+                    appliedCount++;
+                }
+            });
+            e.target.value = ""; // Reset to placeholder
+            if (appliedCount > 0) {
+                showToast(`Applied motion to ${appliedCount} cards.`);
+                document.body.dispatchEvent(new Event('input', { bubbles: true })); // Trigger Save
+            }
+        });
+
+        document.getElementById('bulk-apply-anim-mode')?.addEventListener('change', (e) => {
+            const val = e.target.value;
+            const selectedCheckboxes = document.querySelectorAll('.card-select-cb:checked');
+            let appliedCount = 0;
+            selectedCheckboxes.forEach(cb => {
+                const card = cb.closest('.v2-timeline-card');
+                const wrapper = card.querySelector('.image-editor-wrapper');
+                const cid = wrapper?.dataset.containerId;
+                
+                if (cid && window.imageHistoryMeta && window.imageHistoryMeta[cid]) {
+                    const idx = window.imageHistoryIndex[cid];
+                    if (window.imageHistoryMeta[cid][idx] === 'ai_sequence') {
+                        // Mutate the history object directly and refresh the canvas
+                        window.imageHistory[cid][idx].mode = val;
+                        window.updateInlineImageUI(wrapper, cid);
+                        appliedCount++;
+                    }
+                }
+            });
+            e.target.value = ""; // Reset to placeholder
+            if (appliedCount > 0) {
+                showToast(`Applied animation mode to ${appliedCount} cards.`);
+                document.body.dispatchEvent(new Event('input', { bubbles: true })); // Trigger Save
+            }
+        });
+
+        document.body.addEventListener('change', (e) => {
+            // Individual Card Select Toggle
+            if (e.target.classList.contains('card-select-cb')) {
+                const card = e.target.closest('.v2-timeline-card');
+                if (e.target.checked) card.classList.add('ring-2', 'ring-emerald-500', 'ring-offset-2', 'ring-offset-slate-900');
+                else card.classList.remove('ring-2', 'ring-emerald-500', 'ring-offset-2', 'ring-offset-slate-900');
+                
+                window.updateBulkButtonCounts();
+            }
+        });
+
         ui.btnBulkGen?.addEventListener('click', async () => {
-            // Grab all render buttons currently on the timeline
-            const renderBtns = Array.from(document.querySelectorAll('.btn-ai-render'));
-            if(renderBtns.length === 0) return showToast("No visuals to generate!");
+            // Check for selected cards first, fallback to all
+            const selectedCards = document.querySelectorAll('.card-select-cb:checked');
+            let renderBtns = [];
+            if (selectedCards.length > 0) {
+                selectedCards.forEach(cb => {
+                    const btn = cb.closest('.v2-timeline-card').querySelector('.btn-ai-render');
+                    if (btn) renderBtns.push(btn);
+                });
+            } else {
+                renderBtns = Array.from(document.querySelectorAll('.btn-ai-render'));
+            }
+            if(renderBtns.length === 0) return showToast("No visuals to generate in selection!");
 
             // --- FIX: Track baseCompleted and totalItems for the progress bar ---
             window.bulkState = { queue: renderBtns, active: true, paused: false, currentIndex: 0, accumulatedTime: 0, baseCompleted: 0, totalItems: renderBtns.length };
@@ -10747,12 +11594,6 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             document.getElementById('bulk-animate-modal')?.classList.add('hidden');
         });
 
-        document.getElementById('bulk-animate-target')?.addEventListener('change', (e) => {
-            const customInput = document.getElementById('bulk-animate-target-custom');
-            if (e.target.value === 'custom') customInput.classList.remove('hidden');
-            else customInput.classList.add('hidden');
-        });
-
         document.getElementById('bulk-animate-duration')?.addEventListener('change', (e) => {
             const customInput = document.getElementById('bulk-animate-duration-custom');
             if (e.target.value === 'custom') customInput.classList.remove('hidden');
@@ -10773,48 +11614,21 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 globalDuration = document.getElementById('bulk-animate-duration-custom')?.value || '3';
             }
             
-            const targetMode = document.getElementById('bulk-animate-target')?.value || 'all';
-            const customTargetText = document.getElementById('bulk-animate-target-custom')?.value || '';
-
             let globalFrames = parseInt(document.getElementById('bulk-animate-frames')?.value || '3', 10);
             if (isNaN(globalFrames) || globalFrames < 2 || globalFrames > 15) {
                 globalFrames = 3;
                 showToast("Keyframes constrained to safe limits (2-15).");
             }
 
-            const allCards = Array.from(document.querySelectorAll('#v2-timeline-feed .v2-timeline-card'));
+            // Just use whatever is selected (or all if none are explicitly selected)
+            const selectedCheckboxes = document.querySelectorAll('.card-select-cb:checked');
+            const targetCards = selectedCheckboxes.length > 0 
+                ? Array.from(selectedCheckboxes).map(cb => cb.closest('.v2-timeline-card'))
+                : Array.from(document.querySelectorAll('#v2-timeline-feed .v2-timeline-card'));
+                
             const animateBtns = [];
-            
-            // Helper to check if a block number is in the custom range string (e.g. "1-5, 8, 10")
-            const isBlockInCustomRange = (blockNum, rangeStr) => {
-                const parts = rangeStr.split(',').map(p => p.trim());
-                for (let part of parts) {
-                    if (part.includes('-')) {
-                        const [start, end] = part.split('-').map(Number);
-                        if (blockNum >= start && blockNum <= end) return true;
-                    } else {
-                        if (blockNum === Number(part)) return true;
-                    }
-                }
-                return false;
-            };
 
-            allCards.forEach((card, index) => {
-                const blockNumEl = card.querySelector('span.bg-slate-700.text-white');
-                const blockNum = blockNumEl ? parseInt(blockNumEl.innerText.replace('#', ''), 10) : (index + 1);
-
-                // Smart Target Filtering
-                let isTargeted = false;
-                if (targetMode === 'all') isTargeted = true;
-                else if (targetMode === 'odd') isTargeted = (blockNum % 2 !== 0);
-                else if (targetMode === 'even') isTargeted = (blockNum % 2 === 0);
-                else if (targetMode === 'first_10') isTargeted = (blockNum <= 10);
-                else if (targetMode === 'first_20') isTargeted = (blockNum <= 20);
-                else if (targetMode === 'last_10') isTargeted = (blockNum > allCards.length - 10);
-                else if (targetMode === 'custom') isTargeted = isBlockInCustomRange(blockNum, customTargetText);
-
-                if (!isTargeted) return;
-
+            targetCards.forEach((card) => {
                 const img = card.querySelector('.main-generated-img');
                 const btnAnimate = card.querySelector('.btn-submit-animate');
                 
@@ -10892,7 +11706,11 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
         });
 
         ui.btnBulkRegenFailed?.addEventListener('click', async () => {
-            const allCards = Array.from(document.querySelectorAll('#v2-timeline-feed .v2-timeline-card'));
+            const selectedCards = document.querySelectorAll('.card-select-cb:checked');
+            const allCards = selectedCards.length > 0 
+                ? Array.from(selectedCards).map(cb => cb.closest('.v2-timeline-card'))
+                : Array.from(document.querySelectorAll('#v2-timeline-feed .v2-timeline-card'));
+            
             const failedRenderBtns = [];
             
             allCards.forEach(card => {
@@ -10903,10 +11721,10 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 }
             });
 
-            if(failedRenderBtns.length === 0) return showToast("No failed visuals found!");
+            if(failedRenderBtns.length === 0) return showToast("No missing visuals found in your selection!");
 
-            // --- FIX: Tell the queue how many we ALREADY finished so it doesn't drop back to 0 ---
-            const totalItems = document.querySelectorAll('#v2-timeline-feed .btn-ai-render').length;
+            // Count total and base completed relative to the active selection
+            const totalItems = allCards.filter(c => c.querySelector('.btn-ai-render')).length;
             const baseCompleted = totalItems - failedRenderBtns.length;
 
             window.bulkState = { queue: failedRenderBtns, active: true, paused: false, currentIndex: 0, accumulatedTime: 0, baseCompleted: baseCompleted, totalItems: totalItems };
@@ -10993,9 +11811,13 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 document.getElementById('btn-transition-toggle')?.classList.add('hidden');
             }
 
-            // Check for failed/skipped images (has a render button, but no generated image)
-            const allCards = Array.from(document.querySelectorAll('#v2-timeline-feed .v2-timeline-card'));
-            const failedCards = allCards.filter(card => {
+            // Robust check: Look for missing visuals, and respect the current selection
+            const selectedCheckboxes = document.querySelectorAll('.card-select-cb:checked');
+            const targetCards = selectedCheckboxes.length > 0 
+                ? Array.from(selectedCheckboxes).map(cb => cb.closest('.v2-timeline-card'))
+                : Array.from(document.querySelectorAll('#v2-timeline-feed .v2-timeline-card'));
+
+            const failedCards = targetCards.filter(card => {
                 const hasRenderBtn = card.querySelector('.btn-ai-render');
                 const hasSuccessImage = card.querySelector('.main-generated-img');
                 return hasRenderBtn && !hasSuccessImage;
@@ -11014,6 +11836,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             }
             
             lucide.createIcons();
+            // Refresh toolbar buttons (un-grays Anim Mode automatically after generating sequences)
+            if (typeof window.updateBulkButtonCounts === 'function') window.updateBulkButtonCounts();
         }
 
         async function processBulkQueue() {
@@ -11097,9 +11921,18 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             
             const zip = new JSZip();
             
-            // This actively scrapes the DOM, ensuring it grabs whatever version of the image is currently visible!
-            const images = document.querySelectorAll('#v2-timeline-feed .main-generated-img');
-            if (images.length === 0) return showToast("No images to download.");
+            // Check for selected cards first, fallback to all
+            const selectedCards = document.querySelectorAll('.card-select-cb:checked');
+            let images = [];
+            if (selectedCards.length > 0) {
+                selectedCards.forEach(cb => {
+                    const img = cb.closest('.v2-timeline-card').querySelector('.main-generated-img');
+                    if (img) images.push(img);
+                });
+            } else {
+                images = Array.from(document.querySelectorAll('#v2-timeline-feed .main-generated-img'));
+            }
+            if (images.length === 0) return showToast("No images to download in selection.");
             
             ui.btnBulkDownload.disabled = true;
             const originalHTML = ui.btnBulkDownload.innerHTML;
@@ -11162,10 +11995,17 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
         ui.btnBulkDownloadVid?.addEventListener('click', async () => {
             if (typeof JSZip === 'undefined' || typeof Mp4Muxer === 'undefined') return showToast("Required libraries not loaded!");
 
+            // Capture quality synchronously before any async awaits can delay execution!
+            const qualityMult = parseFloat(ui.btnBulkDownloadVid.dataset.quality || '1');
+            ui.btnBulkDownloadVid.dataset.quality = '1'; // Reset immediately
+
             // Await user confirmation if there are missing blocks
             if (!(await window.confirmExportReadiness('Clips (ZIP)'))) return;
 
-            const timelineCards = document.querySelectorAll('.v2-timeline-card');
+            const selectedCheckboxes = document.querySelectorAll('.card-select-cb:checked');
+            const timelineCards = selectedCheckboxes.length > 0 
+                ? Array.from(selectedCheckboxes).map(cb => cb.closest('.v2-timeline-card'))
+                : document.querySelectorAll('.v2-timeline-card');
             const validClips = [];
 
             if (!window.masterRenderTimings) return showToast("Error: Timing data lost. Please regenerate the timeline.");
@@ -11255,21 +12095,26 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 else if (aspect === '1:1') { baseW = 1080; baseH = 1080; }
 
                 // USER FIX: Only look for an actual IMAGE to determine dimensions.
-                const firstValidImage = validClips.find(c => !c.isPlaceholder && c.src.startsWith('data:image/'));
+                const firstValidImage = validClips.find(c => !c.isPlaceholder && c.src);
                 if (firstValidImage) {
                     const tempImg = new Image();
-                    tempImg.src = firstValidImage.src;
+                    if (typeof firstValidImage.src === 'object' && firstValidImage.src.type === 'ai_sequence') {
+                        tempImg.src = "data:image/jpeg;base64," + firstValidImage.src.frames[0];
+                    } else {
+                        tempImg.src = typeof firstValidImage.src === 'string' && firstValidImage.src.startsWith('blob:') ? firstValidImage.src : "data:image/png;base64," + firstValidImage.src;
+                    }
                     await new Promise(r => tempImg.onload = r);
                     baseW = tempImg.width;
                     baseH = tempImg.height;
                 }
                 
-                const qualityMult = parseFloat(ui.btnBulkDownloadVid.dataset.quality || '1');
+                // qualityMult is already captured at the very top of the function
                 const width = Math.round((baseW * qualityMult) / 2) * 2;
                 const height = Math.round((baseH * qualityMult) / 2) * 2;
                 
-                // /* A-ROLL REF: const placeholderObj = await window.createPlaceholderImage(width, height, "A-ROLL / MISSING VISUAL"); */
-                const placeholderObj = await window.createPlaceholderImage(width, height, "MISSING VISUAL");
+                // Create both placeholder types so they match the Render MP4 logic
+                const placeholderMissing = await window.createPlaceholderImage(width, height, "MISSING VISUAL");
+                const placeholderUnselected = await window.createPlaceholderImage(width, height, "ScriptForge");
 
                 let globalClipProcessed = 0;
 
@@ -11292,7 +12137,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                         document.getElementById('zip-progress-text').innerText = `Rendering Clip ${globalClipProcessed} of ${validClips.length}... (${percent}%)`;
                         
                         const blockDuration = clip.end - clip.start;
-                        const mediaObj = await window.loadMediaSource(clip.src, clip.isPlaceholder, placeholderObj, clip.trimStart, blockDuration);
+                        const activePlaceholder = clip.placeholderText === "ScriptForge" ? placeholderUnselected : placeholderMissing;
+                        const mediaObj = await window.loadMediaSource(clip.src, clip.isPlaceholder, activePlaceholder, clip.trimStart, blockDuration);
                         
                         const canvas = document.createElement('canvas');
                         canvas.width = width;
@@ -11459,8 +12305,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     mainBtn.dataset.quality = qualityVal;
                     // Trigger the main button automatically with the selected quality
                     mainBtn.click();
-                    // Delay the reset slightly so the async render functions can read the tag before it reverts
-                    setTimeout(() => { mainBtn.dataset.quality = "1"; }, 500);
+                    // The reset is now handled synchronously inside the render functions!
                 }
                 // Hide dropdown after click
                 qualityBtn.parentElement.classList.add('hidden');
@@ -11627,18 +12472,28 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
         ui.btnRenderVideo?.addEventListener('click', async () => {
             if (typeof Mp4Muxer === 'undefined') return showToast("MP4 Muxer library not loaded!");
             
+            // Capture quality synchronously before any async awaits can delay execution!
+            const qualityMult = parseFloat(ui.btnRenderVideo.dataset.quality || '1');
+            ui.btnRenderVideo.dataset.quality = '1'; // Reset immediately
+            
             // Await user confirmation if there are missing blocks
             if (!(await window.confirmExportReadiness('Video (MP4)'))) return;
             
-            const timelineCards = document.querySelectorAll('.v2-timeline-card');
+            const selectedCheckboxes = document.querySelectorAll('.card-select-cb:checked');
+            const timelineCards = selectedCheckboxes.length > 0 
+                ? Array.from(selectedCheckboxes).map(cb => cb.closest('.v2-timeline-card'))
+                : document.querySelectorAll('.v2-timeline-card');
             const validClips = [];
             
             if (!window.masterRenderTimings) return showToast("Error: Timing data lost. Please regenerate the timeline.");
 
-            // 1. Scrape timeline but use exact raw millisecond data
+            const hasSelection = selectedCheckboxes.length > 0;
+            
+            // 1. Scrape ENTIRE timeline but use exact raw millisecond data
             for (let i = 0; i < timelineCards.length; i++) {
                 const card = timelineCards[i];
                 const wrapper = card.querySelector('.image-editor-wrapper');
+                const isSelected = card.querySelector('.card-select-cb')?.checked;
                 
                 const cid = wrapper ? wrapper.dataset.containerId : null;
                 const idx = cid ? window.imageHistoryIndex[cid] : null;
@@ -11649,10 +12504,13 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const localMotion = wrapper?.querySelector('.clip-motion-select')?.value || 'global';
                 
                 if (exactEnd > exactStart) {
-                    if (srcData) {
-                        validClips.push({ src: srcData, start: exactStart, end: exactEnd, localMotion, isPlaceholder: false, trimStart: parseFloat(wrapper.dataset.trimStart || 0) });
+                    if (srcData && (!hasSelection || isSelected)) {
+                        let baseName = wrapper ? wrapper.dataset.filename.replace('.png', '') : `Block_${i+1}`;
+                        validClips.push({ src: srcData, start: exactStart, end: exactEnd, name: baseName, localMotion, isPlaceholder: false, trimStart: parseFloat(wrapper.dataset.trimStart || 0) });
                     } else {
-                        validClips.push({ src: null, start: exactStart, end: exactEnd, localMotion: 'none', isPlaceholder: true });
+                        // Force as placeholder if missing OR if not explicitly selected
+                        let phText = (hasSelection && !isSelected) ? "ScriptForge" : "MISSING VISUAL";
+                        validClips.push({ src: null, start: exactStart, end: exactEnd, name: `Block_${i+1}_PLACEHOLDER`, localMotion: 'none', isPlaceholder: true, placeholderText: phText });
                     }
                 }
             }
@@ -11788,14 +12646,14 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     baseH = tempImg.height;
                 }
                 
-                const qualityMult = parseFloat(ui.btnRenderVideo.dataset.quality || '1');
+                // qualityMult is already captured synchronously at the top of the click handler!
                 const width = Math.round((baseW * qualityMult) / 2) * 2;
                 const height = Math.round((baseH * qualityMult) / 2) * 2;
                 const fps = 30;
                 
-                // Pre-generate the A-Roll placeholder image to use dynamically
-                // /* A-ROLL REF: const placeholderObj = await window.createPlaceholderImage(width, height, "A-ROLL / MISSING VISUAL"); */
-                const placeholderObj = await window.createPlaceholderImage(width, height, "MISSING VISUAL");
+                // Pre-generate the placeholder images to use dynamically
+                const placeholderMissing = await window.createPlaceholderImage(width, height, "MISSING VISUAL");
+                const placeholderUnselected = await window.createPlaceholderImage(width, height, "ScriptForge");
 
                 // Pre-assign motions so they are consistent across chunks
                 const allMotions = ['zoom_in', 'zoom_out', 'pan_left', 'pan_right', 'pan_up', 'pan_down', 'pan_top_left', 'pan_top_right', 'pan_bottom_left', 'pan_bottom_right'];
@@ -11893,7 +12751,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
 
                         const clip = chunkClips[i];
                         const blockDuration1 = clip.end - clip.start;
-                        const mediaObj1 = await window.loadMediaSource(clip.src, clip.isPlaceholder, placeholderObj, clip.trimStart, blockDuration1);
+                        const activePlaceholder = clip.placeholderText === "ScriptForge" ? placeholderUnselected : placeholderMissing;
+                        const mediaObj1 = await window.loadMediaSource(clip.src, clip.isPlaceholder, activePlaceholder, clip.trimStart, blockDuration1);
 
                         const canvas = document.createElement('canvas');
                         canvas.width = width;
@@ -11906,7 +12765,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                         if (hasTransition) {
                             nextClip = chunkClips[i+1];
                             const nextBlockDuration = nextClip.end - nextClip.start;
-                            nextMediaObj = await window.loadMediaSource(nextClip.src, nextClip.isPlaceholder, placeholderObj, nextClip.trimStart, nextBlockDuration);
+                            const nextActivePlaceholder = nextClip.placeholderText === "ScriptForge" ? placeholderUnselected : placeholderMissing;
+                            nextMediaObj = await window.loadMediaSource(nextClip.src, nextClip.isPlaceholder, nextActivePlaceholder, nextClip.trimStart, nextBlockDuration);
                             nextTotalFrames = Math.round((nextClip.end - nextClip.start) * fps);
                         }
                         
@@ -12106,7 +12966,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const sysPrompt = "You are an expert Executive Producer. Analyze the Channel Formula and Source Material. Your goal is to select the BEST Script Format from the available list to maximize audience retention.\n\nCRITICAL DIRECTIVES:\n1. BIAS TOWARDS DEFAULTS: ALWAYS select an existing format from the list if it's an 80% match or better. ONLY select 'custom' if the content is wildly unique.\n2. FORMAT VS FORMULA: A 'Script Format' is NOT a narrative outline or tone guide. It is a strict set of structural rules dictating paragraph length, double line breaks (for CapCut chunking), dialogue tags, and stage directions.\n3. MIMIC DEFAULTS: If you invent a 'custom' format, you MUST write its rules in the exact same style, tone, and length as the provided defaults (e.g., starting with '- THE FORMAT RULE:').";
                 const userPrompt = `AVAILABLE FORMATS:\n${JSON.stringify(options, null, 2)}\n\nCHANNEL FORMULA:\n${formula}\n\nSOURCE MATERIAL (Excerpt):\n${transcript.substring(0, 1500)}`;
                 
-                const data = await executeGeminiCall(sysPrompt, userPrompt, schema);
+                const data = await executeGeminiCall(sysPrompt, userPrompt, schema, false, null, 'format');
                 
                 if (data && data.choiceId) {
                     if (data.choiceId === 'custom' && data.customRules) {
@@ -12158,7 +13018,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const sysPrompt = "You are an elite Video Director. Read the Final Script and select the BEST Director Mode from the available list to maximize viewer retention and visual storytelling.\n\nCRITICAL DIRECTIVES:\n1. BIAS TOWARDS DEFAULTS: ALWAYS select an existing mode from the list if it's a strong match. ONLY select 'custom' if the script's visual needs are wildly unique.\n2. MIMIC DEFAULTS: If you invent a 'custom' mode, you MUST write its instructions in the exact same style, tone, and length as the provided defaults. Focus strictly on camera angles, pacing, lighting, composition, and whether to use Images or Videos.";
                 const userPrompt = `AVAILABLE MODES:\n${JSON.stringify(options, null, 2)}\n\nFINAL SCRIPT (Excerpt):\n${script.substring(0, 2000)}`;
                 
-                const data = await executeGeminiCall(sysPrompt, userPrompt, schema);
+                const data = await executeGeminiCall(sysPrompt, userPrompt, schema, false, null, 'format');
                 
                 if (data && data.choiceId) {
                     if (data.choiceId === 'custom' && data.customRules) {
@@ -12211,7 +13071,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const sysPrompt = "You are an elite Art Director. Read the Final Script and current Director Instructions. Select the BEST Visual Art Style from the available list to perfectly match the mood of the video.\n\nCRITICAL DIRECTIVES:\n1. BIAS TOWARDS DEFAULTS: ALWAYS select an existing style from the list if it's a strong match. ONLY select 'custom' if the script requires a completely unique visual aesthetic.\n2. MIMIC DEFAULTS: If you invent a 'custom' style, it MUST be a comma-separated string of descriptive keywords meant for an AI Image Generator (Midjourney style). Study the provided list and match their formatting exactly.";
                 const userPrompt = `AVAILABLE STYLES:\n${JSON.stringify(options, null, 2)}\n\nDIRECTOR INSTRUCTIONS:\n${directorRules}\n\nFINAL SCRIPT (Excerpt):\n${script.substring(0, 1500)}`;
                 
-                const data = await executeGeminiCall(sysPrompt, userPrompt, schema);
+                const data = await executeGeminiCall(sysPrompt, userPrompt, schema, false, null, 'format');
                 
                 if (data && data.choiceId) {
                     if (data.choiceId === 'custom' && data.customPrompt) {
@@ -12336,7 +13196,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
 
                 const sysPrompt = "You are an Audio Script Editor. Analyze the text and find every instance of numbers, dates, times, currencies, and percentages. Create a dictionary mapping the EXACT original numeric string to its spoken-word equivalent. Do not include plain words. If a number is already a word, skip it.";
 
-                const data = await executeGeminiCall(sysPrompt, combinedText, schema);
+                const data = await executeGeminiCall(sysPrompt, combinedText, schema, false, null, 'numbers');
 
                 if (data && data.mappings && data.mappings.length > 0) {
                     // Sort by length descending to prevent partial replacements (e.g. replacing "1" inside "$1.5M")
@@ -12490,7 +13350,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 for (let i = 0; i < payloadArr.length; i += batchSize) {
                     const batch = payloadArr.slice(i, i + batchSize);
                     
-                    const data = await executeGeminiCall(sysPrompt, JSON.stringify(batch), schema);
+                    const data = await executeGeminiCall(sysPrompt, JSON.stringify(batch), schema, false, null, 'polish');
                     if (data && data.edits) {
                         allEdits = allEdits.concat(data.edits);
                     }
@@ -12660,6 +13520,179 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             }
             lucide.createIcons();
         });
+
+        // ==========================================
+        // FAILED CHAPTER REGENERATION LOGIC
+        // ==========================================
+        
+        async function regenerateSingleChapter(btnElement) {
+            if (btnElement.disabled) return; // Failsafe for locked sequential chapters
+            const wrapper = btnElement.closest('.failed-chapter-wrapper');
+            const chapterNum = parseInt(wrapper.getAttribute('data-chapter'), 10);
+            const colorIndex = wrapper.getAttribute('data-color-index');
+            
+            const promptData = window.failedChaptersMap ? window.failedChaptersMap[chapterNum] : null;
+            if (!promptData) return showToast(`Error: Missing generation instructions for Chapter ${chapterNum}.`);
+
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) return showToast("API Key needed to regenerate!");
+
+            const originalHTML = btnElement.innerHTML;
+            btnElement.disabled = true;
+            btnElement.innerHTML = `<div class="loader !w-3.5 !h-3.5 !border-2 !border-t-white"></div> Retrying...`;
+            
+            try {
+                const sectionsArraySchema = {
+                    type: "ARRAY",
+                    items: {
+                        type: "OBJECT",
+                        properties: {
+                            content: { type: "STRING", description: "The generated script text formatted exactly as instructed." }
+                        }, required: ["content"]
+                    }
+                };
+                const chapterSchema = { type: "OBJECT", properties: { sections: sectionsArraySchema }, required: ["sections"] };
+
+                const data = await executeGeminiCall(promptData.sysPrompt, promptData.userPrompt, chapterSchema);
+                
+                if (data && data.sections && data.sections.length > 0) {
+                    // Success! Remove the error object from the map
+                    delete window.failedChaptersMap[chapterNum];
+                    
+                    // Create a document fragment to hold the new blocks
+                    const fragment = document.createDocumentFragment();
+                    
+                    data.sections.forEach(sec => {
+                        const cleanContent = sec.content.replace(/\\n/g, '\n');
+                        const subBlocks = cleanContent.split(/\n\s*\n/).map(b => b.trim()).filter(b => b.length > 0);
+                        
+                        subBlocks.forEach(blockText => {
+                            const el = document.createElement('div');
+                            el.className = "script-block pl-4 border-l-2 border-slate-700 relative group pr-10 py-1.5 mb-4";
+                            el.setAttribute('data-color-index', colorIndex);
+                            el.innerHTML = `
+                                <p class="pure-script-text text-slate-300 leading-relaxed text-lg font-light">${blockText}</p>
+                                <button type="button" class="absolute top-1 right-1 p-2 text-slate-500 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-600 rounded opacity-0 group-hover:opacity-100 transition-all shadow-md btn-copy-block z-10" title="Copy Text">
+                                    <i data-lucide="copy" class="w-4 h-4 pointer-events-none"></i>
+                                </button>
+                            `;
+                            el.querySelector('.btn-copy-block').onclick = (e) => {
+                                const textToCopy = e.currentTarget.parentElement.querySelector('.pure-script-text').innerText;
+                                window.copyToClipboard(textToCopy.trim(), 'Paragraph');
+                            };
+                            fragment.appendChild(el);
+                        });
+                    });
+
+                    // If this was a Sequential chapter, we must extract the ending text and unlock the next chapter!
+                    if (promptData.isSequential) {
+                        const allChapterText = data.sections.map(s => s.content).join(' ');
+                        const words = allChapterText.split(/\s+/);
+                        const newEndText = words.slice(Math.max(words.length - 60, 0)).join(' ');
+                        
+                        // Look ahead to see if the next chapter is locked and waiting
+                        const nextPromptData = window.failedChaptersMap[chapterNum + 1];
+                        if (nextPromptData && nextPromptData.isSequential) {
+                            nextPromptData.userPrompt = nextPromptData.userPrompt.replace("___PENDING_PREVIOUS_END___", newEndText);
+                            
+                            // Unlock the UI visually
+                            const nextWrapper = document.querySelector(`.failed-chapter-wrapper[data-chapter="${chapterNum + 1}"]`);
+                            if (nextWrapper) {
+                                nextWrapper.classList.replace('border-slate-500/50', 'border-red-500/50');
+                                nextWrapper.classList.replace('bg-slate-800/50', 'bg-red-900/10');
+                                
+                                const titleSpan = nextWrapper.querySelector('span.font-bold');
+                                if (titleSpan) {
+                                    titleSpan.innerText = `CHAPTER ${chapterNum + 1} GENERATION FAILED`;
+                                    titleSpan.parentElement.classList.replace('text-slate-400', 'text-red-400');
+                                    const icon = titleSpan.parentElement.querySelector('i');
+                                    if (icon) icon.setAttribute('data-lucide', 'alert-triangle');
+                                }
+                                
+                                const nextBtn = nextWrapper.querySelector('.btn-regen-single-chapter');
+                                if (nextBtn) {
+                                    nextBtn.disabled = false;
+                                    nextBtn.className = "btn-regen-single-chapter bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded text-xs font-bold transition-all shadow flex items-center gap-2";
+                                    nextBtn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Regenerate`;
+                                }
+                                
+                                const descP = nextWrapper.querySelector('p.italic');
+                                if (descP) {
+                                    descP.className = "text-[10px] text-red-300/70 mt-2 italic";
+                                    descP.innerText = `The previous chapter finished! Click regenerate to continue the sequence.`;
+                                }
+                            }
+                        }
+                    }
+
+                    // Inject the new blocks and remove the error wrapper
+                    wrapper.parentNode.insertBefore(fragment, wrapper);
+                    wrapper.remove();
+                    
+                    lucide.createIcons();
+                    document.body.dispatchEvent(new Event('input', { bubbles: true })); // Trigger Auto-save
+                    showToast(`Chapter ${chapterNum} successfully regenerated!`);
+
+                    // Check if any failed chapters remain to toggle the global button
+                    if (document.querySelectorAll('.failed-chapter-wrapper').length === 0) {
+                        document.getElementById('btn-regen-failed-chapters')?.classList.add('hidden');
+                    }
+                } else {
+                    throw new Error("Empty response.");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(`Failed to regenerate Chapter ${chapterNum}. Trying again might work.`);
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalHTML;
+                lucide.createIcons({ root: wrapper });
+            }
+        }
+
+        document.body.addEventListener('click', (e) => {
+            const btnRegenSingle = e.target.closest('.btn-regen-single-chapter');
+            if (btnRegenSingle) {
+                regenerateSingleChapter(btnRegenSingle);
+            }
+        });
+
+        document.getElementById('btn-regen-failed-chapters')?.addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            const initialFailedCount = document.querySelectorAll('.failed-chapter-wrapper').length;
+            if (initialFailedCount === 0) return;
+
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<div class="loader !w-3.5 !h-3.5 !border-2 !border-t-red-400"></div> <span class="hidden sm:inline">Regenerating...</span>`;
+            
+            showToast(`Sequentially retrying ${initialFailedCount} chapters...`);
+
+            let hasMore = true;
+            let firstRun = true;
+
+            // Loop dynamically to catch newly unlocked sequential chapters
+            while(hasMore) {
+                // Find the first available UNLOCKED regenerate button
+                const nextBtn = document.querySelector('.failed-chapter-wrapper .btn-regen-single-chapter:not(:disabled)');
+                
+                if (!nextBtn) {
+                    hasMore = false;
+                    break;
+                }
+
+                if (!firstRun) {
+                    await new Promise(r => setTimeout(r, (appSettings.textCooldown || 4000))); // Respect Cooldown
+                }
+                
+                await regenerateSingleChapter(nextBtn);
+                firstRun = false;
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            lucide.createIcons();
+        });
+
     </script>
 </body>
 </html>
