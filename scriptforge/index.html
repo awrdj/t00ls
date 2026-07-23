@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Script Forge</title>
     
-    <link rel="icond" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 15c6.667-6 13.333 0 20-6'/%3E%3Cpath d='M9 22c1.798-1.998 2.518-3.285 2.807-5.022'/%3E%3Cpath d='M14 14.94c.144-.45.34-1.026.59-1.748'/%3E%3Cpath d='M3 15c3.12 1.48 5.668 1.446 8.356-.16'/%3E%3Cpath d='M13.626 9.423c2.618-1.503 5.09-1.517 8.374.007'/%3E%3Cpath d='M15 2c-1.798 1.998-2.518 3.285-2.807 5.022'/%3E%3Cpath d='M10 9.06c-.144.45-.34 1.026-.59 1.748'/%3E%3Cpath d='M2 9c6.667 6 13.333 0 20 6'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 15c6.667-6 13.333 0 20-6'/%3E%3Cpath d='M9 22c1.798-1.998 2.518-3.285 2.807-5.022'/%3E%3Cpath d='M14 14.94c.144-.45.34-1.026.59-1.748'/%3E%3Cpath d='M3 15c3.12 1.48 5.668 1.446 8.356-.16'/%3E%3Cpath d='M13.626 9.423c2.618-1.503 5.09-1.517 8.374.007'/%3E%3Cpath d='M15 2c-1.798 1.998-2.518 3.285-2.807 5.022'/%3E%3Cpath d='M10 9.06c-.144.45-.34 1.026-.59 1.748'/%3E%3Cpath d='M2 9c6.667 6 13.333 0 20 6'/%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230f172a'/%3E%3Ctext y='70' font-size='65' x='50' text-anchor='middle'%3E🧬%3C/text%3E%3C/svg%3E">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -120,6 +120,9 @@
                 <i data-lucide="cpu" class="w-4 h-4 text-purple-400"></i>
                 <span class="text-[0.65rem] font-semibold uppercase tracking-wider">AI Engines</span>
             </button>-->
+            <button onclick="window.open('https://dfmhub.github.io/sf/docs.html', '_blank')" class="text-slate-400 hover:text-white transition-colors p-2" title="User Guide & Documentation">
+                <i data-lucide="book-open" class="w-5 h-5"></i>
+            </button>
             <button id="btn-api-settings" class="text-slate-400 hover:text-white transition-colors p-2" title="API & Models">
                 <i data-lucide="cpu" class="w-5 h-5"></i>
             </button>
@@ -156,12 +159,31 @@
 
                 <input type="text" id="formula-name" placeholder="Formula Name (e.g., Hidden Archive)" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 mb-3 hidden transition-all">
                 
-                <textarea id="formula-content" rows="4" placeholder="Paste the channel DNA, rules, tone, and formatting constraints here..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-y mb-1.5"></textarea>
+                <div class="relative">
+                    <textarea id="formula-content" rows="4" placeholder="Paste the channel DNA, rules, tone, and formatting constraints here..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-y mb-1.5 pr-12"></textarea>
+                    
+                    <div class="absolute bottom-4 right-3 group flex items-center gap-1.5" id="shield-dropdown-wrapper-v1">
+                        <div class="relative flex items-center shrink-0">
+                            <button id="btn-shield-formula" class="text-blue-400 hover:text-blue-300 transition-colors p-1.5 bg-blue-900/30 hover:bg-blue-900/50 border border-blue-500/30 rounded shadow flex items-center gap-1" title="Halal / Safe Narrative Constraints">
+                                <i data-lucide="shield" class="w-4 h-4 pointer-events-none"></i>
+                                <i data-lucide="chevron-down" class="w-3 h-3 pointer-events-none"></i>
+                            </button>
+                            <div id="shield-dropdown-v1" class="absolute hidden top-full mt-2 right-0 w-72 bg-slate-800 border border-blue-500/50 rounded shadow-xl z-50 overflow-hidden flex flex-col text-left">
+                                <div class="text-[10px] text-blue-300 font-bold uppercase tracking-wider px-3 py-2 border-b border-slate-700/50 bg-slate-900/50 cursor-default">
+                                    Safe Narrative Constraints
+                                </div>
+                                <div class="max-h-60 overflow-y-auto custom-scrollbar flex flex-col">
+                                    <button class="btn-inject-constraint-v1 w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-blue-900/50 hover:text-blue-400 transition-colors" data-constraint="master_narrative">🕌 Master Halal (Safe Storytelling)</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="mb-3">
                     <select id="formula-mode" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500 transition-colors">
-                        <option value="auto" selected>🎲 Auto (50/50 Between Strict & Dynamic - Default)</option>
-                        <option value="dynamic">🧠 Dynamic (Always Invent New Phrasing)</option>
+                        <option value="auto">🎲 Auto (50/50 Between Strict & Dynamic)</option>
+                        <option value="dynamic" selected>🧠 Dynamic (Always Invent New Phrasing - Default)</option>
                         <option value="strict">🔒 Strict (Always Use Exact Examples)</option>
                     </select>
                 </div>
@@ -266,7 +288,31 @@
                 <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-4">
                     <i data-lucide="file-text" class="w-4 h-4"></i> Source Material
                 </h2>
-                <textarea id="transcript-content" rows="4" placeholder="Paste your raw transcript, article, or base concept here..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-y"></textarea>
+                <div class="relative flex-1 flex flex-col min-h-[150px]">
+                    <textarea id="transcript-content" dir="auto" rows="4" placeholder="Paste your raw transcript, article, or base concept here..." class="w-full flex-1 bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors resize-y pr-12"></textarea>
+                    <div class="absolute bottom-3 right-3 group flex items-center gap-1.5">
+                        <button id="btn-estimate-duration" class="text-emerald-400 hover:text-emerald-300 transition-colors p-1.5 bg-emerald-900/30 hover:bg-emerald-900/50 border border-emerald-500/30 rounded shadow" title="AI Optimal Length Estimator">
+                            <i data-lucide="clock" class="w-4 h-4"></i>
+                        </button>
+                        <button id="btn-magic-topic" class="text-blue-400 hover:text-blue-300 transition-colors p-1.5 bg-blue-900/30 hover:bg-blue-900/50 border border-blue-500/30 rounded shadow" title="AI Magic Topic Extractor">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- NEW: Estimator Notice Box -->
+                <div id="estimator-notice" class="hidden mt-3 bg-emerald-900/20 border border-emerald-500/30 rounded p-3 relative">
+                    <button id="btn-close-estimator" class="absolute top-2 right-2 text-slate-500 hover:text-emerald-400 transition-colors" title="Dismiss">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                    <div class="flex gap-2 items-start pr-6">
+                        <i data-lucide="info" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                        <div>
+                            <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest block mb-1">Optimal Length: <span id="estimator-minutes">--</span> Mins</span>
+                            <p id="estimator-reasoning" class="text-[10px] text-slate-300 leading-relaxed">Reasoning will appear here.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Generation Settings & Action -->
@@ -282,9 +328,28 @@
                 <div class="mb-4">
                     <div class="flex justify-between items-center mb-2">
                         <label class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Narration Pace</label>
-                        <span id="pacing-val" class="text-blue-400 font-bold text-sm bg-blue-900/30 px-2 py-1 rounded">150 WPM</span>
+                        <span id="pacing-val" class="text-blue-400 font-bold text-sm bg-blue-900/30 px-2 py-1 rounded">175 WPM</span>
                     </div>
-                    <input type="range" id="script-pacing" min="110" max="180" value="150" step="5" class="w-full accent-blue-500">
+                    <input type="range" id="script-pacing" min="110" max="250" value="175" step="5" class="w-full accent-blue-500">
+                </div>
+
+                <!-- Output Language -->
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Output Language</label>
+                    </div>
+                    <select id="output-language" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                        <option value="English" selected>English (Default)</option>
+                        <option value="Arabic">Arabic (العربية)</option>
+                        <option value="Spanish">Spanish (Español)</option>
+                        <option value="French">French (Français)</option>
+                        <option value="German">German (Deutsch)</option>
+                        <option value="Hindi">Hindi (हिन्दी)</option>
+                        <option value="Portuguese">Portuguese (Português)</option>
+                        <option value="Russian">Russian (Русский)</option>
+                        <option value="Japanese">Japanese (日本語)</option>
+                        <option value="Korean">Korean (한국어)</option>
+                    </select>
                 </div>
 
                 <!-- RESTORED: Generation Engine Toggle -->
@@ -430,8 +495,11 @@
                 </div>
 
                 <div class="relative flex-1 flex flex-col mb-3 min-h-[150px]">
-                    <textarea id="v2-script" placeholder="Paste the final text script here to generate the visual timeline..." class="w-full flex-1 bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors resize-y pr-12"></textarea>
+                    <textarea id="v2-script" dir="auto" placeholder="Paste the final text script here to generate the visual timeline..." class="w-full flex-1 bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors resize-y pr-12"></textarea>
                     <div class="absolute bottom-3 right-3 group flex items-center gap-1.5">
+                        <button id="btn-v2-merge-lines" class="hidden text-emerald-400 hover:text-emerald-300 transition-colors p-1.5 bg-emerald-900/30 hover:bg-emerald-900/50 border border-emerald-500/30 rounded shadow" title="Merge Lines into Paragraphs">
+                            <i data-lucide="align-justify" class="w-4 h-4"></i>
+                        </button>
                         <button id="btn-v2-add-breaks" class="hidden text-emerald-400 hover:text-emerald-300 transition-colors p-1.5 bg-emerald-900/30 hover:bg-emerald-900/50 border border-emerald-500/30 rounded shadow" title="Fix Spacing (Convert to Timeline Blocks)">
                             <i data-lucide="split-square-vertical" class="w-4 h-4"></i>
                         </button>
@@ -577,38 +645,26 @@
 
                 <!-- NEW: Global Art Style -->
                 <div class="mb-6 border-t border-slate-700 pt-6">
-                    <div class="flex flex-col mb-4 gap-3">
-                        <div class="flex justify-between items-center">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-2">
                             <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Global Art Style</h2>
-                            <span class="text-[10px] text-slate-500 font-bold bg-slate-900 px-2 py-0.5 rounded">Optional</span>
-                        </div>
-                        
-                        <!-- Sleek Toggle Switch Group -->
-                        <div class="flex flex-col bg-slate-900/50 border border-slate-700 rounded p-3 gap-3 transition-all">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-[10px] text-slate-300 font-bold uppercase tracking-wider mb-0.5">Adapt To Art Style</p>
-                                    <p class="text-[9px] text-slate-500">Tailors image prompts to the chosen global art style.</p>
+                            <div class="group relative flex items-center cursor-help">
+                                <i data-lucide="help-circle" class="w-4 h-4 text-slate-500 hover:text-emerald-400 transition-colors"></i>
+                                <!-- Tooltip Explainer -->
+                                <div class="absolute hidden group-hover:block top-full mt-2 left-1/2 -translate-x-1/2 w-72 bg-slate-800 border border-slate-600 text-[10px] text-slate-200 p-3 rounded-lg shadow-2xl z-[100] pointer-events-none text-left leading-relaxed">
+                                    <strong class="text-emerald-400 uppercase tracking-widest mb-1 block border-b border-slate-600 pb-1">How Styles Work</strong>
+                                    <ul class="list-disc pl-3 mt-2 space-y-2">
+                                        <li><strong class="text-white">Adapt To Art Style (ON):</strong> The AI is aware of the style and alters its descriptive words to match it naturally (e.g., stopping it from describing "pores" in a cartoon).</li>
+                                        <li><strong class="text-white">+ Append (ON):</strong> Glues your exact style text to the end of the AI's prompt. Guarantees the image generator applies the style strictly.</li>
+                                        <li><strong class="text-white">+ Append (OFF):</strong> AI adapts the description naturally, but we don't glue the raw style text. Good for smart image generators.</li>
+                                        <li><strong class="text-white">Adapt (OFF):</strong> Defaults to Appending the style text blindly at the end of the standard prompt.</li>
+                                    </ul>
                                 </div>
-                                <label class="relative inline-flex items-center cursor-pointer" title="If enabled, the AI will tailor its prompt descriptions to match the medium.">
-                                    <input type="checkbox" id="v2-style-sync-toggle" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
-                                </label>
-                            </div>
-                            
-                            <!-- Sub-Toggle for Appending -->
-                            <div id="v2-auto-append-container" class="hidden flex items-center justify-between border-t border-slate-700/50 pt-3">
-                                <div>
-                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Append Global Art Style</p>
-                                    <p class="text-[9px] text-slate-500">Forcefully add the art style description to the end of the prompts.</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer" title="Turn off to prevent repeating the style keywords if the AI already adapted them perfectly.">
-                                    <input type="checkbox" id="v2-auto-append-toggle" class="sr-only peer">
-                                    <div class="w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
-                                </label>
                             </div>
                         </div>
+                        <span class="text-[10px] text-slate-500 font-bold bg-slate-900 px-2 py-0.5 rounded">Optional</span>
                     </div>
+
                     <div class="flex gap-2 mb-2 min-w-0">
                         <select id="v2-art-style" class="flex-1 min-w-0 truncate bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
                             <!-- Populated by JS -->
@@ -622,7 +678,7 @@
                     </div>
 
                     <!-- Custom Style Input (Hidden by default) -->
-                    <div id="v2-custom-style-container" class="relative hidden">
+                    <div id="v2-custom-style-container" class="relative hidden mb-3">
                         <textarea id="v2-custom-style-input" rows="3" placeholder="e.g. 90s vintage VHS camcorder footage..." class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors resize-y pr-16"></textarea>
                         <div class="absolute bottom-3 right-3 flex items-center gap-1.5">
                             <div class="group relative flex items-center">
@@ -642,11 +698,37 @@
                     </div>
 
                     <!-- Hidden Save Bar (Appears on Dirty State) -->
-                    <div id="art-style-save-bar" class="hidden mt-3 flex flex-col gap-2 bg-slate-900 p-3 rounded border border-emerald-500/50 shadow-inner">
+                    <div id="art-style-save-bar" class="hidden mb-3 flex flex-col gap-2 bg-slate-900 p-3 rounded border border-emerald-500/50 shadow-inner">
                         <label class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Edits Detected. Save as New Preset?</label>
                         <div class="flex gap-2">
                             <input type="text" id="art-style-name-input" placeholder="Name your style..." class="flex-1 bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
                             <button id="btn-save-art-style" class="bg-emerald-600 hover:bg-emerald-500 text-white rounded px-4 py-2 text-xs font-bold transition-colors shadow">Save</button>
+                        </div>
+                    </div>
+
+                    <!-- Sleek Toggle Switch Group (Moved Below Input) -->
+                    <div class="flex flex-col bg-slate-900/50 border border-slate-700 rounded p-3 gap-3 transition-all mt-2">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] text-slate-300 font-bold uppercase tracking-wider mb-0.5">Adapt To Art Style</p>
+                                <p class="text-[9px] text-slate-500">Tailors image prompts to the chosen global art style.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer" title="If enabled, the AI will tailor its prompt descriptions to match the medium.">
+                                <input type="checkbox" id="v2-style-sync-toggle" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+                            </label>
+                        </div>
+                        
+                        <!-- Sub-Toggle for Appending -->
+                        <div id="v2-auto-append-container" class="hidden flex items-center justify-between border-t border-slate-700/50 pt-3">
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Append Global Art Style</p>
+                                <p class="text-[9px] text-slate-500">Forcefully add the art style description to the end of the prompts.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer" title="Turn off to prevent repeating the style keywords if the AI already adapted them perfectly.">
+                                <input type="checkbox" id="v2-auto-append-toggle" class="sr-only peer">
+                                <div class="w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -965,9 +1047,9 @@
                 </select>
                 <textarea id="v3-formula-content" rows="2" placeholder="Or paste custom channel DNA, rules, tone, and formatting constraints here..." class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-y mb-1.5"></textarea>
                 <select id="v3-formula-mode" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs text-slate-300 focus:outline-none focus:border-purple-500 transition-colors">
-                    <option value="auto" selected>🎲 Auto (50/50 Between Strict & Dynamic - Default)</option>
+                    <option value="auto">🎲 Auto (50/50 Between Strict & Dynamic)</option>
                     <option value="dynamic">🧠 Dynamic (Always Invent New Phrasing)</option>
-                    <option value="strict">🔒 Strict (Always Use Exact Examples)</option>
+                    <option value="strict" selected>🔒 Strict (Always Use Exact Examples - Default)</option>
                 </select>
             </div>
 
@@ -994,7 +1076,7 @@
                 <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-3">
                     <i data-lucide="file-check" class="w-4 h-4"></i> Final Script
                 </h2>
-                <textarea id="v3-script" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-y mb-3" rows="2" placeholder="Paste script here or pull from another view..."></textarea>
+                <textarea id="v3-script" dir="auto" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-sm text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-y mb-3" rows="2" placeholder="Paste script here or pull from another view..."></textarea>
                 
                 <!-- Import Toolbar -->
                 <div class="flex gap-2 shrink-0">
@@ -1077,11 +1159,20 @@
                             </h3>
                             <div class="flex gap-2">
                                 <button class="btn-v3-analyze text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded transition-colors flex items-center gap-1 shadow-lg" title="AI Title Rater"><i data-lucide="bar-chart" class="w-3 h-3"></i> Analyze</button>
+                                <button class="btn-v3-add-custom text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors flex items-center gap-1" data-target="titles" title="Add Custom Title"><i data-lucide="plus" class="w-3 h-3 text-emerald-400"></i></button>
                                 <button class="btn-v3-inject text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors flex items-center gap-1" data-target="titles" title="Inject Competitor"><i data-lucide="dna" class="w-3 h-3 text-purple-400"></i></button>
                                 <button class="btn-v3-regen-all text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" data-target="titles"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen All</button>
                                 <button onclick="copyAllV3Titles()" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" title="Copy All Titles"><i data-lucide="copy" class="w-3 h-3"></i> Copy All</button>
                             </div>
                         </div>
+                    <!-- Add Custom Panel (Hidden by default) -->
+                    <div id="v3-add-custom-titles" class="hidden mb-4 bg-slate-900 border border-emerald-500/50 rounded p-3 shadow-inner">
+                        <label class="text-[10px] uppercase font-bold text-emerald-400 mb-2 block">Add Custom Titles</label>
+                        <div class="flex flex-col gap-2">
+                            <textarea id="v3-add-custom-titles-input" rows="2" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-emerald-500 resize-y" placeholder="Paste custom titles here (one per line)..."></textarea>
+                            <button class="btn-execute-add-custom bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors self-end" data-target="titles">Add to List</button>
+                        </div>
+                    </div>
                     <!-- Injector Panel (Hidden by default) -->
                     <div id="v3-inject-titles" class="hidden mb-4 bg-slate-900 border border-purple-500/50 rounded p-3 shadow-inner">
                         <label class="text-[10px] uppercase font-bold text-purple-400 mb-2 block">Adapt Competitor Titles</label>
@@ -1122,7 +1213,7 @@
                             <textarea id="v3-inject-description-input" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-white focus:outline-none focus:border-purple-500 resize-y mb-2" rows="3" placeholder="Paste competitor description as it is..."></textarea>
                             <button class="btn-execute-inject w-full bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors" data-target="description">Adapt & Generate</button>
                         </div>
-                        <textarea id="v3-out-desc" class="w-full flex-1 min-h-[300px] bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none resize-y"></textarea>
+                        <textarea id="v3-out-desc" dir="auto" class="w-full flex-1 min-h-[300px] bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none resize-y"></textarea>
                     </div>
 
                     <!-- Keywords Block -->
@@ -1142,7 +1233,7 @@
                             <textarea id="v3-inject-tags-input" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-white focus:outline-none focus:border-purple-500 mb-2 resize-y" rows="2" placeholder="Paste competitor raw tags..."></textarea>
                             <button class="btn-execute-inject w-full bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors" data-target="tags">Adapt & Generate</button>
                         </div>
-                        <textarea id="v3-out-hashtags" class="w-full flex-1 bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none resize-y min-h-[150px] xl:min-h-[300px]"></textarea>
+                        <textarea id="v3-out-hashtags" dir="auto" class="w-full flex-1 bg-slate-900 border border-slate-600 rounded p-4 text-sm text-slate-300 focus:outline-none resize-y min-h-[150px] xl:min-h-[300px]"></textarea>
                     </div>
                 </div>
                 
@@ -1154,9 +1245,18 @@
                         </h3>
                         <div class="flex gap-2">
                             <button class="btn-v3-analyze-slug text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded transition-colors flex items-center gap-1 shadow-lg" title="AI Hook Rater"><i data-lucide="bar-chart" class="w-3 h-3"></i> Analyze</button>
+                            <button class="btn-v3-add-custom text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors flex items-center gap-1" data-target="slugs" title="Add Custom Hook"><i data-lucide="plus" class="w-3 h-3 text-emerald-400"></i></button>
                             <button class="btn-v3-inject text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded transition-colors flex items-center gap-1" data-target="slugs"><i data-lucide="dna" class="w-3 h-3 text-purple-400"></i></button>
                             <button class="btn-v3-regen-all text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" data-target="slugs"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen All</button>
                             <button onclick="copyAllV3Slugs()" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" title="Copy All Hooks"><i data-lucide="copy" class="w-3 h-3"></i> Copy All</button>
+                        </div>
+                    </div>
+                    <!-- Add Custom Panel -->
+                    <div id="v3-add-custom-slugs" class="hidden mb-4 bg-slate-900 border border-emerald-500/50 rounded p-3 shadow-inner">
+                        <label class="text-[10px] uppercase font-bold text-emerald-400 mb-2 block">Add Custom Hooks</label>
+                        <div class="flex flex-col gap-2">
+                            <textarea id="v3-add-custom-slugs-input" rows="2" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white focus:outline-none focus:border-emerald-500 resize-y" placeholder="Paste custom hooks here (one per line)..."></textarea>
+                            <button class="btn-execute-add-custom bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded text-xs font-bold transition-colors self-end" data-target="slugs">Add to List</button>
                         </div>
                     </div>
                     <!-- Injector Panel -->
@@ -1183,11 +1283,28 @@
                             <i data-lucide="image" class="text-emerald-400"></i> Thumbnail Concepts
                         </h3>
                         <div class="flex gap-2">
-                            <!-- Removed Inject Competitor button -->
+                            <button id="btn-v3-bulk-render-thumbs" class="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded transition-colors flex items-center gap-1 shadow-lg" title="Render all images"><i data-lucide="play" class="w-3 h-3"></i> Bulk Render</button>
                             <button class="btn-v3-regen-all text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" data-target="thumbnails"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen All</button>
                             <button onclick="copyAllV3ThumbPrompts()" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition-colors flex items-center gap-1" title="Copy All Concepts"><i data-lucide="copy" class="w-3 h-3"></i> Copy All</button>
                         </div>
                     </div>
+                    
+                    <!-- V3 Global Reference Lockers -->
+                    <div class="mb-6 border-b border-slate-700 pb-4">
+                        <div class="flex justify-between items-center w-full">
+                            <button onclick="document.getElementById('v3-global-lockers-container').classList.toggle('hidden'); document.getElementById('v3-global-locker-chevron').classList.toggle('rotate-180');" class="flex items-center gap-2 text-sm font-bold text-emerald-400 uppercase tracking-widest hover:text-emerald-300 transition-colors">
+                                <i data-lucide="users"></i> Global Thumbnail Lockers (<span id="v3-global-locker-count">0</span>)
+                                <i data-lucide="chevron-down" id="v3-global-locker-chevron" class="w-4 h-4 transition-transform"></i>
+                            </button>
+                            <button class="btn-add-custom-locker text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 bg-amber-900/20 hover:bg-amber-900/40 px-2 py-1 rounded transition-colors" data-is-global="true" data-is-v3="true">
+                                <i data-lucide="plus" class="w-3 h-3"></i> Add Custom
+                            </button>
+                        </div>
+                        <div id="v3-global-lockers-container" class="hidden flex-col gap-2 mt-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                            <div class="text-center p-4 text-slate-500 italic text-xs border border-dashed border-slate-700 rounded">No global subjects added yet.</div>
+                        </div>
+                    </div>
+
                     <div id="v3-out-thumbnails" class="flex flex-col gap-4">
                         <!-- Dynamic Thumbnails -->
                     </div>
@@ -1247,9 +1364,12 @@
         <div class="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
             <!-- Header -->
             <div class="flex justify-between items-center mb-4 shrink-0 border-b border-slate-700 pb-4">
-                <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                    <i data-lucide="cpu" class="w-5 h-5 text-purple-400"></i> AI Engines & API Keys
-                </h2>
+                <div class="flex items-center gap-4">
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i data-lucide="cpu" class="w-5 h-5 text-purple-400"></i> AI Engines & API Keys
+                    </h2>
+                    <button type="button" id="btn-reset-api-settings" class="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"><i data-lucide="rotate-ccw" class="w-3 h-3"></i> Restore Defaults</button>
+                </div>
                 <button id="btn-close-api" class="text-slate-400 hover:text-white">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -1277,17 +1397,22 @@
                                 <label class="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer"><input type="checkbox" id="text-view-v2" class="accent-purple-500 w-3 h-3"> B-Roll</label>
                                 <label class="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer"><input type="checkbox" id="text-view-v3" class="accent-purple-500 w-3 h-3"> Packager</label>
                             </div>
-                            <details class="mt-1 group">
-                                <summary class="text-[9px] text-slate-500 font-bold uppercase cursor-pointer hover:text-slate-400 list-none flex items-center gap-1"><i data-lucide="chevron-right" class="w-3 h-3 group-open:rotate-90 transition-transform"></i> Advanced Feature Control</summary>
-                                <div class="mt-2 grid grid-cols-2 gap-2 pl-4 border-l border-slate-700">
-                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-names" class="accent-purple-500 w-2.5 h-2.5"> Channel Names</label>
-                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-format" class="accent-purple-500 w-2.5 h-2.5"> Format/Director AI</label>
-                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-research" class="accent-purple-500 w-2.5 h-2.5"> Deep Research</label>
-                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-polish" class="accent-purple-500 w-2.5 h-2.5"> AI Polish</label>
-                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-numbers" class="accent-purple-500 w-2.5 h-2.5"> Number Audio Sync</label>
-                                    <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-seo" class="accent-purple-500 w-2.5 h-2.5"> SEO Packager Items</label>
-                                </div>
-                            </details>
+                            <div class="flex items-center justify-between mt-1">
+                                <details class="group flex-1">
+                                    <summary class="text-[9px] text-slate-500 font-bold uppercase cursor-pointer hover:text-slate-400 list-none flex items-center gap-1"><i data-lucide="chevron-right" class="w-3 h-3 group-open:rotate-90 transition-transform"></i> Advanced Feature Control</summary>
+                                    <div class="mt-2 grid grid-cols-2 gap-2 pl-4 border-l border-slate-700">
+                                        <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-gen-fast" class="accent-purple-500 w-2.5 h-2.5"> Fast Gen Mode</label>
+                                        <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-gen-seq" class="accent-purple-500 w-2.5 h-2.5"> Sequential Mode</label>
+                                        <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-gen-turbo" class="accent-purple-500 w-2.5 h-2.5"> Turbo Mode</label>
+                                        <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-names" class="accent-purple-500 w-2.5 h-2.5"> Channel Names</label>
+                                        <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-format" class="accent-purple-500 w-2.5 h-2.5"> Format/Director AI</label>
+                                        <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-research" class="accent-purple-500 w-2.5 h-2.5"> Deep Research</label>
+                                        <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-polish" class="accent-purple-500 w-2.5 h-2.5"> AI Polish</label>
+                                        <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-numbers" class="accent-purple-500 w-2.5 h-2.5"> Number Audio Sync</label>
+                                        <label class="flex items-center gap-1 text-[9px] text-slate-400 cursor-pointer"><input type="checkbox" id="adv-text-seo" class="accent-purple-500 w-2.5 h-2.5"> SEO Packager Items</label>
+                                    </div>
+                                </details>
+                            </div>
                         </div>
                         <div class="flex flex-col gap-1.5">
                             <label class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Image Generation Keys</label>
@@ -1473,7 +1598,10 @@
             <div class="overflow-y-auto pr-2 flex-1 space-y-6">
                 <!-- API & Engine Fine-Tuning -->
                 <div>
-                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2"><i data-lucide="sliders" class="w-4 h-4 text-orange-400"></i> Engine Fine-Tuning</h3>
+                    <div class="flex justify-between items-center mb-3">
+    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2"><i data-lucide="sliders" class="w-4 h-4 text-orange-400"></i> Engine Fine-Tuning</h3>
+    <button type="button" onclick="restoreFineTuningDefaults()" class="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1 transition-colors"><i data-lucide="rotate-ccw" class="w-3 h-3"></i> Restore Defaults</button>
+</div>
                     <div class="flex flex-col gap-3">
                         
                         <!-- Row 1: Text Engine (3 Columns) -->
@@ -1537,7 +1665,7 @@
                         </div>
 
                         <!-- Row 3: Advanced Limits (3 Columns) -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <!-- Chunk Size -->
                             <div class="bg-slate-900 border border-slate-700 rounded flex justify-between items-center p-2.5 shadow-inner">
                                 <div class="flex flex-col mr-2">
@@ -1548,14 +1676,23 @@
                             </div>
                             
                             <!-- B-Roll Batch Size -->
-                            <div class="bg-slate-900 border border-slate-700 rounded flex justify-between items-center p-2.5 shadow-inner">
-                                <div class="flex flex-col mr-2">
-                                    <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="layers" class="w-3 h-3 text-orange-400"></i> B-Roll Batch</span>
-                                    <span class="text-[9px] text-slate-500 mt-0.5 leading-tight">Blocks to process before API cooldown.</span>
-                                </div>
-                                <input type="number" id="api-broll-batch-size-input" min="1" step="5" placeholder="50" class="w-20 bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-center text-white focus:outline-none focus:border-orange-500 transition-colors shrink-0">
-                            </div>
-                        </div>
+    <div class="bg-slate-900 border border-slate-700 rounded flex justify-between items-center p-2.5 shadow-inner">
+        <div class="flex flex-col mr-2">
+            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="layers" class="w-3 h-3 text-orange-400"></i> B-Roll Batch</span>
+            <span class="text-[9px] text-slate-500 mt-0.5 leading-tight">Blocks to process before API cooldown.</span>
+        </div>
+        <input type="number" id="api-broll-batch-size-input" min="1" step="5" placeholder="50" class="w-20 bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-center text-white focus:outline-none focus:border-orange-500 transition-colors shrink-0">
+    </div>
+    
+    <!-- Chapter Context Size -->
+    <div class="bg-slate-900 border border-slate-700 rounded flex justify-between items-center p-2.5 shadow-inner" title="Previously hardcoded to 60 words. Sets how much of the previous chapter the AI reads to continue the story.">
+        <div class="flex flex-col mr-2">
+            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><i data-lucide="book-open" class="w-3 h-3 text-orange-400"></i> Context Size</span>
+            <span class="text-[9px] text-slate-500 mt-0.5 leading-tight">Previous chapter words (0 = All).</span>
+        </div>
+        <input type="number" id="api-context-size-input" min="0" step="10" placeholder="0" class="w-20 bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-center text-white focus:outline-none focus:border-orange-500 transition-colors shrink-0">
+    </div>
+</div>
                     </div>
                 </div>
 
@@ -2242,7 +2379,7 @@
                 </div>
             </div>
 
-            <div class="mt-0 flex justify-end gap-3 w-full">
+            <div class="mt-4 flex justify-end gap-3 w-full">
                 <button id="btn-cancel-bulk-animate" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-slate-700 shadow">Cancel</button>
                 <button id="btn-start-bulk-animate" class="flex-1 bg-pink-600 hover:bg-pink-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-lg flex items-center justify-center gap-2">
                     <i data-lucide="zap" class="w-4 h-4"></i> Start Engine
@@ -2464,7 +2601,7 @@
             // ALL VIEWS US ON: textKeyViews: JSON.parse(localStorage.getItem('fast_cache_text_views') || '["v1", "v2", "v3"]'),
             // ALL VIEWS US ON: imageKeyViews: JSON.parse(localStorage.getItem('fast_cache_image_views') || '["v1", "v2", "v3"]'),
             textKeyViews: JSON.parse(localStorage.getItem('fast_cache_text_views') || '["v1"]'),
-            textAdv: JSON.parse(localStorage.getItem('fast_cache_text_adv') || '{"names":false, "format":false, "research":false, "polish":false, "numbers":false, "seo":false}'),
+            textAdv: JSON.parse(localStorage.getItem('fast_cache_text_adv') || '{"gen_fast":false, "gen_seq":true, "gen_turbo":true, "names":false, "format":false, "research":false, "polish":false, "numbers":false, "seo":false}'),
             imageKeyViews: JSON.parse(localStorage.getItem('fast_cache_image_views') || '[]'),
             autoRotate: localStorage.getItem('fast_cache_auto_rotate') !== 'false',
             textCooldown: parseInt(localStorage.getItem('fast_cache_text_cooldown') || localStorage.getItem('fast_cache_cooldown') || '4000', 10),
@@ -2473,6 +2610,7 @@
             imageBatchSize: parseInt(localStorage.getItem('fast_cache_image_batch_size') || '8', 10),
             turboCooldown: parseInt(localStorage.getItem('fast_cache_turbo_cooldown') || '1000', 10),
             chunkSize: parseInt(localStorage.getItem('fast_cache_chunk_size') || '800', 10),
+            contextSize: parseInt(localStorage.getItem('fast_cache_context_size') || '0', 10),
             warningThreshold: parseInt(localStorage.getItem('fast_cache_warning_threshold') || '65', 10),
             ramThreshold: parseInt(localStorage.getItem('fast_cache_ram_threshold') || '12', 10),
             brollBatchSize: parseInt(localStorage.getItem('fast_cache_broll_batch_size') || '50', 10),
@@ -2650,6 +2788,7 @@
             btnSaveFormat: document.getElementById('btn-save-format'),
 
             transcriptContent: document.getElementById('transcript-content'),
+            btnMagicTopic: document.getElementById('btn-magic-topic'),
             scriptLength: document.getElementById('script-length'),
             lengthVal: document.getElementById('length-val'),
             scriptPacing: document.getElementById('script-pacing'),
@@ -2814,8 +2953,8 @@
         // --- System Prompts Engine ---
         const DEFAULT_PROMPTS = {
             standard: `You are an elite YouTube Scriptwriter performing a perfect STYLE TRANSFER for the channel "{{CHANNEL_NAME}}".\n\nCRITICAL DIRECTIVE: You will receive two inputs enclosed in XML tags.\n1. <STYLE_GUIDE>: Extract from this ONLY the tone, pacing, structural beats, and emotional hooks..etc. IGNORE all "specific names, dates, and events.. etc" mentioned here—they are just examples.\n2. <SOURCE_MATERIAL>: This is your ONLY source of truth. Every name, location, statistic, core event.. etc in the final script MUST originate from here.\n\n{{FORMAT_INSTRUCTION}}\n\nTARGET LENGTH: EXACTLY {{TARGET_WORDS}} words. {{PACING_INSTRUCTION}} Pace the script to hit this word count.`,
-            outline: `You are the Lead Architect for the YouTube channel "{{CHANNEL_NAME}}". Break the provided <SOURCE_MATERIAL> down into exactly {{NUM_CHAPTERS}} chapters for a {{MINUTES}}-minute video.\n\nCRITICAL DIRECTIVE:\n- Apply "the Niche, Structure, and Tone.. etc" from the <STYLE_GUIDE>.\n- The <SOURCE_MATERIAL> is your ONLY source of truth. Do not use example "names or quotes.. etc" from the <STYLE_GUIDE>.\n- Outline according to the required format (e.g., Solo video essay, skit, podcast.. etc). DO NOT use the original channel name from the STYLE_GUIDE.\n\nProvide 3 distinct potential titles based on the <STYLE_GUIDE>'s Title Format.`,
-            chapter: `You are writing Chapter {{CURRENT_CHAPTER}} of {{TOTAL_CHAPTERS}} for the YouTube channel "{{CHANNEL_NAME}}".\n\nCRITICAL DIRECTIVE:\n- Apply "the Tone and Structure.. etc" from the <STYLE_GUIDE>.\n- Use ONLY facts from the <SOURCE_MATERIAL>.\n- DO NOT use the original channel name from the STYLE_GUIDE. Always refer to your channel as "{{CHANNEL_NAME}}".\n\n{{FORMAT_INSTRUCTION}}\n\nTARGET LENGTH: EXACTLY {{WORDS_PER_CHAPTER}} words. {{PACING_INSTRUCTION}}\n{{HOOK_INSTRUCTION}}\n{{OUTRO_INSTRUCTION}}`,
+            outline: `You are the Lead Architect for the YouTube channel "{{CHANNEL_NAME}}". Break the provided <SOURCE_MATERIAL> down into exactly {{NUM_CHAPTERS}} chapters for a {{MINUTES}}-minute video.\n\nCRITICAL DIRECTIVES:\n1. Apply "the Niche, Structure, and Tone.. etc" from the <STYLE_GUIDE>.\n2. The <SOURCE_MATERIAL> is your ONLY source of truth. Do not use example "names or quotes.. etc" from the <STYLE_GUIDE>.\n3. ANTI-REPETITION SKELETON: The chapters MUST be strictly sequential. Each chapter must focus on a completely distinct idea. Do not let concepts overlap across multiple chapters. The story must constantly move forward.\n4. Outline according to the required format (e.g., Solo video essay, skit, podcast.. etc). DO NOT use the original channel name from the STYLE_GUIDE.\n\nProvide 3 distinct potential titles based on the <STYLE_GUIDE>'s Title Format.`,
+            chapter: `You are writing Chapter {{CURRENT_CHAPTER}} of {{TOTAL_CHAPTERS}} for the YouTube channel "{{CHANNEL_NAME}}".\n\nCRITICAL DIRECTIVES:\n1. Apply the "Tone and Structure.. etc" from the <STYLE_GUIDE>.\n2. Use ONLY facts from the <SOURCE_MATERIAL>.\n3. ANTI-REPETITION RULE: Do NOT summarize, recap, or re-explain foundational concepts established in previous chapters. Assume the viewer already knows everything that happened previously. Your ONLY job is to push the narrative forward with new information.\n4. DO NOT use the original channel name from the STYLE_GUIDE. Always refer to your channel as "{{CHANNEL_NAME}}".\n\n{{FORMAT_INSTRUCTION}}\n\nTARGET LENGTH: EXACTLY {{WORDS_PER_CHAPTER}} words. {{PACING_INSTRUCTION}}\n{{HOOK_INSTRUCTION}}\n{{OUTRO_INSTRUCTION}}\n\nThink step-by-step before generating the final output.`,
             broll: `Role: You are an elite AI B-Roll Director.\nYou will receive a script broken down into numbered "Storyboard Blocks". \nYOUR FIRST TASK: Analyze the script to understand its specific niche and tone, and generate vivid, highly descriptive image and video prompts perfectly tailored to that genre's visual aesthetic.\n\nYOUR SECOND TASK:\nOutput an exact 1:1 mapping. If there are 45 blocks, output an array of EXACTLY 45 directorial decisions in chronological order.\n\nDIRECTOR MODE INSTRUCTIONS (CRITICAL - OBEY THESE FOR CREATIVE STYLE):\n{{DIRECTOR_INSTRUCTION}}\n\nCore System Rules:\n1. Subject Specificity: When a scene calls for specific people, products, locations, or historical events mentioned in the script, use their EXACT names in the prompt (e.g., "Pentagon briefing room", "iPhone 15 Pro Max"). Do not use generic placeholders.\n2. Professional Camera Terminology: Avoid generic filler words like "epic" or "blockbuster". Instead, use precise camera terminology and lighting descriptors specific to the niche and Director Mode.\n3. PACING & DENSITY: Maintain viewer retention by adhering strictly to the pacing, transitions, and coverage rules defined in the Director Mode Instructions above.\n4. THE "NO HOST" RULE (Prevent A-Roll): Do NOT generate prompts showing the YouTuber, host, or narrator talking to the camera. For intros, outros, or conversational filler, use thematic background B-roll. HOWEVER, you MUST show the specific historical figures, celebrities, or named characters actively discussed in the script. Do NOT leave the prompt empty.`,
             packager: `You are an elite YouTube SEO Strategist performing a PERFECT FORMAT CLONE.\n\nCRITICAL DIRECTIVES:\n1. FACTUAL QUARANTINE: The 'Channel Formula', 'Competitor Titles', and 'Competitor Description' often contain specific example names, locations (e.g., "Strait of Hormuz"), and dates to demonstrate tone. DO NOT blindly copy these examples into your output. You may ONLY use a specific name, location, or fact if it explicitly appears in the FINAL SCRIPT. The formula dictates the vibe; the script dictates the facts.\n2. THE CLONE PROTOCOL: You must clone the EXACT FORMATTING SHELL of the Competitor Description. If they put 3 hashtags on the first line, YOU put 3 hashtags on the first line (but make them relevant to the script). If they use specific line breaks, ALL CAPS, or emojis, YOU replicate that exact visual layout line-by-line.\n3. TITLES: Copy the exact psychological structure and punctuation of the competitor titles (e.g., if they use "Topic | Breaking News Today [Date]", you do the same using the script's topic and script's dates.. etc).\n4. THUMBNAIL GENERATION: First, deeply analyze the Final Script to understand its overarching narrative, core theme, and main emotional hook. If images are attached, extract their STRUCTURAL SKELETON (exact layout, text placement, color scheme, split screens, arrows, etc.). However, you must perform a TOTAL NICHE TRANSLATION. For example if the reference image is military, but the script is about politics or finance, ZERO military vehicles or environments are allowed. You must map the reference's skeleton perfectly onto the script's specific subjects and setting (e.g., swap a fighter jet for a politician, swap an ocean for a debate stage.. etc). Entirely IGNORE the Channel Formula's thumbnail rules. If NO images are attached, base the thumbnails purely on the Channel Formula guidelines and Final Script.\n5. INTERNAL SEARCH TAGS: Generate a standalone block of 10-15 highly optimized, comma-separated YouTube backend search tags (phrases). DO NOT remove spaces between words. DO NOT use the '#' symbol.\n\nOUTPUT REQUIRED (JSON):\n- "titles": Array of 3 titles perfectly mimicking the competitor's format but using ONLY script facts.\n- "thumbnailSlugs": Array of EXACTLY 6 AGGRESSIVE, HYPER-CLICKBAITY thumbnail text options based on the script. They MUST evoke strong emotion (fear, curiosity, shock, anger.. etc). Keep them varying lengths (between 1 and 5 words max).\n- "description": A YouTube description matching the competitor's EXACT layout, line-by-line structure, and hashtag placement, populated exclusively with script facts.\n- "thumbnailPrompts": Array of 3 highly detailed prompts for an AI image generator applying the competitor's visual layout to the final script's specific niche.\n- "hashtags": A string of 10-15 optimized search tags with normal spaces (e.g. "Drone Force, Military Strategy, US Military".. etc).`
         };
@@ -2830,6 +2969,26 @@
         window.restorePrompt = function(key) {
             document.getElementById(`prompt-${key}`).value = DEFAULT_PROMPTS[key];
             showToast(`Restored default prompt. Don't forget to save!`);
+        };
+
+        window.restoreFineTuningDefaults = function() {
+            const defaults = {
+                'api-text-cooldown-input': '4000',
+                'api-turbo-cooldown-input': '1000',
+                'api-text-batch-size-input': '0',
+                'api-image-cooldown-input': '3000',
+                'api-image-batch-size-input': '8',
+                'api-ram-threshold-input': '12',
+                'api-chunk-size-input': '800',
+                'api-broll-batch-size-input': '50',
+                'api-context-size-input': '0'
+            };
+            
+            for (const [id, val] of Object.entries(defaults)) {
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+            }
+            showToast("Fine-Tuning defaults restored. Don't forget to save!");
         };
 
         // --- Utils ---
@@ -2879,27 +3038,33 @@
             // Expanded to span > 60 seconds to outlast Google's 1-minute API Quota reset timer
             const delays = [2000, 4000, 8000, 15000, 20000, 25000];
             for (let i = 0; i < retries; i++) {
+                let url = "";
                 try {
                     // This dynamically pulls the newest key if it rotated on a previous loop
-                    const url = typeof getUrlFn === 'function' ? getUrlFn(featureContext) : getUrlFn;
+                    url = typeof getUrlFn === 'function' ? getUrlFn(featureContext) : getUrlFn;
                     const res = await fetch(url, options);
                     
                     if (!res.ok) {
                         const errText = await res.text();
                         if (res.status === 400) throw new Error(`FATAL_400: ${errText}`);
                         
-                        // Auto-Rotate Keys on Quota limit errors
-                        if (res.status === 429) {
+                        // Auto-Rotate Keys on Quota (429), Forbidden (403), or Unauthorized (401) errors
+                        if (res.status === 429 || res.status === 403 || res.status === 401) {
                             const isImage = typeof getUrlFn === 'function' && getUrlFn.name.includes('Image');
                             const rotated = rotateKeys(isImage ? 'image' : 'text');
-                            if (rotated) console.warn("Quota limit hit! Auto-rotated to next API key.");
+                            if (rotated) console.warn(`API Key error (${res.status})! Auto-rotated to next key.`);
                         }
                         
                         throw new Error(`HTTP ${res.status}: ${errText}`);
                     }
                     return await res.json();
                 } catch (err) {
-                    console.warn(`API Attempt ${i + 1} failed:`, err.message);
+                    let maskedKey = "unknown";
+                    try {
+                        const keyParam = new URL(url).searchParams.get('key');
+                        if (keyParam) maskedKey = keyParam.length > 8 ? keyParam.substring(0, 4) + '...' + keyParam.substring(keyParam.length - 4) : keyParam;
+                    } catch(e) {}
+                    console.warn(`API Attempt ${i + 1} failed for key ${maskedKey}:`, err.message);
                     if (i === retries - 1 || err.message.includes('FATAL_400')) throw err;
                     await new Promise(r => setTimeout(r, delays[i]));
                 }
@@ -3998,11 +4163,41 @@ Study the provided <EXAMPLES> to match the tone, brevity, and authoritative styl
         });
 
         const HALAL_CONSTRAINTS = {
+            'master_narrative': "\n\nCONSTRAINT (SAFE NARRATIVE): This script must strictly avoid themes, examples, or metaphors involving gambling, alcohol, recreational drugs, immodest behavior, sexualization, occultism, or specific religious worship rituals. If the source material contains these elements, you MUST rewrite the narrative using neutral, permissible, and safe metaphors. Do not use profane, vulgar, or overly aggressive language. Keep the core story intact, but sanitize the themes.",
             'master': "\n\nAvoid imagery that conflicts with Islamic values, including nudity, immodest clothing, sexualized subjects, alcohol or drinks that may look alcoholic, gambling, idols, religious worship rituals, occult symbolism, and other prohibited (haram) content. When such elements are central to a paragraph, do not depict them directly. Instead, reinterpret the paragraph's meaning through suitable symbolic, environmental, object-based, contextual, or metaphorical storytelling.",
             'no_women': "\n\nCONSTRAINT (NO WOMEN): Absolutely no women may be depicted in any visual. This includes main subjects, background characters, crowds, silhouettes, or historical figures. If the script discusses a woman, you MUST use metaphorical imagery, objects, environments, or text-on-screen to represent the concept instead.",
             'silhouettes': "\n\nCONSTRAINT (SILHOUETTES ONLY): No detailed living creatures (humans, animals, birds, etc.) may be shown. Note: Plants, trees, and landscapes are completely allowed. If a human or animal must be depicted, it MUST be rendered strictly as a single-color, monochrome, featureless silhouette against a contrasting background. The silhouette must NOT depict women's hair clearly, nor emphasize bodily curves. Focus on the environment and geometric shapes.",
             'faceless': "\n\nCONSTRAINT (FACELESS / TAMS AL-MALAMIH): Absolutely no facial features (eyes, nose, mouth) may be visible on ANY living creature. You MUST explicitly write in your generated prompt that the faces of ALL humans AND animals in the scene are 'completely blank, smooth, and featureless'. Do not leave any animal or human face described normally. Their features must be entirely erased or obscured."
         };
+        
+        // --- View 1 (Narrative) Shield Logic ---
+        document.getElementById('btn-shield-formula')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const dropdown = document.getElementById('shield-dropdown-v1');
+            if (dropdown) dropdown.classList.toggle('hidden');
+        });
+
+        document.body.addEventListener('click', (e) => {
+            // Close V1 shield dropdown if clicking outside
+            if (!e.target.closest('#shield-dropdown-wrapper-v1')) {
+                document.getElementById('shield-dropdown-v1')?.classList.add('hidden');
+            }
+
+            // Handle clicking an option in the V1 dropdown
+            const btnV1 = e.target.closest('.btn-inject-constraint-v1');
+            if (btnV1) {
+                const constraintKey = btnV1.dataset.constraint;
+                const textToInject = HALAL_CONSTRAINTS[constraintKey];
+                
+                if (ui.formulaContent && textToInject) {
+                    ui.formulaContent.value = ui.formulaContent.value.trim() + textToInject;
+                    ui.formulaContent.dispatchEvent(new Event('input', { bubbles: true })); // Triggers auto-save!
+                    showToast("Narrative constraint injected!");
+                    document.getElementById('shield-dropdown-v1')?.classList.add('hidden');
+                }
+            }
+        });
 
         // 1. Toggle Dropdown visibility
         ui.btnShieldDirector?.addEventListener('click', (e) => {
@@ -4276,6 +4471,105 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 lucide.createIcons();
             }
         });
+
+        ui.btnMagicTopic?.addEventListener('click', async () => {
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) return showToast("API Key needed for magic topic!");
+            
+            const userInput = ui.transcriptContent?.value.trim();
+            if (!userInput) return showToast("Please paste some source material first!");
+
+            const originalHTML = ui.btnMagicTopic.innerHTML;
+            ui.btnMagicTopic.disabled = true;
+            ui.btnMagicTopic.innerHTML = `<div class="loader !w-4 !h-4 !border-2 !border-t-blue-400"></div>`;
+            showToast("Extracting core topic...");
+
+            try {
+                const schema = { type: "OBJECT", properties: { extractedTopic: { type: "STRING" } }, required: ["extractedTopic"] };
+                const systemPrompt = "You are an expert content analyzer. The user will provide a rough transcript, article, or base concept. Your job is to extract the absolute core topic, theme, or compelling hook and phrase it as a descriptive YouTube title. Do not write a full paragraph. Return ONLY the single extracted topic phrase.";
+                
+                // Note: We use the 'format' featureContext flag here to tie into existing Text API settings
+                const data = await executeGeminiCall(systemPrompt, `Source Material:\n"${userInput}"`, schema, false, null, 'format');
+                
+                if (data && data.extractedTopic) {
+                    ui.transcriptContent.value = data.extractedTopic;
+                    ui.transcriptContent.dispatchEvent(new Event('input', { bubbles: true })); // Trigger Save Bar & Auto-Pilot triggers
+                    showToast("Core topic extracted successfully!");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Error extracting topic.");
+            } finally {
+                ui.btnMagicTopic.disabled = false;
+                ui.btnMagicTopic.innerHTML = originalHTML;
+                lucide.createIcons();
+            }
+        });
+
+        document.getElementById('btn-estimate-duration')?.addEventListener('click', async () => {
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) return showToast("API Key needed for estimator!");
+            
+            const transcript = ui.transcriptContent?.value.trim();
+            if (!transcript) return showToast("Please paste some source material first!");
+
+            const formula = ui.formulaContent?.value.trim() || 'Default YouTube style';
+            const format = ui.customFormatInput?.value.trim() || 'Standard script format';
+
+            const btn = document.getElementById('btn-estimate-duration');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<div class="loader !w-4 !h-4 !border-2 !border-t-emerald-400"></div>`;
+            showToast("Analyzing optimal video length...");
+
+            try {
+                const schema = { 
+                    type: "OBJECT", 
+                    properties: { 
+                        optimalMinutes: { type: "INTEGER", description: "The ideal video length in minutes (e.g. 8)" }, 
+                        reasoning: { type: "STRING", description: "A short 1-sentence reason why." } 
+                    }, 
+                    required: ["optimalMinutes", "reasoning"] 
+                };
+                
+                const systemPrompt = "You are a YouTube Retention Expert. Analyze the provided Source Material, Channel Formula, and Script Format. Calculate the OPTIMAL video length in minutes based on the depth of the provided source material. The goal is to maximize audience retention by ensuring the script is perfectly paced, high-quality, and completely free of repetition, stretching, or fluff. Return the integer of minutes and a brief reasoning.";
+                
+                // Note: using 'format' as featureContext to tie into existing Advanced Text API toggles
+                const data = await executeGeminiCall(systemPrompt, `CHANNEL FORMULA:\n${formula}\n\nSCRIPT FORMAT:\n${format}\n\nSOURCE MATERIAL:\n${transcript}`, schema, false, null, 'format');
+                
+                if (data && data.optimalMinutes) {
+                    const minutes = Math.max(5, Math.min(60, data.optimalMinutes));
+                    if (ui.scriptLength) {
+                        ui.scriptLength.value = minutes;
+                        ui.scriptLength.dispatchEvent(new Event('input', { bubbles: true })); 
+                    }
+                    
+                    // Show the persistent notice box instead of a toast
+                    const noticeBox = document.getElementById('estimator-notice');
+                    const minSpan = document.getElementById('estimator-minutes');
+                    const reasonP = document.getElementById('estimator-reasoning');
+                    
+                    if (noticeBox && minSpan && reasonP) {
+                        minSpan.innerText = minutes;
+                        reasonP.innerText = data.reasoning;
+                        noticeBox.classList.remove('hidden');
+                    }
+                    showToast(`Slider auto-adjusted to ${minutes} minutes.`);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Error estimating duration.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                lucide.createIcons();
+            }
+        });
+
+        // Add the dismiss button listener
+        document.getElementById('btn-close-estimator')?.addEventListener('click', () => {
+            document.getElementById('estimator-notice')?.classList.add('hidden');
+        });
         
         ui.selectTextModel?.addEventListener('change', (e) => {
             if(e.target.value === 'custom') ui.customTextModel?.classList.remove('hidden');
@@ -4303,11 +4597,14 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             if (textInput) {
                 textInput.value = (appSettings.textKeys || []).join('\n');
                 const tViews = appSettings.textKeyViews || ["v1"];
-                const tAdv = appSettings.textAdv || {names:false, format:false, research:false, polish:false, numbers:false, seo:false};
+                const tAdv = appSettings.textAdv || {gen_fast:false, gen_seq:true, gen_turbo:true, names:false, format:false, research:false, polish:false, numbers:false, seo:false};
                 document.getElementById('text-view-v1').checked = tViews.includes('v1');
                 document.getElementById('text-view-v2').checked = tViews.includes('v2');
                 document.getElementById('text-view-v3').checked = tViews.includes('v3');
                 
+                if (document.getElementById('adv-text-gen-fast')) document.getElementById('adv-text-gen-fast').checked = tAdv.gen_fast === true;
+                if (document.getElementById('adv-text-gen-seq')) document.getElementById('adv-text-gen-seq').checked = tAdv.gen_seq !== false;
+                if (document.getElementById('adv-text-gen-turbo')) document.getElementById('adv-text-gen-turbo').checked = tAdv.gen_turbo !== false;
                 if (document.getElementById('adv-text-names')) document.getElementById('adv-text-names').checked = tAdv.names !== false;
                 if (document.getElementById('adv-text-format')) document.getElementById('adv-text-format').checked = tAdv.format !== false;
                 if (document.getElementById('adv-text-research')) document.getElementById('adv-text-research').checked = tAdv.research !== false;
@@ -4371,6 +4668,10 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             if(ui.apiChunkSizeInput) {
                 ui.apiChunkSizeInput.value = appSettings.chunkSize || 800;
             }
+            const contextInput = document.getElementById('api-context-size-input');
+            if(contextInput) {
+                contextInput.value = appSettings.contextSize !== undefined ? appSettings.contextSize : 0;
+            }
             if(ui.apiRamThresholdInput) {
                 ui.apiRamThresholdInput.value = appSettings.ramThreshold || 12;
             }
@@ -4399,16 +4700,17 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             const imageKeysRaw = document.getElementById('api-key-image-input')?.value || '';
             const autoRotate = document.getElementById('api-auto-rotate')?.checked ?? true;
             
-            const textKeysArray = textKeysRaw.split('\n').map(k => k.trim()).filter(k => k.length > 0);
-            const imageKeysArray = imageKeysRaw.split('\n').map(k => k.trim()).filter(k => k.length > 0);
+            const textKeysArray = textKeysRaw.split('\n').map(k => k.replace(/[\s\u200B-\u200D\uFEFF]/g, '')).filter(k => k.length > 0);
+            const imageKeysArray = imageKeysRaw.split('\n').map(k => k.replace(/[\s\u200B-\u200D\uFEFF]/g, '')).filter(k => k.length > 0);
             const legacyKeyBackup = textKeysArray.length > 0 ? textKeysArray[0] : '';
 
             const tCd = parseInt(ui.apiTextCooldownInput?.value || "4000", 10);
             const tbs = parseInt(ui.apiTextBatchSizeInput?.value || "0", 10); // 0 acts as infinite
-            const iCd = parseInt(ui.apiImageCooldownInput?.value || "4000", 10);
-            const ibs = parseInt(ui.apiImageBatchSizeInput?.value || "1", 10);
-            const tbCd = parseInt(ui.apiTurboCooldownInput?.value || "300", 10);
+            const iCd = parseInt(ui.apiImageCooldownInput?.value || "3000", 10);
+            const ibs = parseInt(ui.apiImageBatchSizeInput?.value || "8", 10);
+            const tbCd = parseInt(ui.apiTurboCooldownInput?.value || "1000", 10);
             const cs = parseInt(ui.apiChunkSizeInput?.value || "800", 10);
+            const ctxSz = parseInt(document.getElementById('api-context-size-input')?.value || "0", 10);
             const rt = parseInt(ui.apiRamThresholdInput?.value || "12", 10);
             const bbs = parseInt(ui.apiBrollBatchSizeInput?.value || "50", 10);
             const wt = appSettings.warningThreshold || 65; // FIX: Ensure wt is defined safely
@@ -4438,6 +4740,9 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             if (document.getElementById('img-view-v3')?.checked) iViews.push('v3');
 
             const tAdv = {
+                gen_fast: document.getElementById('adv-text-gen-fast')?.checked ?? false,
+                gen_seq: document.getElementById('adv-text-gen-seq')?.checked ?? true,
+                gen_turbo: document.getElementById('adv-text-gen-turbo')?.checked ?? true,
                 names: document.getElementById('adv-text-names')?.checked ?? true,
                 format: document.getElementById('adv-text-format')?.checked ?? true,
                 research: document.getElementById('adv-text-research')?.checked ?? true,
@@ -4446,7 +4751,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 seo: document.getElementById('adv-text-seo')?.checked ?? true
             };
 
-            appSettings = { id: 'main', apiKey: legacyKeyBackup, textKeys: textKeysArray, imageKeys: imageKeysArray, textKeyViews: tViews, textAdv: tAdv, imageKeyViews: iViews, autoRotate: autoRotate, textCooldown: tCd, textBatchSize: tbs, imageCooldown: iCd, imageBatchSize: ibs, turboCooldown: tbCd, chunkSize: cs, warningThreshold: wt, ramThreshold: rt, brollBatchSize: bbs, prompts: newPrompts, models: newModels };
+            appSettings = { id: 'main', apiKey: legacyKeyBackup, textKeys: textKeysArray, imageKeys: imageKeysArray, textKeyViews: tViews, textAdv: tAdv, imageKeyViews: iViews, autoRotate: autoRotate, textCooldown: tCd, textBatchSize: tbs, imageCooldown: iCd, imageBatchSize: ibs, turboCooldown: tbCd, chunkSize: cs, contextSize: ctxSz, warningThreshold: wt, ramThreshold: rt, brollBatchSize: bbs, prompts: newPrompts, models: newModels };
 
             // Save to the instant fast-cache
             localStorage.setItem('fast_cache_api', legacyKeyBackup);
@@ -4462,6 +4767,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             localStorage.setItem('fast_cache_image_batch_size', ibs.toString());
             localStorage.setItem('fast_cache_turbo_cooldown', tbCd.toString());
             localStorage.setItem('fast_cache_chunk_size', cs.toString());
+            localStorage.setItem('fast_cache_context_size', ctxSz.toString());
             localStorage.setItem('fast_cache_warning_threshold', wt.toString());
             localStorage.setItem('fast_cache_ram_threshold', rt.toString());
             localStorage.setItem('fast_cache_broll_batch_size', bbs.toString());
@@ -4556,15 +4862,23 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                         await saveSettingsDB(appSettings);
                         
                         localStorage.setItem('fast_cache_api', appSettings.apiKey || '');
+                        localStorage.setItem('fast_cache_text_keys', JSON.stringify(appSettings.textKeys || []));
+                        localStorage.setItem('fast_cache_image_keys', JSON.stringify(appSettings.imageKeys || []));
+                        localStorage.setItem('fast_cache_text_views', JSON.stringify(appSettings.textKeyViews || ["v1"]));
+                        localStorage.setItem('fast_cache_text_adv', JSON.stringify(appSettings.textAdv || {names:false, format:false, research:false, polish:false, numbers:false, seo:false}));
+                        localStorage.setItem('fast_cache_image_views', JSON.stringify(appSettings.imageKeyViews || []));
+                        localStorage.setItem('fast_cache_auto_rotate', (appSettings.autoRotate !== false).toString());
                         localStorage.setItem('fast_cache_text_cooldown', appSettings.textCooldown?.toString() || '4000');
+                        localStorage.setItem('fast_cache_text_batch_size', appSettings.textBatchSize?.toString() || '0');
                         localStorage.setItem('fast_cache_image_cooldown', appSettings.imageCooldown?.toString() || '3000');
+                        localStorage.setItem('fast_cache_image_batch_size', appSettings.imageBatchSize?.toString() || '8');
+                        localStorage.setItem('fast_cache_turbo_cooldown', appSettings.turboCooldown?.toString() || '1000');
                         localStorage.setItem('fast_cache_chunk_size', appSettings.chunkSize?.toString() || '800');
-                        if (appSettings.prompts) {
-                            localStorage.setItem('fast_cache_prompts', JSON.stringify(appSettings.prompts));
-                        }
-                        if (appSettings.models) {
-                            localStorage.setItem('fast_cache_models', JSON.stringify(appSettings.models));
-                        }
+                        localStorage.setItem('fast_cache_warning_threshold', appSettings.warningThreshold?.toString() || '65');
+                        localStorage.setItem('fast_cache_ram_threshold', appSettings.ramThreshold?.toString() || '12');
+                        localStorage.setItem('fast_cache_broll_batch_size', appSettings.brollBatchSize?.toString() || '50');
+                        if (appSettings.prompts) localStorage.setItem('fast_cache_prompts', JSON.stringify(appSettings.prompts));
+                        if (appSettings.models) localStorage.setItem('fast_cache_models', JSON.stringify(appSettings.models));
                     }
 
                     // Reload memory arrays if Firebase isn't handling it automatically via snapshots
@@ -4689,9 +5003,27 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             if(ui.outScript) ui.outScript.innerHTML = '';
             let hasFailedChapters = false;
 
+            let currentChapterNum = null;
             (data.sections || []).forEach(sec => {
                 const chapterNum = sec.chapter || 1;
                 const colorIndex = ((chapterNum - 1) % 5) + 1;
+
+                // Inject Chapter Header for Successful Chapters
+                if (!sec.isFailed && chapterNum !== currentChapterNum && totalChapters > 1) {
+                    currentChapterNum = chapterNum;
+                    const headerEl = document.createElement('div');
+                    headerEl.className = "flex justify-between items-center mt-8 mb-4 border-b border-slate-700/50 pb-2 chapter-header-wrapper";
+                    headerEl.setAttribute('data-chapter', chapterNum);
+                    headerEl.innerHTML = `
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                            <i data-lucide="bookmark" class="w-4 h-4"></i> Chapter ${chapterNum}
+                        </h3>
+                        <button type="button" class="btn-regen-success-chapter bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white px-3 py-1 rounded text-[10px] font-bold transition-colors flex items-center gap-1.5 shadow">
+                            <i data-lucide="refresh-cw" class="w-3 h-3 pointer-events-none"></i> Regen Chapter
+                        </button>
+                    `;
+                    if(ui.outScript) ui.outScript.appendChild(headerEl);
+                }
 
                 if (sec.isFailed) {
                     hasFailedChapters = true;
@@ -4742,7 +5074,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                         el.className = "script-block pl-4 border-l-2 border-slate-700 relative group pr-10 py-1.5 mb-4";
                         el.setAttribute('data-color-index', colorIndex);
                         el.innerHTML = `
-                            <p class="pure-script-text text-slate-300 leading-relaxed text-lg font-light">${blockText}</p>
+                            <p class="pure-script-text text-slate-300 leading-relaxed text-lg font-light" dir="auto">${blockText}</p>
                             <button type="button" class="absolute top-1 right-1 p-2 text-slate-500 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-600 rounded opacity-0 group-hover:opacity-100 transition-all shadow-md btn-copy-block z-10" title="Copy Text">
                                 <i data-lucide="copy" class="w-4 h-4 pointer-events-none"></i>
                             </button>
@@ -4813,7 +5145,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             const currentKey = getActiveApiKey();
             if (!currentKey && !isFirebaseEnabled) { ui.settingsModal?.classList.remove('hidden'); return showToast("Wait a moment for API key to load, or check settings!"); }
 
-            let formulaMode = document.getElementById('formula-mode')?.value || 'auto';
+            let formulaMode = document.getElementById('formula-mode')?.value || 'dynamic';
             if (formulaMode === 'auto') {
                 // 50/50 coin flip to decide if this specific generation runs strict or dynamic
                 formulaMode = Math.random() > 0.5 ? 'dynamic' : 'strict';
@@ -4825,6 +5157,9 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             const minutes = parseInt(ui.scriptLength?.value || "30", 10);
             const wpm = parseInt(ui.scriptPacing?.value || "150", 10);
             const mode = ui.generationMode?.value || "standard";
+            
+            const outLang = document.getElementById('output-language')?.value || 'English';
+            const langInstruction = outLang !== 'English' ? `\n\nCRITICAL LANGUAGE RULE: You MUST write the entire generated script perfectly in ${outLang}. Do NOT output in English.` : "";
 
             // Resolve Channel Name and Host safely
             let myChannel = "this channel";
@@ -4867,6 +5202,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             
             // Clear Blueprint & Failed Map
             window.failedChaptersMap = {};
+            window.chapterPromptsMap = {};
             const modeName = mode === 'standard' ? 'Standard (One-Shot)' : (mode === 'turbo' ? 'Deep Dive (Turbo)' : 'Deep Dive (Sequential)');
             window.generationBlueprint = { mode: modeName, targetWords: minutes * wpm, actualWords: 0, time: '00:00', steps: [] };
             ui.btnViewBlueprint?.classList.add('hidden');
@@ -4932,10 +5268,10 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
 
                 const activePrompts = getPrompts();
 
-                // Programmatic Emoji Ban: Forcefully injected here so it dynamically applies without altering user settings
+                // Programmatic Emoji Ban & Language Instructions
                 const emojiBanDirective = "\n\nAbsolutely NO EMOJIS are allowed in the final output.";
-                activePrompts.standard += emojiBanDirective;
-                activePrompts.chapter += emojiBanDirective;
+                activePrompts.standard += emojiBanDirective + langInstruction;
+                activePrompts.chapter += emojiBanDirective + langInstruction;
 
                 // Shared schema - narrative with dynamic formatting
                 const sectionsArraySchema = {
@@ -4975,7 +5311,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                         content: `${systemInstruction}\n\n${userPromptStr}`
                     });
 
-                    finalScriptData = await executeGeminiCall(systemInstruction, userPromptStr, schema);
+                    finalScriptData = await executeGeminiCall(systemInstruction, userPromptStr, schema, false, null, 'gen_fast');
                 
                 } else {
                     // Deep Dive: Auto-Chunking Engine (Restored logic, text-only output)
@@ -5015,7 +5351,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                         content: `${outlineInstruction}\n\n${outlineUserPrompt}`
                     });
 
-                    const outlineData = await executeGeminiCall(outlineInstruction, outlineUserPrompt, outlineSchema);
+                    const outlineData = await executeGeminiCall(outlineInstruction, outlineUserPrompt, outlineSchema, false, null, mode === 'turbo' ? 'gen_turbo' : 'gen_seq');
                     finalScriptData.titles = outlineData.titles;
 
                     window.generationBlueprint.steps.push({
@@ -5053,7 +5389,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                                 const nextChapter = i < outlineData.chapters.length - 1 ? outlineData.chapters[i + 1].focus : "None (This is the concluding chapter).";
                                 
                                 const hookInstruction = isFirst ? "- INCLUDE the high-stakes video Hook and Intro in this chapter." : "- DO NOT write an intro or hook. Plunge straight into the ongoing narrative.";
-                                const outroInstruction = isLast ? "- INCLUDE the dramatic Outro and Call to Action." : "- DO NOT write an outro. End on a cliffhanger or transition point.";
+                                const outroInstruction = isLast ? "- INCLUDE the dramatic Outro and Call to Action." : "- DO NOT write an outro, DO NOT write a cliffhanger, and DO NOT address the audience about what is coming next. End abruptly.";
 
                                 let chapterInstruction = activePrompts.chapter
                                     .replace(/{{CURRENT_CHAPTER}}/g, i + 1)
@@ -5065,7 +5401,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                                     .replace(/{{OUTRO_INSTRUCTION}}/g, outroInstruction)
                                     .replace(/{{FORMAT_INSTRUCTION}}/g, resolvedFormatRules) + hostInstruction;
 
-                                const contextPrompt = `YOUR TASK NOW:\nWrite script sections exclusively for Chapter ${i + 1}.\n\nSTORY ARC CONTEXT:\n- Previous Chapter Focus: ${prevChapter}\n- Current Chapter Focus: ${chapter.focus}\n- Next Chapter Focus: ${nextChapter}\n\nCRITICAL: Smoothly transition from the previous chapter. Do NOT re-explain topics from the previous chapter. Do NOT prematurely introduce topics reserved for the next chapter. Stay strictly focused on your current chapter.`;
+                                const contextPrompt = `YOUR TASK NOW:\nWrite script sections exclusively for Chapter ${i + 1}.\n\nSTORY ARC CONTEXT:\n- Previous Chapter Focus: ${prevChapter}\n- Current Chapter Focus: ${chapter.focus}\n- Next Chapter Focus: ${nextChapter}\n\nCRITICAL RULE: Jump IMMEDIATELY into the current focus. DO NOT use announcer phrases like "Welcome back" or "As we saw last time." Do NOT re-explain the previous chapter. Stay strictly focused on your current chapter.`;
 
                                 let turboUserPrompt = `<STYLE_GUIDE>\n${formula}\n</STYLE_GUIDE>\n\n<SOURCE_MATERIAL>\n${processedSourceMaterial}\n</SOURCE_MATERIAL>\n\n${contextPrompt}`;
                                 if (formulaMode === 'dynamic') turboUserPrompt += dynamicRule;
@@ -5077,12 +5413,15 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                                 };
 
                                 try {
-                                    const data = await executeGeminiCall(chapterInstruction, turboUserPrompt, chapterSchema);
+                                    const data = await executeGeminiCall(chapterInstruction, turboUserPrompt, chapterSchema, false, null, 'gen_turbo');
                                     
                                     // Secretly tag each section with its chapter number
                                     if (data && data.sections) {
                                         data.sections = data.sections.map(s => ({ ...s, chapter: i + 1 }));
                                     }
+                                    
+                                    // Save successful prompt data for manual regeneration later
+                                    window.chapterPromptsMap[i + 1] = { sysPrompt: chapterInstruction, userPrompt: turboUserPrompt, isSequential: false };
 
                                     completedChapters++;
                                     if(ui.loadingText) ui.loadingText.innerText = `Phase 2: Turbo Writing Chapters (${completedChapters}/${outlineData.chapters.length})...`;
@@ -5129,7 +5468,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                             const nextChapter = i < outlineData.chapters.length - 1 ? outlineData.chapters[i + 1].focus : "None (This is the concluding chapter).";
                             
                             const hookInstruction = isFirst ? "- INCLUDE the high-stakes video Hook and Intro in this chapter." : "- DO NOT write an intro or hook. Plunge straight into the ongoing narrative.";
-                            const outroInstruction = isLast ? "- INCLUDE the dramatic Outro and Call to Action." : "- DO NOT write an outro. End on a cliffhanger or transition point.";
+                            const outroInstruction = isLast ? "- INCLUDE the dramatic Outro and Call to Action." : "- DO NOT write an outro, DO NOT write a cliffhanger, and DO NOT address the audience about what is coming next. End abruptly.";
 
                             let chapterInstruction = activePrompts.chapter
                                 .replace(/{{CURRENT_CHAPTER}}/g, i + 1)
@@ -5144,7 +5483,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                             // If we hit a break earlier in the sequence, lock this chapter and prepare a dynamic placeholder
                             let currentPrevEndText = sequentialBreak ? "___PENDING_PREVIOUS_END___" : previousChapterEndText;
 
-                            const contextPrompt = `YOUR TASK NOW:\nWrite script sections exclusively for Chapter ${i + 1}.\n\nSTORY ARC CONTEXT:\n- The Previous Chapter Ended With: "${currentPrevEndText}"\n- Your Current Focus: ${chapter.focus}\n- Where the Narrative Goes Next (Next Chapter Focus): ${nextChapter}\n\nCRITICAL INSTRUCTION: Continue the story flawlessly from the exact sentence where the previous chapter ended. Keep your current focus deeply in mind, but naturally lay the groundwork for where the story is heading next.`;
+                            const contextPrompt = `YOUR TASK NOW:\nWrite script sections exclusively for Chapter ${i + 1}.\n\nSTORY ARC CONTEXT:\n- The Previous Chapter Ended With: "${currentPrevEndText}"\n- Your Current Focus: ${chapter.focus}\n- Where the Narrative Goes Next (Next Chapter Focus): ${nextChapter}\n\nCRITICAL INSTRUCTION: Pick up immediately AFTER the previous chapter's ending. DO NOT repeat the ending sentence you were given. DO NOT summarize what just happened. DO NOT use announcer phrases like "Next time" or "Moving on." Just flow directly into the current focus.`;
 
                             let seqUserPrompt = `<STYLE_GUIDE>\n${formula}\n</STYLE_GUIDE>\n\n<SOURCE_MATERIAL>\n${processedSourceMaterial}\n</SOURCE_MATERIAL>\n\n${contextPrompt}`;
                             if (formulaMode === 'dynamic') seqUserPrompt += dynamicRule;
@@ -5167,13 +5506,17 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                             if(ui.loadingText) ui.loadingText.innerText = `Phase 2: Writing Chapter ${i + 1} of ${outlineData.chapters.length}...`;
 
                             try {
-                                const chapterData = await executeGeminiCall(chapterInstruction, seqUserPrompt, chapterSchema);
+                                const chapterData = await executeGeminiCall(chapterInstruction, seqUserPrompt, chapterSchema, false, null, 'gen_seq');
                                 
                                 if (chapterData && chapterData.sections && chapterData.sections.length > 0) {
+                                    // Save successful prompt data for manual regeneration later
+                                    window.chapterPromptsMap[i + 1] = { sysPrompt: chapterInstruction, userPrompt: seqUserPrompt, isSequential: true };
+                                    
                                     chapterData.sections = chapterData.sections.map(s => ({ ...s, chapter: i + 1 }));
                                     const allChapterText = chapterData.sections.map(s => s.content).join(' ');
                                     const words = allChapterText.split(/\s+/);
-                                    previousChapterEndText = words.slice(Math.max(words.length - 60, 0)).join(' ');
+                                    const ctxSz = appSettings.contextSize || 0;
+                                    previousChapterEndText = ctxSz > 0 ? words.slice(Math.max(words.length - ctxSz, 0)).join(' ') : words.join(' ');
                                     finalScriptData.sections = finalScriptData.sections.concat(chapterData.sections);
                                 }
                             } catch (err) {
@@ -5558,7 +5901,8 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             const cardData = timelineCards.map(card => {
                 const textElements = Array.from(card.querySelectorAll('p.italic'));
                 const cardFullText = textElements.map(p => p.innerText.replace(/^"|"$/g, '').trim()).join(' ');
-                const cleanWords = cardFullText.replace(/[^\w\s']/g, '').toLowerCase().split(/\s+/).filter(w => w.length > 0);
+                const outLang1 = document.getElementById('output-language')?.value || 'English';
+                const cleanWords = cardFullText.replace(outLang1 === 'English' ? /[^\w\s']/g : /[^\p{L}\p{N}\s']/gu, '').toLowerCase().split(/\s+/).filter(w => w.length > 0);
                 totalWordCount += cleanWords.length;
                 return { card, cleanWords, wordCount: cleanWords.length };
             });
@@ -5751,7 +6095,8 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                         const endSec = srtTimeToSeconds(endStr);
                         
                         // Strip punctuation and split by spaces
-                        const words = textLines.replace(/[^\w\s']/g, '').split(/\s+/).filter(w => w.length > 0);
+                        const outLang2 = document.getElementById('output-language')?.value || 'English';
+                        const words = textLines.replace(outLang2 === 'English' ? /[^\w\s']/g : /[^\p{L}\p{N}\s']/gu, '').split(/\s+/).filter(w => w.length > 0);
                         if (words.length > 0) {
                             const timePerWord = (endSec - startSec) / words.length;
                             words.forEach((w, i) => {
@@ -5891,6 +6236,13 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                     }
                 }
                 
+                const btnMerge = document.getElementById('btn-v2-merge-lines');
+                if (hasText && val.includes('\n')) {
+                    if(btnMerge) btnMerge.classList.remove('hidden');
+                } else {
+                    if(btnMerge) btnMerge.classList.add('hidden');
+                }
+                
                 if (hasText && hasSingleBreaks) {
                     btnBreaks.classList.remove('hidden');
                 } else {
@@ -5923,6 +6275,45 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             ui.v2Script.value = lines.join('\n\n');
             ui.v2Script.dispatchEvent(new Event('input', { bubbles: true })); // Trigger Auto-save & Math
             showToast("Spacing fixed for B-Roll Timeline!");
+            lucide.createIcons();
+        });
+
+        document.getElementById('btn-v2-merge-lines')?.addEventListener('click', () => {
+            if (!ui.v2Script) return;
+            const rawText = ui.v2Script.value.trim();
+            if (!rawText) return;
+            
+            // Extract all non-empty lines, completely ignoring how many breaks separate them
+            const lines = rawText.split(/\n+/).map(l => l.trim()).filter(l => l.length > 0);
+            
+            let paragraphs = [];
+            let currentParagraph = "";
+            let currentWordCount = 0;
+            const targetWordCount = 70; // Target ~70 words per paragraph
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const wordsInLine = line.split(/\s+/).length;
+                
+                if (currentWordCount > 0 && currentWordCount + wordsInLine > targetWordCount) {
+                    // Push current paragraph and start a new one
+                    paragraphs.push(currentParagraph);
+                    currentParagraph = line;
+                    currentWordCount = wordsInLine;
+                } else {
+                    // Append to current paragraph with a space
+                    currentParagraph = currentParagraph ? currentParagraph + " " + line : line;
+                    currentWordCount += wordsInLine;
+                }
+            }
+            
+            if (currentParagraph) {
+                paragraphs.push(currentParagraph);
+            }
+            
+            ui.v2Script.value = paragraphs.join('\n\n');
+            ui.v2Script.dispatchEvent(new Event('input', { bubbles: true }));
+            showToast("Script successfully merged into flowing paragraphs!");
             lucide.createIcons();
         });
 
@@ -6383,6 +6774,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                             <i data-lucide="square" class="w-3.5 h-3.5"></i>
                         </div>
                         <span class="text-xs ${isCustom ? 'text-amber-300' : 'text-slate-300'} font-semibold truncate" title="${sub}">${sub}</span>
+                        ${isCustom ? `<span class="text-[9px] font-bold bg-slate-800 text-amber-400 px-1.5 py-0.5 rounded shadow-inner whitespace-nowrap" data-is-custom="true">Custom</span>` : ''}
                         <a href="https://www.google.com/search?tbm=isch&q=${safeSearch}" target="_blank" class="text-slate-500 hover:text-blue-400 transition-colors shrink-0" title="Search Google Images">
                             <i data-lucide="search" class="w-3 h-3"></i>
                         </a>
@@ -6439,7 +6831,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 
                 let finalPrompt = prompt;
                 if (referenceImages.length > 0) {
-                    finalPrompt = "CRITICAL: I have attached reference images for specific subjects. You MUST use the exact faces, objects, and likenesses shown in these images. IF the text prompt contradicts the attached image, THE ATTACHED IMAGE IS THE ABSOLUTE TRUTH. Ignore your pre-trained knowledge of what this subject 'usually' looks like.\n\nPROMPT: " + prompt;
+                    finalPrompt = "CRITICAL REFERENCE INSTRUCTION: I have attached reference images for specific subjects (which could be characters, objects, logos, environments.. etc.). You MUST maintain their exact core identity, design, and likeness. However, you MUST seamlessly adapt their lighting, setting, angle, and physical state to naturally match the scene described in the prompt. Integrate the reference seamlessly into the requested environment instead of just copying and pasting it.\n\nPROMPT: " + prompt;
                 }
                 const parts = [{ text: finalPrompt }];
                 
@@ -7153,8 +7545,11 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 
                 // 1. Check Global Locker First (Skip if desynced!)
                 if (subject && !isDesynced) {
-                    // Escape quotes for the query selector just in case the subject name has them
-                    const globalLocker = document.querySelector(`#global-lockers-container .group\\/locker[data-subject="${subject.replace(/"/g, '\\"')}"]`);
+                    const globalContainer = document.getElementById('global-lockers-container');
+                    const globalLocker = globalContainer ? Array.from(globalContainer.querySelectorAll('.group\\/locker')).find(
+                        l => l.dataset.subject && l.dataset.subject.toLowerCase() === subject.toLowerCase()
+                    ) : null;
+                    
                     if (globalLocker) {
                         const globalInput = globalLocker.querySelector('input[type="file"]');
                         if (globalInput && globalInput.files && globalInput.files.length > 0) {
@@ -7281,7 +7676,10 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                 let resolvedDirectorRules = ui.directorModeInput?.value.trim();
                 if (!resolvedDirectorRules) resolvedDirectorRules = DEFAULT_DIRECTORS['smart'];
 
-                let systemInstruction = getPrompts().broll;
+                const outLang = document.getElementById('output-language')?.value || 'English';
+                const v2LangInstruction = outLang !== 'English' ? `\n\nCRITICAL LANGUAGE RULE: Write the visual descriptions in English (for the image AI to understand), but if you need to specify on-screen text or refer to specific linguistic quotes, use ${outLang}.` : "";
+
+                let systemInstruction = getPrompts().broll + v2LangInstruction;
                 
                 // Backwards compatibility safety catch: If users have old cached prompts in their settings
                 // that still use {{DIRECTOR_MODE}} instead of {{DIRECTOR_INSTRUCTION}}, cleanly inject the rules.
@@ -7377,7 +7775,9 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                     
                     // --- PROPORTIONAL ANCHOR ALGORITHM (V2: Absolute Bulletproof) ---
                     // Flatten the entire script to count pure words for accurate percentages
-                    const totalScriptWords = blocks.join(' ').replace(/[^\w\s']/g, '').toLowerCase().split(/\s+/).filter(w => w.length > 0);
+                    const outLang3 = document.getElementById('output-language')?.value || 'English';
+                    const wordRegex3 = outLang3 === 'English' ? /[^\w\s']/g : /[^\p{L}\p{N}\s']/gu;
+                    const totalScriptWords = blocks.join(' ').replace(wordRegex3, '').toLowerCase().split(/\s+/).filter(w => w.length > 0);
                     const totalWordCount = totalScriptWords.length || 1; // Prevent division by zero
                     let cumulativeWords = 0;
 
@@ -7387,7 +7787,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                         let blockEndSec = currentSec;
 
                         if (window.parsedSRTWords && window.parsedSRTWords.length > 0) {
-                            const cleanBlockWords = blockText.replace(/[^\w\s']/g, '').toLowerCase().split(/\s+/).filter(w => w.length > 0);
+                            const cleanBlockWords = blockText.replace(wordRegex3, '').toLowerCase().split(/\s+/).filter(w => w.length > 0);
                             const blockWordCount = cleanBlockWords.length;
                             
                             // 1. Force the start time to be EXACTLY the end time of the previous block
@@ -7682,7 +8082,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                                         <span class="bg-slate-700 text-white px-2 py-0.5 rounded-md shadow-sm">#${b.index}</span>
                                         ${i === 0 ? `<i data-lucide="${icon}" class="w-4 h-4"></i> ${group.type}` : `<span class="opacity-50 flex items-center gap-1"><i data-lucide="link" class="w-3 h-3"></i> Continued</span>`}
                                     </p>
-                                    <p class="text-xs text-slate-400 leading-relaxed italic border-t border-slate-700/50 pt-2">"${b.text}"</p>
+                                    <p class="text-xs text-slate-400 leading-relaxed italic border-t border-slate-700/50 pt-2" dir="auto">"${b.text}"</p>
                                 </div>
                             `).join('');
 
@@ -7696,9 +8096,12 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                                             <div>
                                                 <div class="flex justify-between items-center mb-1">
                                                     <label class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Generated Prompt</label>
-                                                    <button onclick="copyToClipboard(document.getElementById('${promptId}').value, 'Prompt')" class="text-[10px] text-slate-400 hover:text-white transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                                                    <div class="flex items-center gap-2">
+                                                        <button onclick="copyToClipboard(document.getElementById('${promptId}').value, 'Prompt')" class="text-[10px] text-slate-400 hover:text-white transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                                                        <button class="btn-regen-single-v2-prompt text-[10px] text-emerald-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded transition-colors flex items-center gap-1" data-prompt-id="${promptId}"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen</button>
+                                                    </div>
                                                 </div>
-                                                <textarea id="${promptId}" data-asset-type="${isImg ? 'image' : 'video'}" oninput="updateBulkExports()" class="timeline-prompt-input w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-slate-200 focus:outline-none ${focusColor} transition-colors resize-y min-h-[70px] leading-relaxed">${safePrompt}</textarea>
+                                                <textarea id="${promptId}" dir="auto" data-asset-type="${isImg ? 'image' : 'video'}" oninput="updateBulkExports()" class="timeline-prompt-input w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-slate-200 focus:outline-none ${focusColor} transition-colors resize-y min-h-[70px] leading-relaxed">${safePrompt}</textarea>
                                             </div>
                                             <div>
                                                 <div class="flex justify-between items-center mb-1">
@@ -7720,15 +8123,15 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                     // Update the counters based on the final grouped cards rendered (Moved INSIDE the else block)
                     const imgCount = groups.filter(g => g.type.toLowerCase().includes('image')).length;
                     const vidCount = groups.filter(g => g.type.toLowerCase().includes('video')).length;
-                    if(ui.v2CountImg) ui.v2CountImg.innerText = imgCount;
-                    if(ui.v2CountVid) ui.v2CountVid.innerText = vidCount;
-                }
+                if(ui.v2CountImg) ui.v2CountImg.innerText = imgCount;
+                        if(ui.v2CountVid) ui.v2CountVid.innerText = vidCount;
 
-                // --- BUILD GLOBAL REFERENCE LOCKERS ---
+                    // --- BUILD GLOBAL REFERENCE LOCKERS ---
+                
                 const subjectCounts = {};
-                safeAssets.forEach(asset => {
-                    if (asset.keySubjects && Array.isArray(asset.keySubjects)) {
-                        asset.keySubjects.forEach(sub => {
+                groups.forEach(group => {
+                    if (group.keySubjects && Array.isArray(group.keySubjects)) {
+                        group.keySubjects.forEach(sub => {
                             subjectCounts[sub] = (subjectCounts[sub] || 0) + 1;
                         });
                     }
@@ -7769,6 +8172,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
                         globalContainer.innerHTML = '<div class="text-center p-4 text-slate-500 italic text-xs border border-dashed border-slate-700 rounded">No unique subjects detected in this script.</div>';
                     }
                 }
+                } // <-- Closes the else block so groups is in scope!
                 // --------------------------------------
 
                 // Populate Bulk Textareas dynamically via Live Sync
@@ -7917,7 +8321,7 @@ Output ONLY the strict rules block starting with '- THE FORMAT RULE:'. Do not ex
             const currentKey = getActiveApiKey();
             if (!currentKey && !isFirebaseEnabled) { ui.settingsModal?.classList.remove('hidden'); return showToast("Wait a moment for API key to load, or check settings!"); }
 
-            let v3FormulaMode = document.getElementById('v3-formula-mode')?.value || 'auto';
+            let v3FormulaMode = document.getElementById('v3-formula-mode')?.value || 'dynamic';
             if (v3FormulaMode === 'auto') {
                 v3FormulaMode = Math.random() > 0.5 ? 'dynamic' : 'strict';
             }
@@ -8020,7 +8424,10 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
                     parts.push({ inlineData: { mimeType: "image/jpeg", data: img } });
                 });
                 
-                let finalSystemPrompt = basePrompt + hostInstruction;
+                const outLang = document.getElementById('output-language')?.value || 'English';
+                const v3LangInstruction = outLang !== 'English' ? `\n\nCRITICAL LANGUAGE RULE: You MUST write the titles, description, thumbnail slugs, and hashtags perfectly in ${outLang}. The thumbnail 'prompts' MUST remain in English for the image AI to understand` : "";
+
+                let finalSystemPrompt = basePrompt + hostInstruction + v3LangInstruction;
                 if (v3FormulaMode === 'dynamic') finalSystemPrompt += v3DynamicRule;
 
                 const payload = { 
@@ -8078,14 +8485,14 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
             if (!append) container.innerHTML = '';
             
             const startIndex = append ? container.children.length : 0;
-            const borderColorClass = type === 'competitor' ? 'border-purple-900/50 hover:border-purple-500' : 'border-yellow-900/50 hover:border-yellow-500';
-            const btnColorClass = type === 'competitor' ? 'text-purple-400' : 'text-yellow-400';
+            const borderColorClass = type === 'competitor' ? 'border-purple-900/50 hover:border-purple-500' : (type === 'custom' ? 'border-emerald-900/50 hover:border-emerald-500' : 'border-yellow-900/50 hover:border-yellow-500');
+            const btnColorClass = type === 'competitor' ? 'text-purple-400' : (type === 'custom' ? 'text-emerald-400' : 'text-yellow-400');
             
             slugsArr.forEach((t, i) => {
                 const idx = startIndex + i;
                 container.innerHTML += `
                     <div class="flex justify-center items-center bg-slate-900/80 border ${borderColorClass} rounded-md px-4 py-3 transition-all hover:shadow-lg hover:border-slate-500 group v3-item-row relative overflow-hidden" data-index="${idx}" data-type="${type}">
-                        <p class="text-sm text-slate-200 font-bold uppercase tracking-widest text-center item-text truncate relative z-10" title="${t}">${t}</p>
+                        <p class="text-sm text-slate-200 font-bold uppercase tracking-widest text-center item-text truncate relative z-10" dir="auto" title="${t}">${t}</p>
                         
                         <div class="absolute inset-0 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                             <button onclick="copyToClipboard(this.closest('.v3-item-row').querySelector('.item-text').innerText, 'Slug')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded transition-colors flex items-center gap-1 shadow"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
@@ -8105,15 +8512,15 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
             const startIndex = append ? container.children.length : 0;
             
             // Setup dynamic colors based on origin
-            const borderColorClass = type === 'competitor' ? 'border-purple-900/50 hover:border-purple-500' : 'border-orange-900/50 hover:border-orange-500';
-            const btnColorClass = type === 'competitor' ? 'text-purple-400' : 'text-orange-400';
+            const borderColorClass = type === 'competitor' ? 'border-purple-900/50 hover:border-purple-500' : (type === 'custom' ? 'border-emerald-900/50 hover:border-emerald-500' : 'border-orange-900/50 hover:border-orange-500');
+            const btnColorClass = type === 'competitor' ? 'text-purple-400' : (type === 'custom' ? 'text-emerald-400' : 'text-orange-400');
             
             titlesArr.forEach((t, i) => {
                 const idx = startIndex + i;
                 // No longer need safeT hardcoded in the HTML since we dynamically grab the DOM text!
                 container.innerHTML += `
                     <div class="flex justify-between items-center bg-slate-900 border ${borderColorClass} rounded p-3 transition-colors group v3-item-row" data-index="${idx}" data-type="${type}">
-                        <p class="text-sm text-white font-medium flex-1 mr-4 item-text">${t}</p>
+                        <p class="text-sm text-white font-medium flex-1 mr-4 item-text" dir="auto">${t}</p>
                         <div class="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onclick="copyToClipboard(this.closest('.v3-item-row').querySelector('.item-text').innerText, 'Title')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1.5 rounded transition-colors flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
                             <button class="btn-regen-single-title text-[10px] bg-slate-800 hover:bg-slate-700 ${btnColorClass} px-2 py-1.5 rounded transition-colors flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen</button>
@@ -8132,27 +8539,88 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
             const prompt = row.querySelector('textarea').value;
             const ratio = document.getElementById('v3-image-aspect-ratio').value;
             
-            // 1. Gather SUBJECT images from specific local lockers (Now with labels!)
-            let subjectImages = [];
-            const uploadInputs = row.querySelectorAll('.thumb-subject-upload');
-            for (let input of uploadInputs) {
-                if (input.files && input.files.length > 0) {
-                    const locker = input.closest('.group\\/locker');
-                    const subjectName = locker ? locker.dataset.subject : "Unknown Subject";
-                    subjectImages.push({ 
-                        name: subjectName, 
-                        b64: await fileToBase64(input.files[0]) 
-                    });
+            let referenceImages = [];
+            const localLockers = row.querySelectorAll('.group\\/locker');
+            
+            for (let locker of localLockers) {
+                const subject = locker.dataset.subject;
+                const isDesynced = locker.dataset.desynced === 'true';
+                let fileUsed = null;
+                
+                // 1. Check V3 Global Locker First (Skip if desynced!)
+                if (subject && !isDesynced) {
+                    const globalContainer = document.getElementById('v3-global-lockers-container');
+                    const globalLocker = globalContainer ? Array.from(globalContainer.querySelectorAll('.group\\/locker')).find(
+                        l => l.dataset.subject && l.dataset.subject.toLowerCase() === subject.toLowerCase()
+                    ) : null;
+                    
+                    if (globalLocker) {
+                        const globalInput = globalLocker.querySelector('input[type="file"]');
+                        if (globalInput && globalInput.files && globalInput.files.length > 0) {
+                            fileUsed = globalInput.files[0];
+                        }
+                    }
+                }
+                
+                // 2. Fallback to Local Locker
+                if (!fileUsed) {
+                    const localInput = locker.querySelector('input[type="file"]');
+                    if (localInput && localInput.files && localInput.files.length > 0) {
+                        fileUsed = localInput.files[0];
+                    }
+                }
+                
+                if (fileUsed) {
+                    referenceImages.push({ name: subject, b64: await fileToBase64(fileUsed) });
                 }
             }
             
-            triggerImageGen(prompt, previewId, `Thumb_${i+1}`, '', '', ratio, subjectImages);
+            triggerImageGen(prompt, previewId, `Thumb_${i+1}`, '', '', ratio, referenceImages);
         };
 
         function renderV3Thumbnails(promptsArr) {
             const container = document.getElementById('v3-out-thumbnails');
             if(!container) return;
             container.innerHTML = '';
+            
+            // Build V3 Global Lockers dynamically
+            const subjectCounts = {};
+            promptsArr.forEach(item => {
+                const subjects = typeof item === 'object' && item.keySubjects ? item.keySubjects : [];
+                subjects.forEach(sub => { subjectCounts[sub] = (subjectCounts[sub] || 0) + 1; });
+            });
+            const uniqueSubjects = Object.keys(subjectCounts).sort();
+            const globalContainer = document.getElementById('v3-global-lockers-container');
+            const globalCount = document.getElementById('v3-global-locker-count');
+            if (globalContainer && globalCount) {
+                globalCount.innerText = uniqueSubjects.length;
+                if (uniqueSubjects.length > 0) {
+                    globalContainer.innerHTML = uniqueSubjects.map(sub => {
+                        const safeSearch = encodeURIComponent(sub).replace(/'/g, "%27");
+                        const safeDataSub = sub.replace(/"/g, '&quot;');
+                        const count = subjectCounts[sub] || 0;
+                        return `
+                            <div class="flex items-center justify-between bg-slate-900 border border-slate-700/60 rounded-lg p-2 hover:border-emerald-500/40 transition-colors group/locker shadow-inner" data-subject="${safeDataSub}">
+                                <div class="flex items-center gap-2 truncate mr-3">
+                                    <div class="locker-icon-box w-3 h-3 flex items-center justify-center shrink-0 bg-slate-800 border border-slate-700 rounded text-slate-400 group-hover/locker:text-emerald-400 group-hover/locker:border-emerald-500/30 transition-colors">
+                                        <i data-lucide="square" class="w-3.5 h-3.5"></i>
+                                    </div>
+                                    <span class="text-xs text-slate-300 font-semibold truncate" title="${sub}">${sub}</span>
+                                    <span class="text-[9px] font-bold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded shadow-inner whitespace-nowrap">${count} Scene${count > 1 ? 's' : ''}</span>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input type="file" accept="image/*" class="thumb-subject-upload text-[10px] text-slate-500 file:cursor-pointer file:mr-0 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-slate-800 file:text-slate-300 hover:file:bg-emerald-900/30 hover:file:text-emerald-400 file:transition-colors w-44 shrink-0 cursor-pointer">
+                                    <button class="btn-clear-locker hidden text-slate-500 hover:text-red-400 transition-colors p-1" title="Clear image" type="button"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    <button class="btn-delete-entire-locker text-slate-600 hover:text-red-400 transition-colors p-1 ml-1" title="Delete Locker" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    globalContainer.innerHTML = '<div class="text-center p-4 text-slate-500 italic text-xs border border-dashed border-slate-700 rounded">No global subjects added yet.</div>';
+                }
+            }
+
             promptsArr.forEach((item, i) => {
                 // Backwards compatibility for old saved string formats
                 const p = typeof item === 'string' ? item : item.prompt;
@@ -8170,6 +8638,12 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
                     });
                 }
                 lockersHtml += '</div></div>';
+                
+                // Set a timeout to sync UI after DOM injection
+                setTimeout(() => {
+                    subjects.forEach(sub => window.syncLockerUI(sub));
+                    window.recalculateGlobalLockers();
+                }, 50);
 
                 container.innerHTML += `
                     <div class="bg-slate-900 border border-emerald-900/50 rounded p-4 flex flex-col gap-3 group v3-item-row" data-index="${i}">
@@ -8361,6 +8835,19 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
                 const target = btnInject.dataset.target;
                 const panel = document.getElementById(`v3-inject-${target}`);
                 if (panel) panel.classList.toggle('hidden');
+                // Hide custom panel if open
+                document.getElementById(`v3-add-custom-${target}`)?.classList.add('hidden');
+                return;
+            }
+
+            // Toggle Add Custom Panels
+            const btnAddCustom = e.target.closest('.btn-v3-add-custom');
+            if (btnAddCustom) {
+                const target = btnAddCustom.dataset.target;
+                const panel = document.getElementById(`v3-add-custom-${target}`);
+                if (panel) panel.classList.toggle('hidden');
+                // Hide inject panel if open
+                document.getElementById(`v3-inject-${target}`)?.classList.add('hidden');
                 return;
             }
 
@@ -8413,6 +8900,31 @@ CRITICAL: Do NOT simply say 'Replace X with Y'. Write a complete, standalone des
                     setTimeout(() => document.body.dispatchEvent(new Event('input', { bubbles: true })), 100);
                 }
             };
+
+            // Execute Add Custom
+            const btnExecuteCustom = e.target.closest('.btn-execute-add-custom');
+            if (btnExecuteCustom) {
+                const target = btnExecuteCustom.dataset.target;
+                const inputEl = document.getElementById(`v3-add-custom-${target}-input`);
+                const val = inputEl?.value.trim();
+                if (!val) return showToast("Provide items to add.");
+
+                const items = val.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                if (items.length === 0) return;
+
+                if (target === 'titles') {
+                    renderV3Titles(items, true, 'custom');
+                    document.getElementById('btn-more-formula-titles')?.classList.remove('hidden'); // ensure more buttons visible
+                } else if (target === 'slugs') {
+                    renderV3Slugs(items, true, 'custom');
+                }
+                
+                inputEl.value = '';
+                document.getElementById(`v3-add-custom-${target}`)?.classList.add('hidden');
+                document.body.dispatchEvent(new Event('input', { bubbles: true })); // Trigger Auto-save
+                showToast(`Added ${items.length} custom item(s)!`);
+                return;
+            }
 
             // Execute Clone/Inject (The 🧬 Button Logic)
             const btnExecute = e.target.closest('.btn-execute-inject');
@@ -8671,7 +9183,11 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                         const list = lockersContainer.querySelector('.lockers-list');
                         if (subjects.length > 0) {
                             list.innerHTML = subjects.map(sub => window.buildLockerHTML(sub, true, false)).join('');
+                            // Automatically sync any new local lockers with existing globals
+                            subjects.forEach(sub => window.syncLockerUI(sub));
                         }
+                        // Recalculate global lockers in case a subject was removed or a new one added
+                        window.recalculateGlobalLockers();
                     }
                 }
                 return;
@@ -9882,6 +10398,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             return html
                 // Clean Slate Option 1: Completely wipe any generated image blocks
                 .replace(/<!--NANO_START-->[\s\S]*?<!--NANO_END-->/g, '')
+                // SAFE MINIFICATION: Strip spaces between tags to save space, but leave textarea content untouched
+                .replace(/>\s+</g, '><')
                 // Re-hide the empty asset containers so they don't show up as weird blank boxes
                 .replace(/(<div[^>]*id="(?:v2-asset-[^"]*-img|v3-thumb-preview-[^"]*)"[^>]*)>/gi, (match) => {
                     if (match.includes('class="')) {
@@ -9941,10 +10459,28 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             const safeGlobalLockers = stripBase64FromHTML(document.getElementById('global-lockers-container')?.innerHTML || '');
             const globalLockerCount = document.getElementById('global-locker-count')?.innerText || '0';
 
+            // Safely truncate the blueprint to prevent massive prompt logs from crashing the 1MB limit
+            let safeBlueprint = { mode: '', steps: [] };
+            if (window.generationBlueprint && window.generationBlueprint.steps) {
+                safeBlueprint = {
+                    mode: window.generationBlueprint.mode,
+                    time: window.generationBlueprint.time,
+                    targetWords: window.generationBlueprint.targetWords,
+                    actualWords: window.generationBlueprint.actualWords,
+                    steps: window.generationBlueprint.steps.map(step => {
+                        let safeContent = step.content || '';
+                        if (safeContent.length > 2000) {
+                            safeContent = safeContent.substring(0, 2000) + "\n\n... [Content truncated for cloud save to preserve 1MB limit]";
+                        }
+                        return { ...step, content: safeContent };
+                    })
+                };
+            }
+
             const rawData = {
                 v2GlobalLockers: safeGlobalLockers,
                 v2GlobalLockerCount: globalLockerCount,
-                blueprint: window.generationBlueprint,
+                blueprint: safeBlueprint,
                 // View 1
                 formulaId:    ui.formulaSelect?.value || '',
                 channelId:    ui.channelSelect?.value || '',
@@ -9958,6 +10494,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 scriptTitles:  safeTitlesHTML,
                 factSheet:     ui.researchContent?.value || '',
                 v1NumberState: window.scriptNumberState || 'numeric',
+                outputLanguage: document.getElementById('output-language')?.value || 'English',
                 failedMap: window.failedChaptersMap || {},
                 // View 2
                 v2Script:     ui.v2Script?.value || '',
@@ -10014,6 +10551,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             if(ui.scriptLength) { ui.scriptLength.value = data.length || '30'; if(ui.lengthVal) ui.lengthVal.innerText = ui.scriptLength.value + " Minutes"; }
             if(ui.scriptPacing) { ui.scriptPacing.value = data.pacing || '150'; if(ui.pacingVal) ui.pacingVal.innerText = ui.scriptPacing.value + " WPM"; }
             if(ui.generationMode) ui.generationMode.value = data.mode || 'chunking';
+            const outLangEl = document.getElementById('output-language');
+            if(outLangEl) outLangEl.value = data.outputLanguage || 'English';
             
             const outScript = document.getElementById('out-script');
             const outTitles = document.getElementById('out-titles-container');
@@ -10254,6 +10793,69 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 ui.v3EmptyState?.classList.remove('hidden'); 
                 ui.v3ResultsState?.classList.add('hidden'); 
             }
+
+            // --- LEGACY BACKUP MIGRATION / UI UPGRADES ---
+            // Automatically injects missing UI buttons when loading older project versions
+            
+            // Universal helper to safely inject a button next to a Copy button, wrapping them if needed
+            const injectRegenButton = (container, btnHtml) => {
+                const copyBtn = Array.from(container.querySelectorAll('button')).find(b => b.innerText.includes('Copy'));
+                if (copyBtn) {
+                    const parent = copyBtn.parentElement;
+                    // If the parent isn't a dedicated button container (lacks 'gap-'), wrap them together
+                    const needsWrapper = parent.tagName.toLowerCase() === 'div' && !parent.className.includes('gap-');
+                    
+                    if (needsWrapper) {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'flex items-center gap-2';
+                        parent.insertBefore(wrapper, copyBtn);
+                        wrapper.appendChild(copyBtn);
+                        wrapper.insertAdjacentHTML('beforeend', btnHtml);
+                    } else {
+                        copyBtn.insertAdjacentHTML('afterend', btnHtml);
+                    }
+                }
+            };
+
+            // 1. View 2: Inject missing V2 'Regen' buttons into older timeline cards
+            if (ui.v2TimelineFeed) {
+                ui.v2TimelineFeed.querySelectorAll('.v2-timeline-card').forEach(card => {
+                    const promptTextarea = card.querySelector('.timeline-prompt-input');
+                    if (promptTextarea) {
+                        const promptId = promptTextarea.id;
+                        if (!card.querySelector('.btn-regen-single-v2-prompt')) {
+                            const headerDiv = promptTextarea.previousElementSibling; 
+                            if (headerDiv) {
+                                injectRegenButton(headerDiv, `<button class="btn-regen-single-v2-prompt text-[10px] text-emerald-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded transition-colors flex items-center gap-1" data-prompt-id="${promptId}"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen</button>`);
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. View 3: Inject missing V3 'Regen' buttons into older SEO data
+            document.querySelectorAll('#v3-out-titles .v3-item-row').forEach(row => {
+                if (!row.querySelector('.btn-regen-single-title')) {
+                    const btnColorClass = row.dataset.type === 'competitor' ? 'text-purple-400' : 'text-orange-400';
+                    injectRegenButton(row, `<button class="btn-regen-single-title text-[10px] bg-slate-800 hover:bg-slate-700 ${btnColorClass} px-2 py-1.5 rounded transition-colors flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen</button>`);
+                }
+            });
+
+            document.querySelectorAll('#v3-out-slugs .v3-item-row').forEach(row => {
+                if (!row.querySelector('.btn-regen-single-slug')) {
+                    const btnColorClass = row.dataset.type === 'competitor' ? 'text-purple-400' : 'text-yellow-400';
+                    injectRegenButton(row, `<button class="btn-regen-single-slug text-[10px] bg-slate-800 hover:bg-slate-700 ${btnColorClass} px-3 py-1.5 rounded transition-colors flex items-center gap-1 shadow"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen</button>`);
+                }
+            });
+            
+            document.querySelectorAll('#v3-out-thumbnails .v3-item-row').forEach(row => {
+                if (!row.querySelector('.btn-regen-single-thumb')) {
+                    injectRegenButton(row, `<button class="btn-regen-single-thumb text-[10px] bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-1 rounded transition-colors flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Regen</button>`);
+                }
+            });
+
+            try { lucide.createIcons(); } catch(e) {}
+            // ----------------------------------------------
             
             if (typeof updateImportButtons === 'function') updateImportButtons();
             if (typeof window.updateAIPickButtons === 'function') window.updateAIPickButtons();
@@ -10375,11 +10977,14 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             if (window.imageHistory) {
                 Object.values(window.imageHistory).forEach(arr => {
                     arr.forEach(src => {
-                        if (src.startsWith('blob:')) URL.revokeObjectURL(src);
+                        if (typeof src === 'string' && src.startsWith('blob:')) URL.revokeObjectURL(src);
                     });
                 });
             }
             
+            document.getElementById('v2-style-warning-banner')?.classList.add('hidden');
+            document.getElementById('estimator-notice')?.classList.add('hidden');
+
             // View 1 Resets
             if(ui.formulaSelect) ui.formulaSelect.value = '';
             if(ui.channelSelect) ui.channelSelect.value = '';
@@ -10874,47 +11479,54 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
 
         // Global recalculation helper for when lockers are deleted
         window.recalculateGlobalLockers = function() {
-            const subjectCounts = {};
-            document.querySelectorAll('.v2-timeline-card .group\\/locker').forEach(locker => {
-                const sub = locker.dataset.subject;
-                if (sub) {
-                    subjectCounts[sub] = (subjectCounts[sub] || 0) + 1;
-                }
-            });
-
-            const globalContainer = document.getElementById('global-lockers-container');
-            const globalCountEl = document.getElementById('global-locker-count');
-            
-            if (globalContainer) {
-                const globalLockers = globalContainer.querySelectorAll('.group\\/locker');
-                let validCount = 0;
-                
-                globalLockers.forEach(gLocker => {
-                    const sub = gLocker.dataset.subject;
-                    const badge = gLocker.querySelector('.text-\\[9px\\]');
-                    const isCustom = badge && (badge.innerText.includes('Custom') || gLocker.dataset.isCustom === 'true');
-                    const count = subjectCounts[sub] || 0;
-                    
-                    // Mark it as custom if it was ever custom so we don't lose that state
-                    if (isCustom) gLocker.dataset.isCustom = 'true';
-                    
-                    if (count === 0 && !isCustom) {
-                        gLocker.remove();
-                    } else if (count > 0 && !isCustom) {
-                        if (badge) badge.innerText = `${count} Scene${count > 1 ? 's' : ''}`;
-                        validCount++;
-                    } else if (isCustom) {
-                        if (badge) badge.innerText = count > 0 ? `Custom (${count} Scene${count > 1 ? 's' : ''})` : `Custom (0 Scenes)`;
-                        validCount++;
+            const processView = (cardSelector, globalContainerId, globalCountId) => {
+                const subjectCounts = {};
+                document.querySelectorAll(`${cardSelector} .group\\/locker`).forEach(locker => {
+                    const sub = locker.dataset.subject;
+                    if (sub) {
+                        // Use case-insensitive counting to prevent duplicates breaking the UI
+                        const lowerSub = sub.toLowerCase();
+                        subjectCounts[lowerSub] = (subjectCounts[lowerSub] || 0) + 1;
                     }
                 });
 
-                if (globalCountEl) globalCountEl.innerText = validCount;
+                const globalContainer = document.getElementById(globalContainerId);
+                const globalCountEl = document.getElementById(globalCountId);
+                
+                if (globalContainer) {
+                    const globalLockers = globalContainer.querySelectorAll('.group\\/locker');
+                    let validCount = 0;
+                    
+                    globalLockers.forEach(gLocker => {
+                        const sub = gLocker.dataset.subject;
+                        const lowerSub = sub ? sub.toLowerCase() : '';
+                        const badge = gLocker.querySelector('.text-\\[9px\\]');
+                        const isCustom = badge && (badge.innerText.includes('Custom') || gLocker.dataset.isCustom === 'true');
+                        const count = subjectCounts[lowerSub] || 0;
+                        
+                        if (isCustom) gLocker.dataset.isCustom = 'true';
+                        
+                        if (count === 0 && !isCustom) {
+                            gLocker.remove();
+                        } else if (count > 0 && !isCustom) {
+                            if (badge) badge.innerText = `${count} Scene${count > 1 ? 's' : ''}`;
+                            validCount++;
+                        } else if (isCustom) {
+                            if (badge) badge.innerText = count > 0 ? `Custom (${count} Scene${count > 1 ? 's' : ''})` : `Custom (0 Scenes)`;
+                            validCount++;
+                        }
+                    });
 
-                if (validCount === 0) {
-                    globalContainer.innerHTML = '<div class="text-center p-4 text-slate-500 italic text-xs border border-dashed border-slate-700 rounded">No unique subjects detected in this script.</div>';
+                    if (globalCountEl) globalCountEl.innerText = validCount;
+
+                    if (validCount === 0) {
+                        globalContainer.innerHTML = '<div class="text-center p-4 text-slate-500 italic text-xs border border-dashed border-slate-700 rounded">No global subjects added yet.</div>';
+                    }
                 }
-            }
+            };
+
+            processView('.v2-timeline-card', 'global-lockers-container', 'global-locker-count');
+            processView('#v3-out-thumbnails .v3-item-row', 'v3-global-lockers-container', 'v3-global-locker-count');
         };
 
         // Handle visual feedback and state protection for Subject Locker image uploads
@@ -10954,17 +11566,18 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             const addLockerBtn = e.target.closest('.btn-add-custom-locker');
             if (addLockerBtn) {
                 const isGlobal = addLockerBtn.dataset.isGlobal === 'true';
-                const container = isGlobal ? document.getElementById('global-lockers-container') : addLockerBtn.closest('.subject-lockers-container');
+                const isV3 = addLockerBtn.dataset.isV3 === 'true';
+                const container = isGlobal ? (isV3 ? document.getElementById('v3-global-lockers-container') : document.getElementById('global-lockers-container')) : addLockerBtn.closest('.subject-lockers-container');
                 
                 // If global container is hidden, open it so user can see the form
                 if (isGlobal && container.classList.contains('hidden')) {
                     container.classList.remove('hidden');
-                    document.getElementById('global-locker-chevron')?.classList.add('rotate-180');
+                    const chevronId = isV3 ? 'v3-global-locker-chevron' : 'global-locker-chevron';
+                    document.getElementById(chevronId)?.classList.add('rotate-180');
                 }
 
                 let form = container.querySelector('.custom-locker-form');
                 if (!form) {
-                    const isV3 = addLockerBtn.dataset.isV3 === 'true';
                     form = document.createElement('div');
                     form.className = "custom-locker-form flex items-center gap-2 mb-3 bg-slate-800 p-2 rounded border border-amber-500/50 shadow-inner animate-pulse shrink-0";
                     form.innerHTML = `
@@ -10976,7 +11589,8 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     if (isGlobal) {
                         const emptyMsg = container.querySelector('.text-center.p-4.text-slate-500');
                         if (emptyMsg) emptyMsg.remove();
-                        container.prepend(form);
+                        container.appendChild(form); // Appends to bottom instead of top
+                        setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
                     } else {
                         container.querySelector('.lockers-list').before(form);
                     }
@@ -10999,74 +11613,103 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     const isV3 = saveCustomLockerBtn.dataset.isV3 === 'true';
                     const isGlobal = saveCustomLockerBtn.dataset.isGlobal === 'true';
                     const safeDataSub = subjectName.replace(/"/g, '&quot;');
-                    const safeSubQuery = safeDataSub.replace(/\\/g, '\\\\');
+                    
+                    const globalContainerId = isV3 ? 'v3-global-lockers-container' : 'global-lockers-container';
+                    const cardSelector = isV3 ? '#v3-out-thumbnails .v3-item-row' : '.v2-timeline-card';
+                    const promptSelector = isV3 ? 'textarea.item-text' : '.timeline-prompt-input';
 
-                    if (isV3) {
-                        // V3 behaves exactly as before
-                        const html = window.buildLockerHTML(subjectName, true, true);
-                        const list = form.nextElementSibling;
-                        list.insertAdjacentHTML('beforeend', html);
-                        lucide.createIcons({ root: list.lastElementChild });
-                    } else {
-                        // V2 Propagation Logic
-                        // 1. Ensure it exists in Global
-                        const globalContainer = document.getElementById('global-lockers-container');
-                        if (globalContainer && !globalContainer.querySelector(`.group\\/locker[data-subject="${safeSubQuery}"]`)) {
-                            const emptyMsg = globalContainer.querySelector('.text-center.p-4.text-slate-500');
+                    const buildGlobalLockerHTML = (subName) => {
+                        const safeSearch = encodeURIComponent(subName).replace(/'/g, "%27");
+                        const safeSub = subName.replace(/"/g, '&quot;');
+                        const uploadClass = isV3 ? 'thumb-subject-upload' : 'broll-subject-upload';
+                        return `
+                            <div class="flex items-center justify-between bg-slate-900 border border-slate-700/60 rounded-lg p-2 hover:border-emerald-500/40 transition-colors group/locker shadow-inner" data-subject="${safeSub}">
+                                <div class="flex items-center gap-2 truncate mr-3">
+                                    <div class="locker-icon-box w-3 h-3 flex items-center justify-center shrink-0 bg-slate-800 border border-slate-700 rounded text-slate-400 group-hover/locker:text-emerald-400 group-hover/locker:border-emerald-500/30 transition-colors">
+                                        <i data-lucide="square" class="w-3.5 h-3.5"></i>
+                                    </div>
+                                    <span class="text-xs text-amber-300 font-semibold truncate" title="${subName}">${subName}</span>
+                                    <span class="text-[9px] font-bold bg-slate-800 text-amber-400 px-1.5 py-0.5 rounded shadow-inner whitespace-nowrap" data-is-custom="true">Custom</span>
+                                    <a href="https://www.google.com/search?tbm=isch&q=${safeSearch}" target="_blank" class="text-slate-500 hover:text-blue-400 transition-colors shrink-0" title="Search Google Images">
+                                        <i data-lucide="search" class="w-3 h-3"></i>
+                                    </a>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <input type="file" accept="image/*" class="${uploadClass} text-[10px] text-slate-500 file:cursor-pointer file:mr-0 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-slate-800 file:text-slate-300 hover:file:bg-emerald-900/30 hover:file:text-emerald-400 file:transition-colors w-44 shrink-0 cursor-pointer">
+                                    <button class="btn-clear-locker hidden text-slate-500 hover:text-red-400 transition-colors p-1" title="Clear image" type="button"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    <button class="btn-delete-entire-locker text-slate-600 hover:text-red-400 transition-colors p-1 ml-1" title="Delete Locker" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                        `;
+                    };
+
+                    // Check and remove duplicate global locker (case-insensitive)
+                    if (isGlobal) {
+                        const globalContainer = document.getElementById(globalContainerId);
+                        if (globalContainer) {
+                            const existingGlobal = Array.from(globalContainer.querySelectorAll('.group\\/locker')).find(
+                                l => l.dataset.subject && l.dataset.subject.toLowerCase() === subjectName.toLowerCase()
+                            );
+                            if (existingGlobal) existingGlobal.remove();
+                            
+                            const emptyMsg = globalContainer.querySelector('.text-center');
                             if (emptyMsg) emptyMsg.remove();
                             
-                            const globalHtml = `
-                                <div class="flex items-center justify-between bg-slate-900 border border-slate-700/60 rounded-lg p-2 hover:border-emerald-500/40 transition-colors group/locker shadow-inner" data-subject="${safeDataSub}">
-                                    <div class="flex items-center gap-2 truncate mr-3">
-                                        <div class="locker-icon-box w-3 h-3 flex items-center justify-center shrink-0 bg-slate-800 border border-slate-700 rounded text-slate-400 group-hover/locker:text-emerald-400 group-hover/locker:border-emerald-500/30 transition-colors">
-                                            <i data-lucide="square" class="w-3.5 h-3.5"></i>
-                                        </div>
-                                        <span class="text-xs text-amber-300 font-semibold truncate" title="${subjectName}">${subjectName}</span>
-                                        <span class="text-[9px] font-bold bg-slate-800 text-amber-400 px-1.5 py-0.5 rounded shadow-inner whitespace-nowrap">Custom</span>
-                                        <a href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(subjectName).replace(/'/g, "%27")}" target="_blank" class="text-slate-500 hover:text-blue-400 transition-colors shrink-0" title="Search Google Images">
-                                            <i data-lucide="search" class="w-3 h-3"></i>
-                                        </a>
-                                    </div>
-                                    <div class="flex items-center gap-1 shrink-0">
-                                        <input type="file" accept="image/*" class="broll-subject-upload text-[10px] text-slate-500 file:cursor-pointer file:mr-0 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-slate-800 file:text-slate-300 hover:file:bg-emerald-900/30 hover:file:text-emerald-400 file:transition-colors w-44 shrink-0 cursor-pointer">
-                                        <button class="btn-clear-locker hidden text-slate-500 hover:text-red-400 transition-colors p-1" title="Clear image" type="button"><i data-lucide="x" class="w-4 h-4"></i></button>
-                                        <button class="btn-delete-entire-locker text-slate-600 hover:text-red-400 transition-colors p-1 ml-1" title="Delete Locker" type="button"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                    </div>
-                                </div>
-                            `;
+                            const globalHtml = buildGlobalLockerHTML(subjectName);
                             globalContainer.insertAdjacentHTML('beforeend', globalHtml);
                             lucide.createIcons({ root: globalContainer.lastElementChild });
                         }
+                    } else {
+                        // It's a local addition
+                        const localList = form.nextElementSibling;
+                        if (localList) {
+                            const existingLocal = Array.from(localList.querySelectorAll('.group\\/locker')).find(
+                                l => l.dataset.subject && l.dataset.subject.toLowerCase() === subjectName.toLowerCase()
+                            );
+                            if (existingLocal) existingLocal.remove();
+                            
+                            const localHtml = window.buildLockerHTML(subjectName, isV3, true);
+                            localList.insertAdjacentHTML('beforeend', localHtml);
+                            lucide.createIcons({ root: localList.lastElementChild });
+                        }
+                    }
 
-                        // 2. Propagate to all matching local timeline cards
+                    // Propagate to all matching local timeline cards/concepts (if global)
+                    if (isGlobal) {
                         const searchTarget = subjectName.toLowerCase();
                         let matchCount = 0;
                         
-                        document.querySelectorAll('.v2-timeline-card').forEach(card => {
-                            const promptInput = card.querySelector('.timeline-prompt-input');
-                            if (promptInput && promptInput.value.toLowerCase().includes(searchTarget)) {
+                        document.querySelectorAll(cardSelector).forEach(card => {
+                            const localList = card.querySelector('.lockers-list');
+                            if (!localList) return;
+
+                            const promptInput = card.querySelector(promptSelector);
+                            const promptIncludes = promptInput && promptInput.value.toLowerCase().includes(searchTarget);
+
+                            // Find case-insensitive duplicate locally
+                            const existingLocal = Array.from(localList.querySelectorAll('.group\\/locker')).find(
+                                l => l.dataset.subject && l.dataset.subject.toLowerCase() === searchTarget
+                            );
+
+                            // Replace it if it already exists, OR add it if it's found in the prompt
+                            if (existingLocal || promptIncludes) {
                                 matchCount++;
-                                const localList = card.querySelector('.lockers-list');
-                                // Only add if it doesn't already exist in this specific card
-                                if (localList && !localList.querySelector(`.group\\/locker[data-subject="${safeSubQuery}"]`)) {
-                                    const localHtml = window.buildLockerHTML(subjectName, false, true);
-                                    localList.insertAdjacentHTML('beforeend', localHtml);
-                                    lucide.createIcons({ root: localList.lastElementChild });
-                                    
-                                    // Make the local locker visually synced to global immediately
-                                    const newLocker = localList.lastElementChild;
-                                    newLocker.dataset.desynced = 'false';
-                                    window.syncLockerUI(subjectName, newLocker);
-                                }
+                                if (existingLocal) existingLocal.remove();
+                                
+                                const localHtml = window.buildLockerHTML(subjectName, isV3, true); 
+                                localList.insertAdjacentHTML('beforeend', localHtml);
+                                lucide.createIcons({ root: localList.lastElementChild });
+                                
+                                const newLocker = localList.lastElementChild;
+                                newLocker.dataset.desynced = 'false';
+                                window.syncLockerUI(subjectName, newLocker);
                             }
                         });
                         
-                        // 3. Update global counts
                         window.recalculateGlobalLockers();
-                        
-                        if (isGlobal) {
-                            showToast(`Custom locker added and found in ${matchCount} scene(s)!`);
-                        }
+                        showToast(`Custom locker added and found in ${matchCount} scene(s)!`);
+                    } else {
+                        window.recalculateGlobalLockers();
                     }
                 }
                 form.remove();
@@ -11115,34 +11758,54 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
         // Global Sync Function for Lockers
         window.syncLockerUI = function(subject, specificLocker = null) {
             if (!subject) return;
-            const safeSub = subject.replace(/"/g, '\\"');
+            const lowerSubject = subject.toLowerCase();
             
-            // 1. Check Global State (Only relevant if it exists in V2)
-            const globalLocker = document.querySelector(`#global-lockers-container .group\\/locker[data-subject="${safeSub}"]`);
-            let hasGlobal = false;
-            if (globalLocker) {
-                const globalInput = globalLocker.querySelector('input[type="file"]');
-                hasGlobal = globalInput && globalInput.files && globalInput.files.length > 0;
-                
-                const iconContainer = globalLocker.querySelector('.locker-icon-box');
-                const clearBtn = globalLocker.querySelector('.btn-clear-locker');
-                if (hasGlobal) {
-                    iconContainer.className = 'locker-icon-box w-3 h-3 flex items-center justify-center shrink-0 bg-emerald-900/40 border border-emerald-500 rounded text-emerald-400 transition-colors';
-                    iconContainer.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i>';
-                    if (clearBtn) clearBtn.classList.remove('hidden');
-                } else {
-                    iconContainer.className = 'locker-icon-box w-3 h-3 flex items-center justify-center shrink-0 bg-slate-800 border border-slate-700 rounded text-slate-400 group-hover/locker:text-emerald-400 group-hover/locker:border-emerald-500/30 transition-colors';
-                    iconContainer.innerHTML = '<i data-lucide="square" class="w-3.5 h-3.5"></i>';
-                    if (clearBtn) clearBtn.classList.add('hidden');
-                }
-                try { lucide.createIcons({ root: globalLocker }); } catch(e){}
-            }
+            const findGlobalCaseInsensitive = (id) => {
+                const container = document.getElementById(id);
+                if (!container) return null;
+                return Array.from(container.querySelectorAll('.group\\/locker')).find(
+                    l => l.dataset.subject && l.dataset.subject.toLowerCase() === lowerSubject
+                );
+            };
 
-            // 2. Check and Update Local States dynamically (Now checks ALL lockers everywhere)
-            // If a specific locker was passed, only update that one. Otherwise, update all matching the subject.
+            // 1. Check Global State (V2 AND V3)
+            const globalLocker = findGlobalCaseInsensitive('global-lockers-container');
+            const globalLockerV3 = findGlobalCaseInsensitive('v3-global-lockers-container');
+            
+            let hasGlobal = false;
+            let hasGlobalV3 = false;
+
+            const checkGlobalState = (gLocker) => {
+                if (gLocker) {
+                    const globalInput = gLocker.querySelector('input[type="file"]');
+                    const hasFile = globalInput && globalInput.files && globalInput.files.length > 0;
+                    const iconContainer = gLocker.querySelector('.locker-icon-box');
+                    const clearBtn = gLocker.querySelector('.btn-clear-locker');
+                    
+                    if (hasFile) {
+                        iconContainer.className = 'locker-icon-box w-3 h-3 flex items-center justify-center shrink-0 bg-emerald-900/40 border border-emerald-500 rounded text-emerald-400 transition-colors';
+                        iconContainer.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i>';
+                        if (clearBtn) clearBtn.classList.remove('hidden');
+                    } else {
+                        iconContainer.className = 'locker-icon-box w-3 h-3 flex items-center justify-center shrink-0 bg-slate-800 border border-slate-700 rounded text-slate-400 group-hover/locker:text-emerald-400 group-hover/locker:border-emerald-500/30 transition-colors';
+                        iconContainer.innerHTML = '<i data-lucide="square" class="w-3.5 h-3.5"></i>';
+                        if (clearBtn) clearBtn.classList.add('hidden');
+                    }
+                    try { lucide.createIcons({ root: gLocker }); } catch(e){}
+                    return hasFile;
+                }
+                return false;
+            };
+
+            hasGlobal = checkGlobalState(globalLocker);
+            hasGlobalV3 = checkGlobalState(globalLockerV3);
+
+            // 2. Check and Update Local States dynamically
             const localLockers = specificLocker 
                 ? [specificLocker] 
-                : Array.from(document.querySelectorAll(`.group\\/locker[data-subject="${safeSub}"]`)).filter(l => !l.closest('#global-lockers-container'));
+                : Array.from(document.querySelectorAll('.group\\/locker')).filter(
+                    l => l.dataset.subject && l.dataset.subject.toLowerCase() === lowerSubject && !l.closest('#global-lockers-container') && !l.closest('#v3-global-lockers-container')
+                );
                 
             localLockers.forEach(localLocker => {
                 const localInput = localLocker.querySelector('input[type="file"]');
@@ -11151,10 +11814,14 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const clearBtn = localLocker.querySelector('.btn-clear-locker');
                 const syncBtn = localLocker.querySelector('.btn-toggle-sync');
                 const isDesynced = localLocker.dataset.desynced === 'true';
+                
+                // Determine which global state to check based on where this local locker is
+                const isV3Locker = !!localLocker.closest('#view-3');
+                const activeHasGlobal = isV3Locker ? hasGlobalV3 : hasGlobal;
 
                 // Manage Sync Button Visibility and State
                 if (syncBtn) {
-                    if (hasGlobal) {
+                    if (activeHasGlobal) {
                         syncBtn.classList.remove('hidden');
                         if (isDesynced) {
                             syncBtn.innerHTML = '<i data-lucide="unlink" class="w-4 h-4 text-slate-500 hover:text-slate-400"></i>';
@@ -11173,7 +11840,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     iconContainer.className = 'locker-icon-box w-3 h-3 flex items-center justify-center shrink-0 bg-emerald-900/40 border border-emerald-500 rounded text-emerald-400 transition-colors';
                     iconContainer.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i>';
                     if (clearBtn) clearBtn.classList.remove('hidden');
-                } else if (hasGlobal && !isDesynced) {
+                } else if (activeHasGlobal && !isDesynced) {
                     // Globally Synced (Blue Link)
                     iconContainer.className = 'locker-icon-box w-3 h-3 flex items-center justify-center shrink-0 bg-blue-900/40 border border-blue-500 rounded text-blue-400 transition-colors';
                     iconContainer.innerHTML = '<i data-lucide="link" class="w-3.5 h-3.5"></i>';
@@ -12966,7 +13633,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const sysPrompt = "You are an expert Executive Producer. Analyze the Channel Formula and Source Material. Your goal is to select the BEST Script Format from the available list to maximize audience retention.\n\nCRITICAL DIRECTIVES:\n1. BIAS TOWARDS DEFAULTS: ALWAYS select an existing format from the list if it's an 80% match or better. ONLY select 'custom' if the content is wildly unique.\n2. FORMAT VS FORMULA: A 'Script Format' is NOT a narrative outline or tone guide. It is a strict set of structural rules dictating paragraph length, double line breaks (for CapCut chunking), dialogue tags, and stage directions.\n3. MIMIC DEFAULTS: If you invent a 'custom' format, you MUST write its rules in the exact same style, tone, and length as the provided defaults (e.g., starting with '- THE FORMAT RULE:').";
                 const userPrompt = `AVAILABLE FORMATS:\n${JSON.stringify(options, null, 2)}\n\nCHANNEL FORMULA:\n${formula}\n\nSOURCE MATERIAL (Excerpt):\n${transcript.substring(0, 1500)}`;
                 
-                const data = await executeGeminiCall(sysPrompt, userPrompt, schema, false, null, 'format');
+                const data = await executeGeminiCall(sysPrompt, userPrompt, schema);
                 
                 if (data && data.choiceId) {
                     if (data.choiceId === 'custom' && data.customRules) {
@@ -13018,7 +13685,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const sysPrompt = "You are an elite Video Director. Read the Final Script and select the BEST Director Mode from the available list to maximize viewer retention and visual storytelling.\n\nCRITICAL DIRECTIVES:\n1. BIAS TOWARDS DEFAULTS: ALWAYS select an existing mode from the list if it's a strong match. ONLY select 'custom' if the script's visual needs are wildly unique.\n2. MIMIC DEFAULTS: If you invent a 'custom' mode, you MUST write its instructions in the exact same style, tone, and length as the provided defaults. Focus strictly on camera angles, pacing, lighting, composition, and whether to use Images or Videos.";
                 const userPrompt = `AVAILABLE MODES:\n${JSON.stringify(options, null, 2)}\n\nFINAL SCRIPT (Excerpt):\n${script.substring(0, 2000)}`;
                 
-                const data = await executeGeminiCall(sysPrompt, userPrompt, schema, false, null, 'format');
+                const data = await executeGeminiCall(sysPrompt, userPrompt, schema);
                 
                 if (data && data.choiceId) {
                     if (data.choiceId === 'custom' && data.customRules) {
@@ -13071,7 +13738,7 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                 const sysPrompt = "You are an elite Art Director. Read the Final Script and current Director Instructions. Select the BEST Visual Art Style from the available list to perfectly match the mood of the video.\n\nCRITICAL DIRECTIVES:\n1. BIAS TOWARDS DEFAULTS: ALWAYS select an existing style from the list if it's a strong match. ONLY select 'custom' if the script requires a completely unique visual aesthetic.\n2. MIMIC DEFAULTS: If you invent a 'custom' style, it MUST be a comma-separated string of descriptive keywords meant for an AI Image Generator (Midjourney style). Study the provided list and match their formatting exactly.";
                 const userPrompt = `AVAILABLE STYLES:\n${JSON.stringify(options, null, 2)}\n\nDIRECTOR INSTRUCTIONS:\n${directorRules}\n\nFINAL SCRIPT (Excerpt):\n${script.substring(0, 1500)}`;
                 
-                const data = await executeGeminiCall(sysPrompt, userPrompt, schema, false, null, 'format');
+                const data = await executeGeminiCall(sysPrompt, userPrompt, schema);
                 
                 if (data && data.choiceId) {
                     if (data.choiceId === 'custom' && data.customPrompt) {
@@ -13194,7 +13861,10 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                     }, required: ["mappings"]
                 };
 
-                const sysPrompt = "You are an Audio Script Editor. Analyze the text and find every instance of numbers, dates, times, currencies, and percentages. Create a dictionary mapping the EXACT original numeric string to its spoken-word equivalent. Do not include plain words. If a number is already a word, skip it.";
+                const outLangNum = document.getElementById('output-language')?.value || 'English';
+                const sysPrompt = outLangNum === 'English' 
+                    ? "You are an Audio Script Editor. Analyze the text and find every instance of numbers, dates, times, currencies, and percentages. Create a dictionary mapping the EXACT original numeric string to its spoken-word equivalent. Do not include plain words. If a number is already a word, skip it."
+                    : `You are an Audio Script Editor. Analyze the text and find every instance of numbers, dates, times, currencies, and percentages. Create a dictionary mapping the EXACT original numeric string to its spoken-word equivalent. The spoken-word equivalent MUST be in the same language as the text (${outLangNum}). Do not include plain words. If a number is already a word, skip it.`;
 
                 const data = await executeGeminiCall(sysPrompt, combinedText, schema, false, null, 'numbers');
 
@@ -13570,8 +14240,9 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
                             const el = document.createElement('div');
                             el.className = "script-block pl-4 border-l-2 border-slate-700 relative group pr-10 py-1.5 mb-4";
                             el.setAttribute('data-color-index', colorIndex);
+                            el.setAttribute('data-chapter', chapterNum); // Needed for targeted deletion
                             el.innerHTML = `
-                                <p class="pure-script-text text-slate-300 leading-relaxed text-lg font-light">${blockText}</p>
+                                <p class="pure-script-text text-slate-300 leading-relaxed text-lg font-light" dir="auto">${blockText}</p>
                                 <button type="button" class="absolute top-1 right-1 p-2 text-slate-500 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-600 rounded opacity-0 group-hover:opacity-100 transition-all shadow-md btn-copy-block z-10" title="Copy Text">
                                     <i data-lucide="copy" class="w-4 h-4 pointer-events-none"></i>
                                 </button>
@@ -13649,10 +14320,95 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             }
         }
 
+        async function regenerateSuccessChapter(btnElement) {
+            if (btnElement.disabled) return;
+            const headerWrapper = btnElement.closest('.chapter-header-wrapper');
+            const chapterNum = parseInt(headerWrapper.getAttribute('data-chapter'), 10);
+            const colorIndex = ((chapterNum - 1) % 5) + 1;
+            
+            const promptData = window.chapterPromptsMap ? window.chapterPromptsMap[chapterNum] : null;
+            if (!promptData) return showToast(`Error: Missing generation instructions for Chapter ${chapterNum}.`);
+
+            const currentKey = getActiveApiKey();
+            if (!currentKey && !isFirebaseEnabled) return showToast("API Key needed to regenerate!");
+
+            const originalHTML = btnElement.innerHTML;
+            btnElement.disabled = true;
+            btnElement.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-white"></div>`;
+            
+            try {
+                const sectionsArraySchema = {
+                    type: "ARRAY",
+                    items: {
+                        type: "OBJECT",
+                        properties: {
+                            content: { type: "STRING", description: "The generated script text formatted exactly as instructed." }
+                        }, required: ["content"]
+                    }
+                };
+                const chapterSchema = { type: "OBJECT", properties: { sections: sectionsArraySchema }, required: ["sections"] };
+
+                const data = await executeGeminiCall(promptData.sysPrompt, promptData.userPrompt, chapterSchema);
+                
+                if (data && data.sections && data.sections.length > 0) {
+                    // Find all old blocks belonging to this chapter
+                    const oldBlocks = document.querySelectorAll(`.script-block[data-chapter="${chapterNum}"]`);
+                    
+                    // Create fragment for new blocks
+                    const fragment = document.createDocumentFragment();
+                    
+                    data.sections.forEach(sec => {
+                        const cleanContent = sec.content.replace(/\\n/g, '\n');
+                        const subBlocks = cleanContent.split(/\n\s*\n/).map(b => b.trim()).filter(b => b.length > 0);
+                        
+                        subBlocks.forEach(blockText => {
+                            const el = document.createElement('div');
+                            el.className = "script-block pl-4 border-l-2 border-slate-700 relative group pr-10 py-1.5 mb-4";
+                            el.setAttribute('data-color-index', colorIndex);
+                            el.setAttribute('data-chapter', chapterNum);
+                            el.innerHTML = `
+                                <p class="pure-script-text text-slate-300 leading-relaxed text-lg font-light" dir="auto">${blockText}</p>
+                                <button type="button" class="absolute top-1 right-1 p-2 text-slate-500 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-600 rounded opacity-0 group-hover:opacity-100 transition-all shadow-md btn-copy-block z-10" title="Copy Text">
+                                    <i data-lucide="copy" class="w-4 h-4 pointer-events-none"></i>
+                                </button>
+                            `;
+                            el.querySelector('.btn-copy-block').onclick = (e) => {
+                                const textToCopy = e.currentTarget.parentElement.querySelector('.pure-script-text').innerText;
+                                window.copyToClipboard(textToCopy.trim(), 'Paragraph');
+                            };
+                            fragment.appendChild(el);
+                        });
+                    });
+
+                    // Insert new blocks right after the header, then remove old blocks
+                    headerWrapper.parentNode.insertBefore(fragment, headerWrapper.nextSibling);
+                    oldBlocks.forEach(b => b.remove());
+                    
+                    lucide.createIcons();
+                    document.body.dispatchEvent(new Event('input', { bubbles: true })); // Trigger Auto-save
+                    showToast(`Chapter ${chapterNum} successfully regenerated!`);
+                } else {
+                    throw new Error("Empty response.");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(`Failed to regenerate Chapter ${chapterNum}.`);
+            } finally {
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalHTML;
+            }
+        }
+
         document.body.addEventListener('click', (e) => {
             const btnRegenSingle = e.target.closest('.btn-regen-single-chapter');
             if (btnRegenSingle) {
                 regenerateSingleChapter(btnRegenSingle);
+                return;
+            }
+            const btnRegenSuccess = e.target.closest('.btn-regen-success-chapter');
+            if (btnRegenSuccess) {
+                regenerateSuccessChapter(btnRegenSuccess);
+                return;
             }
         });
 
@@ -13691,6 +14447,197 @@ CRITICAL: Generate exactly ONE new thumbnail prompt for an Image AI. Write a com
             btn.disabled = false;
             btn.innerHTML = originalHTML;
             lucide.createIcons();
+        });
+
+        // ==========================================
+        // V2 SINGLE PROMPT REGENERATION LOGIC
+        // ==========================================
+        document.body.addEventListener('click', async (e) => {
+            const btnRegenV2Prompt = e.target.closest('.btn-regen-single-v2-prompt');
+            if (btnRegenV2Prompt) {
+                const promptId = btnRegenV2Prompt.dataset.promptId;
+                const textarea = document.getElementById(promptId);
+                const oldPrompt = textarea.value.trim();
+                const card = btnRegenV2Prompt.closest('.v2-timeline-card');
+                const scriptText = card.querySelector('p.italic')?.innerText.replace(/^"|"$/g, '').trim() || '';
+
+                const currentKey = getActiveApiKey();
+                if (!currentKey && !isFirebaseEnabled) return showToast("API Key needed!");
+
+                const originalHTML = btnRegenV2Prompt.innerHTML;
+                btnRegenV2Prompt.disabled = true;
+                btnRegenV2Prompt.innerHTML = `<div class="loader !w-3 !h-3 !border-2 !border-t-emerald-400 mx-0.5 my-0.5"></div>`;
+
+                try {
+                    let resolvedDirectorRules = ui.directorModeInput?.value.trim() || DEFAULT_DIRECTORS['smart'];
+                    const outLang = document.getElementById('output-language')?.value || 'English';
+                    const langInstruction = outLang !== 'English' ? `\n\nCRITICAL LANGUAGE RULE: Write the visual description in English, but if you specify on-screen text, use ${outLang}.` : "";
+
+                    let styleInstruction = "";
+                    const syncToggle = document.getElementById('v2-style-sync-toggle');
+                    if (syncToggle && syncToggle.checked && ui.v2ArtStyle?.value !== 'none') {
+                        const activeStyle = ui.v2CustomStyleInput?.value.trim() || 'Custom Style';
+                        styleInstruction = `\n\nCRITICAL CONTEXT - GLOBAL ART STYLE: "${activeStyle}". Ensure your prompt description naturally fits this medium (e.g., if the style is a simple cartoon, do not describe photorealistic details like 'pores' or 'tactile textures').`;
+                    }
+
+                    // Pull the exact same base prompt used in Bulk Generation
+                    let baseSystemInstruction = getPrompts().broll;
+                    if (baseSystemInstruction.includes('{{DIRECTOR_MODE}}')) {
+                        baseSystemInstruction = baseSystemInstruction.replace(/If Director Mode is 'smart':.*?\nIf Director Mode is 'full':.*?\n/gs, '');
+                        baseSystemInstruction = baseSystemInstruction.replace(/DIRECTOR MODE: {{DIRECTOR_MODE}}\./g, `DIRECTOR MODE INSTRUCTIONS:\n${resolvedDirectorRules}`);
+                    } else {
+                        baseSystemInstruction = baseSystemInstruction.replace(/{{DIRECTOR_INSTRUCTION}}/g, resolvedDirectorRules);
+                    }
+
+                    // Extract the "Core System Rules" from the bulk prompt so we can apply them to the single regen
+                    const coreRulesMatch = baseSystemInstruction.match(/Core System Rules:[\s\S]*/);
+                    const coreRules = coreRulesMatch ? coreRulesMatch[0] : "";
+
+                    const sysPrompt = "You are an elite AI B-Roll Director. Your task is to regenerate a single visual prompt for a specific storyboard block.\n\nDIRECTOR MODE INSTRUCTIONS:\n" + resolvedDirectorRules + "\n\n" + coreRules + styleInstruction + langInstruction;
+                    const userPrompt = `SCRIPT BLOCK:\n"${scriptText}"\n\nREJECTED PROMPT:\n"${oldPrompt}"\n\nGenerate a NEW, distinctly different, highly descriptive prompt (and asset type) that strictly follows the Director Mode Instructions and Core System Rules.`;
+
+                    const schema = {
+                        type: "OBJECT",
+                        properties: {
+                            type: { type: "STRING", description: "Must be exactly 'Image' or 'Video'" },
+                            prompt: { type: "STRING", description: "The new visual prompt." },
+                            searchQuery: { type: "STRING", description: "A new short 2-6 word search phrase." },
+                            keySubjects: { type: "ARRAY", items: { type: "STRING" }, description: "Extract specific 'people, named characters, pivotal physical objects, important subjects, real-world locations, or specific graphics/logos' ONLY if explicitly mentioned in the generated 'prompt'. Return an empty array if none." }
+                        }, required: ["type", "prompt", "searchQuery", "keySubjects"]
+                    };
+
+                    const data = await executeGeminiCall(sysPrompt, userPrompt, schema);
+
+                    if (data && data.prompt) {
+                        // 1. Update Prompt Textarea
+                        textarea.value = data.prompt;
+                        
+                        // 2. Update Search Query Input
+                        const queryInput = document.getElementById(promptId.replace('-prompt', '-query'));
+                        if (queryInput && data.searchQuery) queryInput.value = data.searchQuery;
+                        
+                        // 3. Update Asset Type internal tracking
+                        textarea.dataset.assetType = data.type.toLowerCase();
+                        
+                        // 4. Update the visual Card Header (Image/Video Icon & Color)
+                        const typeHeader = card.querySelector('.text-xs.font-bold.uppercase.tracking-widest.relative');
+                        if (typeHeader) {
+                            const isImg = data.type.toLowerCase() === 'image';
+                            const iconHtml = isImg ? '<i data-lucide="image" class="w-4 h-4"></i> Image' : '<i data-lucide="video" class="w-4 h-4"></i> Video';
+                            const colorClass = isImg ? 'text-purple-400' : 'text-emerald-400';
+                            
+                            // Rebuild inner HTML to preserve the checkbox and block number span
+                            const cbEl = typeHeader.querySelector('input');
+                            const blockNumEl = typeHeader.querySelector('span.bg-slate-700');
+                            
+                            typeHeader.innerHTML = '';
+                            if(cbEl) typeHeader.appendChild(cbEl);
+                            if(blockNumEl) typeHeader.appendChild(blockNumEl);
+                            typeHeader.insertAdjacentHTML('beforeend', ' ' + iconHtml);
+                            typeHeader.className = `text-xs font-bold ${colorClass} uppercase tracking-widest flex items-center gap-2 mb-2 relative`;
+                        }
+
+                        // 5. Rebuild Reference Lockers for this specific card
+                        const lockersContainer = card.querySelector('.subject-lockers-container');
+                        if (lockersContainer) {
+                            const subjects = data.keySubjects || [];
+                            lockersContainer.innerHTML = '<div class="flex justify-between items-center mb-3"><div class="text-[10px] text-emerald-400/80 font-bold uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="scan-face" class="w-3 h-3"></i> Reference Lockers</div><button class="btn-add-custom-locker text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 bg-amber-900/20 hover:bg-amber-900/40 px-2 py-1 rounded transition-colors" data-is-v3="false"><i data-lucide="plus" class="w-3 h-3"></i> Add Custom</button></div><div class="lockers-list"></div>';
+                            const list = lockersContainer.querySelector('.lockers-list');
+                            if (subjects.length > 0) {
+                                list.innerHTML = subjects.map(sub => window.buildLockerHTML(sub, false, false)).join('');
+                                // Automatically sync any new local lockers with existing globals
+                                subjects.forEach(sub => window.syncLockerUI(sub));
+                            }
+                            // Recalculate global lockers in case a subject was removed or a new one added
+                            window.recalculateGlobalLockers();
+                        }
+
+                        // 6. Re-apply the Art Style suffix & trigger export data updates
+                        window.updateTimelineArtStyles();
+                        if (typeof window.updateBulkExports === 'function') window.updateBulkExports();
+                        showToast("Prompt regenerated!");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast("Error regenerating prompt: " + err.message);
+                } finally {
+                    btnRegenV2Prompt.disabled = false;
+                    btnRegenV2Prompt.innerHTML = originalHTML;
+                    lucide.createIcons({root: card});
+                    document.body.dispatchEvent(new Event('input', { bubbles: true })); // Trigger Auto-save
+                }
+            }
+        });
+
+        // --- NEW: Reset API Settings to Default ---
+        document.getElementById('btn-reset-api-settings')?.addEventListener('click', () => {
+            // Advanced Features
+            if (document.getElementById('adv-text-gen-fast')) document.getElementById('adv-text-gen-fast').checked = false;
+            if (document.getElementById('adv-text-gen-seq')) document.getElementById('adv-text-gen-seq').checked = true;
+            if (document.getElementById('adv-text-gen-turbo')) document.getElementById('adv-text-gen-turbo').checked = true;
+            if (document.getElementById('adv-text-names')) document.getElementById('adv-text-names').checked = false;
+            if (document.getElementById('adv-text-format')) document.getElementById('adv-text-format').checked = false;
+            if (document.getElementById('adv-text-research')) document.getElementById('adv-text-research').checked = false;
+            if (document.getElementById('adv-text-polish')) document.getElementById('adv-text-polish').checked = false;
+            if (document.getElementById('adv-text-numbers')) document.getElementById('adv-text-numbers').checked = false;
+            if (document.getElementById('adv-text-seo')) document.getElementById('adv-text-seo').checked = false;
+
+            // Auto-Rotate
+            if (document.getElementById('api-auto-rotate')) document.getElementById('api-auto-rotate').checked = true;
+
+            // Text Views
+            if (document.getElementById('text-view-v1')) document.getElementById('text-view-v1').checked = true;
+            if (document.getElementById('text-view-v2')) document.getElementById('text-view-v2').checked = false;
+            if (document.getElementById('text-view-v3')) document.getElementById('text-view-v3').checked = false;
+
+            // Image Views
+            if (document.getElementById('img-view-v1')) document.getElementById('img-view-v1').checked = false;
+            if (document.getElementById('img-view-v2')) document.getElementById('img-view-v2').checked = false;
+            if (document.getElementById('img-view-v3')) document.getElementById('img-view-v3').checked = false;
+
+            // Models
+            if (document.getElementById('select-text-model')) {
+                document.getElementById('select-text-model').value = 'gemini-2.5-flash-preview-09-2025';
+                document.getElementById('custom-text-model')?.classList.add('hidden');
+            }
+            if (document.getElementById('select-image-model')) {
+                document.getElementById('select-image-model').value = 'gemini-2.5-flash-image-preview';
+                document.getElementById('custom-image-model')?.classList.add('hidden');
+            }
+
+            lucide.createIcons();
+            showToast("API Options reset to default (Don't forget to click Save!)");
+        });
+
+        // --- NEW: Bulk Render Thumbnails in V3 ---
+        document.getElementById('btn-v3-bulk-render-thumbs')?.addEventListener('click', async () => {
+            const btn = document.getElementById('btn-v3-bulk-render-thumbs');
+            const renderBtns = document.querySelectorAll('#v3-out-thumbnails .v3-item-row button[onclick^="handleThumbRender"]');
+            
+            if (renderBtns.length === 0) return showToast("No thumbnails generated to render!");
+
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> Rendering All...`;
+            lucide.createIcons();
+
+            try {
+                for (let i = 0; i < renderBtns.length; i++) {
+                    renderBtns[i].click(); // Simulate a click on each individual render button
+                    // Wait a generous 3.5 seconds between clicks to prevent API hammering/rate limits
+                    if (i < renderBtns.length - 1) {
+                        await new Promise(r => setTimeout(r, 3500));
+                    }
+                }
+                showToast("Bulk rendering triggered!");
+            } catch (err) {
+                console.error(err);
+                showToast("Error during bulk render.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                lucide.createIcons();
+            }
         });
 
     </script>
