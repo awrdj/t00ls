@@ -1204,7 +1204,7 @@ function processFileLoad(mode) {
     const files = pendingFiles;
     const isReplace = mode === 'replace';
     
-    showToast('Loading CSV files...', 'success');
+    showToast('Loading and validating CSV files...', 'success');
     
     const readers = Array.from(files).map(file => {
         if (!originalFilename || originalFilename === 'pinterest') {
@@ -1226,7 +1226,7 @@ function processFileLoad(mode) {
         results.forEach((result, fileIndex) => {
             const { filename, pins: filePins } = result;
             
-            // Tag and add all pins (no duplicate filtering)
+            // Tag and add all pins
             filePins.forEach((pin, rowIndex) => {
                 basePins.push({
                     ...pin,
@@ -1248,23 +1248,17 @@ function processFileLoad(mode) {
             const dateA = parseISODate(a['Publish date']);
             const dateB = parseISODate(b['Publish date']);
             
-            // Pins without valid dates go to the end
             if (!dateA && !dateB) {
-                if (a._sourceFileIndex !== b._sourceFileIndex) {
-                    return a._sourceFileIndex - b._sourceFileIndex;
-                }
+                if (a._sourceFileIndex !== b._sourceFileIndex) return a._sourceFileIndex - b._sourceFileIndex;
                 return a._sourceRowIndex - b._sourceRowIndex;
             }
             if (!dateA) return 1;
             if (!dateB) return -1;
             
-            // Both have valid dates: sort chronologically
             const timeDiff = dateA - dateB;
             if (timeDiff !== 0) return timeDiff;
             
-            if (a._sourceFileIndex !== b._sourceFileIndex) {
-                return a._sourceFileIndex - b._sourceFileIndex;
-            }
+            if (a._sourceFileIndex !== b._sourceFileIndex) return a._sourceFileIndex - b._sourceFileIndex;
             return a._sourceRowIndex - b._sourceRowIndex;
         });
         
@@ -1274,109 +1268,116 @@ function processFileLoad(mode) {
             delete pin._sourceRowIndex;
         });
         
-        // --- NEW: AUTO-DELETE PINS WITHOUT IMAGES ---
+        // --- NEW: ASYNC AUTO-DELETE BROKEN IMAGES ---
         const originalDates = basePins.map(p => p['Publish date']).filter(Boolean);
-        const validPins = basePins.filter(pin => (pin['Media URL'] || pin['Thumbnail'] || '').trim() !== '');
-        const autoDeletedCount = basePins.length - validPins.length;
-        basePins = validPins;
-        // --------------------------------------------
-
-        // ===== DUPLICATE DETECTION & NUMBERING =====
-        const titleCounts = {};
-        const descCounts = {};
         
-        basePins.forEach((pin, index) => {
-            const title = pin['Title'] || '';
-            const desc = pin['Description'] || '';
+        showToast('Validating images... please wait', 'warning');
+        
+        // Test all images in the background
+        Promise.all(basePins.map(pin => {
+            return new Promise(resolve => {
+                const url = (pin['Media URL'] || pin['Thumbnail'] || '').trim();
+                if (!url) return resolve({ pin, valid: false });
+                
+                const img = new Image();
+                img.onload = () => resolve({ pin, valid: true });
+                img.onerror = () => resolve({ pin, valid: false }); // Fails if link is broken
+                img.src = url;
+            });
+        })).then(imageResults => {
             
-            // Track title duplicates
-            if (title) {
-                if (!titleCounts[title]) {
-                    titleCounts[title] = 1;
-                } else {
-                    titleCounts[title]++;
-                    const num = titleCounts[title];
-                    
-                    // Update title with #2, #3, etc
-                    pin['Title'] = `${title} #${num}`;
-                    
-                    // Update slug in Link
-                    if (pin['Link']) {
-                        const linkParts = pin['Link'].split('?');
-                        if (linkParts.length === 2) {
-                            const domain = linkParts[0];
-                            const slug = linkParts[1];
-                            pin['Link'] = `${domain}?${slug}-${num}`;
+            // Filter out the broken ones
+            const validPins = imageResults.filter(r => r.valid).map(r => r.pin);
+            const autoDeletedCount = basePins.length - validPins.length;
+            basePins = validPins;
+            // --------------------------------------------
+
+            // ===== DUPLICATE DETECTION & NUMBERING =====
+            const titleCounts = {};
+            const descCounts = {};
+            
+            basePins.forEach((pin, index) => {
+                const title = pin['Title'] || '';
+                const desc = pin['Description'] || '';
+                
+                if (title) {
+                    if (!titleCounts[title]) {
+                        titleCounts[title] = 1;
+                    } else {
+                        titleCounts[title]++;
+                        const num = titleCounts[title];
+                        pin['Title'] = `${title} #${num}`;
+                        if (pin['Link']) {
+                            const linkParts = pin['Link'].split('?');
+                            if (linkParts.length === 2) {
+                                const domain = linkParts[0];
+                                const slug = linkParts[1];
+                                pin['Link'] = `${domain}?${slug}-${num}`;
+                            }
                         }
                     }
                 }
+                
+                if (desc) {
+                    if (!descCounts[desc]) {
+                        descCounts[desc] = 1;
+                    } else {
+                        descCounts[desc]++;
+                        const num = descCounts[desc];
+                        pin['Description'] = `${desc} #${num}`;
+                    }
+                }
+            });
+            
+            let titleDuplicates = 0;
+            let descDuplicates = 0;
+            Object.values(titleCounts).forEach(count => { if (count > 1) titleDuplicates += (count - 1); });
+            Object.values(descCounts).forEach(count => { if (count > 1) descDuplicates += (count - 1); });
+            // ===== END DUPLICATE DETECTION =====
+            
+            saveHistory();
+            pins = basePins;
+            filteredPins = [...pins];
+
+            // --- REPACK DATES IF ANY WERE DELETED ---
+            if (autoDeletedCount > 0) {
+                repackPublishDatesWithOriginalTimes(originalDates);
+            }
+            // ----------------------------------------
+
+            renderPins();
+            updateUI();
+            
+            // Enhanced feedback message
+            const fileCount = results.length;
+            const fileWord = fileCount === 1 ? 'file' : 'files';
+            let message = '';
+            
+            if (isReplace) {
+                message = `Loaded ${fileCount} ${fileWord}, sorted ${pins.length} pins chronologically ✓`;
+            } else {
+                message = `Added ${newPinsAdded} new pins to existing ${existingPinsCount} pins, re-sorted ${pins.length} total ✓`;
             }
             
-            // Track description duplicates
-            if (desc) {
-                if (!descCounts[desc]) {
-                    descCounts[desc] = 1;
-                } else {
-                    descCounts[desc]++;
-                    const num = descCounts[desc];
-                    
-                    // Update description with #2, #3, etc
-                    pin['Description'] = `${desc} #${num}`;
-                }
+            if (titleDuplicates > 0 || descDuplicates > 0) {
+                const dupParts = [];
+                if (titleDuplicates > 0) dupParts.push(`${titleDuplicates} title duplicates`);
+                if (descDuplicates > 0) dupParts.push(`${descDuplicates} description duplicates`);
+                message += ` (Renamed: ${dupParts.join(', ')})`;
             }
-        });
-        
-        // Count how many duplicates were found
-        let titleDuplicates = 0;
-        let descDuplicates = 0;
-        Object.values(titleCounts).forEach(count => { if (count > 1) titleDuplicates += (count - 1); });
-        Object.values(descCounts).forEach(count => { if (count > 1) descDuplicates += (count - 1); });
-        
-        // ===== END DUPLICATE DETECTION =====
-        
-        saveHistory();
-        pins = basePins;
-        filteredPins = [...pins];
 
-        // --- NEW: REPACK DATES ---
-        if (autoDeletedCount > 0) {
-            repackPublishDatesWithOriginalTimes(originalDates);
-        }
-        // -------------------------
+            if (autoDeletedCount > 0) {
+                message += ` [Auto-deleted ${autoDeletedCount} broken images]`;
+            }
+            
+            showToast(message, 'success');
+            
+            // Clear pending files and file input
+            pendingFiles = null;
+            document.getElementById('fileInput').value = '';
+            
+        }); // End of Promise.all for images
 
-        renderPins();
-        updateUI();
-        
-        // Enhanced feedback message
-        const fileCount = results.length;
-        const fileWord = fileCount === 1 ? 'file' : 'files';
-        let message = '';
-        
-        if (isReplace) {
-            message = `Loaded ${fileCount} ${fileWord}, sorted ${pins.length} pins chronologically ✓`;
-        } else {
-            message = `Added ${newPinsAdded} new pins to existing ${existingPinsCount} pins, re-sorted ${pins.length} total ✓`;
-        }
-        
-        // Add duplicate info to message
-        if (titleDuplicates > 0 || descDuplicates > 0) {
-            const dupParts = [];
-            if (titleDuplicates > 0) dupParts.push(`${titleDuplicates} title duplicates`);
-            if (descDuplicates > 0) dupParts.push(`${descDuplicates} description duplicates`);
-            message += ` (Renamed: ${dupParts.join(', ')})`;
-        }
-
-        // --- NEW: ADD DELETION INFO TO MESSAGE ---
-        if (autoDeletedCount > 0) {
-            message += ` [Auto-deleted ${autoDeletedCount} without images]`;
-        }
-        // -----------------------------------------
-        
-        showToast(message, 'success');
-        
-        // Clear pending files and file input
-        pendingFiles = null;
-        document.getElementById('fileInput').value = '';
     }).catch(err => {
         console.error(err);
         showToast('Error loading CSV', 'error');
