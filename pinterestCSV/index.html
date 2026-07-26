@@ -1268,12 +1268,19 @@ function processFileLoad(mode) {
             return a._sourceRowIndex - b._sourceRowIndex;
         });
         
-                // Clean up temporary metadata
+        // Clean up temporary metadata
         basePins.forEach(pin => {
             delete pin._sourceFileIndex;
             delete pin._sourceRowIndex;
         });
         
+        // --- NEW: AUTO-DELETE PINS WITHOUT IMAGES ---
+        const originalDates = basePins.map(p => p['Publish date']).filter(Boolean);
+        const validPins = basePins.filter(pin => (pin['Media URL'] || pin['Thumbnail'] || '').trim() !== '');
+        const autoDeletedCount = basePins.length - validPins.length;
+        basePins = validPins;
+        // --------------------------------------------
+
         // ===== DUPLICATE DETECTION & NUMBERING =====
         const titleCounts = {};
         const descCounts = {};
@@ -1330,6 +1337,13 @@ function processFileLoad(mode) {
         saveHistory();
         pins = basePins;
         filteredPins = [...pins];
+
+        // --- NEW: REPACK DATES ---
+        if (autoDeletedCount > 0) {
+            repackPublishDatesWithOriginalTimes(originalDates);
+        }
+        // -------------------------
+
         renderPins();
         updateUI();
         
@@ -1351,6 +1365,12 @@ function processFileLoad(mode) {
             if (descDuplicates > 0) dupParts.push(`${descDuplicates} description duplicates`);
             message += ` (Renamed: ${dupParts.join(', ')})`;
         }
+
+        // --- NEW: ADD DELETION INFO TO MESSAGE ---
+        if (autoDeletedCount > 0) {
+            message += ` [Auto-deleted ${autoDeletedCount} without images]`;
+        }
+        // -----------------------------------------
         
         showToast(message, 'success');
         
