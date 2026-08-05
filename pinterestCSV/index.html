@@ -2594,13 +2594,32 @@ if (searchValue.trim()) {
             const state = history.pop();
             pins = state.pins;
             selectedIndices = state.selected;
+            
             // Re-apply search filter if active
-    const searchValue = document.getElementById('searchInput').value;
-    if (searchValue.trim()) {
-        searchPins();
-    } else {
-        filteredPins = [...pins];
-    }
+            const searchValue = document.getElementById('searchInput').value;
+            if (searchValue.trim()) {
+                searchPins();
+            } else {
+                filteredPins = [...pins];
+            }
+            
+            // --- NEW: REFRESH PREVIEW IF ACTIVE ---
+            if (previewMode) {
+                previewVisiblePins = getVisiblePins();
+                // Ensure our current position doesn't exceed the newly restored list length
+                if (previewCurrentIndex >= previewVisiblePins.length) {
+                    previewCurrentIndex = Math.max(0, previewVisiblePins.length - 1);
+                }
+                
+                // If we undid our way back from 0 pins, make sure the overlay shows again
+                if (previewVisiblePins.length > 0) {
+                    updatePreviewImage();
+                } else {
+                    hideImagePreview();
+                }
+            }
+            // --------------------------------------
+            
             renderPins(); updateUI();
             showToast('Undo successful', 'success');
         }
