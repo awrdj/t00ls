@@ -1881,7 +1881,18 @@ function updateDockForPreview() {
         dockBtns.link.disabled = !hasSelection;
         dockBtns.board.disabled = !hasSelection;
         dockBtns.keywords.disabled = !hasSelection;
-        dockBtns.swap.disabled = selectedIndices.size !== 2;
+        
+        // --- PREVIEW DOCK SWAP/SHUFFLE SYNC ---
+        dockBtns.swap.disabled = selectedIndices.size < 2;
+        if (selectedIndices.size === 2) {
+            dockBtns.swap.innerHTML = '🔁 <span class="label">Swap</span>';
+        } else if (selectedIndices.size > 2) {
+            dockBtns.swap.innerHTML = '🔀 <span class="label">Shuffle</span>';
+        } else {
+            dockBtns.swap.innerHTML = '🔁 <span class="label">Swap</span>';
+        }
+        // --------------------------------------
+        
         dockBtns.reschedule.disabled = !hasData;
         
         // Re-enable Load and Export buttons
@@ -2314,25 +2325,56 @@ if (searchValue.trim()) {
             timeAdjustIndex = null;
         }
 
-        // Swap two selected pins
+        // Swap or Shuffle selected pins
         function swapSelected() {
-            if (selectedIndices.size !== 2) return;
-            const [a,b] = Array.from(selectedIndices).sort((x,y)=>x-y);
+            const size = selectedIndices.size;
+            if (size < 2) return;
+            
             saveHistory();
-            const dA = pins[a]['Publish date'];
-            const dB = pins[b]['Publish date'];
-            const tmp = pins[a]; pins[a] = pins[b]; pins[b] = tmp;
-            pins[a]['Publish date'] = dA;
-            pins[b]['Publish date'] = dB;
+            
+            if (size === 2) {
+                // Original Swap Logic
+                const [a, b] = Array.from(selectedIndices).sort((x, y) => x - y);
+                const dA = pins[a]['Publish date'];
+                const dB = pins[b]['Publish date'];
+                const tmp = pins[a]; 
+                pins[a] = pins[b]; 
+                pins[b] = tmp;
+                pins[a]['Publish date'] = dA;
+                pins[b]['Publish date'] = dB;
+                showToast('Swapped the two selected pins (times preserved)', 'success');
+            } else {
+                // New Shuffle Logic (3 or more pins)
+                const indices = Array.from(selectedIndices).sort((a, b) => a - b);
+                
+                // Extract just the pins we want to shuffle, and their original dates
+                const selectedPins = indices.map(i => pins[i]);
+                const originalDates = indices.map(i => pins[i]['Publish date']);
+                
+                // Fisher-Yates shuffle algorithm for the selected pins
+                for (let i = selectedPins.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [selectedPins[i], selectedPins[j]] = [selectedPins[j], selectedPins[i]];
+                }
+                
+                // Re-assign the original times back into the newly shuffled pins, then place them in the main array
+                indices.forEach((origIdx, i) => {
+                    const pin = selectedPins[i];
+                    pin['Publish date'] = originalDates[i];
+                    pins[origIdx] = pin;
+                });
+                
+                showToast(`Shuffled ${size} pins (times preserved)`, 'success');
+            }
+            
             // Re-apply search filter if active
-const searchValue = document.getElementById('searchInput').value;
-if (searchValue.trim()) {
-    searchPins();
-} else {
-    filteredPins = [...pins];
-}
+            const searchValue = document.getElementById('searchInput').value;
+            if (searchValue.trim()) {
+                searchPins();
+            } else {
+                filteredPins = [...pins];
+            }
             renderPins(); updateUI();
-            showToast('Swapped the two selected pins (times preserved)', 'success');
         }
 
         // Reschedule All
@@ -2612,7 +2654,20 @@ if (searchValue.trim()) {
 
     document.getElementById('dockExportDropdown').disabled = !hasData;
             
-            document.getElementById('dockSwap').disabled = selectedIndices.size !== 2;
+            // --- NEW: DYNAMIC SWAP/SHUFFLE BUTTON ---
+            const swapBtn = document.getElementById('dockSwap');
+            if (selectedIndices.size === 2) {
+                swapBtn.disabled = false;
+                swapBtn.innerHTML = '🔁 <span class="label">Swap</span>';
+            } else if (selectedIndices.size > 2) {
+                swapBtn.disabled = false;
+                swapBtn.innerHTML = '🔀 <span class="label">Shuffle</span>';
+            } else {
+                swapBtn.disabled = true;
+                swapBtn.innerHTML = '🔁 <span class="label">Swap</span>';
+            }
+            // ----------------------------------------
+            
             document.getElementById('dockReschedule').disabled = !hasData;
         }
         function updateStats() {
