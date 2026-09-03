@@ -1740,17 +1740,18 @@ card.addEventListener('click', e => {
 
         // Image preview
 function showImagePreview(imageUrl, pinIndex = null) {
+    /* --- OLD LOGIC: Warn user and clear selections ---
     const selectedCount = Array.from(selectedIndices).length;
-    
-    // If more than 1 selected, show warning modal
     if (selectedCount > 1) {
         pendingPreviewIndex = pinIndex;
         document.getElementById('previewWarningCount').textContent = selectedCount;
         document.getElementById('previewWarningModal').classList.add('active');
         return;
     }
-    
-    // Otherwise open directly
+    openPreviewDirect(pinIndex);
+    -------------------------------------------------- */
+
+    // --- NEW LOGIC: Context-Aware Smart Preview ---
     openPreviewDirect(pinIndex);
 }
 
@@ -1761,13 +1762,23 @@ function confirmOpenPreview() {
 }
 
 function openPreviewDirect(pinIndex) {
-    // Clear all selections
+    /* --- OLD LOGIC: Clear selections on open ---
     selectedIndices.clear();
     updateUI();
     renderPins();
+    -------------------------------------------- */
     
-    // Get visible pins
-    previewVisiblePins = getVisiblePins();
+    // Determine if we clicked a selected pin (Scenario A) or unselected pin (Scenario B)
+    const isClickingSelectedPin = pinIndex !== null && selectedIndices.has(pinIndex);
+    const visibleFiltered = getVisiblePins();
+    
+    if (isClickingSelectedPin) {
+        // Scenario A: Load ONLY the selected pins into the previewer (in visible order)
+        previewVisiblePins = visibleFiltered.filter(p => selectedIndices.has(pins.indexOf(p)));
+    } else {
+        // Scenario B: Load ALL filtered pins, but leave background selections intact
+        previewVisiblePins = visibleFiltered;
+    }
     
     // Find index in visible pins
     if (pinIndex !== null) {
@@ -1829,6 +1840,17 @@ function deleteCurrentPreviewPin() {
     
     // Save state for undo
     saveHistory();
+
+    // --- NEW LOGIC: Adjust Selection Indices to prevent desync ---
+    selectedIndices.delete(originalIndex);
+    const newSelected = new Set();
+    selectedIndices.forEach(idx => {
+        // If a pin was after the deleted one, its index drops by 1
+        if (idx > originalIndex) newSelected.add(idx - 1);
+        else newSelected.add(idx);
+    });
+    selectedIndices = newSelected;
+    // -------------------------------------------------------------
     
     // Delete the pin
     pins.splice(originalIndex, 1);
