@@ -1117,7 +1117,7 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
                 📋 <span class="label">Board</span>
             </button>
             <button class="dock-btn" id="dockKeywords" onclick="showChangeKeywordsModal()" disabled>
-                🏷️ <span class="label">Keywords</span>
+                🏷️ <span class="label">KWs</span>
             </button>
             <button class="dock-btn" id="dockNegKWs" onclick="showNegKWsModal()" disabled>
                 🚫 <span class="label">Neg KWs</span>
@@ -1189,6 +1189,7 @@ let lastSelectedIndex = null;
 let previewCurrentIndex = 0;
 let previewVisiblePins = [];
 let pendingPreviewIndex = null;
+let isPreviewingSelectedOnly = false; // Tracks context for safe Undos
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1371,6 +1372,14 @@ function processFileLoad(mode) {
             Object.values(titleCounts).forEach(count => { if (count > 1) titleDuplicates += (count - 1); });
             Object.values(descCounts).forEach(count => { if (count > 1) descDuplicates += (count - 1); });
             // ===== END DUPLICATE DETECTION =====
+            
+            // --- NEW: Prevent Ghost Selections and History Clashes ---
+            if (isReplace) {
+                selectedIndices.clear();
+                lastSelectedIndex = null;
+                history = []; 
+            }
+            // ---------------------------------------------------------
             
             saveHistory();
             pins = basePins;
@@ -1770,6 +1779,7 @@ function openPreviewDirect(pinIndex) {
     
     // Determine if we clicked a selected pin (Scenario A) or unselected pin (Scenario B)
     const isClickingSelectedPin = pinIndex !== null && selectedIndices.has(pinIndex);
+    isPreviewingSelectedOnly = isClickingSelectedPin; // Save state for Undo function
     const visibleFiltered = getVisiblePins();
     
     if (isClickingSelectedPin) {
@@ -2685,7 +2695,14 @@ if (searchValue.trim()) {
             
             // --- NEW: REFRESH PREVIEW IF ACTIVE ---
             if (previewMode) {
-                previewVisiblePins = getVisiblePins();
+                // Respect the preview context we were in before the undo
+                const visibleFiltered = getVisiblePins();
+                if (isPreviewingSelectedOnly) {
+                    previewVisiblePins = visibleFiltered.filter(p => selectedIndices.has(pins.indexOf(p)));
+                } else {
+                    previewVisiblePins = visibleFiltered;
+                }
+                
                 // Ensure our current position doesn't exceed the newly restored list length
                 if (previewCurrentIndex >= previewVisiblePins.length) {
                     previewCurrentIndex = Math.max(0, previewVisiblePins.length - 1);
