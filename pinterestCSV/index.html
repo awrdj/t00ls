@@ -1173,7 +1173,7 @@ body:not(.dark-mode) .dock-btn:not(:disabled):hover {
     <div class="dock-indicator" id="dockIndicator" onclick="showDock()">▲ Toolbar hidden (click here or scroll up to show)</div>
 
     <script>
-        const DEFAULT_NEG_KEYWORDS = ["adultery", "alcohol", "astrology", "babe", "bacon", "bdsm", "beer", "betting", "bible", "bikini", "bisexual", "blackjack", "bodyart", "bodycon", "bodymodification", "booty", "boudoir", "boyfriend", "brandy", "buddha", "buddhist", "camgirl", "cannabis", "casino", "chakra", "champagne", "christian", "christianity", "christmas", "church", "cigar", "cigarette", "cleavage", "cocaine", "cocktail", "cosplay", "crossdressing", "crucifix", "dating", "deity", "demon", "devil", "diwali", "drag", "drugs", "easter", "elf", "erotic", "escort", "fetish", "fornication", "gambling", "ganesh", "gay", "gelatin", "gin", "girlfriend", "goddess", "halloween", "ham", "hanukkah", "heroin", "hindu", "homosexuality", "hookah", "horoscope", "horus", "idol", "idolatry", "jesus", "jewish", "jewishness", "judaism", "kiss", "krishna", "lard", "lesbian", "lesbianism", "lgbt", "lgbtq", "lingerie", "liquor", "lottery", "lucifer", "magic", "makeout", "marijuana", "naked", "nsfw", "nude", "occult", "onlyfans", "ouija", "pagan", "patrick's day", "patricksday", "paydayloan", "piercing", "playboy", "poker", "polytheism", "pork", "porn", "pornography", "portrait", "pride", "profanity", "prostitution", "queer", "reincarnation", "riba", "romantic", "rum", "saint", "santa", "santa claus", "santaclaus", "satan", "satanism", "seduce", "sexy", "shirk", "shisha", "shiva", "slotmachine", "smoking", "sodomy", "sorcery", "spell", "spells", "st patrick", "statueworship", "stpatrick", "strip", "stripper", "stvalentine", "swimsuit", "tarot", "tattoo", "tattoos", "tequila", "thanksgiving", "topless", "trans", "transgender", "transsexual", "trinity", "usury", "valentine", "valentine's", "vape", "vaping", "vishnu", "vodka", "weed", "whiskey", "wine", "witch", "witchcraft", "wizard", "xxx", "yom kippur", "yomkippur", "zodiac", "zombie"];
+        const DEFAULT_NEG_KEYWORDS = ["adultery", "alcohol", "astrology", "babe", "bacon", "bdsm", "beer", "betting", "bible", "bikini", "bisexual", "blackjack", "bodyart", "bodycon", "bodymodification", "booty", "boudoir", "boyfriend", "brandy", "buddha", "buddhist", "camgirl", "cannabis", "casino", "chakra", "champagne", "christian", "christianity", "christmas", "church", "cigar", "cigarette", "cleavage", "cocaine", "cocktail", "cosplay", "crossdressing", "crucifix", "dating", "deity", "demon", "devil", "diwali", "drag", "drugs", "easter", "elf", "erotic", "escort", "fetish", "fornication", "gambling", "ganesh", "gay", "gelatin", "gin", "girlfriend", "goddess", "halloween", "ham", "hanukkah", "heroin", "hindu", "homosexuality", "hookah", "horoscope", "horus", "idol", "idolatry", "jesus", "jewish", "jewishness", "judaism", "kiss", "krishna", "lard", "lesbian", "lesbianism", "lgbt", "lgbtq", "lingerie", "liquor", "lottery", "lucifer", "magic", "makeout", "marijuana", "naked", "nsfw", "nude", "occult", "onlyfans", "ouija", "pagan", "patrick's day", "patricksday", "paydayloan", "piercing", "playboy", "poker", "polytheism", "pork", "porn", "pornography", "portrait", "pride", "profanity", "prostitution", "queer", "reincarnation", "riba", "romantic", "rum", "saint", "santa", "santa claus", "santaclaus", "satan", "satanism", "seduce", "sexy", "shirk", "shisha", "shiva", "slotmachine", "smoking", "sodomy", "sorcery", "spell", "spells", "st patrick", "st valentine", "statueworship", "stpatrick", "strip", "stripper", "stvalentine", "swimsuit", "tarot", "tattoo", "tattoos", "tequila", "thanksgiving", "topless", "trans", "transgender", "transsexual", "trinity", "usury", "valentine", "valentine's", "vape", "vaping", "vishnu", "vodka", "weed", "whiskey", "wine", "witch", "witchcraft", "wizard", "xxx", "yom kippur", "yomkippur", "zodiac", "zombie"];
         let pendingFiles = null;
 let pins = [];
 let filteredPins = [];
@@ -1850,6 +1850,7 @@ function deleteCurrentPreviewPin() {
         else newSelected.add(idx);
     });
     selectedIndices = newSelected;
+    lastSelectedIndex = null; // Reset shift-click anchor to prevent UI desync
     // -------------------------------------------------------------
     
     // Delete the pin
@@ -1858,8 +1859,13 @@ function deleteCurrentPreviewPin() {
     // REPACK TIMES - Keep earliest scheduled times, remove latest (same as card delete)
     repackPublishDatesWithOriginalTimes(originalDates);
     
-    // Update filtered pins array
-    filteredPins = [...pins];
+    // Re-apply search filter if active to prevent background UI wipe
+    const searchValue = document.getElementById('searchInput').value;
+    if (searchValue.trim()) {
+        searchPins();
+    } else {
+        filteredPins = [...pins];
+    }
     
     // Remove from visible pins array
     previewVisiblePins.splice(previewCurrentIndex, 1);
@@ -2212,7 +2218,22 @@ function showDeleteModal() {
     const indices = indicesToDelete.sort((a,b) => b-a);
     indices.forEach(i => pins.splice(i,1));
     const deleted = indices.length;
-    selectedIndices.clear();
+    
+    // If deleting via quick-action 🗑️, preserve other selections and shift them down
+    if (singlePinActionIndex !== null) {
+        selectedIndices.delete(singlePinActionIndex);
+        const newSelected = new Set();
+        selectedIndices.forEach(idx => {
+            if (idx > singlePinActionIndex) newSelected.add(idx - 1);
+            else newSelected.add(idx);
+        });
+        selectedIndices = newSelected;
+    } else {
+        // We deleted the selected batch, so clear them safely
+        selectedIndices.clear();
+    }
+    
+    lastSelectedIndex = null; // Reset shift-click anchor
     singlePinActionIndex = null;
     
     repackPublishDatesWithOriginalTimes(originalDates);
@@ -2785,6 +2806,7 @@ if (searchValue.trim()) {
                 return;
             }
 
+            saveHistory(); // Allow user to undo this bulk selection
             closeModal('negKWsModal');
             
             let matchCount = 0;
