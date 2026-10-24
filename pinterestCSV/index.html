@@ -1345,7 +1345,14 @@ function processFileLoad(mode) {
                     } else {
                         titleCounts[title]++;
                         const num = titleCounts[title];
-                        pin['Title'] = `${title} #${num}`;
+                        
+                        const suffix = ` #${num}`;
+                        let safeTitle = title;
+                        if (safeTitle.length + suffix.length > 100) {
+                            safeTitle = safeTitle.substring(0, 100 - suffix.length).trim();
+                        }
+                        pin['Title'] = `${safeTitle}${suffix}`;
+                        
                         if (pin['Link']) {
                             const linkParts = pin['Link'].split('?');
                             if (linkParts.length === 2) {
