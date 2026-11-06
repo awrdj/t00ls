@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Chat Viewer (2026 Edition)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- JSZip for handling .zip exports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- OggOpusDecoder WebAssembly fallback for Safari/iOS & stubborn .opus voice notes -->
+    <script src="https://cdn.jsdelivr.net/npm/ogg-opus-decoder@1.6.2/dist/ogg-opus-decoder.min.js"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #d1d7db;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Crisp SVG WhatsApp Chat Background Pattern */
+        .chat-bg {
+            background-color: #efeae2;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px), radial-gradient(#cbd5e1 1px, #efeae2 1px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+        }
+
+        .bubble {
+            max-width: 82%;
+            word-wrap: break-word;
+            position: relative;
+            box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
+        }
+
+        @media (min-width: 768px) {
+            .bubble {
+                max-width: 65%;
+            }
+        }
+
+        .bubble.sent {
+            background-color: #d9fdd3;
+            border-radius: 8px 0 8px 8px;
+        }
+
+        .bubble.received {
+            background-color: #ffffff;
+            border-radius: 0 8px 8px 8px;
+        }
+
+        .bubble-tail-sent {
+            position: absolute;
+            top: 0;
+            right: -8px;
+            width: 8px;
+            height: 13px;
+            background: radial-gradient(circle at bottom right, transparent 8px, #d9fdd3 0);
+        }
+
+        .bubble-tail-received {
+            position: absolute;
+            top: 0;
+            left: -8px;
+            width: 8px;
+            height: 13px;
+            background: radial-gradient(circle at bottom left, transparent 8px, #ffffff 0);
+        }
+
+        .system-msg {
+            background-color: #ffeecd;
+            color: #54656f;
+            box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(17, 27, 33, 0.25);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(17, 27, 33, 0.4);
+        }
+
+        #upload-screen.dragover .drop-zone {
+            background-color: #f0fdf4;
+            border-color: #25D366;
+            transform: scale(1.01);
+        }
+
+        /* Audio Player Tweaks */
+        audio::-webkit-media-controls-panel {
+            background-color: transparent;
+        }
+        
+        /* Highlight animation for jump-to-message */
+        @keyframes highlightPulse {
+            0% { background-color: rgba(37, 211, 102, 0.4); }
+            100% { background-color: transparent; }
+        }
+        .highlight-row {
+            animation: highlightPulse 2.5s ease-out;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toast Notification Banner -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Upload Screen -->
+    <div id="upload-screen" class="flex-1 flex flex-col items-center justify-center p-4 md:p-6 transition-all duration-300">
+        <div class="drop-zone bg-white p-8 md:p-10 rounded-2xl shadow-xl max-w-xl w-full text-center border-2 border-dashed border-gray-300 transition-all duration-200">
+            <div class="w-20 h-20 bg-[#e8f8ee] text-[#25D366] rounded-full flex items-center justify-center text-5xl mx-auto mb-5 shadow-inner">
+                <i class="fab fa-whatsapp"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">WhatsApp Chat & Media Viewer</h1>
+            <p class="text-gray-500 mb-6 text-sm leading-relaxed">
+                Fast, future-proof local parser for your exported WhatsApp <code class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">.zip</code> or <code class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">.txt</code> archives. 100% private in-browser processing.
+            </p>
+            
+            <input type="file" id="file-input" class="hidden" accept=".txt,.zip" multiple>
+            <input type="file" id="folder-input" class="hidden" webkitdirectory directory multiple>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button onclick="document.getElementById('folder-input').click()" class="bg-[#00a884] hover:bg-[#008f6f] text-white font-semibold py-3 px-6 rounded-xl shadow-md hover:shadow-lg transition duration-200 flex items-center justify-center gap-2" title="Best for performance! Select the extracted folder.">
+                    <i class="fas fa-folder-tree"></i> Open Extracted Folder
+                </button>
+                <button onclick="document.getElementById('file-input').click()" class="bg-[#25D366] hover:bg-[#1da851] text-white font-semibold py-3 px-5 rounded-xl shadow-md hover:shadow-lg transition duration-200 flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-file-archive"></i> Open .ZIP or .TXT
+                </button>
+                <button onclick="loadDemoChat()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-5 rounded-xl transition duration-200 flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-bolt text-amber-500"></i> Load 2026 Demo
+                </button>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-gray-100 grid grid-cols-3 gap-2 text-left text-xs text-gray-500">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-check-circle text-[#25D366]"></i>
+                    <span>Opus Voice Notes</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-check-circle text-[#25D366]"></i>
+                    <span>Media Gallery</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-check-circle text-[#25D366]"></i>
+                    <span>2026 Formats</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="chat-screen" class="hidden flex-1 flex w-full h-full max-w-[1700px] mx-auto overflow-hidden bg-white shadow-2xl relative">
+        
+        <!-- Mobile Sidebar Backdrop -->
+        <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/40 z-20 hidden md:hidden"></div>
+
+        <!-- Sidebar (Stats, Users, Media Summary) -->
+        <div id="sidebar" class="fixed md:static inset-y-0 left-0 z-30 w-[300px] lg:w-[350px] bg-white border-r border-gray-200 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-200 shrink-0">
+            <!-- Sidebar Header -->
+            <div class="bg-[#f0f2f5] h-16 flex items-center px-4 justify-between border-b border-gray-200 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-[#00a884] flex items-center justify-center text-white text-lg shadow-sm">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-[#111b21] block text-sm leading-tight">Chat Details</span>
+                        <span id="sidebar-date-range" class="text-[11px] text-[#667781]">Overview</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button onclick="resetApp()" class="p-2 text-gray-500 hover:text-red-600 hover:bg-gray-200 rounded-lg transition" title="Load Another File">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                    <button onclick="toggleMobileSidebar()" class="md:hidden p-2 text-gray-500 hover:text-gray-800 rounded-lg">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sidebar Body -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-6">
+                <!-- Identify "Me" -->
+                <div class="bg-[#f8f9fa] p-3.5 rounded-xl border border-gray-200/80">
+                    <label class="text-xs font-semibold text-[#111b21] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i class="fas fa-user-check text-[#00a884]"></i> Active Perspective ("Me")
+                    </label>
+                    <select id="me-selector" class="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#00a884] font-medium text-gray-800">
+                        <option value="">Select your name...</option>
+                    </select>
+                    <p class="text-[11px] text-gray-500 mt-1.5">Aligns selected user's messages to the right in green.</p>
+                </div>
+
+                <!-- Media Quick Breakdown -->
+                <div>
+                    <div class="flex items-center justify-between mb-2.5">
+                        <h3 class="text-xs font-semibold text-[#111b21] uppercase tracking-wider">Media & Files</h3>
+                        <button onclick="switchMainTab('gallery')" class="text-xs text-[#00a884] hover:underline font-medium">View All</button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <button onclick="openGalleryCategory('photos')" class="bg-[#f0f2f5] hover:bg-gray-200/80 p-2.5 rounded-xl transition flex flex-col items-center">
+                            <i class="fas fa-image text-blue-500 text-lg mb-1"></i>
+                            <span id="count-photos" class="font-bold text-sm text-[#111b21]">0</span>
+                            <span class="text-[10px] text-[#667781]">Photos</span>
+                        </button>
+                        <button onclick="openGalleryCategory('videos')" class="bg-[#f0f2f5] hover:bg-gray-200/80 p-2.5 rounded-xl transition flex flex-col items-center">
+                            <i class="fas fa-video text-purple-500 text-lg mb-1"></i>
+                            <span id="count-videos" class="font-bold text-sm text-[#111b21]">0</span>
+                            <span class="text-[10px] text-[#667781]">Videos</span>
+                        </button>
+                        <button onclick="openGalleryCategory('gifs')" class="bg-[#f0f2f5] hover:bg-gray-200/80 p-2.5 rounded-xl transition flex flex-col items-center">
+                            <i class="fas fa-film text-pink-500 text-lg mb-1"></i>
+                            <span id="count-gifs" class="font-bold text-sm text-[#111b21]">0</span>
+                            <span class="text-[10px] text-[#667781]">GIFs</span>
+                        </button>
+                        <button onclick="openGalleryCategory('voicenotes')" class="bg-[#f0f2f5] hover:bg-gray-200/80 p-2.5 rounded-xl transition flex flex-col items-center">
+                            <i class="fas fa-microphone text-[#00a884] text-lg mb-1"></i>
+                            <span id="count-voicenotes" class="font-bold text-sm text-[#111b21]">0</span>
+                            <span class="text-[10px] text-[#667781]">Voice Notes</span>
+                        </button>
+                        <button onclick="openGalleryCategory('audios')" class="bg-[#f0f2f5] hover:bg-gray-200/80 p-2.5 rounded-xl transition flex flex-col items-center">
+                            <i class="fas fa-headphones text-amber-500 text-lg mb-1"></i>
+                            <span id="count-audios" class="font-bold text-sm text-[#111b21]">0</span>
+                            <span class="text-[10px] text-[#667781]">Audios</span>
+                        </button>
+                        <button onclick="openGalleryCategory('docs')" class="bg-[#f0f2f5] hover:bg-gray-200/80 p-2.5 rounded-xl transition flex flex-col items-center">
+                            <i class="fas fa-file-alt text-slate-600 text-lg mb-1"></i>
+                            <span id="count-docs" class="font-bold text-sm text-[#111b21]">0</span>
+                            <span class="text-[10px] text-[#667781]">Docs/Stickers</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Participants Breakdown -->
+                <div>
+                    <h3 class="text-xs font-semibold text-[#111b21] uppercase tracking-wider mb-2.5">Participants</h3>
+                    <ul id="participant-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+
+                <!-- Overall Stats -->
+                <div>
+                    <h3 class="text-xs font-semibold text-[#111b21] uppercase tracking-wider mb-2.5">Archive Summary</h3>
+                    <div class="bg-[#f0f2f5] rounded-xl p-3.5 text-xs text-[#3b4a54] space-y-2">
+                        <div class="flex justify-between"><span>Total Messages:</span> <span id="stat-total" class="font-bold text-[#111b21]">0</span></div>
+                        <div class="flex justify-between"><span>Total Media Matched:</span> <span id="stat-media" class="font-bold text-[#00a884]">0</span></div>
+                        <div class="flex justify-between"><span>System Events:</span> <span id="stat-system" class="font-semibold">0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Main Container (Chat + Media Gallery Views) -->
+        <div class="flex-1 flex flex-col h-full relative overflow-hidden">
+            
+            <!-- Unified Top Header -->
+            <div class="bg-[#f0f2f5] h-16 flex items-center px-3 md:px-5 justify-between border-b border-gray-200 z-10 shrink-0 gap-2">
+                <div class="flex items-center gap-3 min-w-0">
+                    <button onclick="toggleMobileSidebar()" class="md:hidden p-2 text-gray-600 hover:bg-gray-200 rounded-lg">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white text-lg shrink-0 font-semibold" id="chat-avatar">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <div class="truncate">
+                        <h2 id="chat-title" class="font-semibold text-[#111b21] text-sm md:text-base truncate">Exported Chat</h2>
+                        <p class="text-[11px] text-[#667781] truncate" id="chat-subtitle">Parsed successfully</p>
+                    </div>
+                </div>
+
+                <!-- Center/Right Controls: Search & View Switcher -->
+                <div class="flex items-center gap-2">
+                    <!-- Search Bar -->
+                    <div class="relative hidden sm:block w-44 lg:w-64">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input type="text" id="search-input" placeholder="Search messages or files..." class="w-full pl-8 pr-7 py-1.5 bg-white rounded-lg text-xs border border-gray-200 focus:outline-none focus:border-[#00a884]">
+                        <button id="clear-search" onclick="clearSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </div>
+
+                    <!-- View Tabs (Chat vs Media Gallery) -->
+                    <div class="bg-gray-200/80 p-1 rounded-xl flex items-center text-xs font-medium shrink-0">
+                        <button id="tab-btn-chat" onclick="switchMainTab('chat')" class="px-3 py-1.5 rounded-lg bg-white text-[#111b21] shadow-sm transition flex items-center gap-1.5">
+                            <i class="fas fa-comment-dots text-[#00a884]"></i>
+                            <span>Chat</span>
+                        </button>
+                        <button id="tab-btn-gallery" onclick="switchMainTab('gallery')" class="px-3 py-1.5 rounded-lg text-gray-600 hover:text-[#111b21] transition flex items-center gap-1.5">
+                            <i class="fas fa-photo-video text-purple-600"></i>
+                            <span>Media</span>
+                            <span id="gallery-badge" class="bg-[#00a884] text-white text-[10px] px-1.5 py-0.2 rounded-full">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Search Bar -->
+            <div class="sm:hidden bg-[#f0f2f5] px-3 pb-2 border-b border-gray-200">
+                <div class="relative w-full">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="text" id="mobile-search-input" placeholder="Search messages or media..." class="w-full pl-8 pr-4 py-1.5 bg-white rounded-lg text-xs border border-gray-200 focus:outline-none focus:border-[#00a884]">
+                </div>
+            </div>
+
+            <!-- VIEW 1: Chat Messages View -->
+            <div id="view-chat" class="flex-1 flex flex-col h-full overflow-hidden chat-bg relative">
+                <!-- Pinned jump buttons -->
+                <div class="absolute right-4 bottom-16 z-20 flex flex-col gap-2">
+                    <button onclick="scrollToTop()" class="w-9 h-9 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center text-gray-600 transition" title="Jump to Top">
+                        <i class="fas fa-angle-double-up text-sm"></i>
+                    </button>
+                    <button onclick="scrollToBottom()" class="w-9 h-9 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center text-gray-600 transition" title="Jump to Bottom">
+                        <i class="fas fa-angle-double-down text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Messages Container -->
+                <div id="messages-container" class="flex-1 overflow-y-auto px-3 md:px-10 py-4 flex flex-col gap-1">
+                    <!-- Chunked messages rendered here -->
+                </div>
+
+                <!-- Chat Footer -->
+                <div class="bg-[#f0f2f5] px-4 py-2.5 flex items-center justify-between text-xs text-[#54656f] border-t border-gray-200 shrink-0">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-shield-alt text-[#00a884]"></i>
+                        <span>Local Read-Only Archive Mode</span>
+                    </div>
+                    <div id="render-status" class="text-[11px] font-medium text-gray-500"></div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: Media Gallery View -->
+            <div id="view-gallery" class="hidden flex-1 flex flex-col h-full bg-[#f8f9fa] overflow-hidden">
+                <!-- Gallery Filter Sub-header -->
+                <div class="bg-white px-4 py-3 border-b border-gray-200 flex items-center gap-2 overflow-x-auto shrink-0">
+                    <button onclick="filterGallery('all')" data-cat="all" class="gallery-pill bg-[#00a884] text-white px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5">
+                        <i class="fas fa-layer-group"></i> All <span id="pill-count-all" class="opacity-80">(0)</span>
+                    </button>
+                    <button onclick="filterGallery('photos')" data-cat="photos" class="gallery-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5">
+                        <i class="fas fa-image text-blue-500"></i> Photos <span id="pill-count-photos" class="opacity-75">(0)</span>
+                    </button>
+                    <button onclick="filterGallery('videos')" data-cat="videos" class="gallery-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5">
+                        <i class="fas fa-video text-purple-500"></i> Videos <span id="pill-count-videos" class="opacity-75">(0)</span>
+                    </button>
+                    <button onclick="filterGallery('gifs')" data-cat="gifs" class="gallery-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5">
+                        <i class="fas fa-film text-pink-500"></i> GIFs <span id="pill-count-gifs" class="opacity-75">(0)</span>
+                    </button>
+                    <button onclick="filterGallery('voicenotes')" data-cat="voicenotes" class="gallery-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5">
+                        <i class="fas fa-microphone text-[#00a884]"></i> Voice Notes <span id="pill-count-voicenotes" class="opacity-75">(0)</span>
+                    </button>
+                    <button onclick="filterGallery('audios')" data-cat="audios" class="gallery-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5">
+                        <i class="fas fa-headphones text-amber-500"></i> Audios <span id="pill-count-audios" class="opacity-75">(0)</span>
+                    </button>
+                    <button onclick="filterGallery('stickers')" data-cat="stickers" class="gallery-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5">
+                        <i class="fas fa-sticky-note text-emerald-500"></i> Stickers <span id="pill-count-stickers" class="opacity-75">(0)</span>
+                    </button>
+                    <button onclick="filterGallery('docs')" data-cat="docs" class="gallery-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5">
+                        <i class="fas fa-file-alt text-slate-600"></i> Documents <span id="pill-count-docs" class="opacity-75">(0)</span>
+                    </button>
+                </div>
+
+                <!-- Gallery Grid Container -->
+                <div id="gallery-container" class="flex-1 overflow-y-auto p-4 md:p-6">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Lightbox Modal for Photos / Videos -->
+    <div id="lightbox-modal" class="fixed inset-0 bg-black/95 z-50 hidden flex-col justify-between p-4 select-none">
+        <div class="flex items-center justify-between text-white max-w-6xl w-full mx-auto py-2 z-20">
+            <div class="min-w-0 pr-4">
+                <div class="flex items-center gap-2">
+                    <h4 id="lightbox-title" class="font-medium text-sm truncate">filename.jpg</h4>
+                    <span id="lightbox-counter" class="bg-white/15 text-white text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0">1 / 1</span>
+                </div>
+                <p id="lightbox-meta" class="text-xs text-gray-400 truncate">Sender • Date</p>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                <button id="lightbox-jump-btn" class="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+                    <i class="fas fa-comment-alt"></i> <span class="hidden sm:inline">Locate in Chat</span>
+                </button>
+                <a id="lightbox-download" href="#" download class="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+                    <i class="fas fa-download"></i> <span class="hidden sm:inline">Download</span>
+                </a>
+                <button onclick="closeLightbox()" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg transition" title="Close (Esc)">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex items-center justify-center relative overflow-hidden my-2">
+            <!-- Previous Chevron Button -->
+            <button id="lightbox-prev" onclick="navigateLightbox(-1)" class="absolute left-2 sm:left-6 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/80 border border-white/15 text-white flex items-center justify-center text-lg sm:text-xl transition shadow-lg hover:scale-105 active:scale-95" title="Previous (Left Arrow)">
+                <i class="fas fa-chevron-left -ml-0.5"></i>
+            </button>
+
+            <!-- Dynamic Image or Video -->
+            <div id="lightbox-content" class="w-full h-full flex items-center justify-center px-12 sm:px-20">
+            </div>
+
+            <!-- Next Chevron Button -->
+            <button id="lightbox-next" onclick="navigateLightbox(1)" class="absolute right-2 sm:right-6 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/80 border border-white/15 text-white flex items-center justify-center text-lg sm:text-xl transition shadow-lg hover:scale-105 active:scale-95" title="Next (Right Arrow)">
+                <i class="fas fa-chevron-right ml-0.5"></i>
+            </button>
+        </div>
+
+        <div class="text-center text-[11px] text-gray-400 pb-1">
+            Use <kbd class="bg-white/10 px-1.5 py-0.5 rounded text-gray-300">←</kbd> <kbd class="bg-white/10 px-1.5 py-0.5 rounded text-gray-300">→</kbd> arrow keys to navigate • <kbd class="bg-white/10 px-1.5 py-0.5 rounded text-gray-300">Esc</kbd> to close
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-xs hidden flex-col items-center justify-center z-50 text-white p-4">
+        <div class="bg-[#111b21] p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center border border-gray-700">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-[#25D366] mb-4"></i>
+            <p id="loading-text" class="text-base font-semibold mb-2">Processing Archive...</p>
+            <div class="w-full bg-gray-700 h-2 rounded-full overflow-hidden">
+                <div id="loading-bar" class="bg-[#25D366] h-full w-1/3 transition-all duration-200"></div>
+            </div>
+            <p id="loading-subtext" class="text-xs text-gray-400 mt-2">Unpacking locally in browser memory</p>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Core Application State
+         * Future-proofed for large archives via Lazy Blob URL creation & Progressive Chunk Rendering
+         */
+        let chatMessages = [];
+        let filteredMessages = [];
+        let participants = new Map(); // name -> message count
+        let mediaRegistry = new Map(); // lowercasebasename -> MediaEntry
+        let allMediaItems = []; // Array of rich media objects linked to messages or standalone in zip
+        let primaryUser = null;
+        let currentTab = 'chat';
+        let currentGalleryCategory = 'all';
+        let searchQuery = '';
+        let currentLightboxList = [];
+        let currentLightboxIndex = -1;
+        let activeAudioController = null;
+
+        // Progressive Rendering Constants
+        const CHUNK_SIZE = 250; 
+        let renderedStartIndex = 0;
+        let renderedEndIndex = 0;
+        let isRenderingChunk = false;
+
+        // Sender Color Palette
+        const SENDER_COLORS = [
+            '#00a884', '#3b82f6', '#8b5cf6', '#ec4899', 
+            '#f59e0b', '#10b981', '#ef4444', '#6366f1'
+        ];
+        const senderColorMap = new Map();
+
+        // DOM Elements
+        const fileInput = document.getElementById('file-input');
+        const folderInput = document.getElementById('folder-input');
+        const uploadScreen = document.getElementById('upload-screen');
+        const chatScreen = document.getElementById('chat-screen');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+        const loadingSubtext = document.getElementById('loading-subtext');
+        const loadingBar = document.getElementById('loading-bar');
+        const messagesContainer = document.getElementById('messages-container');
+        const meSelector = document.getElementById('me-selector');
+        const searchInput = document.getElementById('search-input');
+        const mobileSearchInput = document.getElementById('mobile-search-input');
+
+        // Explicit MIME Type Map
+        const MIME_MAP = {
+            'opus': 'audio/ogg',
+            'ogg':  'audio/ogg',
+            'mp3':  'audio/mpeg',
+            'm4a':  'audio/mp4',
+            'aac':  'audio/aac',
+            'wav':  'audio/wav',
+            'amr':  'audio/amr',
+            'jpg':  'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png':  'image/png',
+            'webp': 'image/webp',
+            'heic': 'image/heic',
+            'avif': 'image/avif',
+            'gif':  'image/gif',
+            'mp4':  'video/mp4',
+            'mov':  'video/quicktime',
+            '3gp':  'video/3gpp',
+            'webm': 'video/webm',
+            'mkv':  'video/x-matroska',
+            'pdf':  'application/pdf',
+            'vcf':  'text/vcard',
+            'txt':  'text/plain'
+        };
+
+        // Event Listeners
+        fileInput.addEventListener('change', handleFileSelection);
+        folderInput.addEventListener('change', handleFileSelection);
+        
+        meSelector.addEventListener('change', (e) => {
+            primaryUser = e.target.value;
+            renderInitialMessages(true);
+        });
+
+        // Search Debounce
+        let searchTimeout = null;
+        const handleSearch = (val) => {
+            searchQuery = val.trim().toLowerCase();
+            document.getElementById('clear-search').classList.toggle('hidden', !searchQuery);
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                applySearchFilter();
+            }, 180);
+        };
+
+        searchInput.addEventListener('input', (e) => {
+            mobileSearchInput.value = e.target.value;
+            handleSearch(e.target.value);
+        });
+        mobileSearchInput.addEventListener('input', (e) => {
+            searchInput.value = e.target.value;
+            handleSearch(e.target.value);
+        });
+
+        // Infinite Scroll Up / Down on Chat Container
+        messagesContainer.addEventListener('scroll', () => {
+            if (isRenderingChunk) return;
+            if (messagesContainer.scrollTop < 180 && renderedStartIndex > 0) {
+                prependMessageChunk();
+            } else if (
+                messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 250 &&
+                renderedEndIndex < filteredMessages.length
+            ) {
+                appendMessageChunk();
+            }
+        });
+
+        // Drag and Drop Support
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadScreen.classList.add('dragover');
+        });
+        document.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadScreen.classList.remove('dragover');
+        });
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadScreen.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFiles(Array.from(e.dataTransfer.files));
+            }
+        });
+
+        // Keyboard navigation for Lightbox Modal (Left, Right, Escape)
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('lightbox-modal');
+            if (modal.classList.contains('hidden')) return;
+
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeLightbox();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                navigateLightbox(-1);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                navigateLightbox(1);
+            }
+        });
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bg = type === 'error' ? 'bg-red-600' : 'bg-[#111b21]';
+            toast.className = `${bg} text-white px-4 py-3 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2.5 pointer-events-auto transition-all duration-300`;
+            toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle text-[#25D366]'} text-sm"></i> <span>${escapeHTML(message)}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function resetApp() {
+            // Revoke existing object URLs to free memory
+            mediaRegistry.forEach(entry => {
+                if (entry.blobUrl) URL.revokeObjectURL(entry.blobUrl);
+            });
+            chatMessages = [];
+            filteredMessages = [];
+            participants.clear();
+            mediaRegistry.clear();
+            allMediaItems = [];
+            fileInput.value = '';
+            chatScreen.classList.add('hidden');
+            uploadScreen.classList.remove('hidden');
+        }
+
+        async function handleFileSelection(e) {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+            await handleFiles(files);
+        }
+
+        async function handleFiles(files) {
+            showLoading("Initializing Parser...", 10, "Preparing browser memory");
+            
+            // Cleanup old state
+            mediaRegistry.forEach(entry => {
+                if (entry.blobUrl) URL.revokeObjectURL(entry.blobUrl);
+            });
+            chatMessages = [];
+            participants.clear();
+            mediaRegistry.clear();
+            allMediaItems = [];
+            senderColorMap.clear();
+
+            try {
+                const zipFile = files.find(f => f.name.toLowerCase().endsWith('.zip'));
+                let txtFile = files.find(f => f.name.toLowerCase() === '_chat.txt' || f.name.toLowerCase().includes('whatsapp chat'));
+                if (!txtFile) txtFile = files.find(f => f.name.toLowerCase().endsWith('.txt'));
+
+                if (zipFile) {
+                    document.getElementById('chat-title').textContent = zipFile.name.replace(/\.zip$/i, '');
+                    await processZipFile(zipFile);
+                } else if (txtFile) {
+                    document.getElementById('chat-title').textContent = txtFile.name.replace(/\.txt$/i, '');
+                    // Also index any loose media files selected alongside the .txt file
+                    for (const f of files) {
+                        if (f !== txtFile) {
+                            registerDirectFile(f);
+                        }
+                    }
+                    const text = await txtFile.text();
+                    await processTextFile(text);
+                } else {
+                    throw new Error("Please select a valid WhatsApp .zip or .txt export file.");
+                }
+
+                if (chatMessages.length === 0 && mediaRegistry.size === 0) {
+                    throw new Error("No messages or media could be parsed from this file.");
+                }
+
+                finalizeMediaCatalog();
+                populateUI();
+                hideLoading();
+                uploadScreen.classList.add('hidden');
+                chatScreen.classList.remove('hidden');
+            } catch (error) {
+                console.error(error);
+                hideLoading();
+                showToast(error.message || "Failed to parse file", "error");
+            }
+        }
+
+        /**
+         * Categorizes a filename into WhatsApp media buckets:
+         * photos, videos, gifs, voicenotes, audios, stickers, docs
+         */
+        function classifyMediaFile(filename) {
+            const lower = filename.toLowerCase();
+            const ext = lower.split('.').pop();
+
+            if (ext === 'webp' && (lower.includes('stk-') || lower.includes('sticker'))) {
+                return 'stickers';
+            }
+            if (ext === 'gif' || (ext === 'mp4' && lower.includes('gif'))) {
+                return 'gifs';
+            }
+            if (['jpg', 'jpeg', 'png', 'webp', 'heic', 'avif'].includes(ext)) {
+                return 'photos';
+            }
+            if (['mp4', 'mov', '3gp', 'webm', 'mkv'].includes(ext)) {
+                return 'videos';
+            }
+            if (
+                ext === 'opus' ||
+                lower.includes('ptt-') ||
+                lower.includes('audio-') && ext === 'opus' ||
+                lower.includes('voice')
+            ) {
+                return 'voicenotes';
+            }
+            if (['mp3', 'm4a', 'wav', 'aac', 'ogg', 'amr'].includes(ext)) {
+                return 'audios';
+            }
+            return 'docs';
+        }
+
+        function registerDirectFile(file) {
+            const cleanName = file.name.split('/').pop().split('\\').pop();
+            const key = cleanName.toLowerCase();
+            const ext = key.split('.').pop();
+            const category = classifyMediaFile(cleanName);
+            const mime = MIME_MAP[ext] || file.type || 'application/octet-stream';
+
+            mediaRegistry.set(key, {
+                filename: cleanName,
+                ext,
+                category,
+                mime,
+                directFile: file,
+                zipEntry: null,
+                blobUrl: null,
+                usedInMsgId: null
+            });
+        }
+
+        /**
+         * Fast Lazy-Extraction ZIP Processor
+         * Instead of unpacking all blobs up front (which freezes on large zips),
+         * we index the JSZip entries and only extract the central .txt immediately.
+         */
+        async function processZipFile(file) {
+            showLoading("Indexing ZIP Archive...", 25, "Reading central directory without full memory unpack");
+            const zip = await JSZip.loadAsync(file);
+            
+            let chatEntry = null;
+            const entries = Object.entries(zip.files);
+
+            for (const [filepath, fileData] of entries) {
+                if (fileData.dir) continue;
+                // Ignore macOS resource forks
+                if (filepath.includes('__MACOSX') || filepath.split('/').pop().startsWith('._')) continue;
+
+                const cleanName = filepath.split('/').pop().split('\\').pop();
+                const lowerName = cleanName.toLowerCase();
+
+                // Pick primary chat log (.txt)
+                if (lowerName.endsWith('.txt') && (!chatEntry || lowerName === '_chat.txt' || lowerName.includes('whatsapp'))) {
+                    chatEntry = fileData;
+                } else {
+                    const ext = lowerName.split('.').pop();
+                    const category = classifyMediaFile(cleanName);
+                    const mime = MIME_MAP[ext] || 'application/octet-stream';
+
+                    mediaRegistry.set(lowerName, {
+                        filename: cleanName,
+                        ext,
+                        category,
+                        mime,
+                        zipEntry: fileData,
+                        directFile: null,
+                        blobUrl: null,
+                        usedInMsgId: null
+                    });
+                }
+            }
+
+            if (chatEntry) {
+                showLoading("Extracting Chat Log...", 55, "Reading text stream");
+                const chatText = await chatEntry.async("string");
+                await processTextFile(chatText);
+            } else if (mediaRegistry.size > 0) {
+                showToast("ZIP contains media files but no .txt chat log. Opening Media Gallery.", "info");
+            } else {
+                throw new Error("Could not find a WhatsApp .txt file or media inside the ZIP.");
+            }
+        }
+
+        /**
+         * Raw ArrayBuffer extractor for a media entry
+         */
+        async function getMediaArrayBuffer(mediaEntry) {
+            if (!mediaEntry) return null;
+            if (mediaEntry.rawBuffer) return mediaEntry.rawBuffer;
+            if (mediaEntry.directFile) {
+                return await mediaEntry.directFile.arrayBuffer();
+            }
+            if (mediaEntry.zipEntry) {
+                return await mediaEntry.zipEntry.async("arraybuffer");
+            }
+            if (mediaEntry.blobUrl) {
+                const res = await fetch(mediaEntry.blobUrl);
+                return await res.arrayBuffer();
+            }
+            return null;
+        }
+
+        /**
+         * Parses Ogg Opus granule position to calculate exact duration in seconds
+         * (Fixes browsers showing 0:00 for WhatsApp .opus voice notes)
+         */
+        function parseOggOpusDuration(buffer) {
+            try {
+                const bytes = new Uint8Array(buffer);
+                if (bytes.length < 28) return 0;
+                // Check for "OggS" magic header
+                if (bytes[0] !== 0x4F || bytes[1] !== 0x67 || bytes[2] !== 0x67 || bytes[3] !== 0x53) {
+                    return 0;
+                }
+                const view = new DataView(buffer);
+                // Search backwards from the end for the final "OggS" page header
+                for (let i = bytes.length - 27; i >= 0; i--) {
+                    if (bytes[i] === 0x4F && bytes[i + 1] === 0x67 && bytes[i + 2] === 0x67 && bytes[i + 3] === 0x53) {
+                        const low = view.getUint32(i + 6, true);
+                        const high = view.getInt32(i + 10, true);
+                        if (high === -1 && low === 0xFFFFFFFF) continue;
+                        const totalSamples = (high * 4294967296) + low;
+                        if (totalSamples > 0) {
+                            // Opus always uses a 48,000 Hz granule clock rate
+                            return totalSamples / 48000;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Ogg duration parse error:", e);
+            }
+            return 0;
+        }
+
+        /**
+         * Encodes decoded Float32 PCM channels into a universal 16-bit WAV Blob
+         * so any browser (including Safari/iOS or strict Chromium) can play & seek seamlessly.
+         */
+        function encodePcmToWavBlob(channelData, sampleRate) {
+            const numChannels = channelData.length || 1;
+            const samples = channelData[0];
+            const numSamples = samples.length;
+            const buffer = new ArrayBuffer(44 + numSamples * 2);
+            const view = new DataView(buffer);
+
+            const writeStr = (offset, str) => {
+                for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+            };
+
+            writeStr(0, 'RIFF');
+            view.setUint32(4, 36 + numSamples * 2, true);
+            writeStr(8, 'WAVE');
+            writeStr(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM
+            view.setUint16(22, 1, true); // Mono
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeStr(36, 'data');
+            view.setUint32(40, numSamples * 2, true);
+
+            let offset = 44;
+            for (let i = 0; i < numSamples; i++) {
+                let s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                offset += 2;
+            }
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        /**
+         * Converts stubborn Ogg Opus buffers into a standard playable WAV Blob URL using WebAssembly
+         */
+        async function transcodeOpusToWavUrl(mediaEntry) {
+            if (mediaEntry.wavFallbackUrl) return mediaEntry.wavFallbackUrl;
+            const buffer = await getMediaArrayBuffer(mediaEntry);
+            if (!buffer) return null;
+
+            if (window['ogg-opus-decoder'] && window['ogg-opus-decoder'].OggOpusDecoder) {
+                const decoder = new window['ogg-opus-decoder'].OggOpusDecoder();
+                await decoder.ready;
+                const decoded = await decoder.decodeFile(new Uint8Array(buffer));
+                decoder.free();
+                if (decoded && decoded.channelData && decoded.channelData.length > 0 && decoded.channelData[0].length > 0) {
+                    const wavBlob = encodePcmToWavBlob(decoded.channelData, decoded.sampleRate || 48000);
+                    mediaEntry.duration = decoded.channelData[0].length / (decoded.sampleRate || 48000);
+                    mediaEntry.wavFallbackUrl = URL.createObjectURL(wavBlob);
+                    return mediaEntry.wavFallbackUrl;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * On-demand Blob URL generator with pre-calculated duration for .opus voice notes
+         */
+        async function getMediaBlobUrl(mediaEntry) {
+            if (!mediaEntry) return null;
+            if (mediaEntry.blobUrl) return mediaEntry.blobUrl;
+
+            // PERFORMANCE FIX: If it's a local folder file, use it directly! Zero memory used.
+            if (mediaEntry.directFile) {
+                mediaEntry.blobUrl = URL.createObjectURL(mediaEntry.directFile);
+                return mediaEntry.blobUrl;
+            }
+
+            const arrayBuffer = await getMediaArrayBuffer(mediaEntry);
+            if (!arrayBuffer) return null;
+
+            // Pre-calculate exact Ogg Opus duration from container headers so UI never shows 0:00
+            if (mediaEntry.ext === 'opus' || mediaEntry.ext === 'ogg' || mediaEntry.category === 'voicenotes') {
+                const parsedDur = parseOggOpusDuration(arrayBuffer);
+                if (parsedDur > 0) {
+                    mediaEntry.duration = parsedDur;
+                }
+            }
+
+            const typedBlob = new Blob([arrayBuffer], { type: mediaEntry.mime });
+            mediaEntry.blobUrl = URL.createObjectURL(typedBlob);
+            return mediaEntry.blobUrl;
+        }
+
+        function formatSeconds(sec) {
+            if (!sec || !isFinite(sec) || sec < 0) return "0:00";
+            const total = Math.round(sec);
+            const mins = Math.floor(total / 60);
+            const secs = total % 60;
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        /**
+         * Builds a custom WhatsApp-style Voice Note & Audio Player
+         * - Immediately displays real duration (fixes 0:00 bug)
+         * - Automatically falls back to WebAssembly Opus-to-WAV decoding if native playback fails
+         * - Includes 1x / 1.5x / 2x playback speed toggle
+         */
+        function createCustomAudioPlayer(entry, compact = false) {
+            const isVoice = entry.category === 'voicenotes';
+            const container = document.createElement('div');
+            container.className = `flex items-center gap-2.5 ${compact ? 'w-full py-1' : 'my-1 p-2.5 rounded-xl bg-black/[0.04] border border-black/[0.06] min-w-[250px] sm:min-w-[300px]'}`;
+
+            // Play/Pause Button
+            const playBtn = document.createElement('button');
+            playBtn.type = 'button';
+            playBtn.className = `w-9 h-9 rounded-full ${isVoice ? 'bg-[#00a884] hover:bg-[#008f6f]' : 'bg-amber-500 hover:bg-amber-600'} text-white flex items-center justify-center text-xs shrink-0 shadow-xs transition cursor-pointer`;
+            playBtn.innerHTML = `<i class="fas fa-play ml-0.5"></i>`;
+
+            // Center Waveform / Scrubber + Timestamps
+            const centerCol = document.createElement('div');
+            centerCol.className = "flex-1 flex flex-col justify-center min-w-0";
+
+            const topMeta = document.createElement('div');
+            topMeta.className = "flex items-center justify-between text-[11px] mb-1";
+            topMeta.innerHTML = `
+                <span class="font-semibold text-[#111b21] truncate pr-2">${isVoice ? '<i class="fas fa-microphone text-[#00a884] mr-1"></i>Voice Note' : escapeHTML(entry.filename)}</span>
+                <span class="text-[10px] font-mono text-[#667781] shrink-0 time-label">0:00</span>
+            `;
+            const timeLabel = topMeta.querySelector('.time-label');
+
+            const slider = document.createElement('input');
+            slider.type = 'range';
+            slider.min = '0';
+            slider.max = '100';
+            slider.step = '0.1';
+            slider.value = '0';
+            slider.className = "w-full h-1.5 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-[#00a884]";
+
+            centerCol.appendChild(topMeta);
+            centerCol.appendChild(slider);
+
+            // Speed Pill (1x / 1.5x / 2x)
+            const speedBtn = document.createElement('button');
+            speedBtn.type = 'button';
+            speedBtn.className = "bg-black/10 hover:bg-black/15 text-[#111b21] font-semibold text-[10px] px-2 py-1 rounded-full shrink-0 transition";
+            speedBtn.textContent = "1x";
+
+            container.appendChild(playBtn);
+            container.appendChild(centerCol);
+            container.appendChild(speedBtn);
+
+            const audio = new Audio();
+            audio.preload = "metadata";
+            let knownDuration = entry.duration || 0;
+            let isLoaded = false;
+            let triedWasmFallback = false;
+            const speeds = [1, 1.5, 2];
+            let speedIdx = 0;
+
+            const updateTimeDisplay = (currentSec) => {
+                const dur = (audio.duration && isFinite(audio.duration) && audio.duration > 0) ? audio.duration : knownDuration;
+                if (currentSec > 0) {
+                    timeLabel.textContent = `${formatSeconds(currentSec)} / ${formatSeconds(dur)}`;
+                } else {
+                    timeLabel.textContent = formatSeconds(dur);
+                }
+            };
+
+            // Initialize blob & header duration immediately
+            getMediaBlobUrl(entry).then(url => {
+                if (!url) return;
+                if (entry.duration && entry.duration > 0) {
+                    knownDuration = entry.duration;
+                    updateTimeDisplay(0);
+                }
+                audio.src = entry.wavFallbackUrl || url;
+            });
+
+            audio.addEventListener('loadedmetadata', () => {
+                if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+                    knownDuration = audio.duration;
+                    entry.duration = knownDuration;
+                    updateTimeDisplay(0);
+                } else if (audio.duration === Infinity) {
+                    // Fix Chromium bug where Ogg blobs report Infinity until seeked
+                    audio.currentTime = 1e101;
+                    const fixInfinity = () => {
+                        audio.removeEventListener('timeupdate', fixInfinity);
+                        if (isFinite(audio.duration) && audio.duration > 0) {
+                            knownDuration = audio.duration;
+                            entry.duration = knownDuration;
+                        }
+                        audio.currentTime = 0;
+                        updateTimeDisplay(0);
+                    };
+                    audio.addEventListener('timeupdate', fixInfinity);
+                }
+            });
+
+            audio.addEventListener('timeupdate', () => {
+                const dur = (audio.duration && isFinite(audio.duration) && audio.duration > 0) ? audio.duration : knownDuration;
+                if (dur > 0) {
+                    slider.value = String((audio.currentTime / dur) * 100);
+                }
+                updateTimeDisplay(audio.currentTime);
+            });
+
+            audio.addEventListener('play', () => {
+                if (activeAudioController && activeAudioController !== audio) {
+                    activeAudioController.pause();
+                }
+                activeAudioController = audio;
+                playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
+            });
+
+            audio.addEventListener('pause', () => {
+                playBtn.innerHTML = `<i class="fas fa-play ml-0.5"></i>`;
+            });
+
+            audio.addEventListener('ended', () => {
+                playBtn.innerHTML = `<i class="fas fa-play ml-0.5"></i>`;
+                slider.value = '0';
+                audio.currentTime = 0;
+                updateTimeDisplay(0);
+            });
+
+            // Automatic WebAssembly Opus decoder fallback if native browser playback fails
+            const triggerWasmFallback = async () => {
+                if (triedWasmFallback) {
+                    showToast("Native playback and WASM fallback both failed.", "error");
+                    playBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i>`;
+                    return;
+                }
+                triedWasmFallback = true;
+                playBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i>`;
+                try {
+                    const wavUrl = await transcodeOpusToWavUrl(entry);
+                    if (wavUrl) {
+                        knownDuration = entry.duration || knownDuration;
+                        audio.src = wavUrl;
+                        audio.playbackRate = speeds[speedIdx];
+                        updateTimeDisplay(0);
+                        await audio.play();
+                    } else {
+                        throw new Error("WASM Transcode returned null");
+                    }
+                } catch (err) {
+                    console.error("WASM Opus fallback error:", err);
+                    showToast("Audio decode blocked by browser security.", "error");
+                    playBtn.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500"></i>`;
+                }
+            };
+
+            playBtn.addEventListener('click', async () => {
+                if (audio.paused) {
+                    try {
+                        if (!audio.src) {
+                            const url = await getMediaBlobUrl(entry);
+                            audio.src = entry.wavFallbackUrl || url;
+                        }
+                        await audio.play();
+                    } catch (err) {
+                        await triggerWasmFallback();
+                    }
+                } else {
+                    audio.pause();
+                }
+            });
+
+            slider.addEventListener('input', () => {
+                const dur = (audio.duration && isFinite(audio.duration) && audio.duration > 0) ? audio.duration : knownDuration;
+                if (dur > 0) {
+                    audio.currentTime = ( parseFloat(slider.value) / 100 ) * dur;
+                    updateTimeDisplay(audio.currentTime);
+                }
+            });
+
+            speedBtn.addEventListener('click', () => {
+                speedIdx = (speedIdx + 1) % speeds.length;
+                audio.playbackRate = speeds[speedIdx];
+                speedBtn.textContent = `${speeds[speedIdx]}x`;
+            });
+
+            return container;
+        }
+
+        /**
+         * Universal 2026 WhatsApp Text Parser
+         * Supports:
+         * - iOS/Android/Web/macOS/Windows formats
+         * - 2024-2026 ISO dates (YYYY-MM-DD), European dots (DD.MM.YYYY), slashes (DD/MM/YYYY)
+         * - Unicode narrow no-break spaces (\u202F) before AM/PM, LRM/RLM directional marks (\u200E, \u200F)
+         * - Attachment syntax: <attached: filename>, filename (file attached), or standalone filenames
+         */
+        async function processTextFile(text) {
+            showLoading("Parsing Messages...", 75, "Analyzing timestamps & attachments");
+            
+            // Yield to UI thread so loading bar updates
+            await new Promise(r => setTimeout(r, 20));
+
+            const lines = text.split(/\r?\n/);
+            
+            // Universal Line Header Regex
+            // Group 1: Date | Group 2: Time | Group 3: Rest of line
+            const lineHeaderRegex = /^[\u200E\u200F]*\[?(\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}),?\s+(\d{1,2}[:.]\d{2}(?:[:.]\d{2})?(?:[\s\u202F\u00A0]*[APap]\.?[Mm]\.?)?)\]?(?:[\s\u202F\u00A0]*[-–—])?\s+([\s\S]*)/;
+
+            let currentMsg = null;
+            let msgIdCounter = 1;
+
+            for (let i = 0; i < lines.length; i++) {
+                let rawLine = lines[i];
+                if (!rawLine || !rawLine.trim()) {
+                    if (currentMsg) currentMsg.text += '\n';
+                    continue;
+                }
+
+                const match = rawLine.match(lineHeaderRegex);
+                if (match) {
+                    if (currentMsg) {
+                        finalizeMessageObject(currentMsg);
+                        chatMessages.push(currentMsg);
+                    }
+
+                    const dateStr = match[1].trim();
+                    const timeStr = match[2].replace(/\u202F/g, ' ').trim();
+                    const body = match[3];
+
+                    // Separate "Sender: Message" from System Messages
+                    const colonIndex = body.indexOf(': ');
+                    // Ensure colon isn't part of a URL or system encryption notice
+                    const isSystemNotice = colonIndex === -1 || 
+                        body.startsWith('Messages and calls are end-to-end encrypted') ||
+                        body.startsWith('\u200EMessages and calls are end-to-end encrypted');
+
+                    if (!isSystemNotice && colonIndex > 0 && colonIndex < 65) {
+                        const sender = body.substring(0, colonIndex).replace(/[\u200E\u200F]/g, '').trim();
+                        const msgText = body.substring(colonIndex + 2);
+
+                        participants.set(sender, (participants.get(sender) || 0) + 1);
+                        if (!senderColorMap.has(sender)) {
+                            senderColorMap.set(sender, SENDER_COLORS[senderColorMap.size % SENDER_COLORS.length]);
+                        }
+
+                        currentMsg = {
+                            id: msgIdCounter++,
+                            date: dateStr,
+                            time: timeStr,
+                            sender: sender,
+                            text: msgText,
+                            isSystem: false,
+                            mediaEntry: null,
+                            isEdited: false,
+                            isPoll: false,
+                            pollData: null
+                        };
+                    } else {
+                        currentMsg = {
+                            id: msgIdCounter++,
+                            date: dateStr,
+                            time: timeStr,
+                            sender: null,
+                            text: body.replace(/[\u200E\u200F]/g, '').trim(),
+                            isSystem: true,
+                            mediaEntry: null
+                        };
+                    }
+                } else {
+                    if (currentMsg) {
+                        currentMsg.text += '\n' + rawLine;
+                    }
+                }
+            }
+
+            if (currentMsg) {
+                finalizeMessageObject(currentMsg);
+                chatMessages.push(currentMsg);
+            }
+        }
+
+        /**
+         * Inspects a completed message object for:
+         * - Attached media files (links against mediaRegistry)
+         * - 2025/2026 WhatsApp Polls
+         * - "<This message was edited>" tags
+         */
+        function finalizeMessageObject(msg) {
+            if (!msg.text) return;
+
+            // Clean LRM/RLM marks for matching
+            const cleanText = msg.text.replace(/[\u200E\u200F]/g, '').trim();
+
+            // Check for "<This message was edited>"
+            if (cleanText.includes('<This message was edited>') || cleanText.includes('(edited)')) {
+                msg.isEdited = true;
+                msg.text = msg.text
+                    .replace(/[\u200E\u200F]*<This message was edited>/g, '')
+                    .replace(/\(edited\)$/i, '')
+                    .trim();
+            }
+
+            // Check for WhatsApp Poll format
+            if (cleanText.startsWith('POLL:')) {
+                const pollLines = cleanText.split('\n').map(l => l.trim()).filter(Boolean);
+                const question = pollLines[0].replace(/^POLL:\s*/i, '');
+                const options = [];
+                for (let i = 1; i < pollLines.length; i++) {
+                    const optMatch = pollLines[i].match(/^OPTION:\s*(.*?)(?:\s*\((\d+)\s*votes?\))?$/i);
+                    if (optMatch) {
+                        options.push({
+                            label: optMatch[1],
+                            votes: parseInt(optMatch[2] || '0', 10)
+                        });
+                    }
+                }
+                if (options.length > 0) {
+                    msg.isPoll = true;
+                    msg.pollData = { question, options };
+                }
+            }
+
+            // Detect Media Attachment Filename
+            // Pattern 1: <attached: 00000123-PHOTO-2026-11-06.jpg>
+            // Pattern 2: PTT-20261106-WA0001.opus (file attached)
+            // Pattern 3: Any filename with known extension inside the text
+            let matchedKey = null;
+
+            const attachedBracketMatch = cleanText.match(/<attached:\s*([^>]+)>/i);
+            const fileAttachedMatch = cleanText.match(/([^\s/\\]+\.[a-zA-Z0-9]{2,5})\s*\(file attached\)/i);
+            const genericFileMatch = cleanText.match(/([\w\-. ]+\.(?:jpg|jpeg|png|webp|gif|heic|avif|mp4|mov|3gp|webm|opus|ogg|mp3|m4a|wav|aac|amr|pdf|vcf|docx|xlsx|zip))/i);
+
+            const candidates = [
+                attachedBracketMatch ? attachedBracketMatch[1].trim() : null,
+                fileAttachedMatch ? fileAttachedMatch[1].trim() : null,
+                genericFileMatch ? genericFileMatch[1].trim() : null
+            ].filter(Boolean);
+
+            for (const cand of candidates) {
+                const lowerCand = cand.split('/').pop().split('\\').pop().toLowerCase();
+                if (mediaRegistry.has(lowerCand)) {
+                    matchedKey = lowerCand;
+                    break;
+                }
+            }
+
+            if (matchedKey) {
+                const entry = mediaRegistry.get(matchedKey);
+                msg.mediaEntry = entry;
+                entry.usedInMsgId = msg.id;
+                entry.sender = msg.sender || 'Participant';
+                entry.date = msg.date;
+                entry.time = msg.time;
+
+                // Strip redundant attachment markers from caption text
+                msg.text = msg.text
+                    .replace(/[\u200E\u200F]*<attached:\s*[^>]+>/gi, '')
+                    .replace(/[\u200E\u200F]*[^\s/\\]+\.[a-zA-Z0-9]{2,5}\s*\(file attached\)/gi, '')
+                    .trim();
+
+                // If remaining text is just the raw filename itself, clear it
+                if (msg.text.toLowerCase() === entry.filename.toLowerCase()) {
+                    msg.text = '';
+                }
+            }
+        }
+
+        /**
+         * Builds the unified allMediaItems list (both matched in messages and any unmatched files in the zip)
+         */
+        function finalizeMediaCatalog() {
+            allMediaItems = [];
+            mediaRegistry.forEach((entry) => {
+                allMediaItems.push({
+                    ...entry,
+                    sender: entry.sender || 'Archive File',
+                    date: entry.date || '',
+                    time: entry.time || ''
+                });
+            });
+            // Sort chronologically by chat message ID. Unmatched files go to the end.
+            allMediaItems.sort((a, b) => {
+                const idA = a.usedInMsgId || Infinity;
+                const idB = b.usedInMsgId || Infinity;
+                return idA - idB;
+            });
+        }
+
+        function populateUI() {
+            // Retain natural order of appearance for selecting the 2nd member, while sorting for the sidebar list
+            const appearanceParticipants = Array.from(participants.entries());
+            const sortedParticipants = Array.from(participants.entries()).sort((a, b) => b[1] - a[1]);
+            
+            const partList = document.getElementById('participant-list');
+            partList.innerHTML = '';
+            meSelector.innerHTML = '<option value="">Select your name...</option>';
+
+            sortedParticipants.forEach(([name, count]) => {
+                const color = senderColorMap.get(name) || '#00a884';
+                const li = document.createElement('li');
+                li.className = "flex items-center justify-between text-xs bg-[#f8f9fa] px-3 py-2 rounded-lg border border-gray-100";
+                li.innerHTML = `
+                    <div class="flex items-center gap-2 truncate pr-2">
+                        <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${color}"></span>
+                        <span class="font-medium text-[#111b21] truncate">${escapeHTML(name)}</span>
+                    </div>
+                    <span class="text-[11px] text-gray-500 font-semibold shrink-0">${count.toLocaleString()} msgs</span>
+                `;
+                partList.appendChild(li);
+            });
+
+            // Populate dropdown in appearance order and auto-select the 2nd member (index 1)
+            appearanceParticipants.forEach(([name, count]) => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = `${name} (${count.toLocaleString()})`;
+                meSelector.appendChild(opt);
+            });
+
+            if (appearanceParticipants.length >= 2) {
+                primaryUser = appearanceParticipants[1][0];
+                meSelector.value = primaryUser;
+            } else if (appearanceParticipants.length === 1) {
+                primaryUser = appearanceParticipants[0][0];
+                meSelector.value = primaryUser;
+            }
+
+            // Date range subtitle
+            const firstMsg = chatMessages.find(m => m.date);
+            const lastMsg = [...chatMessages].reverse().find(m => m.date);
+            if (firstMsg && lastMsg) {
+                const rangeText = `${firstMsg.date} → ${lastMsg.date}`;
+                document.getElementById('sidebar-date-range').textContent = rangeText;
+                document.getElementById('chat-subtitle').textContent = `${chatMessages.length.toLocaleString()} messages • ${rangeText}`;
+            }
+
+            // Category Counts
+            const counts = {
+                all: allMediaItems.length,
+                photos: 0,
+                videos: 0,
+                gifs: 0,
+                voicenotes: 0,
+                audios: 0,
+                stickers: 0,
+                docs: 0
+            };
+
+            allMediaItems.forEach(item => {
+                if (counts[item.category] !== undefined) {
+                    counts[item.category]++;
+                } else {
+                    counts.docs++;
+                }
+            });
+
+            document.getElementById('count-photos').textContent = counts.photos.toLocaleString();
+            document.getElementById('count-videos').textContent = counts.videos.toLocaleString();
+            document.getElementById('count-gifs').textContent = counts.gifs.toLocaleString();
+            document.getElementById('count-voicenotes').textContent = counts.voicenotes.toLocaleString();
+            document.getElementById('count-audios').textContent = counts.audios.toLocaleString();
+            document.getElementById('count-docs').textContent = (counts.docs + counts.stickers).toLocaleString();
+            document.getElementById('gallery-badge').textContent = counts.all.toLocaleString();
+
+            // Update Gallery Filter Pills
+            Object.keys(counts).forEach(cat => {
+                const el = document.getElementById(`pill-count-${cat}`);
+                if (el) el.textContent = `(${counts[cat]})`;
+            });
+
+            // Overall Stats
+            const sysCount = chatMessages.filter(m => m.isSystem).length;
+            document.getElementById('stat-total').textContent = chatMessages.length.toLocaleString();
+            document.getElementById('stat-media').textContent = counts.all.toLocaleString();
+            document.getElementById('stat-system').textContent = sysCount.toLocaleString();
+
+            filteredMessages = chatMessages;
+            renderInitialMessages(true);
+            renderGalleryGrid();
+        }
+
+        function applySearchFilter() {
+            if (!searchQuery) {
+                filteredMessages = chatMessages;
+            } else {
+                filteredMessages = chatMessages.filter(m => 
+                    (m.text && m.text.toLowerCase().includes(searchQuery)) ||
+                    (m.sender && m.sender.toLowerCase().includes(searchQuery)) ||
+                    (m.mediaEntry && m.mediaEntry.filename.toLowerCase().includes(searchQuery))
+                );
+            }
+
+            if (currentTab === 'chat') {
+                renderInitialMessages(true);
+            } else {
+                renderGalleryGrid();
+            }
+        }
+
+        function clearSearch() {
+            searchInput.value = '';
+            mobileSearchInput.value = '';
+            handleSearch('');
+        }
+
+        /**
+         * High-Speed Chunked DOM Renderer
+         * Renders the most recent CHUNK_SIZE messages immediately and loads older/newer messages smoothly on scroll.
+         */
+        function renderInitialMessages(scrollToEnd = true) {
+            messagesContainer.innerHTML = '';
+            const total = filteredMessages.length;
+
+            if (total === 0) {
+                messagesContainer.innerHTML = `
+                    <div class="my-auto text-center p-8">
+                        <div class="bg-white/90 inline-block px-6 py-4 rounded-2xl shadow-sm text-gray-500 text-sm">
+                            <i class="fas fa-search mb-2 text-xl text-gray-400 block"></i>
+                            No messages match your filter.
+                        </div>
+                    </div>`;
+                updateRenderStatus();
+                return;
+            }
+
+            renderedEndIndex = total;
+            renderedStartIndex = Math.max(0, total - CHUNK_SIZE);
+
+            const slice = filteredMessages.slice(renderedStartIndex, renderedEndIndex);
+            const fragment = buildMessageSliceFragment(slice);
+            messagesContainer.appendChild(fragment);
+
+            if (scrollToEnd) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+            updateRenderStatus();
+        }
+
+        function prependMessageChunk() {
+            if (renderedStartIndex <= 0) return;
+            isRenderingChunk = true;
+
+            const prevScrollHeight = messagesContainer.scrollHeight;
+            const prevScrollTop = messagesContainer.scrollTop;
+
+            const newStart = Math.max(0, renderedStartIndex - CHUNK_SIZE);
+            const slice = filteredMessages.slice(newStart, renderedStartIndex);
+            renderedStartIndex = newStart;
+
+            const fragment = buildMessageSliceFragment(slice);
+            messagesContainer.insertBefore(fragment, messagesContainer.firstChild);
+
+            // Preserve exact viewport scroll position
+            messagesContainer.scrollTop = messagesContainer.scrollHeight - prevScrollHeight + prevScrollTop;
+            updateRenderStatus();
+
+            requestAnimationFrame(() => { isRenderingChunk = false; });
+        }
+
+        function appendMessageChunk() {
+            if (renderedEndIndex >= filteredMessages.length) return;
+            isRenderingChunk = true;
+
+            const newEnd = Math.min(filteredMessages.length, renderedEndIndex + CHUNK_SIZE);
+            const slice = filteredMessages.slice(renderedEndIndex, newEnd);
+            renderedEndIndex = newEnd;
+
+            const fragment = buildMessageSliceFragment(slice);
+            messagesContainer.appendChild(fragment);
+            updateRenderStatus();
+
+            requestAnimationFrame(() => { isRenderingChunk = false; });
+        }
+
+        function updateRenderStatus() {
+            const statusEl = document.getElementById('render-status');
+            if (filteredMessages.length === 0) {
+                statusEl.textContent = '0 messages';
+            } else {
+                statusEl.textContent = `Showing ${(renderedEndIndex - renderedStartIndex).toLocaleString()} of ${filteredMessages.length.toLocaleString()} messages`;
+            }
+        }
+
+        function buildMessageSliceFragment(messagesSlice) {
+            const fragment = document.createDocumentFragment();
+            let lastDate = null;
+            let lastSender = null;
+
+            messagesSlice.forEach((msg) => {
+                // Date Divider
+                if (msg.date && msg.date !== lastDate) {
+                    const dateDiv = document.createElement('div');
+                    dateDiv.className = "flex justify-center my-2.5 sticky top-1 z-10";
+                    dateDiv.innerHTML = `<span class="system-msg text-[11px] font-medium py-1 px-3 rounded-lg shadow-xs">${escapeHTML(msg.date)}</span>`;
+                    fragment.appendChild(dateDiv);
+                    lastDate = msg.date;
+                    lastSender = null;
+                }
+
+                // System Message
+                if (msg.isSystem) {
+                    const sysDiv = document.createElement('div');
+                    sysDiv.id = `msg-row-${msg.id}`;
+                    sysDiv.className = "flex justify-center my-1.5";
+                    sysDiv.innerHTML = `<span class="system-msg text-[11.5px] py-1.5 px-3.5 rounded-lg max-w-[88%] text-center leading-relaxed"><i class="fas fa-info-circle text-[10px] mr-1 opacity-75"></i>${formatWhatsAppText(msg.text)}</span>`;
+                    fragment.appendChild(sysDiv);
+                    lastSender = null;
+                    return;
+                }
+
+                const isMe = msg.sender === primaryUser;
+                const showTail = lastSender !== msg.sender;
+                
+                const msgRow = document.createElement('div');
+                msgRow.id = `msg-row-${msg.id}`;
+                msgRow.className = `flex w-full ${isMe ? 'justify-end' : 'justify-start'} ${showTail ? 'mt-2' : 'mt-0.5'} transition-colors`;
+                
+                const bubble = document.createElement('div');
+                bubble.className = `bubble px-2.5 py-1.5 flex flex-col ${isMe ? 'sent' : 'received'} ${showTail && isMe ? 'rounded-tr-none' : ''} ${showTail && !isMe ? 'rounded-tl-none' : ''}`;
+                
+                if (showTail) {
+                    const tail = document.createElement('div');
+                    tail.className = isMe ? 'bubble-tail-sent' : 'bubble-tail-received';
+                    bubble.appendChild(tail);
+                }
+
+                // Sender Name Header
+                if (!isMe && showTail) {
+                    const nameSpan = document.createElement('span');
+                    const color = senderColorMap.get(msg.sender) || '#00a884';
+                    nameSpan.className = "text-[12.5px] font-semibold mb-0.5 leading-tight";
+                    nameSpan.style.color = color;
+                    nameSpan.textContent = msg.sender;
+                    bubble.appendChild(nameSpan);
+                }
+
+                // Media Attachment Container
+                if (msg.mediaEntry) {
+                    const mediaContainer = createChatMediaElement(msg.mediaEntry, msg);
+                    bubble.appendChild(mediaContainer);
+                }
+
+                // Poll Rendering (2026 WhatsApp Polls)
+                if (msg.isPoll && msg.pollData) {
+                    const pollEl = createPollElement(msg.pollData);
+                    bubble.appendChild(pollEl);
+                } else if (msg.text) {
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = "text-[14px] text-[#111b21] leading-snug whitespace-pre-wrap break-words";
+
+                    const cleanCheck = msg.text.replace(/[\u200E\u200F]/g, '').trim();
+                    if (/^<(?:Media|image|video|audio|sticker|GIF|document)\s+omitted>$/i.test(cleanCheck)) {
+                        contentDiv.innerHTML = `<div class="flex items-center gap-2 text-gray-500 italic text-xs py-1"><i class="fas fa-ban opacity-70"></i> ${escapeHTML(cleanCheck.replace(/[<>]/g, ''))}</div>`;
+                    } else {
+                        contentDiv.innerHTML = formatWhatsAppText(msg.text);
+                    }
+                    bubble.appendChild(contentDiv);
+                }
+
+                // Metadata Footer (Edited tag + Timestamp + Read Checks)
+                const metaRow = document.createElement('div');
+                metaRow.className = "flex items-center justify-end gap-1 mt-0.5 select-none self-end";
+                metaRow.innerHTML = `
+                    ${msg.isEdited ? '<span class="text-[10px] text-[#667781] italic mr-0.5">Edited</span>' : ''}
+                    <span class="text-[10.5px] text-[#667781]">${escapeHTML(msg.time)}</span>
+                    ${isMe ? '<i class="fas fa-check-double text-[#53bdeb] text-[10px] ml-0.5"></i>' : ''}
+                `;
+                bubble.appendChild(metaRow);
+
+                msgRow.appendChild(bubble);
+                fragment.appendChild(msgRow);
+
+                lastSender = msg.sender;
+            });
+
+            return fragment;
+        }
+
+        /**
+         * Creates Rich Interactive Media Elements inside Chat Bubbles
+         * Uses lazy asynchronous Blob loading so scrolling remains 60fps
+         */
+        function createChatMediaElement(entry, msg) {
+            const wrapper = document.createElement('div');
+            wrapper.className = "my-1 rounded-lg overflow-hidden";
+
+            const cat = entry.category;
+
+            if (cat === 'photos' || cat === 'stickers') {
+                wrapper.className += cat === 'stickers' ? " max-w-[150px]" : " max-w-[320px] bg-black/5 min-h-[120px] flex items-center justify-center";
+                const img = document.createElement('img');
+                img.alt = entry.filename;
+                img.className = "w-full h-auto max-h-[360px] object-cover cursor-pointer hover:opacity-95 transition rounded-lg";
+                img.onclick = () => openLightbox(entry, msg.id);
+                wrapper.appendChild(img);
+
+                getMediaBlobUrl(entry).then(url => {
+                    if (url) img.src = url;
+                });
+            } else if (cat === 'gifs') {
+                wrapper.className += " max-w-[280px] relative bg-black/10";
+                getMediaBlobUrl(entry).then(url => {
+                    if (!url) return;
+                    if (entry.ext === 'mp4') {
+                        wrapper.innerHTML = `
+                            <video src="${url}" autoplay loop muted playsinline class="w-full h-auto rounded-lg cursor-pointer" onclick="openLightboxByFilename('${escapeHTML(entry.filename.toLowerCase())}', ${msg.id})"></video>
+                            <span class="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">GIF</span>
+                        `;
+                    } else {
+                        wrapper.innerHTML = `
+                            <img src="${url}" class="w-full h-auto rounded-lg cursor-pointer" onclick="openLightboxByFilename('${escapeHTML(entry.filename.toLowerCase())}', ${msg.id})">
+                            <span class="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">GIF</span>
+                        `;
+                    }
+                });
+            } else if (cat === 'videos') {
+                wrapper.className += " max-w-[320px] bg-black rounded-lg relative group cursor-pointer";
+                const video = document.createElement('video');
+                video.controls = true;
+                video.preload = "metadata";
+                video.className = "w-full max-h-[360px] rounded-lg";
+                wrapper.appendChild(video);
+
+                const expandBtn = document.createElement('button');
+                expandBtn.className = "absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white text-xs p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition";
+                expandBtn.innerHTML = `<i class="fas fa-expand"></i>`;
+                expandBtn.title = "Open in Media Previewer";
+                expandBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    video.pause();
+                    openLightbox(entry, msg.id);
+                };
+                wrapper.appendChild(expandBtn);
+
+                getMediaBlobUrl(entry).then(url => {
+                    if (url) video.src = url;
+                });
+            } else if (cat === 'voicenotes' || cat === 'audios') {
+                return createCustomAudioPlayer(entry, false);
+            } else {
+                // Documents (.pdf, .vcf, .docx, etc.)
+                wrapper.className = "my-1 p-3 rounded-xl bg-black/[0.04] border border-black/[0.06] flex items-center justify-between gap-3 min-w-[230px]";
+                wrapper.innerHTML = `
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-lg bg-slate-600 text-white flex items-center justify-center text-lg shrink-0">
+                            <i class="fas ${entry.ext === 'pdf' ? 'fa-file-pdf text-red-300' : entry.ext === 'vcf' ? 'fa-address-card text-blue-200' : 'fa-file-alt'}"></i>
+                        </div>
+                        <div class="truncate">
+                            <p class="text-xs font-semibold text-[#111b21] truncate">${escapeHTML(entry.filename)}</p>
+                            <p class="text-[10px] text-[#667781] uppercase">${escapeHTML(entry.ext)} Document</p>
+                        </div>
+                    </div>
+                `;
+                const dlBtn = document.createElement('a');
+                dlBtn.className = "p-2 text-gray-600 hover:text-[#00a884] bg-white rounded-lg shadow-2xs transition shrink-0";
+                dlBtn.innerHTML = `<i class="fas fa-download text-xs"></i>`;
+                dlBtn.title = "Download File";
+                getMediaBlobUrl(entry).then(url => {
+                    if (url) {
+                        dlBtn.href = url;
+                        dlBtn.download = entry.filename;
+                    }
+                });
+                wrapper.appendChild(dlBtn);
+            }
+
+            return wrapper;
+        }
+
+        function createPollElement(pollData) {
+            const totalVotes = pollData.options.reduce((acc, o) => acc + o.votes, 0) || 1;
+            const div = document.createElement('div');
+            div.className = "my-1 p-2.5 bg-black/[0.03] rounded-xl border border-black/[0.06] min-w-[230px]";
+            
+            let optionsHtml = pollData.options.map(opt => {
+                const pct = Math.round((opt.votes / totalVotes) * 100);
+                return `
+                    <div class="mt-2">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="font-medium text-[#111b21]">${escapeHTML(opt.label)}</span>
+                            <span class="text-[#667781] text-[11px]">${opt.votes} vote${opt.votes === 1 ? '' : 's'}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                            <div class="bg-[#00a884] h-full rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            div.innerHTML = `
+                <div class="flex items-center gap-1.5 text-[11px] font-bold text-[#00a884] uppercase tracking-wider mb-1">
+                    <i class="fas fa-poll"></i> Poll
+                </div>
+                <p class="font-semibold text-sm text-[#111b21] mb-2">${escapeHTML(pollData.question)}</p>
+                ${optionsHtml}
+            `;
+            return div;
+        }
+
+        /**
+         * Media Gallery View & Filtering
+         * Supports: all, photos, videos, gifs, voicenotes, audios, stickers, docs
+         */
+        function switchMainTab(tab) {
+            currentTab = tab;
+            const chatView = document.getElementById('view-chat');
+            const galleryView = document.getElementById('view-gallery');
+            const btnChat = document.getElementById('tab-btn-chat');
+            const btnGallery = document.getElementById('tab-btn-gallery');
+
+            if (tab === 'chat') {
+                chatView.classList.remove('hidden');
+                galleryView.classList.add('hidden');
+                btnChat.className = "px-3 py-1.5 rounded-lg bg-white text-[#111b21] shadow-sm transition flex items-center gap-1.5";
+                btnGallery.className = "px-3 py-1.5 rounded-lg text-gray-600 hover:text-[#111b21] transition flex items-center gap-1.5";
+            } else {
+                chatView.classList.add('hidden');
+                galleryView.classList.remove('hidden');
+                btnGallery.className = "px-3 py-1.5 rounded-lg bg-white text-[#111b21] shadow-sm transition flex items-center gap-1.5";
+                btnChat.className = "px-3 py-1.5 rounded-lg text-gray-600 hover:text-[#111b21] transition flex items-center gap-1.5";
+                renderGalleryGrid();
+            }
+        }
+
+        function openGalleryCategory(category) {
+            if (window.innerWidth < 768) {
+                toggleMobileSidebar(false);
+            }
+            switchMainTab('gallery');
+            filterGallery(category);
+        }
+
+        function filterGallery(category) {
+            currentGalleryCategory = category;
+            document.querySelectorAll('.gallery-pill').forEach(btn => {
+                if (btn.dataset.cat === category) {
+                    btn.className = "gallery-pill bg-[#00a884] text-white px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5 shadow-xs";
+                } else {
+                    btn.className = "gallery-pill bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-1.5 rounded-full text-xs font-medium transition shrink-0 flex items-center gap-1.5";
+                }
+            });
+            renderGalleryGrid();
+        }
+
+        function renderGalleryGrid() {
+            const container = document.getElementById('gallery-container');
+            container.innerHTML = '';
+
+            let items = allMediaItems;
+            if (currentGalleryCategory !== 'all') {
+                items = items.filter(i => i.category === currentGalleryCategory);
+            }
+            if (searchQuery) {
+                items = items.filter(i => 
+                    i.filename.toLowerCase().includes(searchQuery) ||
+                    (i.sender && i.sender.toLowerCase().includes(searchQuery))
+                );
+            }
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="h-64 flex flex-col items-center justify-center text-center text-gray-400">
+                        <i class="fas fa-folder-open text-4xl mb-3 opacity-50"></i>
+                        <p class="text-sm font-medium text-gray-500">No media files in this category</p>
+                        <p class="text-xs mt-1">Export your WhatsApp chat "With Media" (.zip) to view photos, voice notes, and videos here.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Use visual grid for photos/videos/gifs/stickers, and rich list cards for voice notes/audios/docs
+            const isAudioOrDocMode = ['voicenotes', 'audios', 'docs'].includes(currentGalleryCategory);
+            const grid = document.createElement('div');
+            grid.className = isAudioOrDocMode 
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
+                : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3";
+
+            items.forEach(item => {
+                const card = createGalleryCard(item);
+                grid.appendChild(card);
+            });
+
+            container.appendChild(grid);
+        }
+
+        function createGalleryCard(item) {
+            const cat = item.category;
+            const card = document.createElement('div');
+
+            if (cat === 'photos' || cat === 'stickers' || cat === 'gifs' || cat === 'videos') {
+                card.className = "group relative bg-white rounded-xl overflow-hidden shadow-xs border border-gray-200 aspect-square flex flex-col justify-between cursor-pointer hover:shadow-md transition";
+                
+                const mediaBox = document.createElement('div');
+                mediaBox.className = "w-full h-full bg-gray-100 flex items-center justify-center overflow-hidden";
+
+                getMediaBlobUrl(item).then(url => {
+                    if (!url) return;
+                    if (cat === 'videos' || (cat === 'gifs' && item.ext === 'mp4')) {
+                        mediaBox.innerHTML = `
+                            <video src="${url}#t=0.1" preload="metadata" muted class="w-full h-full object-cover group-hover:scale-105 transition duration-300"></video>
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition">
+                                <div class="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center">
+                                    <i class="fas fa-play text-xs ml-0.5"></i>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        mediaBox.innerHTML = `<img src="${url}" alt="${escapeHTML(item.filename)}" loading="lazy" class="w-full h-full ${cat === 'stickers' ? 'object-contain p-4' : 'object-cover'} group-hover:scale-105 transition duration-300">`;
+                    }
+                });
+
+                const badge = document.createElement('span');
+                badge.className = "absolute top-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase";
+                badge.textContent = cat === 'gifs' ? 'GIF' : item.ext;
+
+                const overlay = document.createElement('div');
+                overlay.className = "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2.5 text-white opacity-0 group-hover:opacity-100 transition flex items-end justify-between";
+                overlay.innerHTML = `
+                    <div class="truncate pr-2">
+                        <p class="text-[11px] font-semibold truncate">${escapeHTML(item.sender)}</p>
+                        <p class="text-[9px] text-gray-300">${escapeHTML(item.date)}</p>
+                    </div>
+                    ${item.usedInMsgId ? `<button onclick="event.stopPropagation(); jumpToMessage(${item.usedInMsgId})" class="bg-white/20 hover:bg-white/30 p-1.5 rounded-lg text-xs" title="Jump to Chat Message"><i class="fas fa-comment-dots"></i></button>` : ''}
+                `;
+
+                card.onclick = () => openLightbox(item, item.usedInMsgId);
+                card.appendChild(mediaBox);
+                card.appendChild(badge);
+                card.appendChild(overlay);
+            } else {
+                // Voice Notes, Audios, Documents Card
+                const isVoice = cat === 'voicenotes';
+                const isAudio = cat === 'audios';
+                card.className = "bg-white rounded-xl p-3.5 shadow-xs border border-gray-200 flex flex-col justify-between gap-2.5 hover:border-[#00a884]/50 transition";
+
+                const topRow = document.createElement('div');
+                topRow.className = "flex items-start justify-between gap-2.5";
+                topRow.innerHTML = `
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-10 h-10 rounded-xl ${isVoice ? 'bg-[#e8f8ee] text-[#00a884]' : isAudio ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-600'} flex items-center justify-center text-lg shrink-0">
+                            <i class="fas ${isVoice ? 'fa-microphone' : isAudio ? 'fa-headphones' : 'fa-file-alt'}"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-xs font-semibold text-[#111b21] truncate" title="${escapeHTML(item.filename)}">${escapeHTML(item.filename)}</h4>
+                            <p class="text-[11px] text-[#667781] truncate">${escapeHTML(item.sender)} ${item.date ? '• ' + escapeHTML(item.date) : ''}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        ${item.usedInMsgId ? `<button onclick="jumpToMessage(${item.usedInMsgId})" class="p-1.5 text-gray-500 hover:text-[#00a884] hover:bg-gray-100 rounded-lg text-xs transition" title="Show in Chat"><i class="fas fa-comment-dots"></i></button>` : ''}
+                    </div>
+                `;
+                card.appendChild(topRow);
+
+                if (isVoice || isAudio) {
+                    const customPlayer = createCustomAudioPlayer(item, true);
+                    card.appendChild(customPlayer);
+                } else {
+                    const actions = document.createElement('div');
+                    actions.className = "flex justify-end pt-1 border-t border-gray-100";
+                    const dlLink = document.createElement('a');
+                    dlLink.className = "text-xs font-medium text-[#00a884] hover:underline flex items-center gap-1";
+                    dlLink.innerHTML = `<i class="fas fa-download"></i> Download (${escapeHTML(item.ext.toUpperCase())})`;
+                    getMediaBlobUrl(item).then(url => {
+                        if (url) {
+                            dlLink.href = url;
+                            dlLink.download = item.filename;
+                        }
+                    });
+                    actions.appendChild(dlLink);
+                    card.appendChild(actions);
+                }
+            }
+
+            return card;
+        }
+
+        /**
+         * Lightbox Modal with Prev/Next Chevron & Keyboard Navigation
+         */
+        function getNavigableMediaList() {
+            const visualCategories = ['photos', 'videos', 'gifs', 'stickers'];
+            // If user is currently in the Gallery tab, respect their active category & search filter
+            if (currentTab === 'gallery') {
+                return allMediaItems.filter(item => {
+                    if (!visualCategories.includes(item.category)) return false;
+                    if (currentGalleryCategory !== 'all' && item.category !== currentGalleryCategory) return false;
+                    if (searchQuery) {
+                        const matchName = item.filename.toLowerCase().includes(searchQuery);
+                        const matchSender = item.sender && item.sender.toLowerCase().includes(searchQuery);
+                        if (!matchName && !matchSender) return false;
+                    }
+                    return true;
+                });
+            }
+            // Otherwise browse through all visual media in chronological chat order
+            return allMediaItems.filter(item => visualCategories.includes(item.category));
+        }
+
+        function openLightboxByFilename(lowerKey, msgId) {
+            const entry = mediaRegistry.get(lowerKey);
+            if (entry) openLightbox(entry, msgId);
+        }
+
+        async function openLightbox(entry, msgId) {
+            currentLightboxList = getNavigableMediaList();
+            currentLightboxIndex = currentLightboxList.findIndex(
+                item => item.filename.toLowerCase() === entry.filename.toLowerCase()
+            );
+            if (currentLightboxIndex === -1) {
+                currentLightboxList = [entry];
+                currentLightboxIndex = 0;
+            }
+
+            const modal = document.getElementById('lightbox-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            await renderLightboxSlide(entry, msgId || entry.usedInMsgId);
+        }
+
+        async function navigateLightbox(direction) {
+            if (!currentLightboxList.length || currentLightboxList.length <= 1) return;
+            currentLightboxIndex = (currentLightboxIndex + direction + currentLightboxList.length) % currentLightboxList.length;
+            const targetEntry = currentLightboxList[currentLightboxIndex];
+            await renderLightboxSlide(targetEntry, targetEntry.usedInMsgId);
+        }
+
+        async function renderLightboxSlide(entry, msgId) {
+            const content = document.getElementById('lightbox-content');
+            const title = document.getElementById('lightbox-title');
+            const counter = document.getElementById('lightbox-counter');
+            const meta = document.getElementById('lightbox-meta');
+            const dl = document.getElementById('lightbox-download');
+            const jumpBtn = document.getElementById('lightbox-jump-btn');
+            const prevBtn = document.getElementById('lightbox-prev');
+            const nextBtn = document.getElementById('lightbox-next');
+
+            title.textContent = entry.filename;
+            counter.textContent = `${currentLightboxIndex + 1} / ${currentLightboxList.length}`;
+            meta.textContent = `${entry.sender || 'Archive'} ${entry.date ? '• ' + entry.date : ''} ${entry.time || ''}`;
+            content.innerHTML = `<i class="fas fa-circle-notch fa-spin text-white text-3xl"></i>`;
+
+            const hasMultiple = currentLightboxList.length > 1;
+            prevBtn.classList.toggle('hidden', !hasMultiple);
+            nextBtn.classList.toggle('hidden', !hasMultiple);
+
+            if (msgId) {
+                jumpBtn.classList.remove('hidden');
+                jumpBtn.onclick = () => {
+                    closeLightbox();
+                    jumpToMessage(msgId);
+                };
+            } else {
+                jumpBtn.classList.add('hidden');
+            }
+
+            const url = await getMediaBlobUrl(entry);
+            if (!url) return;
+
+            dl.href = url;
+            dl.download = entry.filename;
+
+            if (entry.category === 'videos' || (entry.category === 'gifs' && entry.ext === 'mp4')) {
+                content.innerHTML = `<video src="${url}" controls autoplay class="max-h-full max-w-full rounded-lg shadow-2xl"></video>`;
+            } else {
+                content.innerHTML = `<img src="${url}" alt="${escapeHTML(entry.filename)}" class="max-h-full max-w-full object-contain rounded-lg shadow-2xl select-none">`;
+            }
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('lightbox-modal');
+            const content = document.getElementById('lightbox-content');
+            content.innerHTML = '';
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function jumpToMessage(msgId) {
+            switchMainTab('chat');
+            
+            // Clear search filter if the target message isn't in current filtered list
+            let targetIndex = filteredMessages.findIndex(m => m.id === msgId);
+            if (targetIndex === -1) {
+                clearSearch();
+                targetIndex = filteredMessages.findIndex(m => m.id === msgId);
+            }
+            if (targetIndex === -1) return;
+
+            // Ensure targetIndex is within the rendered window
+            if (targetIndex < renderedStartIndex || targetIndex >= renderedEndIndex) {
+                messagesContainer.innerHTML = '';
+                renderedStartIndex = Math.max(0, targetIndex - Math.floor(CHUNK_SIZE / 2));
+                renderedEndIndex = Math.min(filteredMessages.length, renderedStartIndex + CHUNK_SIZE);
+                const slice = filteredMessages.slice(renderedStartIndex, renderedEndIndex);
+                messagesContainer.appendChild(buildMessageSliceFragment(slice));
+                updateRenderStatus();
+            }
+
+            requestAnimationFrame(() => {
+                const row = document.getElementById(`msg-row-${msgId}`);
+                if (row) {
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    row.classList.remove('highlight-row');
+                    void row.offsetWidth; // trigger reflow
+                    row.classList.add('highlight-row');
+                }
+            });
+        }
+
+        function scrollToTop() {
+            if (filteredMessages.length === 0) return;
+            jumpToMessage(filteredMessages[0].id);
+        }
+
+        function scrollToBottom() {
+            if (filteredMessages.length === 0) return;
+            jumpToMessage(filteredMessages[filteredMessages.length - 1].id);
+        }
+
+        function toggleMobileSidebar(force) {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const isHidden = sidebar.classList.contains('-translate-x-full');
+            const shouldOpen = force !== undefined ? force : isHidden;
+
+            if (shouldOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            }
+        }
+
+        /**
+         * 2026 WhatsApp Rich Text Formatter
+         * Supports: ```codeblocks```, `inline code`, *bold*, _italic_, ~strikethrough~, > blockquotes, URLs
+         */
+        function formatWhatsAppText(text) {
+            let html = escapeHTML(text);
+
+            // Triple backtick code blocks
+            html = html.replace(/```([\s\S]*?)```/g, '<pre class="bg-black/5 p-2 rounded font-mono text-xs my-1 overflow-x-auto">$1</pre>');
+            // Inline monospace
+            html = html.replace(/`([^`\n]+)`/g, '<code class="bg-black/5 px-1 py-0.5 rounded font-mono text-xs">$1</code>');
+            // Blockquotes (> quote)
+            html = html.replace(/(?:^|\n)&gt;\s*(.*)/g, '<blockquote class="border-l-3 border-[#00a884] pl-2.5 my-1 text-gray-600 italic">$1</blockquote>');
+            // Bold, Italic, Strikethrough
+            html = html.replace(/\*([^\*\n]+)\*/g, '<strong>$1</strong>');
+            html = html.replace(/(?:^|\s)_([^_\n]+)_(?=$|\s|[.,!?])/g, ' <em>$1</em>');
+            html = html.replace(/~([^~\n]+)~/g, '<del>$1</del>');
+            // Auto-link URLs
+            html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-[#027eb5] hover:underline break-all">$1</a>');
+
+            return html;
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag]));
+        }
+
+        function showLoading(text, progress = 50, subtext = "") {
+            loadingText.textContent = text;
+            loadingBar.style.width = `${progress}%`;
+            if (subtext) loadingSubtext.textContent = subtext;
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.classList.add('flex');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+            loadingOverlay.classList.remove('flex');
+        }
+
+        /**
+         * Interactive 2026 Demo Archive Generator
+         */
+        async function loadDemoChat() {
+            showLoading("Loading Demo Archive...", 25, "Synthesizing demo media & chat");
+
+            const wavBlob = generateSampleWavBlob(2.2, 440);
+            const wavBlob2 = generateSampleWavBlob(3.0, 523.25);
+
+            // Generate SVG Image Blobs for demo photos
+            const svgPhoto = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00a884"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><rect width="600" height="400" fill="url(#g)"/><circle cx="480" cy="100" r="50" fill="#fde047" opacity="0.9"/><path d="M0 320 L180 180 L340 290 L460 200 L600 300 L600 400 L0 400 Z" fill="#0f172a" opacity="0.4"/><text x="40" y="80" fill="#ffffff" font-family="sans-serif" font-size="28" font-weight="bold">Casablanca 2026 Summit</text><text x="40" y="115" fill="#e2e8f0" font-family="sans-serif" font-size="16">Slide 1 • Press Right Arrow to view next photo</text></svg>`;
+            const svgPhoto2 = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><rect width="600" height="400" fill="url(#g2)"/><circle cx="140" cy="120" r="45" fill="#38bdf8" opacity="0.8"/><path d="M0 340 L220 210 L380 300 L510 180 L600 260 L600 400 L0 400 Z" fill="#1e1b4b" opacity="0.5"/><text x="40" y="80" fill="#ffffff" font-family="sans-serif" font-size="28" font-weight="bold">Keynote Stage Architecture</text><text x="40" y="115" fill="#f3e8ff" font-family="sans-serif" font-size="16">Slide 2 • Use Left/Right chevrons or Arrow keys</text></svg>`;
+            const photoBlob = new Blob([svgPhoto], { type: 'image/svg+xml' });
+            const photoBlob2 = new Blob([svgPhoto2], { type: 'image/svg+xml' });
+
+            const registerDemoBlob = (filename, category, mime, blob, durationSec = null) => {
+                mediaRegistry.set(filename.toLowerCase(), {
+                    filename,
+                    ext: filename.split('.').pop(),
+                    category,
+                    mime,
+                    directFile: null,
+                    zipEntry: null,
+                    blobUrl: URL.createObjectURL(blob),
+                    duration: durationSec,
+                    usedInMsgId: null
+                });
+            };
+
+            registerDemoBlob('IMG-20261106-WA0001.jpg', 'photos', 'image/svg+xml', photoBlob);
+            registerDemoBlob('IMG-20261106-WA0002.jpg', 'photos', 'image/svg+xml', photoBlob2);
+            registerDemoBlob('PTT-20261106-WA0002.opus', 'voicenotes', 'audio/wav', wavBlob, 2.2);
+            registerDemoBlob('AUD-20261106-SynthTrack.mp3', 'audios', 'audio/wav', wavBlob2, 3.0);
+            registerDemoBlob('Launch-Specs-v2.pdf', 'docs', 'application/pdf', new Blob(['%PDF-1.4 Demo'], { type: 'application/pdf' }));
+
+            const sampleChat = [
+                "[2026-11-05, 09:14:22\u202FAM] \u200EMessages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them.",
+                "[2026-11-05, 09:15:04\u202FAM] Sarah: Morning team! Welcome to the *2026 WhatsApp Export Viewer* demo.",
+                "[2026-11-05, 09:16:19\u202FAM] Alex: Hey Sarah! Notice how the 2nd participant (*Alex*) is now automatically selected as \"Me\"! <This message was edited>",
+                "[2026-11-05, 09:18:45\u202FAM] Sarah: <attached: IMG-20261106-WA0001.jpg>\nHere is the first banner preview. Click to open it and use your keyboard arrows or chevrons!",
+                "[2026-11-05, 09:19:10\u202FAM] Alex: <attached: IMG-20261106-WA0002.jpg>\nAnd here is the second stage concept photo.",
+                "[2026-11-06, 10:02:11\u202FAM] Karim: PTT-20261106-WA0002.opus (file attached)",
+                "[2026-11-06, 10:03:00\u202FAM] Alex: Voice notes now parse Ogg Opus duration headers directly and include a WebAssembly decoder fallback plus 1x/1.5x/2x speed controls:\n<attached: AUD-20261106-SynthTrack.mp3>",
+                "[2026-11-06, 10:05:30\u202FAM] Sarah: POLL: Which new feature do you like best?\nOPTION: Custom Opus Voice Note Player (15 votes)\nOPTION: Lightbox Keyboard + Chevron Navigation (12 votes)\nOPTION: Auto-Select 2nd Member as Me (10 votes)",
+                "[2026-11-06, 10:08:12\u202FAM] Alex: <attached: Launch-Specs-v2.pdf>\nAttached the final release PDF."
+            ].join('\n');
+
+            await processTextFile(sampleChat);
+            finalizeMediaCatalog();
+            populateUI();
+            hideLoading();
+            uploadScreen.classList.add('hidden');
+            chatScreen.classList.remove('hidden');
+        }
+
+        // Helper to synthesize a valid playable WAV audio buffer for the demo
+        function generateSampleWavBlob(durationSec, freqHz) {
+            const sampleRate = 22050;
+            const numSamples = Math.floor(sampleRate * durationSec);
+            const buffer = new ArrayBuffer(44 + numSamples * 2);
+            const view = new DataView(buffer);
+
+            const writeStr = (offset, str) => {
+                for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+            };
+
+            writeStr(0, 'RIFF');
+            view.setUint32(4, 36 + numSamples * 2, true);
+            writeStr(8, 'WAVE');
+            writeStr(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeStr(36, 'data');
+            view.setUint32(40, numSamples * 2, true);
+
+            for (let i = 0; i < numSamples; i++) {
+                const t = i / sampleRate;
+                const env = Math.sin((Math.PI * i) / numSamples);
+                const sample = Math.sin(2 * Math.PI * freqHz * t) * Math.cos(2 * Math.PI * 3 * t) * env * 0.35;
+                view.setInt16(44 + i * 2, sample * 32767, true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+    </script>
+</body>
+</html>
