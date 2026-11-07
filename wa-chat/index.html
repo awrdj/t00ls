@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- JSZip for handling .zip exports -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Marked.js for AI Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- OggOpusDecoder WebAssembly fallback for Safari/iOS & stubborn .opus voice notes -->
     <script src="https://cdn.jsdelivr.net/npm/ogg-opus-decoder@1.6.2/dist/ogg-opus-decoder.min.js"></script>
     <!-- FontAwesome for icons -->
@@ -117,6 +119,18 @@
             animation: highlightPulse 2.5s ease-out;
             border-radius: 8px;
         }
+
+        /* AI Markdown Custom Styling */
+        .ai-markdown-prose h1 { font-size: 1.5rem; font-weight: 700; color: #111b21; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .ai-markdown-prose h2 { font-size: 1.25rem; font-weight: 700; color: #111b21; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+        .ai-markdown-prose h3 { font-size: 1.1rem; font-weight: 600; color: #111b21; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .ai-markdown-prose p { margin-bottom: 0.75rem; line-height: 1.6; }
+        .ai-markdown-prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .ai-markdown-prose ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .ai-markdown-prose li { margin-bottom: 0.35rem; }
+        .ai-markdown-prose strong { font-weight: 700; color: #111b21; }
+        .ai-markdown-prose blockquote { border-left: 3px solid #00a884; padding-left: 0.75rem; color: #667781; font-style: italic; margin-bottom: 0.75rem; }
+        .ai-markdown-prose code { background-color: rgba(0,0,0,0.05); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.85em; }
     </style>
 </head>
 <body>
@@ -126,7 +140,7 @@
 
     <!-- Upload Screen -->
     <div id="upload-screen" class="flex-1 flex flex-col items-center justify-center p-4 md:p-6 transition-all duration-300">
-        <div class="drop-zone bg-white p-8 md:p-10 rounded-2xl shadow-xl max-w-xl w-full text-center border-2 border-dashed border-gray-300 transition-all duration-200">
+        <div class="drop-zone bg-white p-8 md:p-10 rounded-2xl shadow-xl max-w-xxl w-full text-center border-2 border-dashed border-gray-300 transition-all duration-200">
             <div class="w-20 h-20 bg-[#e8f8ee] text-[#25D366] rounded-full flex items-center justify-center text-5xl mx-auto mb-5 shadow-inner">
                 <i class="fab fa-whatsapp"></i>
             </div>
@@ -444,11 +458,11 @@
                                 <i class="fas fa-robot text-[#00a884]"></i> AI Analysis
                             </h3>
                             <div id="ai-loading" class="hidden flex items-center gap-2 text-xs font-medium text-amber-500">
-                                <i class="fas fa-circle-notch fa-spin text-sm"></i> Reading messages...
-                            </div>
+                            <i class="fas fa-circle-notch fa-spin text-sm"></i> Reading messages...
                         </div>
-                        <div id="ai-response-content" class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"></div>
                     </div>
+                    <div id="ai-response-content" class="text-sm text-gray-700 ai-markdown-prose"></div>
+                </div>
                 </div>
             </div>
 
@@ -1942,8 +1956,12 @@
 
                 const result = await fetchGeminiWithRotation(prompt);
                 
-                // Format markdown slightly
-                outContent.innerHTML = formatWhatsAppText(result).replace(/\n/g, '<br>');
+                // Use Marked.js to parse Gemini's standard markdown gracefully
+                if (window.marked) {
+                    outContent.innerHTML = marked.parse(result);
+                } else {
+                    outContent.innerHTML = formatWhatsAppText(result).replace(/\n/g, '<br>');
+                }
 
             } catch(e) {
                 outContent.innerHTML = `<span class="text-red-500"><i class="fas fa-exclamation-triangle"></i> Error: ${e.message}</span>`;
