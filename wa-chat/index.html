@@ -523,7 +523,25 @@
         let searchQuery = '';
         let currentLightboxList = [];
         let currentLightboxIndex = -1;
-        let activeAudioController = null;
+        
+        // Fix for "Too many WebMediaPlayers" browser crash
+        const globalAudio = new Audio();
+        let currentPlayingUI = null; // Keeps track of which UI button is active
+        
+        // Only load video frames when scrolled into view
+        const videoObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const video = entry.target;
+                if (entry.isIntersecting) {
+                    if (!video.src && video.dataset.src) video.src = video.dataset.src;
+                } else {
+                    if (video.src) {
+                        video.removeAttribute('src');
+                        video.load(); // Immediately frees the WebMediaPlayer from RAM
+                    }
+                }
+            });
+        }, { rootMargin: '300px' });
 
         // Progressive Rendering Constants
         const CHUNK_SIZE = 250; 
@@ -1004,16 +1022,13 @@
             const container = document.createElement('div');
             container.className = `flex items-center gap-2.5 ${compact ? 'w-full py-1' : 'my-1 p-2.5 rounded-xl bg-black/[0.04] border border-black/[0.06] min-w-[250px] sm:min-w-[300px]'}`;
 
-            // Play/Pause Button
             const playBtn = document.createElement('button');
             playBtn.type = 'button';
             playBtn.className = `w-9 h-9 rounded-full ${isVoice ? 'bg-[#00a884] hover:bg-[#008f6f]' : 'bg-amber-500 hover:bg-amber-600'} text-white flex items-center justify-center text-xs shrink-0 shadow-xs transition cursor-pointer`;
             playBtn.innerHTML = `<i class="fas fa-play ml-0.5"></i>`;
 
-            // Center Waveform / Scrubber + Timestamps
             const centerCol = document.createElement('div');
             centerCol.className = "flex-1 flex flex-col justify-center min-w-0";
-
             const topMeta = document.createElement('div');
             topMeta.className = "flex items-center justify-between text-[11px] mb-1";
             topMeta.innerHTML = `
@@ -1033,7 +1048,6 @@
             centerCol.appendChild(topMeta);
             centerCol.appendChild(slider);
 
-            // Speed Pill (1x / 1.5x / 2x)
             const speedBtn = document.createElement('button');
             speedBtn.type = 'button';
             speedBtn.className = "bg-black/10 hover:bg-black/15 text-[#111b21] font-semibold text-[10px] px-2 py-1 rounded-full shrink-0 transition";
@@ -1043,136 +1057,115 @@
             container.appendChild(centerCol);
             container.appendChild(speedBtn);
 
-            const audio = new Audio();
-            audio.preload = "metadata";
             let knownDuration = entry.duration || 0;
-            let isLoaded = false;
             let triedWasmFallback = false;
             const speeds = [1, 1.5, 2];
             let speedIdx = 0;
 
             const updateTimeDisplay = (currentSec) => {
-                const dur = (audio.duration && isFinite(audio.duration) && audio.duration > 0) ? audio.duration : knownDuration;
-                if (currentSec > 0) {
-                    timeLabel.textContent = `${formatSeconds(currentSec)} / ${formatSeconds(dur)}`;
-                } else {
-                    timeLabel.textContent = formatSeconds(dur);
-                }
+                const dur = (globalAudio.src && currentPlayingUI === playBtn && globalAudio.duration && isFinite(globalAudio.duration)) ? globalAudio.duration : knownDuration;
+                timeLabel.textContent = currentSec > 0 ? `${formatSeconds(currentSec)} / ${formatSeconds(dur)}` : formatSeconds(dur);
             };
 
-            // Initialize blob & header duration immediately
-            getMediaBlobUrl(entry).then(url => {
-                if (!url) return;
-                if (entry.duration && entry.duration > 0) {
-                    knownDuration = entry.duration;
+            // Setup UI callbacks bound to this specific instance
+            const myUI = {
+                onTimeUpdate: () => {
+                    const dur = (globalAudio.duration && isFinite(globalAudio.duration)) ? globalAudio.duration : knownDuration;
+                    if (dur > 0) slider.value = String((globalAudio.currentTime / dur) * 100);
+                    updateTimeDisplay(globalAudio.currentTime);
+                },
+                onPlay: () => playBtn.innerHTML = `<i class="fas fa-pause"></i>`,
+                onPause: () => playBtn.innerHTML = `<i class="fas fa-play ml-0.5"></i>`,
+                onEnded: () => {
+                    playBtn.innerHTML = `<i class="fas fa-play ml-0.5"></i>`;
+                    slider.value = '0';
                     updateTimeDisplay(0);
-                }
-                audio.src = entry.wavFallbackUrl || url;
-            });
+                },
+                setDuration: (d) => { knownDuration = d; entry.duration = d; updateTimeDisplay(globalAudio.currentTime); }
+            };
 
-            audio.addEventListener('loadedmetadata', () => {
-                if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
-                    knownDuration = audio.duration;
-                    entry.duration = knownDuration;
+            updateTimeDisplay(0);
+
+            const playAudio = async () => {
+                if (currentPlayingUI && currentPlayingUI !== playBtn) {
+                    currentPlayingUI.reset(); // Pause previous UI cleanly
+                }
+                currentPlayingUI = playBtn;
+                playBtn.reset = () => {
+                    playBtn.innerHTML = `<i class="fas fa-play ml-0.5"></i>`;
+                    slider.value = '0';
                     updateTimeDisplay(0);
-                } else if (audio.duration === Infinity) {
-                    // Fix Chromium bug where Ogg blobs report Infinity until seeked
-                    audio.currentTime = 1e101;
-                    const fixInfinity = () => {
-                        audio.removeEventListener('timeupdate', fixInfinity);
-                        if (isFinite(audio.duration) && audio.duration > 0) {
-                            knownDuration = audio.duration;
-                            entry.duration = knownDuration;
-                        }
-                        audio.currentTime = 0;
-                        updateTimeDisplay(0);
-                    };
-                    audio.addEventListener('timeupdate', fixInfinity);
-                }
-            });
+                };
 
-            audio.addEventListener('timeupdate', () => {
-                const dur = (audio.duration && isFinite(audio.duration) && audio.duration > 0) ? audio.duration : knownDuration;
-                if (dur > 0) {
-                    slider.value = String((audio.currentTime / dur) * 100);
-                }
-                updateTimeDisplay(audio.currentTime);
-            });
+                // Bind global events to this specific UI
+                globalAudio.ontimeupdate = myUI.onTimeUpdate;
+                globalAudio.onplay = myUI.onPlay;
+                globalAudio.onpause = myUI.onPause;
+                globalAudio.onended = myUI.onEnded;
+                globalAudio.onloadedmetadata = () => {
+                    if (globalAudio.duration === Infinity) {
+                        globalAudio.currentTime = 1e101;
+                        globalAudio.ontimeupdate = () => {
+                            globalAudio.ontimeupdate = myUI.onTimeUpdate;
+                            if (isFinite(globalAudio.duration)) myUI.setDuration(globalAudio.duration);
+                            globalAudio.currentTime = 0;
+                        };
+                    } else if (isFinite(globalAudio.duration)) {
+                        myUI.setDuration(globalAudio.duration);
+                    }
+                };
 
-            audio.addEventListener('play', () => {
-                if (activeAudioController && activeAudioController !== audio) {
-                    activeAudioController.pause();
-                }
-                activeAudioController = audio;
-                playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
-            });
-
-            audio.addEventListener('pause', () => {
-                playBtn.innerHTML = `<i class="fas fa-play ml-0.5"></i>`;
-            });
-
-            audio.addEventListener('ended', () => {
-                playBtn.innerHTML = `<i class="fas fa-play ml-0.5"></i>`;
-                slider.value = '0';
-                audio.currentTime = 0;
-                updateTimeDisplay(0);
-            });
-
-            // Automatic WebAssembly Opus decoder fallback if native browser playback fails
-            const triggerWasmFallback = async () => {
-                if (triedWasmFallback) {
-                    showToast("Native playback and WASM fallback both failed.", "error");
-                    playBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i>`;
-                    return;
-                }
-                triedWasmFallback = true;
-                playBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i>`;
                 try {
-                    const wavUrl = await transcodeOpusToWavUrl(entry);
-                    if (wavUrl) {
-                        knownDuration = entry.duration || knownDuration;
-                        audio.src = wavUrl;
-                        audio.playbackRate = speeds[speedIdx];
-                        updateTimeDisplay(0);
-                        await audio.play();
-                    } else {
-                        throw new Error("WASM Transcode returned null");
+                    const url = await getMediaBlobUrl(entry);
+                    const targetSrc = entry.wavFallbackUrl || url;
+                    if (globalAudio.src !== targetSrc) {
+                        globalAudio.src = targetSrc;
+                        globalAudio.playbackRate = speeds[speedIdx];
                     }
+                    await globalAudio.play();
                 } catch (err) {
-                    console.error("WASM Opus fallback error:", err);
-                    showToast("Audio decode blocked by browser security.", "error");
-                    playBtn.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500"></i>`;
+                    if (triedWasmFallback) {
+                        showToast("Audio decode blocked by browser security.", "error");
+                        playBtn.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500"></i>`;
+                    } else {
+                        triedWasmFallback = true;
+                        playBtn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i>`;
+                        try {
+                            const wavUrl = await transcodeOpusToWavUrl(entry);
+                            if (wavUrl) {
+                                globalAudio.src = wavUrl;
+                                globalAudio.playbackRate = speeds[speedIdx];
+                                await globalAudio.play();
+                            } else { throw new Error(); }
+                        } catch (e) {
+                            playBtn.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500"></i>`;
+                        }
+                    }
                 }
             };
 
-            playBtn.addEventListener('click', async () => {
-                if (audio.paused) {
-                    try {
-                        if (!audio.src) {
-                            const url = await getMediaBlobUrl(entry);
-                            audio.src = entry.wavFallbackUrl || url;
-                        }
-                        await audio.play();
-                    } catch (err) {
-                        await triggerWasmFallback();
-                    }
+            playBtn.addEventListener('click', () => {
+                if (currentPlayingUI === playBtn && !globalAudio.paused) {
+                    globalAudio.pause();
                 } else {
-                    audio.pause();
+                    playAudio();
                 }
             });
 
             slider.addEventListener('input', () => {
-                const dur = (audio.duration && isFinite(audio.duration) && audio.duration > 0) ? audio.duration : knownDuration;
-                if (dur > 0) {
-                    audio.currentTime = ( parseFloat(slider.value) / 100 ) * dur;
-                    updateTimeDisplay(audio.currentTime);
+                const dur = knownDuration;
+                if (dur > 0 && currentPlayingUI === playBtn) {
+                    globalAudio.currentTime = ( parseFloat(slider.value) / 100 ) * dur;
+                    updateTimeDisplay(globalAudio.currentTime);
+                } else if (dur > 0) {
+                    updateTimeDisplay(( parseFloat(slider.value) / 100 ) * dur);
                 }
             });
 
             speedBtn.addEventListener('click', () => {
                 speedIdx = (speedIdx + 1) % speeds.length;
-                audio.playbackRate = speeds[speedIdx];
                 speedBtn.textContent = `${speeds[speedIdx]}x`;
+                if (currentPlayingUI === playBtn) globalAudio.playbackRate = speeds[speedIdx];
             });
 
             return container;
@@ -1726,8 +1719,10 @@
                 wrapper.appendChild(expandBtn);
 
                 getMediaBlobUrl(entry).then(url => {
-                    // #t=0.001 forces browsers to generate a poster frame automatically
-                    if (url) video.src = url + "#t=0.001";
+                    if (url) {
+                        video.dataset.src = url + "#t=0.001";
+                        videoObserver.observe(video);
+                    }
                 });
             } else if (cat === 'voicenotes' || cat === 'audios') {
                 return createCustomAudioPlayer(entry, false);
@@ -1862,22 +1857,30 @@
 
             while (attempts < maxRetries) {
                 const key = aiApiKeys[currentKeyIndex];
-                try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }],
-                            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
-                        })
-                    });
+                let response = null;
+                const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
+                let lastError = "API Error";
 
-                    if (!response.ok) {
-                        if (response.status === 429) {
-                            throw new Error("Rate limit exceeded");
-                        }
+                try {
+                    for (const model of modelsToTry) {
+                        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: prompt }] }],
+                                generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+                            })
+                        });
+                        
+                        if (response.ok) break;
+                        
                         const errData = await response.json();
-                        throw new Error(errData.error?.message || "API Error");
+                        lastError = errData.error?.message || "API Error";
+                        if (response.status === 429) throw new Error("Rate limit exceeded");
+                    }
+
+                    if (!response || !response.ok) {
+                        throw new Error(lastError);
                     }
 
                     const data = await response.json();
@@ -2013,13 +2016,15 @@
                     if (!url) return;
                     if (cat === 'videos' || (cat === 'gifs' && item.ext === 'mp4')) {
                         mediaBox.innerHTML = `
-                            <video src="${url}#t=0.1" preload="metadata" muted class="w-full h-full object-cover group-hover:scale-105 transition duration-300"></video>
-                            <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition">
-                                <div class="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center">
+                            <video data-src="${url}#t=0.1" preload="metadata" muted class="w-full h-full object-cover group-hover:scale-105 transition duration-300"></video>
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition pointer-events-none">
+                                <div class="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center shadow-md">
                                     <i class="fas fa-play text-xs ml-0.5"></i>
                                 </div>
                             </div>
                         `;
+                        const vid = mediaBox.querySelector('video');
+                        videoObserver.observe(vid);
                     } else {
                         mediaBox.innerHTML = `<img src="${url}" alt="${escapeHTML(item.filename)}" loading="lazy" class="w-full h-full ${cat === 'stickers' ? 'object-contain p-4' : 'object-cover'} group-hover:scale-105 transition duration-300">`;
                     }
